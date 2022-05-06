@@ -74,7 +74,7 @@ const nodeFetch = require('node-fetch');
       body: JSON.stringify({
         destination: {
           type: 'HTTP',
-          url: 'https://europe-west3-t1-integration.cloudfunctions.net/t1-ct-dev-api-extension',
+          url: `${process.env.NGROK_URL}/api-extension`,
           authentication: {
             type: 'AuthorizationHeader',
             headerValue: 'Basic dXNlcjEyMzpwYXNzd29yZDEyMw==',
