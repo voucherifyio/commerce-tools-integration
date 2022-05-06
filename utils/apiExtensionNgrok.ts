@@ -3,7 +3,7 @@ const { base64encode } = require('nodejs-base64');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const nodeFetch = require('node-fetch');
+const nodeFetch = require('node-fetch2');
 
 (async () => {
   const responseToken = await nodeFetch(
@@ -91,7 +91,8 @@ const nodeFetch = require('node-fetch');
   const response3Extensions_ = await response3Extensions.json();
   if (!response3Extensions_?.id) {
     console.log(response3Extensions_);
-    throw new Error('API Extension was most likely not added');
+    console.log('API Extension was most likely not added');
+    process.exit(1);
   }
   console.log('API Extension - OK');
 })();
