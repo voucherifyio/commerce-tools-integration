@@ -10,7 +10,42 @@ export class ApiExtensionService {
     const couponCodes = cartObj.custom.fields.discount_code;
     const actions = [];
 
-    console.log(couponCodes);
+    //coupons off price <--need an upgrade ???  delete those witch not in list
+    const couponsOff = [
+      {
+        name: 'coupon1',
+        value: -10000,
+      },
+      {
+        name: 'coupon2',
+        value: -2000,
+      },
+    ];
+    let couponsToAdd = [...couponsOff];
+    const customLineItems = cartObj.customLineItems;
+    for (const customLineItem of customLineItems) {
+      couponsToAdd = couponsToAdd.filter(
+        (coupon) => coupon.name !== customLineItem.slug,
+      );
+    }
+    for (const coupon of couponsToAdd) {
+      actions.push({
+        action: 'addCustomLineItem',
+        name: {
+          en: `Coupon ${-coupon.value / 100} ${currencyCode}`,
+        },
+        quantity: 1,
+        money: {
+          centAmount: coupon.value,
+          currencyCode: currencyCode,
+          type: 'centPrecision',
+        },
+        slug: coupon.name,
+        taxCategory: {
+          id: process.env.COUPON_TAX_CATEGORY,
+        },
+      });
+    }
 
     let percentOff = 0;
     //checking codes

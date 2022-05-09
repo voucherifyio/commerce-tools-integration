@@ -3,9 +3,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ApiExtensionController } from './api-extension/api-extension.controller';
 import { ApiExtensionService } from './api-extension/api-extension.service';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [],
+  imports: [ConfigModule.forRoot()],
   controllers: [AppController, ApiExtensionController],
   providers: [AppService, ApiExtensionService],
 })
