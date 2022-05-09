@@ -13,11 +13,13 @@
     Set environment variables: 
     VOUCHERIFY_APP_ID, 
     VOUCHERIFY_SECRET_KEY,
+
     COMMERCE_TOOLS_PROJECT_KEY,
     COMMERCE_TOOLS_AUTH_URL,
     COMMERCE_TOOLS_API_URL,
-    COMMERCE_TOOLS_ID,
+    COMMERCE_TOOLS_CLIENT_ID,
     COMMERCE_TOOLS_SECRET,
+    COMMERCE_TOOLS_SCOPES: Array of strings=["manage_project:xxxxxxx"] 
 ---
 ## 2. Dependencies
 ---

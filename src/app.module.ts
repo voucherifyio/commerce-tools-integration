@@ -9,9 +9,10 @@ import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [ConfigModule.forRoot()],
-  controllers: [AppController,ApiExtensionController],
+  controllers: [AppController, ApiExtensionController],
   providers: [
-    AppService,ApiExtensionService,
+    AppService,
+    ApiExtensionService,
     VoucherifyConnectorService,
     CommerceToolsConnectorService,
   ],

@@ -10,14 +10,14 @@ const ngrok = require('ngrok');
 (async () => {
   ngrok.connect().then(async (url) => {
     const responseToken = await nodeFetch(
-      `${process.env.CT_AUTH_URL}/oauth/token`,
+      `${process.env.COMMERCE_TOOLS_AUTH_URL}/oauth/token`,
       {
         method: 'POST',
         headers: {
           Authorization:
             'Basic ' +
             base64encode(
-              `${process.env.CT_CLIENT_ID}:${process.env.CT_SECRET}`,
+              `${process.env.COMMERCE_TOOLS_CLIENT_ID}:${process.env.COMMERCE_TOOLS_SECRET}`,
             ),
           'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
         },
@@ -29,7 +29,7 @@ const ngrok = require('ngrok');
     const responseToken_ = await responseToken.json();
     const accessToken = responseToken_.access_token;
     const responseExtensions = await nodeFetch(
-      `${process.env.CT_API_URL}/${process.env.CT_PROJECT_KEY}/extensions`,
+      `${process.env.COMMERCE_TOOLS_API_URL}/${process.env.COMMERCE_TOOLS_PROJECT_KEY}/extensions`,
       {
         method: 'GET',
         headers: {
@@ -42,7 +42,7 @@ const ngrok = require('ngrok');
     if (responseExtensions_.total > 0) {
       for (const extension of responseExtensions_.results) {
         await nodeFetch(
-          `${process.env.CT_API_URL}/${process.env.CT_PROJECT_KEY}/extensions/${extension.id}?version=${extension.version}`,
+          `${process.env.COMMERCE_TOOLS_API_URL}/${process.env.COMMERCE_TOOLS_PROJECT_KEY}/extensions/${extension.id}?version=${extension.version}`,
           {
             method: 'DELETE',
             headers: {
@@ -53,7 +53,7 @@ const ngrok = require('ngrok');
         );
       }
       const response2Extensions = await nodeFetch(
-        `${process.env.CT_API_URL}/${process.env.CT_PROJECT_KEY}/extensions`,
+        `${process.env.COMMERCE_TOOLS_API_URL}/${process.env.COMMERCE_TOOLS_PROJECT_KEY}/extensions`,
         {
           method: 'GET',
           headers: {
@@ -69,7 +69,7 @@ const ngrok = require('ngrok');
     }
 
     const response3Extensions = await nodeFetch(
-      `${process.env.CT_API_URL}/${process.env.CT_PROJECT_KEY}/extensions`,
+      `${process.env.COMMERCE_TOOLS_API_URL}/${process.env.COMMERCE_TOOLS_PROJECT_KEY}/extensions`,
       {
         method: 'POST',
         headers: {

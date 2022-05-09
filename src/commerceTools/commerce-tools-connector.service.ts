@@ -23,8 +23,9 @@ export class CommerceToolsConnectorService {
   private readonly projectKey: string = this.configService.get<string>(
     'COMMERCE_TOOLS_PROJECT_KEY',
   );
-  private readonly clientId: string =
-    this.configService.get<string>('COMMERCE_TOOLS_ID');
+  private readonly clientId: string = this.configService.get<string>(
+    'COMMERCE_TOOLS_CLIENT_ID',
+  );
   private readonly clientSecret: string = this.configService.get<string>(
     'COMMERCE_TOOLS_SECRET',
   );
