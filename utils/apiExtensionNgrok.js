@@ -1,10 +1,6 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { base64encode } = require('nodejs-base64');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const nodeFetch = require('node-fetch2');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const ngrok = require('ngrok');
 
 (async () => {

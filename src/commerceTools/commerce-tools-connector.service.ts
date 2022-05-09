@@ -13,7 +13,9 @@ import {
 
 @Injectable()
 export class CommerceToolsConnectorService {
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) {
+    console.log(process.env.COUPON_TAX_CATEGORY, 'conector');
+  }
   private readonly authUrl: string = this.configService.get<string>(
     'COMMERCE_TOOLS_AUTH_URL',
   );
