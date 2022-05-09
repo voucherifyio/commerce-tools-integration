@@ -4,7 +4,7 @@
   "description": "",
   "author": "",
   "private": true,
-  "license": "UNLICENSED", 
+  "license": "UNLICENSED",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
@@ -36,7 +36,7 @@
     "dotenv": "^16.0.0",
     "json-logger-service": "^8.0.4",
     "ngrok": "^4.3.1",
-    "node-fetch": "^2.6.7",
+    "node-fetch": "^3.2.4",
     "node-fetch2": "npm:node-fetch@^2.6.7",
     "nodejs-base64": "^2.0.0",
     "reflect-metadata": "^0.1.13",

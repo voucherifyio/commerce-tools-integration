@@ -6,7 +6,7 @@
 3. [Implemented funtionallities](#3-implemented-funtionallities)
 4. [How to test your app](#4-how-to-test-your-app)
 
-## 1. Installation and configuration guide
+## 1. Installation and configuration guide (for developers)
     Install dependencies 
     > npm i
 
