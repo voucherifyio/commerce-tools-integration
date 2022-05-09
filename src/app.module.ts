@@ -13,4 +13,5 @@ import { CommerceToolsConnectorService } from './commerceTools/commerce-tools-co
   controllers: [AppController, TmpVoucherifyConnectorController, TmpCtConnectorController],
   providers: [AppService, VoucherifyConnectorService, CommerceToolsConnectorService],
 })
+
 export class AppModule {}
