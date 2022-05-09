@@ -1,13 +1,19 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { VoucherifyConnectorService } from './commerceTools/voucherify-connector.service';
+import { CommerceToolsConnectorService } from './commerceTools/commerce-tools-connector.service';
 import { ApiExtensionController } from './api-extension/api-extension.controller';
 import { ApiExtensionService } from './api-extension/api-extension.service';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [ConfigModule.forRoot()],
-  controllers: [AppController, ApiExtensionController],
-  providers: [AppService, ApiExtensionService],
+  controllers: [AppController,ApiExtensionController],
+  providers: [
+    AppService,ApiExtensionService,
+    VoucherifyConnectorService,
+    CommerceToolsConnectorService,
+  ],
 })
 export class AppModule {}
