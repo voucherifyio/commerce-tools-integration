@@ -7,7 +7,7 @@ export class ApiExtensionService {
 
     const lineItems = cartObj.lineItems;
     const currencyCode = cartObj.totalPrice?.currencyCode;
-    const couponCodes = cartObj.custom.fields.discount_code;
+    // const couponCodes = cartObj.custom.fields.discount_code;
 
     //checking codes
     const actions = [];
