@@ -18,7 +18,6 @@ import { CommerceToolsConnectorService } from './commerceTools/commerce-tools-co
         COMMERCE_TOOLS_API_URL: Joi.string().required(),
         COMMERCE_TOOLS_ID: Joi.string().required(),
         COMMERCE_TOOLS_SECRET: Joi.string().required(),
-        COMMERCE_TOOLS_SCOPES: Joi.string().required(),
       }),
     }),
   ],
