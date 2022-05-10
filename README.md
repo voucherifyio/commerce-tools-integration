@@ -16,9 +16,8 @@
     - COMMERCE_TOOLS_PROJECT_KEY
     - COMMERCE_TOOLS_AUTH_URL
     - COMMERCE_TOOLS_API_URL
-    - COMMERCE_TOOLS_ID
+    - COMMERCE_TOOLS_CLIENT_ID
     - COMMERCE_TOOLS_SECRET
-    - COMMERCE_TOOLS_SCOPES
 
 3. (optional) Set LOGGER_PRETTY_PRINT environment variable to true, to have console output in a text format (by default it is in JSON format).
 ---

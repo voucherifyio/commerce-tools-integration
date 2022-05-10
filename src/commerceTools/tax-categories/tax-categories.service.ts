@@ -12,12 +12,7 @@ export class TaxCategoriesService {
     taxCategory?: { id?: string };
   }> {
     const CT = this.commerceToolsConnectorService.getClient();
-    const taxCategories = await CT.withProjectKey({
-      projectKey: process.env.COMMERCE_TOOLS_PROJECT_KEY,
-    })
-      .taxCategories()
-      .get()
-      .execute();
+    const taxCategories = await CT.taxCategories().get().execute();
     const couponTaxCategory = taxCategories.body.results.find(
       (taxCategory) => taxCategory.name === 'coupon',
     );
