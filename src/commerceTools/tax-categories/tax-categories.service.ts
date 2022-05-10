@@ -24,4 +24,13 @@ export class TaxCategoriesService {
     if (!couponTaxCategory) return { found: false };
     return { found: true, taxCategory: couponTaxCategory };
   }
+
+  // async configureCouponTaxCategory() {
+  //   // const couponTaxCategory = this.getCouponTaxCategory();
+  //   // if (!couponTaxCategory?.found) {
+  //   //   //create
+  //   // }
+  // }
+  //
+  // async updateRatesInCouponCategory() {}
 }

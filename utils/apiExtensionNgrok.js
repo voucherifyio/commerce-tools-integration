@@ -83,8 +83,8 @@ const ngrok = require('ngrok');
           },
           triggers: [
             { resourceTypeId: 'cart', actions: ['Create', 'Update'] },
-            { resourceTypeId: 'customer', actions: ['Create', 'Update'] },
-            { resourceTypeId: 'order', actions: ['Create', 'Update'] },
+            // { resourceTypeId: 'customer', actions: ['Create', 'Update'] },
+            // { resourceTypeId: 'order', actions: ['Create', 'Update'] },
           ],
         }),
       },
