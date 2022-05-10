@@ -18,7 +18,8 @@ module.exports = {
   ignorePatterns: [
     '.eslintrc.js',
     'utils/apiExtensionNgrok.js',
-    'utils/commerceToolsCouponTaxCategory.js','utils/commerceToolsCouponCodesType.js'
+    'utils/devConfigure.js',
+    'utils/commerceToolsCouponCodesType.js',
   ],
   rules: {
     '@typescript-eslint/interface-name-prefix': 'off',
