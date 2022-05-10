@@ -9,9 +9,9 @@
     "prebuild": "rimraf dist",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "LOGGER_PRETTY_PRINT=true nest start",
-    "start:dev": "LOGGER_PRETTY_PRINT=true nest start --watch & npm run apiExtensionNgrokUtil",
-    "start:debug": "LOGGER_PRETTY_PRINT=true nest start --debug --watch",
+    "start": "nest start",
+    "start:dev": "nest start --watch & npm run apiExtensionNgrok",
+    "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
@@ -20,7 +20,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prepare": "husky install",
-    "apiExtensionNgrokUtil": "node utils/apiExtensionNgrok.js"
+    "config": "node utils/devConfigure.js",
+    "apiExtensionNgrok": "node utils/apiExtensionNgrok.js"
   },
   "dependencies": {
     "@commercetools/platform-sdk": "^2.7.0",

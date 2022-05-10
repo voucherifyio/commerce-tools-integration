@@ -19,7 +19,6 @@ module.exports = {
     '.eslintrc.js',
     'utils/apiExtensionNgrok.js',
     'utils/devConfigure.js',
-    'utils/commerceToolsCouponCodesType.js',
   ],
   rules: {
     '@typescript-eslint/interface-name-prefix': 'off',

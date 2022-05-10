@@ -30,6 +30,7 @@
 - npm run start:dev - will start an app, and will watch for changes
 - npm run start:prod - will run in production mode
 - npm run test - will run tests
+- npm run config - must local nest server be online, will configure custom types for coupons and coupon tax category
 ---
 ## How to test your app
 ---
