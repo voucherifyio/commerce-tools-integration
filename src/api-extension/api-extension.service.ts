@@ -1,20 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
+import { TypesService } from '../commerceTools/types/types.service';
 
 @Injectable()
 export class ApiExtensionService {
-  constructor(private readonly taxCategoriesService: TaxCategoriesService) {}
+  constructor(
+    private readonly taxCategoriesService: TaxCategoriesService,
+    private readonly typesService: TypesService,
+  ) {}
 
   async checkCart(body) {
     const cartObj = body?.resource?.obj;
+    const version = cartObj.version;
+    const actions = [];
+    if (version === 1) {
+      return {
+        status: true,
+        actions: [
+          {
+            action: 'setCustomType',
+            type: {
+              id: await this.typesService.findCouponType().then((response) => {
+                if (response.found) return response.type.id;
+                else throw new Error('CouponType not found');
+              }),
+            },
+            name: 'couponCodes',
+          },
+        ],
+      };
+    }
 
     const lineItems = cartObj.lineItems;
     const currencyCode = cartObj.totalPrice?.currencyCode;
-    const couponCodes = cartObj.custom.fields.discount_code;
+    const couponCodes = cartObj.custom?.fields?.discount_code ?? [];
     // const couponCodes = cartObj.custom.fields.discount_code;
 
     //checking codes
-    const actions = [];
 
     //coupons off price <--need an upgrade ???  delete those witch not in list
     const couponsOff = [

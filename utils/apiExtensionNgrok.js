@@ -4,7 +4,7 @@ const nodeFetch = require('node-fetch2');
 const ngrok = require('ngrok');
 
 (async () => {
-  ngrok.connect().then(async (url) => {
+  ngrok.connect(3000).then(async (url) => {
     const responseToken = await nodeFetch(
       `${process.env.COMMERCE_TOOLS_AUTH_URL}/oauth/token`,
       {
