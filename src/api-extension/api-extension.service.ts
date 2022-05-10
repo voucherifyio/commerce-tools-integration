@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
 
 @Injectable()
 export class ApiExtensionService {
-  checkCart(body) {
+  constructor(private readonly taxCategoriesService: TaxCategoriesService) {}
+
+  async checkCart(body) {
     const cartObj = body?.resource?.obj;
 
     const lineItems = cartObj.lineItems;
@@ -28,6 +31,14 @@ export class ApiExtensionService {
         (coupon) => coupon.name !== customLineItem.slug,
       );
     }
+
+    const taxCategoryResult =
+      await this.taxCategoriesService.getCouponTaxCategory();
+
+    if (!taxCategoryResult.found) {
+      return { status: false, actions: [] };
+    }
+
     for (const coupon of couponsToAdd) {
       actions.push({
         action: 'addCustomLineItem',
@@ -42,7 +53,7 @@ export class ApiExtensionService {
         },
         slug: coupon.name,
         taxCategory: {
-          id: process.env.COUPON_TAX_CATEGORY,
+          id: taxCategoryResult.taxCategory.id,
         },
       });
     }

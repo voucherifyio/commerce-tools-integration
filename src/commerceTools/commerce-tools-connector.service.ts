@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import fetch from 'node-fetch';
+import fetch from 'node-fetch2';
 import { ConfigService } from '@nestjs/config';
 import {
   ClientBuilder,
@@ -13,9 +13,7 @@ import {
 
 @Injectable()
 export class CommerceToolsConnectorService {
-  constructor(private configService: ConfigService) {
-    console.log(process.env.COUPON_TAX_CATEGORY, 'conector');
-  }
+  constructor(private configService: ConfigService) {}
   private readonly authUrl: string = this.configService.get<string>(
     'COMMERCE_TOOLS_AUTH_URL',
   );

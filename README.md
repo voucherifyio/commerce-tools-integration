@@ -19,7 +19,6 @@
     COMMERCE_TOOLS_API_URL,
     COMMERCE_TOOLS_CLIENT_ID,
     COMMERCE_TOOLS_SECRET,
-    COMMERCE_TOOLS_SCOPES: Array of strings=["manage_project:xxxxxxx"] 
 ---
 ## 2. Dependencies
 ---

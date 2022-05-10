@@ -6,6 +6,7 @@ import { CommerceToolsConnectorService } from './commerceTools/commerce-tools-co
 import { ApiExtensionController } from './api-extension/api-extension.controller';
 import { ApiExtensionService } from './api-extension/api-extension.service';
 import { ConfigModule } from '@nestjs/config';
+import { TaxCategoriesService } from './commerceTools/tax-categories/tax-categories.service';
 
 @Module({
   imports: [ConfigModule.forRoot()],
@@ -15,6 +16,7 @@ import { ConfigModule } from '@nestjs/config';
     ApiExtensionService,
     VoucherifyConnectorService,
     CommerceToolsConnectorService,
+    TaxCategoriesService,
   ],
 })
 export class AppModule {}
