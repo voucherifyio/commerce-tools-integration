@@ -6,10 +6,8 @@ import {
   AuthMiddlewareOptions,
   HttpMiddlewareOptions,
 } from '@commercetools/sdk-client-v2';
-import {
-  ApiRoot,
-  createApiBuilderFromCtpClient,
-} from '@commercetools/platform-sdk';
+import { createApiBuilderFromCtpClient } from '@commercetools/platform-sdk';
+import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 
 @Injectable()
 export class CommerceToolsConnectorService {
@@ -45,7 +43,7 @@ export class CommerceToolsConnectorService {
     fetch,
   };
 
-  public getClient(): ApiRoot {
+  public getClient(): ByProjectKeyRequestBuilder {
     const ctpClient = new ClientBuilder()
       .withProjectKey(this.projectKey)
       .withClientCredentialsFlow(this.authMiddlewareOptions)
@@ -53,6 +51,8 @@ export class CommerceToolsConnectorService {
       .withLoggerMiddleware()
       .build();
 
-    return createApiBuilderFromCtpClient(ctpClient);
+    return createApiBuilderFromCtpClient(ctpClient).withProjectKey({
+      projectKey: this.projectKey,
+    });
   }
 }
