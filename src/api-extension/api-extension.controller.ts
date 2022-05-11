@@ -7,12 +7,19 @@ export class ApiExtensionController {
   constructor(private readonly apiExtensionService: ApiExtensionService) {}
 
   @Post()
-  findAll(@Req() request: Request): any {
+  async findAll(@Req() request: Request): Promise<any> {
     const type = request?.body?.resource?.typeId;
-    let response;
-    if (type === 'cart') {
-      response = this.apiExtensionService.checkCart(request?.body);
+    const authorization = request?.headers?.authorization;
+    if (
+      authorization !==
+        `Basic ${process.env.API_EXTENSION_BASIC_AUTH_PASSWORD}` ||
+      type !== 'cart'
+    ) {
+      throw new HttpException('', 400);
     }
+    const response = await this.apiExtensionService.checkCartAndMutate(
+      request?.body,
+    );
     if (!response.status) {
       throw new HttpException('', 400);
     }
