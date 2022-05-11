@@ -24,7 +24,6 @@ exports.getClient = () => {
     .withProjectKey(process.env.COMMERCE_TOOLS_PROJECT_KEY)
     .withClientCredentialsFlow(authMiddlewareOptions)
     .withHttpMiddleware(httpMiddlewareOption)
-    .withLoggerMiddleware()
     .build();
 
   return createApiBuilderFromCtpClient(ctpClient).withProjectKey({
