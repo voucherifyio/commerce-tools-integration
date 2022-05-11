@@ -27,11 +27,19 @@
 - npm >= 8.5.5
 ---
 ## Implemented funtionallities
-- npm run start - will start your application in developer mode
-- npm run start:dev - will start an app, and will watch for changes
-- npm run start:prod - will run in production mode
-- npm run test - will run tests
-- npm run config - must local nest server be online, will configure custom types for coupons and coupon tax category
----
+
+> npm run start - will start your application in developer mode
+
+>npm run start:dev - will start an app, and will watch for changes
+
+> npm run start:prod - will run in production mode
+
+>npm run test - will run tests
+
+> npm run config - currently working only while application is running and Ngrok is installed and configured on our computer. It will configure:
+>1. custom coupon type - needed to hold coupons codes inside cart object
+>2. coupon tax category, needed for any coupon or gift card with fixed amount discount (for example -10 USD)
+>
+>You also can 
 ## How to test your app
 ---

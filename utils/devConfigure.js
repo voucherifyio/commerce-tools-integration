@@ -5,7 +5,7 @@ const nodeFetch = require('node-fetch2');
   const responseToken = await nodeFetch(
     `http://localhost:3000/tax-categories/configure`,
     {
-      method: 'GET',
+      method: 'POST',
     },
   );
   const responseToken_ = await responseToken.json();
@@ -16,7 +16,7 @@ const nodeFetch = require('node-fetch2');
   const responseToken2 = await nodeFetch(
     `http://localhost:3000/types/configure`,
     {
-      method: 'GET',
+      method: 'POST',
     },
   );
   const responseToken2_ = await responseToken2.json();

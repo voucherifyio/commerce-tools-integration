@@ -4,11 +4,7 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class VoucherifyConnectorService {
-  constructor(private configService: ConfigService) {
-    (async () => {
-      console.log(await this.getClient().vouchers.get('LtW9BAUS'));
-    })();
-  }
+  constructor(private configService: ConfigService) {}
   private readonly applicationId: string =
     this.configService.get<string>('VOUCHERIFY_APP_ID');
   private readonly secretKey: string = this.configService.get<string>(

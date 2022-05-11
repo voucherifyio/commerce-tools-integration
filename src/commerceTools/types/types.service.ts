@@ -44,7 +44,7 @@ export class TypesService {
       const couponType = typesResult.body.results.find(
         (type) => type.key === 'couponCodes',
       );
-      if (couponType) return couponType;
+      if (couponType?.id) return couponType;
       page++;
       if (typesResult.body.total < page * limit) {
         allTypesCollected = true;
@@ -56,7 +56,7 @@ export class TypesService {
 
   async configureCouponType(): Promise<{ success: boolean; type: any }> {
     const couponType = await this.findCouponType();
-    if (!couponType) {
+    if (couponType) {
       return { success: true, type: couponType };
     }
     const newCouponType = this.createCouponType();
