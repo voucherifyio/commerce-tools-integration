@@ -1,7 +1,6 @@
 import { Controller, Post, Req, HttpException } from '@nestjs/common';
 import { Request } from 'express';
 import { ApiExtensionService } from './api-extension.service';
-import { TypesService } from '../commerceTools/types/types.service';
 
 @Controller('api-extension')
 export class ApiExtensionController {
