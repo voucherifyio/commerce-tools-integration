@@ -9,7 +9,7 @@ export class TaxCategoriesService {
   ) {}
 
   //coupon tax category not included
-  async getListOfCountriesUsedInTaxCategories() {
+  async getListOfCountriesUsedInTaxCategories(): Promise<string[]> {
     const allTaxCategories = await this.getAllTaxCategories();
     return [
       ...new Set(
@@ -22,43 +22,41 @@ export class TaxCategoriesService {
   }
 
   async getAllTaxCategories(): Promise<TaxCategory[]> {
-    const CT = this.commerceToolsConnectorService.getClient();
-    const taxCategories = await CT.taxCategories()
+    const ctClient = this.commerceToolsConnectorService.getClient();
+    const taxCategories = await ctClient
+      .taxCategories()
       .get({ queryArgs: { limit: 100 } })
       .execute();
     return taxCategories.body.results;
   }
 
-  async getCouponTaxCategory(): Promise<{
-    found: boolean;
-    taxCategory?: TaxCategory;
-  }> {
+  async getCouponTaxCategory(): Promise<TaxCategory> {
     const taxCategories = await this.getAllTaxCategories();
     const couponTaxCategory = taxCategories.find(
       (taxCategory) => taxCategory.name === 'coupon',
     );
-    if (!couponTaxCategory) return { found: false };
-    return { found: true, taxCategory: couponTaxCategory };
+    if (!couponTaxCategory) return null;
+    return couponTaxCategory;
   }
 
   async configureCouponTaxCategory(): Promise<{
     success: boolean;
     couponTaxCategory: TaxCategory;
   }> {
-    const CT = this.commerceToolsConnectorService.getClient();
+    const ctClient = this.commerceToolsConnectorService.getClient();
     const couponTaxCategoryResult = await this.getCouponTaxCategory();
     let couponTaxCategory;
-    if (!couponTaxCategoryResult?.found) {
-      couponTaxCategory = await CT.taxCategories().post({
+    if (!couponTaxCategoryResult) {
+      couponTaxCategory = await ctClient.taxCategories().post({
         body: {
           name: 'coupon', //DO NOT change coupon name
           rates: [],
         },
       });
     } else {
-      couponTaxCategory = couponTaxCategoryResult.taxCategory;
+      couponTaxCategory = couponTaxCategoryResult;
     }
-    const rates = couponTaxCategory.rates;
+    const rates = couponTaxCategory?.rates;
 
     const listOfCountriesUsedInTaxCategories =
       await this.getListOfCountriesUsedInTaxCategories();
@@ -104,7 +102,8 @@ export class TaxCategoriesService {
       });
     }
     if (actions.length) {
-      couponTaxCategory = await CT.taxCategories()
+      couponTaxCategory = await ctClient
+        .taxCategories()
         .withId(couponTaxCategory.id)
         .post({
           body: {

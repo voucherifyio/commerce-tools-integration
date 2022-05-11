@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Post } from '@nestjs/common';
 import { TypesService } from './types.service';
 import { Type } from '@commercetools/platform-sdk';
 
@@ -6,7 +6,7 @@ import { Type } from '@commercetools/platform-sdk';
 export class TypesController {
   constructor(private readonly typesService: TypesService) {}
 
-  @Get('configure')
+  @Post('configure')
   async configure(): Promise<{
     success: boolean;
     couponTaxCategory?: Type;

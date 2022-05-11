@@ -9,10 +9,16 @@ export class ApiExtensionService {
     private readonly typesService: TypesService,
   ) {}
 
-  async checkCart(body) {
+  async checkCartAndMutate(
+    body,
+  ): Promise<{ status: boolean; actions: object[] }> {
     const cartObj = body?.resource?.obj;
     const version = cartObj.version;
     const actions = [];
+    const couponType = await this.typesService.findCouponType();
+    if (!couponType) {
+      throw new Error('CouponType not found');
+    }
     if (version === 1) {
       return {
         status: true,
@@ -20,10 +26,7 @@ export class ApiExtensionService {
           {
             action: 'setCustomType',
             type: {
-              id: await this.typesService.findCouponType().then((response) => {
-                if (response.found) return response.type.id;
-                else throw new Error('CouponType not found');
-              }),
+              id: couponType.id,
             },
             name: 'couponCodes',
           },
@@ -33,8 +36,14 @@ export class ApiExtensionService {
 
     const lineItems = cartObj.lineItems;
     const currencyCode = cartObj.totalPrice?.currencyCode;
+
+    const taxCategory = await this.taxCategoriesService.getCouponTaxCategory();
+
+    if (!taxCategory) {
+      return { status: false, actions: [] };
+    }
+
     const couponCodes = cartObj.custom?.fields?.discount_code ?? [];
-    // const couponCodes = cartObj.custom.fields.discount_code;
 
     //checking codes
 
@@ -49,20 +58,10 @@ export class ApiExtensionService {
         value: -2000,
       },
     ];
-    let couponsToAdd = [...couponsOff];
-    const customLineItems = cartObj.customLineItems;
-    for (const customLineItem of customLineItems) {
-      couponsToAdd = couponsToAdd.filter(
-        (coupon) => coupon.name !== customLineItem.slug,
-      );
-    }
 
-    const taxCategoryResult =
-      await this.taxCategoriesService.getCouponTaxCategory();
-
-    if (!taxCategoryResult.found) {
-      return { status: false, actions: [] };
-    }
+    const couponsToAdd = [...couponsOff].filter((coupon) =>
+      cartObj.customLineItems.some((lineItem) => lineItem.slug === coupon.name),
+    );
 
     for (const coupon of couponsToAdd) {
       actions.push({
@@ -78,7 +77,7 @@ export class ApiExtensionService {
         },
         slug: coupon.name,
         taxCategory: {
-          id: taxCategoryResult.taxCategory.id,
+          id: taxCategory.id,
         },
       });
     }

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import * as Joi from 'joi';
-import { VoucherifyConnectorService } from './commerceTools/voucherify-connector.service';
+import { VoucherifyConnectorService } from './voucherify/voucherify-connector.service';
 import { CommerceToolsConnectorService } from './commerceTools/commerce-tools-connector.service';
 import { ApiExtensionController } from './api-extension/api-extension.controller';
 import { ApiExtensionService } from './api-extension/api-extension.service';
@@ -21,7 +21,7 @@ import { TypesService } from './commerceTools/types/types.service';
         COMMERCE_TOOLS_PROJECT_KEY: Joi.string().required(),
         COMMERCE_TOOLS_AUTH_URL: Joi.string().required(),
         COMMERCE_TOOLS_API_URL: Joi.string().required(),
-        COMMERCE_TOOLS_CLIENT_ID: Joi.string().required(),
+        COMMERCE_TOOLS_ID: Joi.string().required(),
         COMMERCE_TOOLS_SECRET: Joi.string().required(),
       }),
     }),

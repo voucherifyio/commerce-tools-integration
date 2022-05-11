@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Post } from '@nestjs/common';
 import { TaxCategoriesService } from './tax-categories.service';
 import { TaxCategory } from '@commercetools/platform-sdk';
 
@@ -6,7 +6,7 @@ import { TaxCategory } from '@commercetools/platform-sdk';
 export class TaxCategoriesController {
   constructor(private readonly taxCategoriesService: TaxCategoriesService) {}
 
-  @Get('configure')
+  @Post('configure')
   async configure(): Promise<{
     success: boolean;
     couponTaxCategory?: TaxCategory;

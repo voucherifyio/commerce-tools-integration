@@ -9,62 +9,64 @@ export class TypesService {
   ) {}
 
   async getAllTypes(): Promise<Type[]> {
-    const CT = this.commerceToolsConnectorService.getClient();
+    const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 20;
-    let allTypes = [];
-    const typesResult = await CT.types()
-      .get({ queryArgs: { limit: limit } })
-      .execute();
-    const total = typesResult.body.total;
-    allTypes = [...allTypes, typesResult.body.results];
-    if (total > limit) {
-      for (let i = 1; i <= Math.ceil(total / limit); i++) {
-        const typesResult = await CT.types()
-          .get({ queryArgs: { limit: limit, offset: i * limit } })
-          .execute();
-        allTypes = [...allTypes, typesResult.body.results];
+    const allTypes = [];
+    let page = 0;
+    let allTypesCollected = false;
+
+    do {
+      const typesResult = await ctClient
+        .types()
+        .get({ queryArgs: { limit: limit, offset: page * limit } })
+        .execute();
+      allTypes.push(...typesResult.body.results);
+      page++;
+      if (typesResult.body.total < page * limit) {
+        allTypesCollected = true;
       }
-    }
+    } while (!allTypesCollected);
+
     return allTypes.flat();
   }
 
-  async findCouponType(): Promise<{ found: boolean; type?: Type }> {
-    const CT = this.commerceToolsConnectorService.getClient();
+  async findCouponType(): Promise<Type | null> {
+    const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 20;
-    const typesResult = await CT.types()
-      .get({ queryArgs: { limit: limit } })
-      .execute();
-    const total = typesResult.body.total;
-    const couponType = typesResult.body.results.find(
-      (type) => type.key === 'couponCodes',
-    );
-    if (couponType) return { found: true, type: couponType };
-    if (total > limit) {
-      for (let i = 1; i <= Math.ceil(total / limit); i++) {
-        const typesResult = await CT.types()
-          .get({ queryArgs: { limit: limit, offset: i * limit } })
-          .execute();
-        const couponType = typesResult.body.results.find(
-          (type) => type.key === 'couponCodes',
-        );
-        if (couponType) return { found: true, type: couponType };
+    let page = 0;
+    let allTypesCollected = false;
+
+    do {
+      const typesResult = await ctClient
+        .types()
+        .get({ queryArgs: { limit: limit, offset: page * limit } })
+        .execute();
+      const couponType = typesResult.body.results.find(
+        (type) => type.key === 'couponCodes',
+      );
+      if (couponType) return couponType;
+      page++;
+      if (typesResult.body.total < page * limit) {
+        allTypesCollected = true;
       }
-    }
-    return { found: false };
+    } while (!allTypesCollected);
+
+    return null;
   }
 
-  async configureCouponType() {
-    const couponTypeSearchResult = await this.findCouponType();
-    if (couponTypeSearchResult.found) {
-      return { success: true, type: couponTypeSearchResult.type };
+  async configureCouponType(): Promise<{ success: boolean; type: any }> {
+    const couponType = await this.findCouponType();
+    if (!couponType) {
+      return { success: true, type: couponType };
     }
-    const couponType = this.createCouponType();
-    return { success: true, type: couponType };
+    const newCouponType = this.createCouponType();
+    return { success: true, type: newCouponType };
   }
 
   async createCouponType() {
-    const CT = this.commerceToolsConnectorService.getClient();
-    return await CT.types()
+    const ctClient = this.commerceToolsConnectorService.getClient();
+    const response = await ctClient
+      .types()
       .post({
         body: {
           key: 'couponCodes', //DO NOT CHANGE the key
@@ -92,5 +94,9 @@ export class TypesService {
         },
       })
       .execute();
+    if (response.statusCode === 201) {
+      return response.body;
+    }
+    throw new Error('couponCodes type cannot be created');
   }
 }
