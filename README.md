@@ -19,7 +19,8 @@
     - COMMERCE_TOOLS_ID
     - COMMERCE_TOOLS_SECRET
 
-3. (optional) Set LOGGER_PRETTY_PRINT environment variable to true, to have console output in a text format (by default it is in JSON format).
+3. (optional) Set LOGGER_PRETTY_PRINT environment variable to `true`, to have console output in a text format (by default it is in JSON format).
+4. (optional) Set COMMERCE_TOOLS_WITH_LOGGER_MIDDLEWARE environment variable to `false`, to disable debugger mode in commerce tools connector.
 ---
 ## Dependencies
 - Node.js >= 16.15.0

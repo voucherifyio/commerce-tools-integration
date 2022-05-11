@@ -43,12 +43,21 @@ export class CommerceToolsConnectorService {
   };
 
   public getClient(): ByProjectKeyRequestBuilder {
-    const ctpClient = new ClientBuilder()
-      .withProjectKey(this.projectKey)
-      .withClientCredentialsFlow(this.authMiddlewareOptions)
-      .withHttpMiddleware(this.httpMiddlewareOptions)
-      .withLoggerMiddleware()
-      .build();
+    let ctpClient;
+    if (process.env.COMMERCE_TOOLS_WITH_LOGGER_MIDDLEWARE === 'false') {
+      ctpClient = new ClientBuilder()
+        .withProjectKey(this.projectKey)
+        .withClientCredentialsFlow(this.authMiddlewareOptions)
+        .withHttpMiddleware(this.httpMiddlewareOptions)
+        .build();
+    } else {
+      ctpClient = new ClientBuilder()
+        .withProjectKey(this.projectKey)
+        .withClientCredentialsFlow(this.authMiddlewareOptions)
+        .withHttpMiddleware(this.httpMiddlewareOptions)
+        .withLoggerMiddleware()
+        .build();
+    }
 
     return createApiBuilderFromCtpClient(ctpClient).withProjectKey({
       projectKey: this.projectKey,
