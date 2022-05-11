@@ -11,8 +11,9 @@ export class ApiExtensionController {
     const type = request?.body?.resource?.typeId;
     const authorization = request?.headers?.authorization;
     if (
-      authorization !==
-        `Basic ${process.env.API_EXTENSION_BASIC_AUTH_PASSWORD}` ||
+      (process.env.API_EXTENSION_BASIC_AUTH_PASSWORD?.length &&
+        authorization !==
+          `Basic ${process.env.API_EXTENSION_BASIC_AUTH_PASSWORD}`) ||
       type !== 'cart'
     ) {
       throw new HttpException('', 400);
