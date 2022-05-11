@@ -39,9 +39,9 @@
 
 >npm run test - will run tests
 
->npm run config - currently working only while application is 'running'. It will configure:
+>npm run config - currently working only while application is 'running' on localhost:3000. It will configure:
 >1. custom coupon type - needed to hold coupons codes inside cart object
->2. coupon tax category, needed for any coupon or gift card with fixed amount discount (for example -10 USD)
+>2. coupon tax category - needed for any coupon or gift card with fixed amount discount (for example -10 USD)
 >
 >Or you can send an empty POST request to application `[domain]/types/configure` and `[domain]/tax-categories/configure` while your application is 'running'.
 ## How to test your app
