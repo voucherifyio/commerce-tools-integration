@@ -2,19 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { VoucherifyServerSide } from '@voucherify/sdk';
 import { ConfigService } from '@nestjs/config';
 import { Cart } from '@commercetools/platform-sdk';
-import {
-  StackableOptions,
-  StackableRedeemableParams,
-} from '@voucherify/sdk/dist/types/Stackable';
-import { ValidationSessionParams } from '@voucherify/sdk/dist/types/ValidateSession';
-import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
-import { CustomersCreateBody } from '@voucherify/sdk/dist/types/Customers';
 
 const getAmount = (item) => {
   try {
-    const x = item?.variant?.prices?.[0]?.value?.centAmount * item.quantity;
-    console.log(x);
-    return x;
+    return item?.variant?.prices?.[0]?.value?.centAmount * item.quantity;
   } catch (e) {
     return undefined;
   }

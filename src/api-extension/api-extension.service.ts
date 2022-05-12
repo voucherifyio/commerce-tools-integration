@@ -45,13 +45,13 @@ export class ApiExtensionService {
       return { status: false, actions: [] };
     }
 
-    // const coupons = cartObj.custom?.fields?.discount_codes ?? [];
-    // console.log(
-    //   await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
-    //     coupons,
-    //     cartObj,
-    //   ),
-    // );
+    const coupons = cartObj.custom?.fields?.discount_codes ?? [];
+    console.log(
+      await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
+        coupons,
+        cartObj,
+      ),
+    );
 
     const appliedCoupons =
       cartObj.customLineItems.map((coupon) => coupon.slug) ?? [];
