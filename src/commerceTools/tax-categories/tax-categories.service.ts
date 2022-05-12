@@ -49,12 +49,15 @@ export class TaxCategoriesService {
     const couponTaxCategoryResult = await this.getCouponTaxCategory();
     let couponTaxCategory;
     if (!couponTaxCategoryResult) {
-      couponTaxCategory = await ctClient.taxCategories().post({
-        body: {
-          name: 'coupon', //DO NOT change coupon name
-          rates: [],
-        },
-      });
+      couponTaxCategory = await ctClient
+        .taxCategories()
+        .post({
+          body: {
+            name: 'coupon', //DO NOT change coupon name
+            rates: [],
+          },
+        })
+        .execute();
     } else {
       couponTaxCategory = couponTaxCategoryResult;
     }

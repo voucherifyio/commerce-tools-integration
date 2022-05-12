@@ -145,7 +145,7 @@ export class ApiExtensionService {
         action: 'setCustomField',
         name: 'discount_codes',
         value: cartObj.custom?.fields?.discount_code?.filter(
-          (coupon) => notValidCoupons.includes(coupon) ?? [],
+          (coupon) => !notValidCoupons.includes(coupon) ?? [],
         ),
       });
     }
