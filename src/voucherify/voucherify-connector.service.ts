@@ -5,7 +5,11 @@ import { Cart } from '@commercetools/platform-sdk';
 
 @Injectable()
 export class VoucherifyConnectorService {
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) {
+    (async () => {
+      await this.getClient();
+    })();
+  }
 
   private readonly applicationId: string =
     this.configService.get<string>('VOUCHERIFY_APP_ID');

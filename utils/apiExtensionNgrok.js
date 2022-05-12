@@ -37,6 +37,7 @@ const { getClient } = require('./sdkCommerceTools');
             // { resourceTypeId: 'customer', actions: ['Create', 'Update'] },
             // { resourceTypeId: 'order', actions: ['Create', 'Update'] },
           ],
+          timeoutInMs: 2000,
         },
       })
       .execute();

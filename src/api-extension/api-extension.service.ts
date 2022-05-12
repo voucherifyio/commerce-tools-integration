@@ -48,13 +48,13 @@ export class ApiExtensionService {
     const appliedCoupons =
       cartObj.customLineItems.map((coupon) => coupon.slug) ?? [];
 
-    const newCouponCodes =
-      cartObj.custom?.fields?.discount_code?.filter(
+    const newCouponCodes: string[] =
+      cartObj.custom?.fields?.discount_codes?.filter(
         (coupon) => !appliedCoupons.includes(coupon),
       ) ?? [];
 
     const couponsToDelete = appliedCoupons.filter(
-      (coupon) => !cartObj.custom?.fields?.discount_code.includes(coupon),
+      (coupon) => !cartObj.custom?.fields?.discount_codes.includes(coupon),
     );
 
     for (const coupon of couponsToDelete) {
@@ -93,6 +93,7 @@ export class ApiExtensionService {
           cartObj,
         );
       if (!voucherResult?.valid) {
+        console.log(voucherResult);
         notValidCoupons.push(coupon);
       } else if (voucherResult?.discount?.type === 'PERCENT') {
         percentOff += voucherResult?.discount?.percent_off;
@@ -106,11 +107,11 @@ export class ApiExtensionService {
           },
           quantity: 1,
           money: {
-            centAmount: voucherResult?.discount?.amount_off,
+            centAmount: -voucherResult?.discount?.amount_off,
             currencyCode: currencyCode,
             type: 'centPrecision',
           },
-          slug: coupon.name,
+          slug: coupon,
           taxCategory: {
             id: taxCategory.id,
           },
@@ -144,9 +145,9 @@ export class ApiExtensionService {
       actions.push({
         action: 'setCustomField',
         name: 'discount_codes',
-        value: cartObj.custom?.fields?.discount_code?.filter(
-          (coupon) => !notValidCoupons.includes(coupon) ?? [],
-        ),
+        value: [...appliedCoupons, ...newCouponCodes]
+          ?.filter((coupon) => !couponsToDelete.includes(coupon))
+          ?.filter((coupon) => !notValidCoupons.includes(coupon) ?? []),
       });
     }
 
