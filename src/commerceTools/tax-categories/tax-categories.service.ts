@@ -6,7 +6,9 @@ import { TaxCategory } from '@commercetools/platform-sdk';
 export class TaxCategoriesService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
-  ) {}
+  ) {
+    this.getAllTaxCategories();
+  }
 
   //coupon tax category not included
   async getListOfCountriesUsedInTaxCategories(): Promise<string[]> {
