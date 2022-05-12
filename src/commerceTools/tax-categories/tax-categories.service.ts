@@ -6,7 +6,9 @@ import { TaxCategory } from '@commercetools/platform-sdk';
 export class TaxCategoriesService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
-  ) {}
+  ) {
+    this.getAllTaxCategories();
+  }
 
   //coupon tax category not included
   async getListOfCountriesUsedInTaxCategories(): Promise<string[]> {
@@ -47,12 +49,15 @@ export class TaxCategoriesService {
     const couponTaxCategoryResult = await this.getCouponTaxCategory();
     let couponTaxCategory;
     if (!couponTaxCategoryResult) {
-      couponTaxCategory = await ctClient.taxCategories().post({
-        body: {
-          name: 'coupon', //DO NOT change coupon name
-          rates: [],
-        },
-      });
+      couponTaxCategory = await ctClient
+        .taxCategories()
+        .post({
+          body: {
+            name: 'coupon', //DO NOT change coupon name
+            rates: [],
+          },
+        })
+        .execute();
     } else {
       couponTaxCategory = couponTaxCategoryResult;
     }
