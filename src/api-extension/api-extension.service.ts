@@ -45,6 +45,14 @@ export class ApiExtensionService {
       return { status: false, actions: [] };
     }
 
+    // const coupons = cartObj.custom?.fields?.discount_codes ?? [];
+    // console.log(
+    //   await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
+    //     coupons,
+    //     cartObj,
+    //   ),
+    // );
+
     const appliedCoupons =
       cartObj.customLineItems.map((coupon) => coupon.slug) ?? [];
 
@@ -136,7 +144,7 @@ export class ApiExtensionService {
               lineItem.variant.prices.find(
                 (price) => price.value.currencyCode === currencyCode,
               ).value.centAmount *
-              ((100 - percentOff) / 10),
+              ((100 - percentOff) / 100),
           },
         });
     }
