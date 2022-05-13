@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
 import { TypesService } from '../commerceTools/types/types.service';
+import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 
 @Injectable()
 export class ApiExtensionService {
   constructor(
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly typesService: TypesService,
+    private readonly voucherifyConnectorService: VoucherifyConnectorService,
   ) {}
 
   async checkCartAndMutate(
@@ -43,48 +45,87 @@ export class ApiExtensionService {
       return { status: false, actions: [] };
     }
 
-    const couponCodes = cartObj.custom?.fields?.discount_code ?? [];
+    // const coupons = cartObj.custom?.fields?.discount_codes ?? [];
+    // console.log(
+    //   await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
+    //     coupons,
+    //     cartObj,
+    //   ),
+    // );
 
-    //checking codes
+    const appliedCoupons =
+      cartObj.customLineItems.map((coupon) => coupon.slug) ?? [];
 
-    //coupons off price <--need an upgrade ???  delete those witch not in list
-    const couponsOff = [
-      {
-        name: 'coupon1',
-        value: -10000,
-      },
-      {
-        name: 'coupon2',
-        value: -2000,
-      },
-    ];
+    const newCouponCodes: string[] =
+      cartObj.custom?.fields?.discount_codes?.filter(
+        (coupon) => !appliedCoupons.includes(coupon),
+      ) ?? [];
 
-    const couponsToAdd = [...couponsOff].filter((coupon) =>
-      cartObj.customLineItems.some((lineItem) => lineItem.slug === coupon.name),
+    const couponsToDelete = appliedCoupons.filter(
+      (coupon) => !cartObj.custom?.fields?.discount_codes.includes(coupon),
     );
 
-    for (const coupon of couponsToAdd) {
+    for (const coupon of couponsToDelete) {
       actions.push({
-        action: 'addCustomLineItem',
-        name: {
-          en: `Coupon ${-coupon.value / 100} ${currencyCode}`,
-        },
-        quantity: 1,
-        money: {
-          centAmount: coupon.value,
-          currencyCode: currencyCode,
-          type: 'centPrecision',
-        },
-        slug: coupon.name,
-        taxCategory: {
-          id: taxCategory.id,
-        },
+        action: 'removeCustomLineItem',
+        customLineItemId: cartObj.customLineItems.find(
+          (customField) => customField.slug === coupon,
+        ).id,
       });
     }
 
+    const notValidCoupons = [];
+
+    for (const coupon of appliedCoupons) {
+      const voucherResult =
+        await this.voucherifyConnectorService.validateVoucherWithCTCart(
+          coupon,
+          cartObj,
+        );
+      if (!voucherResult?.valid) {
+        notValidCoupons.push(coupon);
+        actions.push({
+          action: 'removeCustomLineItem',
+          customLineItemId: cartObj.customLineItems.find(
+            (customField) => customField.slug === coupon,
+          ).id,
+        });
+      }
+    }
+
     let percentOff = 0;
-    //checking codes
-    percentOff += 10; // if(-X% all products)  percentOff+=X
+    for (const coupon of newCouponCodes) {
+      const voucherResult =
+        await this.voucherifyConnectorService.validateVoucherWithCTCart(
+          coupon,
+          cartObj,
+        );
+      if (!voucherResult?.valid) {
+        console.log(voucherResult);
+        notValidCoupons.push(coupon);
+      } else if (voucherResult?.discount?.type === 'PERCENT') {
+        percentOff += voucherResult?.discount?.percent_off;
+      } else if (voucherResult?.discount.type === 'AMOUNT') {
+        actions.push({
+          action: 'addCustomLineItem',
+          name: {
+            en: `Coupon ${-voucherResult?.discount?.amount_off / 100} ${
+              voucherResult?.discount?.amount_off
+            }`,
+          },
+          quantity: 1,
+          money: {
+            centAmount: -voucherResult?.discount?.amount_off,
+            currencyCode: currencyCode,
+            type: 'centPrecision',
+          },
+          slug: coupon,
+          taxCategory: {
+            id: taxCategory.id,
+          },
+        });
+      }
+    }
 
     for (const lineItem of lineItems) {
       if (
@@ -103,9 +144,19 @@ export class ApiExtensionService {
               lineItem.variant.prices.find(
                 (price) => price.value.currencyCode === currencyCode,
               ).value.centAmount *
-              ((100 - percentOff) / 10),
+              ((100 - percentOff) / 100),
           },
         });
+    }
+
+    if (notValidCoupons.length) {
+      actions.push({
+        action: 'setCustomField',
+        name: 'discount_codes',
+        value: [...appliedCoupons, ...newCouponCodes]
+          ?.filter((coupon) => !couponsToDelete.includes(coupon))
+          ?.filter((coupon) => !notValidCoupons.includes(coupon) ?? []),
+      });
     }
 
     return { status: true, actions: actions };
