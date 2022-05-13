@@ -42,6 +42,7 @@ export class RegisterService {
           actions: ['Create' as const, 'Update' as const],
         },
       ],
+      timeoutInMs: 2000,
     };
     const addResponse = await this.client.extensions().post({ body }).execute();
     return addResponse.body?.id || false;
