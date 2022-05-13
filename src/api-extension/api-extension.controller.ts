@@ -18,9 +18,11 @@ export class ApiExtensionController {
     ) {
       throw new HttpException('', 400);
     }
+    const start = new Date().getTime();
     const response = await this.apiExtensionService.checkCartAndMutate(
       request?.body,
     );
+    console.log(`Execution time:  ${new Date().getTime() - start}`);
     if (!response.status) {
       throw new HttpException('', 400);
     }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
 import { TypesService } from '../commerceTools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
@@ -45,21 +45,74 @@ export class ApiExtensionService {
       return { status: false, actions: [] };
     }
 
-    // const coupons = cartObj.custom?.fields?.discount_codes ?? [];
-    // console.log(
-    //   await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
-    //     coupons,
-    //     cartObj,
-    //   ),
-    // );
+    let percentOff = 0;
+
+    let couponsValidation;
+    const coupons = cartObj.custom?.fields?.discount_codes ?? [];
+    if (coupons.length) {
+      couponsValidation =
+        await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
+          coupons,
+          cartObj,
+        );
+      if (
+        couponsValidation.redeemables.filter(
+          (voucher) => voucher.status !== 'APPLICABLE',
+        ).length
+      ) {
+        throw new HttpException(
+          {
+            errors: couponsValidation.redeemables
+              .filter((voucher) => voucher.status !== 'APPLICABLE')
+              .map((coupon) => {
+                return {
+                  code: `InvalidInput`,
+                  message: `Coupon '${coupon?.id}' is ${coupon.status}`,
+                  extensionExtraInfo: {
+                    coupon: coupon?.id,
+                    status: coupon.status,
+                  },
+                };
+              }),
+          },
+          400,
+        );
+      }
+    }
 
     const appliedCoupons =
       cartObj.customLineItems.map((coupon) => coupon.slug) ?? [];
 
-    const newCouponCodes: string[] =
-      cartObj.custom?.fields?.discount_codes?.filter(
-        (coupon) => !appliedCoupons.includes(coupon),
-      ) ?? [];
+    if (couponsValidation && couponsValidation?.valid) {
+      for (const redeemable of couponsValidation.redeemables) {
+        if (redeemable.result.discount.type === 'PERCENT') {
+          percentOff += redeemable.result.discount.percent_off;
+        }
+        if (
+          redeemable.result.discount.type === 'AMOUNT' &&
+          !appliedCoupons.includes(redeemable.id)
+        ) {
+          actions.push({
+            action: 'addCustomLineItem',
+            name: {
+              en: `Coupon ${
+                -redeemable.result.discount.amount_off / 100
+              } ${currencyCode}`,
+            },
+            quantity: 1,
+            money: {
+              centAmount: -redeemable.result.discount.amount_off,
+              currencyCode: currencyCode,
+              type: 'centPrecision',
+            },
+            slug: redeemable.id,
+            taxCategory: {
+              id: taxCategory.id,
+            },
+          });
+        }
+      }
+    }
 
     const couponsToDelete = appliedCoupons.filter(
       (coupon) => !cartObj.custom?.fields?.discount_codes.includes(coupon),
@@ -72,59 +125,6 @@ export class ApiExtensionService {
           (customField) => customField.slug === coupon,
         ).id,
       });
-    }
-
-    const notValidCoupons = [];
-
-    for (const coupon of appliedCoupons) {
-      const voucherResult =
-        await this.voucherifyConnectorService.validateVoucherWithCTCart(
-          coupon,
-          cartObj,
-        );
-      if (!voucherResult?.valid) {
-        notValidCoupons.push(coupon);
-        actions.push({
-          action: 'removeCustomLineItem',
-          customLineItemId: cartObj.customLineItems.find(
-            (customField) => customField.slug === coupon,
-          ).id,
-        });
-      }
-    }
-
-    let percentOff = 0;
-    for (const coupon of newCouponCodes) {
-      const voucherResult =
-        await this.voucherifyConnectorService.validateVoucherWithCTCart(
-          coupon,
-          cartObj,
-        );
-      if (!voucherResult?.valid) {
-        console.log(voucherResult);
-        notValidCoupons.push(coupon);
-      } else if (voucherResult?.discount?.type === 'PERCENT') {
-        percentOff += voucherResult?.discount?.percent_off;
-      } else if (voucherResult?.discount.type === 'AMOUNT') {
-        actions.push({
-          action: 'addCustomLineItem',
-          name: {
-            en: `Coupon ${-voucherResult?.discount?.amount_off / 100} ${
-              voucherResult?.discount?.amount_off
-            }`,
-          },
-          quantity: 1,
-          money: {
-            centAmount: -voucherResult?.discount?.amount_off,
-            currencyCode: currencyCode,
-            type: 'centPrecision',
-          },
-          slug: coupon,
-          taxCategory: {
-            id: taxCategory.id,
-          },
-        });
-      }
     }
 
     for (const lineItem of lineItems) {
@@ -147,16 +147,6 @@ export class ApiExtensionService {
               ((100 - percentOff) / 100),
           },
         });
-    }
-
-    if (notValidCoupons.length) {
-      actions.push({
-        action: 'setCustomField',
-        name: 'discount_codes',
-        value: [...appliedCoupons, ...newCouponCodes]
-          ?.filter((coupon) => !couponsToDelete.includes(coupon))
-          ?.filter((coupon) => !notValidCoupons.includes(coupon) ?? []),
-      });
     }
 
     return { status: true, actions: actions };
