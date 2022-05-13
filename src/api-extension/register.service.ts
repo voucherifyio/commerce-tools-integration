@@ -10,7 +10,7 @@ export class RegisterService {
     this.client = this.ctConnector.getClient();
   }
 
-  private async removeExisitngApiExtensions() {
+  private async removeExistingApiExtensions() {
     const {
       body: { total: extensionTotal, results: extensions },
     } = await this.client.extensions().get().execute();
@@ -26,7 +26,7 @@ export class RegisterService {
     }
   }
 
-  private async addApiExtenions(url: string): Promise<string | false> {
+  private async addApiExtensions(url: string): Promise<string | false> {
     const body = {
       destination: {
         type: 'HTTP' as const,
@@ -49,7 +49,7 @@ export class RegisterService {
   }
 
   async register(url: string): Promise<string | false> {
-    await this.removeExisitngApiExtensions();
-    return await this.addApiExtenions(url);
+    await this.removeExistingApiExtensions();
+    return await this.addApiExtensions(url);
   }
 }
