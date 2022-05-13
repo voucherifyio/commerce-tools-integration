@@ -12,6 +12,7 @@ import { TaxCategoriesService } from './commerceTools/tax-categories/tax-categor
 import { TaxCategoriesController } from './commerceTools/tax-categories/tax-categories.controller';
 import { TypesController } from './commerceTools/types/types.controller';
 import { TypesService } from './commerceTools/types/types.service';
+import { ProductsService } from './commerceTools/products/products.service';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { TypesService } from './commerceTools/types/types.service';
     CommerceToolsConnectorService,
     TaxCategoriesService,
     TypesService,
+    ProductsService,
   ],
 })
 export class AppModule {}

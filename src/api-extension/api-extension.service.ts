@@ -39,12 +39,6 @@ export class ApiExtensionService {
     const lineItems = cartObj.lineItems;
     const currencyCode = cartObj.totalPrice?.currencyCode;
 
-    const taxCategory = await this.taxCategoriesService.getCouponTaxCategory();
-
-    if (!taxCategory) {
-      return { status: false, actions: [] };
-    }
-
     let percentOff = 0;
 
     let couponsValidation;
@@ -83,6 +77,8 @@ export class ApiExtensionService {
     const appliedCoupons =
       cartObj.customLineItems.map((coupon) => coupon.slug) ?? [];
 
+    let taxCategory;
+
     if (couponsValidation && couponsValidation?.valid) {
       for (const redeemable of couponsValidation.redeemables) {
         if (redeemable.result.discount.type === 'PERCENT') {
@@ -92,6 +88,37 @@ export class ApiExtensionService {
           redeemable.result.discount.type === 'AMOUNT' &&
           !appliedCoupons.includes(redeemable.id)
         ) {
+          if (!taxCategory) {
+            taxCategory =
+              await this.taxCategoriesService.getCouponTaxCategory();
+            if (!taxCategory) {
+              throw new HttpException(
+                {
+                  errors: [
+                    {
+                      code: `General`,
+                      message: `Coupon tax category is was not configured correctly`,
+                      extensionExtraInfo: {
+                        taxCategoryName: 'coupon',
+                        status: 'not found',
+                      },
+                    },
+                  ],
+                },
+                400,
+              );
+            }
+          }
+          if (
+            !taxCategory?.rates?.find(
+              (rate) => rate.country === cartObj.country,
+            )
+          ) {
+            await this.taxCategoriesService.addCountryToCouponTaxCategory(
+              taxCategory,
+              cartObj.country,
+            );
+          }
           actions.push({
             action: 'addCustomLineItem',
             name: {
@@ -115,7 +142,7 @@ export class ApiExtensionService {
     }
 
     const couponsToDelete = appliedCoupons.filter(
-      (coupon) => !cartObj.custom?.fields?.discount_codes.includes(coupon),
+      (coupon) => !cartObj.custom?.fields?.discount_codes?.includes(coupon),
     );
 
     for (const coupon of couponsToDelete) {
@@ -140,11 +167,12 @@ export class ApiExtensionService {
           lineItemId: lineItem.id,
           externalPrice: {
             currencyCode: currencyCode,
-            centAmount:
+            centAmount: Math.round(
               lineItem.variant.prices.find(
                 (price) => price.value.currencyCode === currencyCode,
               ).value.centAmount *
-              ((100 - percentOff) / 100),
+                ((100 - percentOff) / 100),
+            ),
           },
         });
     }

@@ -1,25 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { CommerceToolsConnectorService } from '../commerce-tools-connector.service';
 import { TaxCategory } from '@commercetools/platform-sdk';
+import { ProductsService } from '../products/products.service';
 
 @Injectable()
 export class TaxCategoriesService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
+    private readonly productsService: ProductsService,
   ) {}
-
-  //coupon tax category not included
-  async getListOfCountriesUsedInTaxCategories(): Promise<string[]> {
-    const allTaxCategories = await this.getAllTaxCategories();
-    return [
-      ...new Set(
-        allTaxCategories
-          .filter((taxCategory) => taxCategory.name !== 'coupon')
-          .map((taxCategory) => taxCategory.rates.map((rate) => rate.country))
-          .flat(),
-      ),
-    ];
-  }
 
   async getAllTaxCategories(): Promise<TaxCategory[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
@@ -61,22 +50,23 @@ export class TaxCategoriesService {
     }
     const rates = couponTaxCategory?.rates;
 
-    const listOfCountriesUsedInTaxCategories =
-      await this.getListOfCountriesUsedInTaxCategories();
-    const desiredRates = listOfCountriesUsedInTaxCategories.map(
-      (countryCode) => {
+    const listOfCountriesUsedInAllProducts =
+      await this.productsService.getListOfCountriesUsedInProducts();
+
+    const desiredRates =
+      listOfCountriesUsedInAllProducts?.map((countryCode) => {
         return {
           name: 'coupon',
           amount: 0,
           country: countryCode,
           includedInPrice: true,
         };
-      },
-    );
+      }) ?? [];
 
-    const ratesToAdd = desiredRates.filter(
+    const ratesToAdd = desiredRates?.filter(
       (rate) => !rates.map((rate_) => rate_.country).includes(rate.country),
     );
+
     const ratesToUpdate = desiredRates.filter((rate) =>
       rates.map((rate_) => rate_.country).includes(rate.country),
     );
@@ -104,17 +94,47 @@ export class TaxCategoriesService {
         taxRate: rate,
       });
     }
+
     if (actions.length) {
-      couponTaxCategory = await ctClient
+      await ctClient
         .taxCategories()
-        .withId(couponTaxCategory.id)
+        .withId({ ID: couponTaxCategory.id })
         .post({
           body: {
             version: couponTaxCategory.version,
-            actions: actions,
+            actions: [],
           },
-        });
+        })
+        .execute();
     }
+
     return { success: true, couponTaxCategory: couponTaxCategory };
+  }
+
+  async addCountryToCouponTaxCategory(
+    taxCategory: TaxCategory,
+    countryCode: string,
+  ) {
+    const ctClient = this.commerceToolsConnectorService.getClient();
+    return await ctClient
+      .taxCategories()
+      .withId({ ID: taxCategory.id })
+      .post({
+        body: {
+          version: taxCategory.version,
+          actions: [
+            {
+              action: 'addTaxRate',
+              taxRate: {
+                name: 'coupon',
+                amount: 0,
+                country: countryCode,
+                includedInPrice: true,
+              },
+            },
+          ],
+        },
+      })
+      .execute();
   }
 }
