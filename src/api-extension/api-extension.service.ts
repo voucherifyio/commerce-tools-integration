@@ -97,7 +97,7 @@ export class ApiExtensionService {
                   errors: [
                     {
                       code: `General`,
-                      message: `Coupon tax category is was not configured correctly`,
+                      message: `Coupon tax category was not configured correctly`,
                       extensionExtraInfo: {
                         taxCategoryName: 'coupon',
                         status: 'not found',
@@ -110,6 +110,7 @@ export class ApiExtensionService {
             }
           }
           if (
+            cartObj?.country &&
             !taxCategory?.rates?.find(
               (rate) => rate.country === cartObj.country,
             )
