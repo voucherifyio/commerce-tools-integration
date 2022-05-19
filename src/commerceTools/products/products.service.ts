@@ -9,7 +9,6 @@ export class ProductsService {
   ) {}
 
   async getListOfCountriesUsedInProducts(): Promise<string[]> {
-    const allProducts = await this.getAllProducts();
     const countries: Set<string> = new Set();
 
     const addValueToCountriesIfKeyFound = (e: object, key: string) => {
@@ -25,17 +24,15 @@ export class ProductsService {
       return e;
     };
 
-    for (const product of allProducts) {
+    for await (const product of this.getAllProducts()) {
       addValueToCountriesIfKeyFound(product, 'country');
     }
-
     return [...countries];
   }
 
-  async getAllProducts(): Promise<Product[]> {
+  async *getAllProducts(): AsyncGenerator<Product[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
-    const allTypes = [];
     let page = 0;
     let allProductsCollected = false;
 
@@ -44,7 +41,7 @@ export class ProductsService {
         .products()
         .get({ queryArgs: { limit: limit, offset: page * limit } })
         .execute();
-      allTypes.push(...productResult.body.results);
+      yield productResult.body.results;
       page++;
       if (productResult.body.total < page * limit) {
         allProductsCollected = true;
@@ -57,7 +54,5 @@ export class ProductsService {
         }/${productResult.body.total} products`,
       );
     } while (!allProductsCollected);
-
-    return allTypes.flat();
   }
 }
