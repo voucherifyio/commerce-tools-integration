@@ -18,6 +18,7 @@ import { ProductsService } from './commerceTools/products/products.service';
   imports: [
     ConfigModule.forRoot({
       validationSchema: Joi.object({
+        APP_URL: Joi.string(),
         VOUCHERIFY_APP_ID: Joi.string().required(),
         VOUCHERIFY_SECRET_KEY: Joi.string().required(),
         COMMERCE_TOOLS_PROJECT_KEY: Joi.string().required(),

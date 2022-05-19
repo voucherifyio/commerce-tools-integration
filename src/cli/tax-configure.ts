@@ -5,6 +5,7 @@ import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-catego
 import { TypesService } from '../commerceTools/types/types.service';
 
 async function run() {
+  console.log('process.argv', process.argv);
   const logger = new JsonLoggerService('NestServer');
   const app = await NestFactory.createApplicationContext(AppModule);
   // Coupon types

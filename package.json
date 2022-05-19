@@ -20,7 +20,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prepare": "husky install",
-    "config": "nest start --config nest-cli-config.json"
+    "config": "nest start --config nest-cli-tax-config.json",
+    "register": "nest start --config nest-cli-api-extension-register.json"
   },
   "dependencies": {
     "@nestjs/cli": "^8.0.0",
