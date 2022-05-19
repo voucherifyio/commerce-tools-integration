@@ -23,6 +23,7 @@
     "config": "nest start --config nest-cli-config.json"
   },
   "dependencies": {
+    "@nestjs/cli": "^8.0.0",
     "@commercetools/platform-sdk": "^2.7.0",
     "@commercetools/sdk-auth": "^3.0.13",
     "@commercetools/sdk-client-v2": "^1.4.0",
@@ -45,7 +46,6 @@
     "rxjs": "^7.2.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "^8.0.0",
     "@nestjs/schematics": "^8.0.0",
     "@nestjs/testing": "^8.0.0",
     "@types/express": "^4.17.13",
