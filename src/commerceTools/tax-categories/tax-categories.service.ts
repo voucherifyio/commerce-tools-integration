@@ -64,7 +64,7 @@ export class TaxCategoriesService {
       }) ?? [];
 
     const ratesToAdd = desiredRates?.filter(
-      (rate) => !rates.map((rate_) => rate_.country).includes(rate.country),
+      (rate) => !rates?.map((rate_) => rate_.country).includes(rate.country),
     );
 
     const ratesToUpdate = desiredRates.filter((rate) =>
