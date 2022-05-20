@@ -11,21 +11,27 @@ export class ApiExtensionController {
     const type = request?.body?.resource?.typeId;
     const authorization = request?.headers?.authorization;
     if (
-      (process.env.API_EXTENSION_BASIC_AUTH_PASSWORD?.length &&
-        authorization !==
-          `Basic ${process.env.API_EXTENSION_BASIC_AUTH_PASSWORD}`) ||
-      type !== 'cart'
+      process.env.API_EXTENSION_BASIC_AUTH_PASSWORD?.length &&
+      authorization !== `Basic ${process.env.API_EXTENSION_BASIC_AUTH_PASSWORD}`
     ) {
       throw new HttpException('', 400);
     }
-    const start = new Date().getTime();
-    const response = await this.apiExtensionService.checkCartAndMutate(
-      request?.body,
-    );
-    console.log(`Execution time:  ${new Date().getTime() - start}`);
-    if (!response.status) {
-      throw new HttpException('', 400);
+
+    if (type === 'cart') {
+      const start = new Date().getTime();
+      const response = await this.apiExtensionService.checkCartAndMutate(
+        request?.body,
+      );
+      console.log(`Execution time:  ${new Date().getTime() - start}`);
+      if (!response.status) {
+        throw new HttpException('', 400);
+      }
+      return { actions: response.actions };
+    } else if (type === 'order') {
+      const response = await this.apiExtensionService.redeemVoucherifyCoupons(
+        request?.body,
+      );
+      return { actions: response.actions };
     }
-    return { actions: response.actions };
   }
 }

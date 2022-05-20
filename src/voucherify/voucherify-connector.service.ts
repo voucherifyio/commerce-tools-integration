@@ -105,4 +105,15 @@ export class VoucherifyConnectorService {
       },
     });
   }
+
+  async reedemStackableVouchers(coupons: string[]) {
+    return this.getClient().redemptions.redeemStackable({
+      redeemables: coupons.map((coupon) => {
+        return {
+          object: 'voucher',
+          id: coupon,
+        };
+      }),
+    });
+  }
 }

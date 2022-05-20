@@ -3,6 +3,10 @@ import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-catego
 import { TypesService } from '../commerceTools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 
+type RealisedCoupons = {
+  result: string;
+  coupon: string;
+};
 @Injectable()
 export class ApiExtensionService {
   constructor(
@@ -10,6 +14,49 @@ export class ApiExtensionService {
     private readonly typesService: TypesService,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
   ) {}
+
+  public async redeemVoucherifyCoupons(
+    body,
+  ): Promise<{ status: boolean; actions: object[] }> {
+    const coupons: string[] | null =
+      body.resource.obj.custom?.fields?.discount_codes &&
+      body.resource.obj.custom?.fields?.discount_codes.length
+        ? body.resource.obj.custom?.fields?.discount_codes
+        : null;
+    const realisedCoupons: RealisedCoupons[] = [];
+    const unusedCoupons: string[] = [];
+
+    if (body.resource.obj.paymentState === 'Paid' && coupons) {
+      const response =
+        await this.voucherifyConnectorService.reedemStackableVouchers(coupons);
+      realisedCoupons.push(
+        ...response.redemptions.map((redem) => {
+          return {
+            result: redem.result,
+            coupon: redem.voucher.code,
+          };
+        }),
+      );
+
+      realisedCoupons.forEach((realised) => {
+        if (realised.result !== 'SUCCESS') {
+          unusedCoupons.push(realised.coupon);
+        }
+      });
+
+      const actions = [
+        {
+          action: 'setCustomField',
+          name: 'discount_codes',
+          value: unusedCoupons,
+        },
+      ];
+
+      return { status: true, actions: actions };
+    } else {
+      return { status: true, actions: [] };
+    }
+  }
 
   async checkCartAndMutate(
     body,

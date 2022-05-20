@@ -41,6 +41,10 @@ export class RegisterService {
           resourceTypeId: 'cart' as const,
           actions: ['Create' as const, 'Update' as const],
         },
+        {
+          resourceTypeId: 'order' as const,
+          actions: ['Create' as const, 'Update' as const],
+        },
       ],
       timeoutInMs: 2000,
     };
