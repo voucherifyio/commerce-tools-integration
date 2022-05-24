@@ -13,6 +13,7 @@ import { TaxCategoriesController } from './commerceTools/tax-categories/tax-cate
 import { TypesController } from './commerceTools/types/types.controller';
 import { TypesService } from './commerceTools/types/types.service';
 import { ProductsService } from './commerceTools/products/products.service';
+import { OrderService } from './api-extension/order.service';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { ProductsService } from './commerceTools/products/products.service';
     TaxCategoriesService,
     TypesService,
     ProductsService,
+    OrderService,
   ],
 })
 export class AppModule {}
