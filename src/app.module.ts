@@ -14,6 +14,8 @@ import { TypesController } from './commerceTools/types/types.controller';
 import { TypesService } from './commerceTools/types/types.service';
 import { ProductsService } from './commerceTools/products/products.service';
 import { OrderService } from './api-extension/order.service';
+import { APP_PIPE } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 
 @Module({
   imports: [
@@ -46,6 +48,12 @@ import { OrderService } from './api-extension/order.service';
     TypesService,
     ProductsService,
     OrderService,
+    {
+      provide: APP_PIPE,
+      useValue: new ValidationPipe({
+        transform: true,
+      }),
+    },
   ],
 })
 export class AppModule {}

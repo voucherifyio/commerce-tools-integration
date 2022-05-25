@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Req,
+  Body,
   HttpException,
   UseInterceptors,
 } from '@nestjs/common';
@@ -9,6 +10,7 @@ import { Request } from 'express';
 import { ApiExtensionService } from './api-extension.service';
 import { OrderService } from './order.service';
 import { TimeLoggingInterceptor } from 'src/misc/time-logging.interceptor';
+import { CartOrderDto } from 'src/misc/CartOrder.dto';
 
 @UseInterceptors(new TimeLoggingInterceptor())
 @Controller('api-extension')
@@ -19,8 +21,11 @@ export class ApiExtensionController {
   ) {}
 
   @Post()
-  async findAll(@Req() request: Request): Promise<any> {
-    const type = request?.body?.resource?.typeId;
+  async findAll(
+    @Body() body: CartOrderDto,
+    @Req() request: Request,
+  ): Promise<any> {
+    const type = body.resource?.typeId;
     const authorization = request?.headers?.authorization;
     if (
       process.env.API_EXTENSION_BASIC_AUTH_PASSWORD?.length &&
@@ -30,17 +35,13 @@ export class ApiExtensionController {
     }
 
     if (type === 'cart') {
-      const response = await this.apiExtensionService.checkCartAndMutate(
-        request?.body,
-      );
+      const response = await this.apiExtensionService.checkCartAndMutate(body);
       if (!response.status) {
         throw new HttpException('', 400);
       }
       return { actions: response.actions };
     } else if (type === 'order') {
-      const response = await this.orderService.redeemVoucherifyCoupons(
-        request?.body,
-      );
+      const response = await this.orderService.redeemVoucherifyCoupons(body);
       return { actions: response.actions };
     }
   }
