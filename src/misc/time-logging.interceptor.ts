@@ -20,6 +20,7 @@ export class TimeLoggingInterceptor implements NestInterceptor {
     return next.handle().pipe(
       tap(() =>
         this.logger.info({
+          msg: 'Request response time',
           class: context.getClass().name,
           method: context.getHandler().name,
           time: Date.now() - timeBefore,

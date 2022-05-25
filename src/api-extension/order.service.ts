@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
-import { JsonLoggerService } from 'json-logger-service';
-
+import { JsonLogger, LoggerFactory } from 'json-logger-service';
+import { Order } from '@commercetools/platform-sdk';
 type SendedCoupons = {
   result: string;
   coupon: string;
@@ -9,15 +9,18 @@ type SendedCoupons = {
 
 @Injectable()
 export class OrderService {
-  private logger = new JsonLoggerService('NestServer');
+  private readonly logger: JsonLogger = LoggerFactory.createLogger(
+    OrderService.name,
+  );
   constructor(
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
   ) {}
 
   public async redeemVoucherifyCoupons(
-    body,
+    order: Order,
   ): Promise<{ status: boolean; actions: object[] }> {
-    const coupons: string[] = body.resource.obj.custom?.fields?.discount_codes;
+    const coupons: string[] = order.custom?.fields?.discount_codes;
+    this.logger.debug({ msg: 'Attempt to redeem vouchers', order });
     const sendedCoupons: SendedCoupons[] = [];
     const usedCoupons: string[] = [];
     const notUsedCoupons: string[] = [];
@@ -34,7 +37,7 @@ export class OrderService {
     );
 
     sendedCoupons.forEach((sendedCoupon) => {
-      this.logger.log(
+      this.logger.info(
         `Coupon: ${sendedCoupon.coupon} - ${sendedCoupon.result}`,
       );
       if (sendedCoupon.result === 'SUCCESS') {
