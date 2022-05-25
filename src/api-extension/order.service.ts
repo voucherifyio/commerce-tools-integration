@@ -18,7 +18,8 @@ export class OrderService {
   ): Promise<{ status: boolean; actions: object[] }> {
     const coupons: string[] = body.resource.obj.custom?.fields?.discount_codes;
     const sendedCoupons: SendedCoupons[] = [];
-    const unusedCoupons: string[] = [];
+    const usedCoupons: string[] = [];
+    const notUsedCoupons: string[] = [];
 
     const response =
       await this.voucherifyConnectorService.reedemStackableVouchers(coupons);
@@ -32,8 +33,10 @@ export class OrderService {
     );
 
     sendedCoupons.forEach((sendedCoupon) => {
-      if (sendedCoupon.result !== 'SUCCESS') {
-        unusedCoupons.push(sendedCoupon.coupon);
+      if (sendedCoupon.result === 'SUCCESS') {
+        usedCoupons.push(sendedCoupon.coupon);
+      } else {
+        notUsedCoupons.push(sendedCoupon.coupon);
       }
     });
 
@@ -41,7 +44,12 @@ export class OrderService {
       {
         action: 'setCustomField',
         name: 'discount_codes',
-        value: unusedCoupons,
+        value: notUsedCoupons,
+      },
+      {
+        action: 'setCustomField',
+        name: 'used_codes',
+        value: usedCoupons,
       },
     ];
 
