@@ -90,7 +90,7 @@ export class Resource {
   @IsIn(['order', 'cart'])
   @IsDefined()
   @IsString()
-  public typeId: string;
+  public typeId: 'order' | 'cart';
 
   @IsDefined()
   @ValidateNested()

@@ -5,17 +5,14 @@ import {
   Body,
   HttpException,
   UseInterceptors,
-  UseFilters,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ApiExtensionService } from './api-extension.service';
 import { OrderService } from './order.service';
 import { TimeLoggingInterceptor } from 'src/misc/time-logging.interceptor';
 import { CartOrderDto } from 'src/misc/CartOrder.dto';
-import { BadRequestExceptionFilter } from 'src/misc/bad-request.exception';
 
-@UseFilters(new BadRequestExceptionFilter())
-@UseInterceptors(new TimeLoggingInterceptor())
+@UseInterceptors(TimeLoggingInterceptor)
 @Controller('api-extension')
 export class ApiExtensionController {
   constructor(
@@ -24,7 +21,7 @@ export class ApiExtensionController {
   ) {}
 
   @Post()
-  async findAll(
+  async handleApiExtensionRequest(
     @Body() body: CartOrderDto,
     @Req() request: Request,
   ): Promise<any> {
@@ -43,9 +40,11 @@ export class ApiExtensionController {
         throw new HttpException('', 400);
       }
       return { actions: response.actions };
-    } else if (type === 'order') {
+    }
+    if (type === 'order') {
       const response = await this.orderService.redeemVoucherifyCoupons(body);
       return { actions: response.actions };
     }
+    return { status: 200, actions: [] };
   }
 }
