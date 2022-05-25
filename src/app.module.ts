@@ -52,6 +52,7 @@ import { ValidationPipe } from '@nestjs/common';
       provide: APP_PIPE,
       useValue: new ValidationPipe({
         transform: true,
+        enableDebugMessages: true,
       }),
     },
   ],

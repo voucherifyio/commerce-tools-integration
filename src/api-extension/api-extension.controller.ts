@@ -1,7 +1,6 @@
 import {
   Controller,
   Post,
-  Req,
   Body,
   HttpException,
   UseGuards,
@@ -14,6 +13,7 @@ import { CartOrderDto } from 'src/api-extension/CartOrder.dto';
 import { ApiExtensionGuard } from './api-extension.guard';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import { Order } from '@commercetools/platform-sdk';
+
 @UseInterceptors(TimeLoggingInterceptor)
 @Controller('api-extension')
 @UseGuards(ApiExtensionGuard)
@@ -31,6 +31,8 @@ export class ApiExtensionController {
   async handleApiExtensionRequest(@Body() body: CartOrderDto): Promise<any> {
     const type = body.resource?.typeId;
 
+    this.logger.info({ msg: 'Handle Commerce Tools API Extension', type });
+
     if (type === 'cart') {
       const response = await this.apiExtensionService.checkCartAndMutate(body);
       if (!response.status) {
@@ -45,6 +47,7 @@ export class ApiExtensionController {
       );
       return { actions: response.actions };
     }
+
     return { status: 200, actions: [] };
   }
 }

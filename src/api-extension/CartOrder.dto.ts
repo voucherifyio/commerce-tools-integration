@@ -5,6 +5,7 @@ import {
   ValidateNested,
   IsDefined,
   IsIn,
+  IsOptional,
 } from 'class-validator';
 import {
   Cart,
@@ -29,8 +30,8 @@ import { Type } from 'class-transformer';
 
 export class FC implements FieldContainer {
   @IsArray()
-  @ArrayNotEmpty()
-  public discount_codes: string[];
+  @IsOptional()
+  public discount_codes?: string[];
 }
 
 export class Custom implements CustomFields {
@@ -76,11 +77,10 @@ export class OrderObj implements Order {
   public lastMessageSequenceNumber: number;
 
   @IsString()
-  @IsDefined()
-  @IsIn(['Paid'])
-  public paymentState: PaymentState;
+  @IsOptional()
+  public paymentState?: PaymentState;
 
-  @IsDefined()
+  @IsOptional()
   @ValidateNested()
   @Type(() => Custom)
   public custom: Custom;

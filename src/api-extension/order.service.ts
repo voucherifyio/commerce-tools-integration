@@ -19,8 +19,18 @@ export class OrderService {
   public async redeemVoucherifyCoupons(
     order: Order,
   ): Promise<{ status: boolean; actions: object[] }> {
-    const coupons: string[] = order.custom?.fields?.discount_codes;
-    this.logger.debug({ msg: 'Attempt to redeem vouchers', order });
+    const coupons: string[] = Array.isArray(
+      order.custom?.fields?.discount_codes,
+    )
+      ? order.custom.fields.discount_codes
+      : [];
+
+    if (!coupons.length) {
+      this.logger.info({ msg: 'No cuopuns provided' });
+      return { status: true, actions: [] };
+    }
+
+    this.logger.info({ msg: 'Attempt to redeem vouchers', coupons });
     const sendedCoupons: SendedCoupons[] = [];
     const usedCoupons: string[] = [];
     const notUsedCoupons: string[] = [];
@@ -36,17 +46,23 @@ export class OrderService {
       }),
     );
 
+    this.logger.info({
+      msg: 'Voucherify redeem response',
+      redemptions: response?.redemptions,
+    });
+
     sendedCoupons.forEach((sendedCoupon) => {
-      this.logger.info(
-        `Coupon: ${sendedCoupon.coupon} - ${sendedCoupon.result}`,
-      );
       if (sendedCoupon.result === 'SUCCESS') {
         usedCoupons.push(sendedCoupon.coupon);
       } else {
         notUsedCoupons.push(sendedCoupon.coupon);
       }
     });
-
+    this.logger.info({
+      msg: 'Realized coupons',
+      usedCoupons,
+      notUsedCoupons,
+    });
     const actions = [
       {
         action: 'setCustomField',
