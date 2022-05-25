@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
-// import { JsonLoggerService } from 'json-logger-service';
+import { JsonLoggerService } from 'json-logger-service';
 
 type SendedCoupons = {
   result: string;
@@ -9,8 +9,9 @@ type SendedCoupons = {
 
 @Injectable()
 export class OrderService {
+  private logger = new JsonLoggerService('NestServer');
   constructor(
-    private readonly voucherifyConnectorService: VoucherifyConnectorService, // private logger: JsonLoggerService,
+    private readonly voucherifyConnectorService: VoucherifyConnectorService,
   ) {}
 
   public async redeemVoucherifyCoupons(
@@ -33,6 +34,9 @@ export class OrderService {
     );
 
     sendedCoupons.forEach((sendedCoupon) => {
+      this.logger.log(
+        `Coupon: ${sendedCoupon.coupon} - ${sendedCoupon.result}`,
+      );
       if (sendedCoupon.result === 'SUCCESS') {
         usedCoupons.push(sendedCoupon.coupon);
       } else {
