@@ -5,13 +5,16 @@ import {
   Body,
   HttpException,
   UseInterceptors,
+  UseFilters,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ApiExtensionService } from './api-extension.service';
 import { OrderService } from './order.service';
 import { TimeLoggingInterceptor } from 'src/misc/time-logging.interceptor';
 import { CartOrderDto } from 'src/misc/CartOrder.dto';
+import { BadRequestExceptionFilter } from 'src/misc/bad-request.exception';
 
+@UseFilters(new BadRequestExceptionFilter())
 @UseInterceptors(new TimeLoggingInterceptor())
 @Controller('api-extension')
 export class ApiExtensionController {
