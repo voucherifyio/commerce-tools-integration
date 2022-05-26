@@ -75,7 +75,7 @@ export class ApiExtensionService {
     }
 
     const appliedCoupons =
-      cartObj.customLineItems.map((coupon) => coupon.slug) ?? [];
+      cartObj.customLineItems?.map((coupon) => coupon.slug) ?? [];
 
     let taxCategory;
 

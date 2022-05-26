@@ -1,31 +1,51 @@
-import { Controller, Post, Req, HttpException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Req,
+  Body,
+  HttpException,
+  UseInterceptors,
+  UseFilters,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { ApiExtensionService } from './api-extension.service';
+import { OrderService } from './order.service';
+import { TimeLoggingInterceptor } from 'src/misc/time-logging.interceptor';
+import { CartOrderDto } from 'src/misc/CartOrder.dto';
+import { BadRequestExceptionFilter } from 'src/misc/bad-request.exception';
 
+@UseFilters(new BadRequestExceptionFilter())
+@UseInterceptors(new TimeLoggingInterceptor())
 @Controller('api-extension')
 export class ApiExtensionController {
-  constructor(private readonly apiExtensionService: ApiExtensionService) {}
+  constructor(
+    private readonly apiExtensionService: ApiExtensionService,
+    private readonly orderService: OrderService,
+  ) {}
 
   @Post()
-  async findAll(@Req() request: Request): Promise<any> {
-    const type = request?.body?.resource?.typeId;
+  async findAll(
+    @Body() body: CartOrderDto,
+    @Req() request: Request,
+  ): Promise<any> {
+    const type = body.resource?.typeId;
     const authorization = request?.headers?.authorization;
     if (
-      (process.env.API_EXTENSION_BASIC_AUTH_PASSWORD?.length &&
-        authorization !==
-          `Basic ${process.env.API_EXTENSION_BASIC_AUTH_PASSWORD}`) ||
-      type !== 'cart'
+      process.env.API_EXTENSION_BASIC_AUTH_PASSWORD?.length &&
+      authorization !== `Basic ${process.env.API_EXTENSION_BASIC_AUTH_PASSWORD}`
     ) {
       throw new HttpException('', 400);
     }
-    const start = new Date().getTime();
-    const response = await this.apiExtensionService.checkCartAndMutate(
-      request?.body,
-    );
-    console.log(`Execution time:  ${new Date().getTime() - start}`);
-    if (!response.status) {
-      throw new HttpException('', 400);
+
+    if (type === 'cart') {
+      const response = await this.apiExtensionService.checkCartAndMutate(body);
+      if (!response.status) {
+        throw new HttpException('', 400);
+      }
+      return { actions: response.actions };
+    } else if (type === 'order') {
+      const response = await this.orderService.redeemVoucherifyCoupons(body);
+      return { actions: response.actions };
     }
-    return { actions: response.actions };
   }
 }
