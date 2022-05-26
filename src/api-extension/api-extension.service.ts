@@ -2,6 +2,7 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
 import { TypesService } from '../commerceTools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
+import { JsonLogger, LoggerFactory } from 'json-logger-service';
 
 @Injectable()
 export class ApiExtensionService {
@@ -10,6 +11,9 @@ export class ApiExtensionService {
     private readonly typesService: TypesService,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
   ) {}
+  private readonly logger: JsonLogger = LoggerFactory.createLogger(
+    ApiExtensionService.name,
+  );
 
   async checkCartAndMutate(
     body,

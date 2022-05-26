@@ -1,12 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { CommerceToolsConnectorService } from '../commerce-tools-connector.service';
 import { Type } from '@commercetools/platform-sdk';
+import { JsonLogger, LoggerFactory } from 'json-logger-service';
 
 @Injectable()
 export class TypesService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
   ) {}
+
+  private readonly logger: JsonLogger = LoggerFactory.createLogger(
+    TypesService.name,
+  );
 
   async getAllTypes(): Promise<Type[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
@@ -108,6 +113,11 @@ export class TypesService {
       if (response.statusCode === 201) {
         return response.body;
       }
+      this.logger.error({
+        msg: 'couponCodes type cannot be updated',
+        statusCode: response.statusCode,
+        body: response.body,
+      });
       throw new Error('couponCodes type cannot be updated');
     } else {
       const response = await ctClient
@@ -154,6 +164,11 @@ export class TypesService {
       if (response.statusCode === 201) {
         return response.body;
       }
+      this.logger.error({
+        msg: 'couponCodes type cannot be created',
+        statusCode: response.statusCode,
+        body: response.body,
+      });
       throw new Error('couponCodes type cannot be created');
     }
   }
