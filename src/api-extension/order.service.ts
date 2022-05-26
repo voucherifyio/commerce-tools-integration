@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
-import { JsonLoggerService } from 'json-logger-service';
-
+import { JsonLogger, LoggerFactory } from 'json-logger-service';
+import { Order } from '@commercetools/platform-sdk';
 type SendedCoupons = {
   result: string;
   coupon: string;
@@ -9,15 +9,28 @@ type SendedCoupons = {
 
 @Injectable()
 export class OrderService {
-  private logger = new JsonLoggerService('NestServer');
+  private readonly logger: JsonLogger = LoggerFactory.createLogger(
+    OrderService.name,
+  );
   constructor(
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
   ) {}
 
   public async redeemVoucherifyCoupons(
-    body,
+    order: Order,
   ): Promise<{ status: boolean; actions: object[] }> {
-    const coupons: string[] = body.resource.obj.custom?.fields?.discount_codes;
+    const coupons: string[] = Array.isArray(
+      order.custom?.fields?.discount_codes,
+    )
+      ? order.custom.fields.discount_codes
+      : [];
+
+    if (!coupons.length || order.paymentState !== 'Paid') {
+      this.logger.info({ msg: 'No coupons provided or order is not paid' });
+      return { status: true, actions: [] };
+    }
+
+    this.logger.info({ msg: 'Attempt to redeem vouchers', coupons });
     const sendedCoupons: SendedCoupons[] = [];
     const usedCoupons: string[] = [];
     const notUsedCoupons: string[] = [];
@@ -33,17 +46,23 @@ export class OrderService {
       }),
     );
 
+    this.logger.info({
+      msg: 'Voucherify redeem response',
+      redemptions: response?.redemptions,
+    });
+
     sendedCoupons.forEach((sendedCoupon) => {
-      this.logger.log(
-        `Coupon: ${sendedCoupon.coupon} - ${sendedCoupon.result}`,
-      );
       if (sendedCoupon.result === 'SUCCESS') {
         usedCoupons.push(sendedCoupon.coupon);
       } else {
         notUsedCoupons.push(sendedCoupon.coupon);
       }
     });
-
+    this.logger.info({
+      msg: 'Realized coupons',
+      usedCoupons,
+      notUsedCoupons,
+    });
     const actions = [
       {
         action: 'setCustomField',

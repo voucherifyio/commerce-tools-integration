@@ -15,9 +15,9 @@ async function bootstrap() {
   const registerService = app.get(RegisterApiEstension);
   const isApiExtensionRegistered = await registerService.register(url);
   if (isApiExtensionRegistered) {
-    logger.log(`Api Extension registerd in Commerce tools`);
+    logger.log({ msg: `Api Extension registerd in Commerce tools` });
   } else {
-    logger.error('Could not register Api Extension in Commerce Tools');
+    logger.error({ msg: 'Could not register Api Extension in Commerce Tools' });
   }
 }
 bootstrap();
