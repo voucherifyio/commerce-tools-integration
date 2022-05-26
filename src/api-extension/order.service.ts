@@ -25,8 +25,8 @@ export class OrderService {
       ? order.custom.fields.discount_codes
       : [];
 
-    if (!coupons.length) {
-      this.logger.info({ msg: 'No cuopuns provided' });
+    if (!coupons.length || order.paymentState !== 'Paid') {
+      this.logger.info({ msg: 'No coupons provided or order is not paid' });
       return { status: true, actions: [] };
     }
 
