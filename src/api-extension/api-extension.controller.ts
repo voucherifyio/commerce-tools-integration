@@ -30,8 +30,15 @@ export class ApiExtensionController {
   @Post()
   async handleApiExtensionRequest(@Body() body: CartOrderDto): Promise<any> {
     const type = body.resource?.typeId;
+    const action = body.action;
+    const id = body.resource?.obj?.id;
 
-    this.logger.info({ msg: 'Handle Commerce Tools API Extension', type });
+    this.logger.info({
+      msg: 'Handle Commerce Tools API Extension',
+      type,
+      id,
+      action,
+    });
 
     if (type === 'cart') {
       const response = await this.apiExtensionService.checkCartAndMutate(body);

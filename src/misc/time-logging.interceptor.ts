@@ -18,14 +18,17 @@ export class TimeLoggingInterceptor implements NestInterceptor {
   ): Observable<any> | Promise<Observable<any>> {
     const timeBefore = Date.now();
     return next.handle().pipe(
-      tap(() =>
-        this.logger.info({
-          msg: 'Request response time',
-          class: context.getClass().name,
-          method: context.getHandler().name,
-          time: Date.now() - timeBefore,
-        }),
-      ),
+      tap(() => {
+        const time = Date.now() - timeBefore;
+        if (time > 350) {
+          this.logger.info({
+            msg: 'Request response time',
+            class: context.getClass().name,
+            method: context.getHandler().name,
+            time,
+          });
+        }
+      }),
     );
   }
 }

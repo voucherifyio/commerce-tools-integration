@@ -102,4 +102,7 @@ export class CartOrderDto {
   @ValidateNested()
   @Type(() => Resource)
   public resource: Resource;
+
+  @IsString()
+  public action: string;
 }
