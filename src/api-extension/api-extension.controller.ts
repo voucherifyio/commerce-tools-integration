@@ -6,20 +6,20 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExtensionService } from './api-extension.service';
+import { CartService } from './cart.service';
 import { OrderService } from './order.service';
 import { TimeLoggingInterceptor } from 'src/misc/time-logging.interceptor';
 import { CartOrderDto } from 'src/api-extension/CartOrder.dto';
 import { ApiExtensionGuard } from './api-extension.guard';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
-import { Order } from '@commercetools/platform-sdk';
+import { Cart, Order } from '@commercetools/platform-sdk';
 
 @UseInterceptors(TimeLoggingInterceptor)
 @Controller('api-extension')
 @UseGuards(ApiExtensionGuard)
 export class ApiExtensionController {
   constructor(
-    private readonly apiExtensionService: ApiExtensionService,
+    private readonly apiExtensionService: CartService,
     private readonly orderService: OrderService,
   ) {}
 
@@ -41,7 +41,9 @@ export class ApiExtensionController {
     });
 
     if (type === 'cart') {
-      const response = await this.apiExtensionService.checkCartAndMutate(body);
+      const response = await this.apiExtensionService.checkCartAndMutate(
+        body.resource.obj as Cart,
+      );
       if (!response.status) {
         throw new HttpException('', 400);
       }

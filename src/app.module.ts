@@ -5,7 +5,7 @@ import * as Joi from 'joi';
 import { VoucherifyConnectorService } from './voucherify/voucherify-connector.service';
 import { CommerceToolsConnectorService } from './commerceTools/commerce-tools-connector.service';
 import { ApiExtensionController } from './api-extension/api-extension.controller';
-import { ApiExtensionService } from './api-extension/api-extension.service';
+import { CartService } from './api-extension/cart.service';
 import { RegisterService } from './api-extension/register.service';
 import { ConfigModule } from '@nestjs/config';
 import { TaxCategoriesService } from './commerceTools/tax-categories/tax-categories.service';
@@ -40,7 +40,7 @@ import { ValidationPipe } from '@nestjs/common';
   ],
   providers: [
     AppService,
-    ApiExtensionService,
+    CartService,
     RegisterService,
     VoucherifyConnectorService,
     CommerceToolsConnectorService,

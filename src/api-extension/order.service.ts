@@ -25,12 +25,23 @@ export class OrderService {
       ? order.custom.fields.discount_codes
       : [];
 
+    const { id, customerId } = order;
+
     if (!coupons.length || order.paymentState !== 'Paid') {
-      this.logger.info({ msg: 'No coupons provided or order is not paid' });
+      this.logger.info({
+        msg: 'No coupons provided or order is not paid',
+        id,
+        customerId,
+      });
       return { status: true, actions: [] };
     }
 
-    this.logger.info({ msg: 'Attempt to redeem vouchers', coupons });
+    this.logger.info({
+      msg: 'Attempt to redeem vouchers',
+      coupons,
+      id,
+      customerId,
+    });
     const sendedCoupons: SendedCoupons[] = [];
     const usedCoupons: string[] = [];
     const notUsedCoupons: string[] = [];
@@ -48,6 +59,8 @@ export class OrderService {
 
     this.logger.info({
       msg: 'Voucherify redeem response',
+      id,
+      customerId,
       redemptions: response?.redemptions,
     });
 
@@ -60,6 +73,8 @@ export class OrderService {
     });
     this.logger.info({
       msg: 'Realized coupons',
+      id,
+      customerId,
       usedCoupons,
       notUsedCoupons,
     });

@@ -3,29 +3,34 @@ import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-catego
 import { TypesService } from '../commerceTools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
+import { Cart } from '@commercetools/platform-sdk';
 
 @Injectable()
-export class ApiExtensionService {
+export class CartService {
   constructor(
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly typesService: TypesService,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
   ) {}
   private readonly logger: JsonLogger = LoggerFactory.createLogger(
-    ApiExtensionService.name,
+    CartService.name,
   );
 
   async checkCartAndMutate(
-    body,
+    cartObj: Cart,
   ): Promise<{ status: boolean; actions: object[] }> {
-    const cartObj = body?.resource?.obj;
-    const version = cartObj.version;
     const actions = [];
+    const { id, customerId } = cartObj;
     const couponType = await this.typesService.findCouponType();
     if (!couponType) {
-      throw new Error('CouponType not found');
+      this.logger.error({
+        msg: 'CouponType not found',
+        id,
+        customerId,
+      });
+      return { status: true, actions: [] };
     }
-    if (version === 1) {
+    if (cartObj.version === 1) {
       return {
         status: true,
         actions: [
@@ -47,34 +52,46 @@ export class ApiExtensionService {
 
     let couponsValidation;
     const coupons = cartObj.custom?.fields?.discount_codes ?? [];
+    this.logger.info({
+      msg: 'Attempt to apply vouchers',
+      coupons,
+      id,
+      customerId,
+    });
     if (coupons.length) {
       couponsValidation =
         await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
           coupons,
           cartObj,
         );
-      if (
-        couponsValidation.redeemables.filter(
-          (voucher) => voucher.status !== 'APPLICABLE',
-        ).length
-      ) {
-        throw new HttpException(
-          {
-            errors: couponsValidation.redeemables
-              .filter((voucher) => voucher.status !== 'APPLICABLE')
-              .map((coupon) => {
-                return {
-                  code: `InvalidInput`,
-                  message: `Coupon '${coupon?.id}' is ${coupon.status}`,
-                  extensionExtraInfo: {
-                    coupon: coupon?.id,
-                    status: coupon.status,
-                  },
-                };
-              }),
-          },
-          400,
-        );
+      this.logger.info({
+        msg: 'Validated coupons',
+        couponsValidation,
+        id,
+        customerId,
+      });
+      const notApplicableVouchers = couponsValidation.redeemables.filter(
+        (voucher) => voucher.status !== 'APPLICABLE',
+      );
+      if (notApplicableVouchers.length) {
+        const errors = notApplicableVouchers.map((coupon) => {
+          return {
+            code: `InvalidInput`,
+            message: `Coupon '${coupon?.id}' is ${coupon.status}`,
+            extensionExtraInfo: {
+              coupon: coupon?.id,
+              status: coupon.status,
+            },
+          };
+        });
+        this.logger.info({
+          msg: 'Some coupons were not applicable',
+          errors,
+          coupons,
+          id,
+          customerId,
+        });
+        return { status: true, actions: [] };
       }
     }
 
