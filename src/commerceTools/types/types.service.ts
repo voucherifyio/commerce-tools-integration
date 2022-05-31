@@ -61,17 +61,17 @@ export class TypesService {
 
   async configureCouponType(): Promise<{ success: boolean; type: any }> {
     const couponType = await this.findCouponType();
-    if (couponType.fieldDefinitions.length === 2) {
+    if (couponType?.fieldDefinitions.length === 2) {
       return { success: true, type: couponType };
     } else if (
-      couponType.fieldDefinitions.length === 1 &&
-      couponType.fieldDefinitions[0].name === 'discount_codes'
+      couponType?.fieldDefinitions.length === 1 &&
+      couponType?.fieldDefinitions[0].name === 'discount_codes'
     ) {
       const newCouponType = this.createCouponType(couponType, 'used_codes');
       return { success: true, type: newCouponType };
     } else if (
-      couponType.fieldDefinitions.length === 1 &&
-      couponType.fieldDefinitions[0].name === 'used_codes'
+      couponType?.fieldDefinitions.length === 1 &&
+      couponType?.fieldDefinitions[0].name === 'used_codes'
     ) {
       const newCouponType = this.createCouponType(couponType, 'discount_codes');
       return { success: true, type: newCouponType };
