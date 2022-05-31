@@ -70,7 +70,7 @@ export class TaxCategoriesService {
     const ratesToUpdate = desiredRates.filter((rate) =>
       rates.map((rate_) => rate_.country).includes(rate.country),
     );
-    const ratesToDelete = rates.filter(
+    const ratesToDelete = rates?.filter(
       (rate) =>
         !desiredRates.map((rate_) => rate_.country).includes(rate.country),
     );
