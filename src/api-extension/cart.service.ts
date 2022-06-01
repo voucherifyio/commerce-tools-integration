@@ -73,6 +73,9 @@ export class CartService {
       const notApplicableVouchers = couponsValidation.redeemables.filter(
         (voucher) => voucher.status !== 'APPLICABLE',
       );
+      const applicableVouchers = couponsValidation.redeemables.filter(
+        (voucher) => voucher.status === 'APPLICABLE',
+      );
       if (notApplicableVouchers.length) {
         const errors = notApplicableVouchers.map((coupon) => {
           return {
@@ -91,7 +94,16 @@ export class CartService {
           id,
           customerId,
         });
-        return { status: true, actions: [] };
+        return {
+          status: true,
+          actions: [
+            {
+              action: 'setCustomField',
+              name: 'discount_codes',
+              value: JSON.stringify(applicableVouchers),
+            },
+          ],
+        };
       }
     }
 
