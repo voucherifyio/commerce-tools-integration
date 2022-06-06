@@ -46,8 +46,10 @@ export class OrderService {
     const usedCoupons: string[] = [];
     const notUsedCoupons: string[] = [];
 
+    const sessionKey = order.custom?.fields.session;
+
     const response =
-      await this.voucherifyConnectorService.reedemStackableVouchers(coupons);
+      await this.voucherifyConnectorService.reedemStackableVouchers(coupons, sessionKey);
     sendedCoupons.push(
       ...response.redemptions.map((redem) => {
         return {

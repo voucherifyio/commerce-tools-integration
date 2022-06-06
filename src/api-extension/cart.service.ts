@@ -20,6 +20,12 @@ type CartActionSetCustomFieldWithCoupons = {
   value: string[];
 };
 
+type CartActionSetCustomFieldWithSession = {
+  action: 'setCustomField';
+  name: 'session';
+  value: string;
+};
+
 type CartActionRemoveCustomLineItem = {
   action: 'removeCustomLineItem';
   customLineItemId: string;
@@ -45,6 +51,7 @@ type CartActionAddCustomLineItem = {
 type CartAction =
   | CartActionSetCustomType
   | CartActionSetCustomFieldWithCoupons
+  | CartActionSetCustomFieldWithSession
   | CartActionRemoveCustomLineItem
   | CartActionAddCustomLineItem;
 
@@ -90,7 +97,7 @@ export class CartService {
     };
   }
 
-  private async validateCoupons(cartObj: Cart) {
+  private async validateCoupons(cartObj: Cart, sessionKey?: string | null) {
     const { id, customerId } = cartObj;
     const coupons: Coupon[] = (
       cartObj.custom?.fields?.discount_codes ?? []
@@ -118,6 +125,7 @@ export class CartService {
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
         coupons.map((coupon) => coupon.code),
         cartObj,
+        sessionKey
       );
 
     const notApplicableCoupons = validatedCoupons.redeemables.filter(
@@ -135,7 +143,11 @@ export class CartService {
       customerId,
     });
 
-    return { applicableCoupons, notApplicableCoupons };
+    return { 
+      applicableCoupons, 
+      notApplicableCoupons,
+      newSessionKey: sessionKey ? null : validatedCoupons.session.key,
+    };
   }
 
   private async calculateDiscount(
@@ -296,6 +308,18 @@ export class CartService {
     };
   }
 
+  private getSession(cartObj: Cart): string | null {
+    return cartObj.custom?.fields?.session ? cartObj.custom?.fields?.session?.key : null
+  }
+
+  private setSession(sessionKey: string): CartActionSetCustomFieldWithSession {
+    return {
+      action: 'setCustomField',
+      name: 'session',
+      value: sessionKey,
+    }
+  }
+
   async checkCartAndMutate(cartObj: Cart): Promise<CartResponse> {
     if (cartObj.version === 1) {
       return await this.setCustomTypeForInitializedCart();
@@ -305,10 +329,17 @@ export class CartService {
       cartObj?.country,
     );
 
-    const { applicableCoupons, notApplicableCoupons } =
-      await this.validateCoupons(cartObj);
+    const sessionKey = this.getSession(cartObj);
 
+    const { applicableCoupons, notApplicableCoupons, newSessionKey } = await this.validateCoupons(cartObj, sessionKey);
+
+    
     const actions: CartAction[] = [];
+
+    if(newSessionKey) {
+      actions.push(this.setSession(newSessionKey))
+    }
+
     actions.push(
       ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
     );

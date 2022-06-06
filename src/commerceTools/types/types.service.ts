@@ -61,20 +61,24 @@ export class TypesService {
 
   async configureCouponType(): Promise<{ success: boolean; type: any }> {
     const couponType = await this.findCouponType();
-    if (couponType?.fieldDefinitions.length === 2) {
-      return { success: true, type: couponType };
-    } else if (
-      couponType?.fieldDefinitions.length === 1 &&
-      couponType?.fieldDefinitions[0].name === 'discount_codes'
-    ) {
-      const newCouponType = this.createCouponType(couponType, 'used_codes');
-      return { success: true, type: newCouponType };
-    } else if (
-      couponType?.fieldDefinitions.length === 1 &&
-      couponType?.fieldDefinitions[0].name === 'used_codes'
-    ) {
-      const newCouponType = this.createCouponType(couponType, 'discount_codes');
-      return { success: true, type: newCouponType };
+    // if (couponType?.fieldDefinitions.length === 2) {
+    //   return { success: true, type: couponType };
+    // } else if (
+    //   couponType?.fieldDefinitions.length === 1 &&
+    //   couponType?.fieldDefinitions[0].name === 'discount_codes'
+    // ) {
+    //   const newCouponType = this.createCouponType(couponType, 'used_codes');
+    //   return { success: true, type: newCouponType };
+    // } else if (
+    //   couponType?.fieldDefinitions.length === 1 &&
+    //   couponType?.fieldDefinitions[0].name === 'used_codes'
+    // ) {
+    //   const newCouponType = this.createCouponType(couponType, 'discount_codes');
+    //   return { success: true, type: newCouponType };
+    // }
+    if(couponType) {
+      const updatedCouponType = this.createCouponType(couponType);
+      return { success: true, type: updatedCouponType };
     }
     const newCouponType = this.createCouponType();
     return { success: true, type: newCouponType };
@@ -82,7 +86,7 @@ export class TypesService {
 
   async createCouponType(oldCouponType?: Type, newCouponField?: string) {
     const ctClient = this.commerceToolsConnectorService.getClient();
-    if (oldCouponType && newCouponField) {
+    if (oldCouponType) {
       const response = await ctClient
         .types()
         .withId({ ID: oldCouponType.id })
@@ -93,14 +97,13 @@ export class TypesService {
               {
                 action: 'addFieldDefinition',
                 fieldDefinition: {
-                  name: 'used_codes',
+                  name: 'session',
                   label: {
-                    en: 'used_codes',
+                    en: 'session',
                   },
                   required: false,
                   type: {
-                    name: 'Set',
-                    elementType: { name: 'String' },
+                    name: 'String',
                   },
                   inputHint: 'SingleLine',
                 },
@@ -157,11 +160,22 @@ export class TypesService {
                 },
                 inputHint: 'SingleLine',
               },
+              {
+                name: 'session',
+                label: {
+                  en: 'session',
+                },
+                required: false,
+                type: {
+                  name: 'String',
+                },
+                inputHint: 'SingleLine',
+              },
             ],
           },
         })
         .execute();
-      if (response.statusCode === 201) {
+      if (response.statusCode === 201 || response.statusCode === 200) {
         return response.body;
       }
       this.logger.error({
