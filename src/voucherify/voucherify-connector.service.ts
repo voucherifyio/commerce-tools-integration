@@ -122,7 +122,7 @@ export class VoucherifyConnectorService {
       redeemables: coupons.map((coupon) => {
         return {
           object: 'voucher',
-          id: JSON.parse(coupon).code,
+          id: coupon,
         };
       }),
     });

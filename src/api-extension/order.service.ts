@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import { Order } from '@commercetools/platform-sdk';
+import { desarializeCoupons, Coupon } from './coupon';
+
 type SendedCoupons = {
   result: string;
   coupon: string;
@@ -19,11 +21,9 @@ export class OrderService {
   public async redeemVoucherifyCoupons(
     order: Order,
   ): Promise<{ status: boolean; actions: object[] }> {
-    const coupons: string[] = Array.isArray(
-      order.custom?.fields?.discount_codes,
-    )
-      ? order.custom.fields.discount_codes
-      : [];
+    const coupons: Coupon[] = (order.custom?.fields?.discount_codes ?? []).map(
+      desarializeCoupons,
+    );
 
     const { id, customerId } = order;
 
@@ -50,7 +50,7 @@ export class OrderService {
 
     const response =
       await this.voucherifyConnectorService.reedemStackableVouchers(
-        coupons,
+        coupons.map((coupon) => coupon.code),
         sessionKey,
       );
     sendedCoupons.push(

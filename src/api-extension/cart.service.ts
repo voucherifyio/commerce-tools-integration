@@ -8,7 +8,7 @@ import {
   StackableRedeemableResponse,
   ValidationSessionResponse,
 } from '@voucherify/sdk';
-
+import { desarializeCoupons, Coupon } from './coupon';
 type CartActionSetCustomType = {
   action: 'setCustomType';
   name: 'couponCodes';
@@ -60,12 +60,6 @@ type CartAction =
 
 type CartResponse = { status: boolean; actions: CartAction[] };
 
-type Coupon = {
-  code: string;
-  status: 'NEW' | 'APPLIED' | 'NOT_APPLIED';
-  errMsg?: string;
-};
-
 @Injectable()
 export class CartService {
   constructor(
@@ -104,16 +98,7 @@ export class CartService {
     const { id, customerId } = cartObj;
     const coupons: Coupon[] = (
       cartObj.custom?.fields?.discount_codes ?? []
-    ).map((serializedDiscountOrCode): Coupon => {
-      if (serializedDiscountOrCode.startsWith('{')) {
-        return JSON.parse(serializedDiscountOrCode);
-      }
-      // that case handle legacy way of saving coupons in Commerce Tools
-      return {
-        code: serializedDiscountOrCode,
-        status: 'NEW',
-      };
-    });
+    ).map(desarializeCoupons);
     if (!coupons.length) {
       return { applicableCoupons: [], notApplicableCoupons: [] };
     }
