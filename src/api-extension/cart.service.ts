@@ -356,7 +356,6 @@ export class CartService {
       actions.push(
         ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
       );
-
       actions.push(
         ...(await this.addCustomLineItemsThatReflectDiscounts(
           applicableCoupons,
@@ -366,9 +365,23 @@ export class CartService {
       );
     }
 
-    if (!valid && notApplicableCoupons.length > 1) {
+    const calculatedDiscountBaseOnCodes = cartObj.customLineItems
+      .filter((lineItem) => lineItem.name.en.startsWith('Coupon '))
+      .reduce((acc, lineItem) => {
+        return [...acc, ...lineItem?.slug?.split(', ')];
+      }, [] as string[]);
+
+    if (
+      !valid &&
+      skippedCoupons.length &&
+      calculatedDiscountBaseOnCodes.length !== skippedCoupons.length
+    ) {
       this.logger.warn({
         msg: 'Validation invalid, some previous discounts  are invalid now. Remove discount from the cart as calculations will be different.',
+        calculatedDiscountBaseOnCodes,
+        skippedCoupons,
+        notApplicableCoupons,
+        applicableCoupons,
       });
       actions.push(
         ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
