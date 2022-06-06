@@ -93,9 +93,10 @@ export class CartService {
 
   private async validateCoupons(cartObj: Cart, sessionKey?: string | null) {
     const { id, customerId } = cartObj;
-    const coupons: Coupon[] = (
-      cartObj.custom?.fields?.discount_codes ?? []
-    ).map(desarializeCoupons);
+    const coupons: Coupon[] = (cartObj.custom?.fields?.discount_codes ?? [])
+      .map(desarializeCoupons)
+      .filter((coupon) => coupon.status !== 'NOT_APPLIED'); // we already declined them, will be removed by frontend
+
     if (!coupons.length) {
       return {
         applicableCoupons: [],
@@ -362,29 +363,6 @@ export class CartService {
           cartObj,
           taxCategory,
         )),
-      );
-    }
-
-    const calculatedDiscountBaseOnCodes = cartObj.customLineItems
-      .filter((lineItem) => lineItem.name.en.startsWith('Coupon '))
-      .reduce((acc, lineItem) => {
-        return [...acc, ...lineItem?.slug?.split(', ')];
-      }, [] as string[]);
-
-    if (
-      !valid &&
-      skippedCoupons.length &&
-      calculatedDiscountBaseOnCodes.length !== skippedCoupons.length
-    ) {
-      this.logger.warn({
-        msg: 'Validation invalid, some previous discounts  are invalid now. Remove discount from the cart as calculations will be different.',
-        calculatedDiscountBaseOnCodes,
-        skippedCoupons,
-        notApplicableCoupons,
-        applicableCoupons,
-      });
-      actions.push(
-        ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
       );
     }
 
