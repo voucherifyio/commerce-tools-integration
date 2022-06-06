@@ -62,7 +62,11 @@ export class VoucherifyConnectorService {
     });
   }
 
-  async validateStackableVouchersWithCTCart(coupons: string[], cart: Cart) {
+  async validateStackableVouchersWithCTCart(
+    coupons: string[],
+    cart: Cart,
+    sessionKey?: string | null,
+  ) {
     return await this.getClient().validations.validateStackable({
       // options?: StackableOptions;
       redeemables: coupons.map((coupon) => {
@@ -71,7 +75,10 @@ export class VoucherifyConnectorService {
           id: coupon,
         };
       }),
-      // session?: ValidationSessionParams;
+      session: {
+        type: 'LOCK',
+        ...(sessionKey && { key: sessionKey }),
+      },
       order: {
         customer: {
           id: cart?.createdBy?.clientId,
@@ -106,8 +113,12 @@ export class VoucherifyConnectorService {
     });
   }
 
-  async reedemStackableVouchers(coupons: string[]) {
+  async reedemStackableVouchers(coupons: string[], sessionKey: string) {
     return this.getClient().redemptions.redeemStackable({
+      session: {
+        type: 'LOCK',
+        key: sessionKey,
+      },
       redeemables: coupons.map((coupon) => {
         return {
           object: 'voucher',

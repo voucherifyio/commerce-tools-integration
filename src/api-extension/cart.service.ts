@@ -5,7 +5,7 @@ import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.s
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import { Cart } from '@commercetools/platform-sdk';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
-
+import { desarializeCoupons, Coupon } from './coupon';
 type CartActionSetCustomType = {
   action: 'setCustomType';
   name: 'couponCodes';
@@ -18,6 +18,12 @@ type CartActionSetCustomFieldWithCoupons = {
   action: 'setCustomField';
   name: 'discount_codes';
   value: string[];
+};
+
+type CartActionSetCustomFieldWithSession = {
+  action: 'setCustomField';
+  name: 'session';
+  value: string;
 };
 
 type CartActionRemoveCustomLineItem = {
@@ -45,16 +51,11 @@ type CartActionAddCustomLineItem = {
 type CartAction =
   | CartActionSetCustomType
   | CartActionSetCustomFieldWithCoupons
+  | CartActionSetCustomFieldWithSession
   | CartActionRemoveCustomLineItem
   | CartActionAddCustomLineItem;
 
 type CartResponse = { status: boolean; actions: CartAction[] };
-
-type Coupon = {
-  code: string;
-  status: 'NEW' | 'APPLIED' | 'NOT_APPLIED';
-  errMsg?: string;
-};
 
 @Injectable()
 export class CartService {
@@ -90,22 +91,18 @@ export class CartService {
     };
   }
 
-  private async validateCoupons(cartObj: Cart) {
+  private async validateCoupons(cartObj: Cart, sessionKey?: string | null) {
     const { id, customerId } = cartObj;
-    const coupons: Coupon[] = (
-      cartObj.custom?.fields?.discount_codes ?? []
-    ).map((serializedDiscountOrCode): Coupon => {
-      if (serializedDiscountOrCode.startsWith('{')) {
-        return JSON.parse(serializedDiscountOrCode);
-      }
-      // that case handle legacy way of saving coupons in Commerce Tools
-      return {
-        code: serializedDiscountOrCode,
-        status: 'NEW',
-      };
-    });
+    const coupons: Coupon[] = (cartObj.custom?.fields?.discount_codes ?? [])
+      .map(desarializeCoupons)
+      .filter((coupon) => coupon.status !== 'NOT_APPLIED'); // we already declined them, will be removed by frontend
+
     if (!coupons.length) {
-      return { applicableCoupons: [], notApplicableCoupons: [] };
+      return {
+        applicableCoupons: [],
+        notApplicableCoupons: [],
+        skippedCoupons: [],
+      };
     }
     this.logger.info({
       msg: 'Attempt to apply coupons',
@@ -118,24 +115,44 @@ export class CartService {
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
         coupons.map((coupon) => coupon.code),
         cartObj,
+        sessionKey,
       );
 
     const notApplicableCoupons = validatedCoupons.redeemables.filter(
-      (voucher) => voucher.status !== 'APPLICABLE',
+      (voucher) => voucher.status === 'INAPPLICABLE',
+    );
+    const skippedCoupons = validatedCoupons.redeemables.filter(
+      (voucher) => voucher.status === 'SKIPPED',
     );
     const applicableCoupons = validatedCoupons.redeemables.filter(
       (voucher) => voucher.status === 'APPLICABLE',
     );
 
+    const sessionKeyResponse = validatedCoupons.session?.key;
+    const valid = validatedCoupons.valid;
+
     this.logger.info({
       msg: 'Validated coupons',
       applicableCoupons,
       notApplicableCoupons,
+      skippedCoupons,
       id,
+      valid,
       customerId,
+      sessionKey,
+      sessionKeyResponse,
     });
 
-    return { applicableCoupons, notApplicableCoupons };
+    return {
+      applicableCoupons,
+      notApplicableCoupons,
+      skippedCoupons,
+      newSessionKey:
+        sessionKey && !validatedCoupons.valid
+          ? null
+          : validatedCoupons.session?.key,
+      valid,
+    };
   }
 
   private async calculateDiscount(
@@ -271,9 +288,10 @@ export class CartService {
   private updateDiscountsCodes(
     applicableCoupons: StackableRedeemableResponse[],
     notApplicableCoupons: StackableRedeemableResponse[],
+    skippedCoupons: StackableRedeemableResponse[],
   ): CartActionSetCustomFieldWithCoupons {
     const coupons = [
-      ...applicableCoupons.map(
+      ...[...applicableCoupons, ...skippedCoupons].map(
         (coupon) =>
           ({
             code: coupon.id,
@@ -296,6 +314,20 @@ export class CartService {
     };
   }
 
+  private getSession(cartObj: Cart): string | null {
+    return cartObj.custom?.fields?.session
+      ? cartObj.custom?.fields?.session
+      : null;
+  }
+
+  private setSession(sessionKey: string): CartActionSetCustomFieldWithSession {
+    return {
+      action: 'setCustomField',
+      name: 'session',
+      value: sessionKey,
+    };
+  }
+
   async checkCartAndMutate(cartObj: Cart): Promise<CartResponse> {
     if (cartObj.version === 1) {
       return await this.setCustomTypeForInitializedCart();
@@ -305,24 +337,41 @@ export class CartService {
       cartObj?.country,
     );
 
-    const { applicableCoupons, notApplicableCoupons } =
-      await this.validateCoupons(cartObj);
+    const sessionKey = this.getSession(cartObj);
+
+    const {
+      valid,
+      applicableCoupons,
+      skippedCoupons,
+      notApplicableCoupons,
+      newSessionKey,
+    } = await this.validateCoupons(cartObj, sessionKey);
 
     const actions: CartAction[] = [];
-    actions.push(
-      ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
-    );
+
+    if (newSessionKey && valid && newSessionKey !== sessionKey) {
+      actions.push(this.setSession(newSessionKey));
+    }
+
+    if (valid) {
+      actions.push(
+        ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
+      );
+      actions.push(
+        ...(await this.addCustomLineItemsThatReflectDiscounts(
+          applicableCoupons,
+          cartObj,
+          taxCategory,
+        )),
+      );
+    }
 
     actions.push(
-      ...(await this.addCustomLineItemsThatReflectDiscounts(
+      this.updateDiscountsCodes(
         applicableCoupons,
-        cartObj,
-        taxCategory,
-      )),
-    );
-
-    actions.push(
-      this.updateDiscountsCodes(applicableCoupons, notApplicableCoupons),
+        notApplicableCoupons,
+        skippedCoupons,
+      ),
     );
 
     this.logger.info(actions);
