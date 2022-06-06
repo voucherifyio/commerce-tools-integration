@@ -4,10 +4,7 @@ import { TypesService } from '../commerceTools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import { Cart } from '@commercetools/platform-sdk';
-import {
-  StackableRedeemableResponse,
-  ValidationSessionResponse,
-} from '@voucherify/sdk';
+import { StackableRedeemableResponse } from '@voucherify/sdk';
 import { desarializeCoupons, Coupon } from './coupon';
 type CartActionSetCustomType = {
   action: 'setCustomType';
@@ -100,7 +97,11 @@ export class CartService {
       cartObj.custom?.fields?.discount_codes ?? []
     ).map(desarializeCoupons);
     if (!coupons.length) {
-      return { applicableCoupons: [], notApplicableCoupons: [] };
+      return {
+        applicableCoupons: [],
+        notApplicableCoupons: [],
+        skippedCoupons: [],
+      };
     }
     this.logger.info({
       msg: 'Attempt to apply coupons',
@@ -117,30 +118,39 @@ export class CartService {
       );
 
     const notApplicableCoupons = validatedCoupons.redeemables.filter(
-      (voucher) => voucher.status !== 'APPLICABLE',
+      (voucher) => voucher.status === 'INAPPLICABLE',
+    );
+    const skippedCoupons = validatedCoupons.redeemables.filter(
+      (voucher) => voucher.status === 'SKIPPED',
     );
     const applicableCoupons = validatedCoupons.redeemables.filter(
       (voucher) => voucher.status === 'APPLICABLE',
     );
 
+    const sessionKeyResponse = validatedCoupons.session?.key;
+    const valid = validatedCoupons.valid;
+
     this.logger.info({
       msg: 'Validated coupons',
       applicableCoupons,
       notApplicableCoupons,
+      skippedCoupons,
       id,
+      valid,
       customerId,
+      sessionKey,
+      sessionKeyResponse,
     });
 
-    console.log(validatedCoupons);
-
     return {
-      valid: validatedCoupons.valid,
       applicableCoupons,
       notApplicableCoupons,
+      skippedCoupons,
       newSessionKey:
         sessionKey && !validatedCoupons.valid
           ? null
           : validatedCoupons.session?.key,
+      valid,
     };
   }
 
@@ -277,9 +287,10 @@ export class CartService {
   private updateDiscountsCodes(
     applicableCoupons: StackableRedeemableResponse[],
     notApplicableCoupons: StackableRedeemableResponse[],
+    skippedCoupons: StackableRedeemableResponse[],
   ): CartActionSetCustomFieldWithCoupons {
     const coupons = [
-      ...applicableCoupons.map(
+      ...[...applicableCoupons, ...skippedCoupons].map(
         (coupon) =>
           ({
             code: coupon.id,
@@ -304,7 +315,7 @@ export class CartService {
 
   private getSession(cartObj: Cart): string | null {
     return cartObj.custom?.fields?.session
-      ? cartObj.custom?.fields?.session?.key
+      ? cartObj.custom?.fields?.session
       : null;
   }
 
@@ -327,20 +338,25 @@ export class CartService {
 
     const sessionKey = this.getSession(cartObj);
 
-    const { valid, applicableCoupons, notApplicableCoupons, newSessionKey } =
-      await this.validateCoupons(cartObj, sessionKey);
+    const {
+      valid,
+      applicableCoupons,
+      skippedCoupons,
+      notApplicableCoupons,
+      newSessionKey,
+    } = await this.validateCoupons(cartObj, sessionKey);
 
     const actions: CartAction[] = [];
 
-    if (newSessionKey && valid) {
+    if (newSessionKey && valid && newSessionKey !== sessionKey) {
       actions.push(this.setSession(newSessionKey));
     }
 
-    actions.push(
-      ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
-    );
-
     if (valid) {
+      actions.push(
+        ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
+      );
+
       actions.push(
         ...(await this.addCustomLineItemsThatReflectDiscounts(
           applicableCoupons,
@@ -350,8 +366,21 @@ export class CartService {
       );
     }
 
+    if (!valid && notApplicableCoupons.length > 1) {
+      this.logger.warn({
+        msg: 'Validation invalid, some previous discounts  are invalid now. Remove discount from the cart as calculations will be different.',
+      });
+      actions.push(
+        ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
+      );
+    }
+
     actions.push(
-      this.updateDiscountsCodes(applicableCoupons, notApplicableCoupons),
+      this.updateDiscountsCodes(
+        applicableCoupons,
+        notApplicableCoupons,
+        skippedCoupons,
+      ),
     );
 
     this.logger.info(actions);
