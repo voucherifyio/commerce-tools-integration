@@ -76,7 +76,7 @@ export class TypesService {
     //   const newCouponType = this.createCouponType(couponType, 'discount_codes');
     //   return { success: true, type: newCouponType };
     // }
-    if(couponType) {
+    if (couponType) {
       const updatedCouponType = this.createCouponType(couponType);
       return { success: true, type: updatedCouponType };
     }

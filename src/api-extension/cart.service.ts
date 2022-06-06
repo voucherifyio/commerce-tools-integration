@@ -4,7 +4,10 @@ import { TypesService } from '../commerceTools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import { Cart } from '@commercetools/platform-sdk';
-import { StackableRedeemableResponse } from '@voucherify/sdk';
+import {
+  StackableRedeemableResponse,
+  ValidationSessionResponse,
+} from '@voucherify/sdk';
 
 type CartActionSetCustomType = {
   action: 'setCustomType';
@@ -125,7 +128,7 @@ export class CartService {
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
         coupons.map((coupon) => coupon.code),
         cartObj,
-        sessionKey
+        sessionKey,
       );
 
     const notApplicableCoupons = validatedCoupons.redeemables.filter(
@@ -143,10 +146,16 @@ export class CartService {
       customerId,
     });
 
-    return { 
-      applicableCoupons, 
+    console.log(validatedCoupons);
+
+    return {
+      valid: validatedCoupons.valid,
+      applicableCoupons,
       notApplicableCoupons,
-      newSessionKey: sessionKey ? null : validatedCoupons.session.key,
+      newSessionKey:
+        sessionKey && !validatedCoupons.valid
+          ? null
+          : validatedCoupons.session?.key,
     };
   }
 
@@ -309,7 +318,9 @@ export class CartService {
   }
 
   private getSession(cartObj: Cart): string | null {
-    return cartObj.custom?.fields?.session ? cartObj.custom?.fields?.session?.key : null
+    return cartObj.custom?.fields?.session
+      ? cartObj.custom?.fields?.session?.key
+      : null;
   }
 
   private setSession(sessionKey: string): CartActionSetCustomFieldWithSession {
@@ -317,7 +328,7 @@ export class CartService {
       action: 'setCustomField',
       name: 'session',
       value: sessionKey,
-    }
+    };
   }
 
   async checkCartAndMutate(cartObj: Cart): Promise<CartResponse> {
@@ -331,26 +342,28 @@ export class CartService {
 
     const sessionKey = this.getSession(cartObj);
 
-    const { applicableCoupons, notApplicableCoupons, newSessionKey } = await this.validateCoupons(cartObj, sessionKey);
+    const { valid, applicableCoupons, notApplicableCoupons, newSessionKey } =
+      await this.validateCoupons(cartObj, sessionKey);
 
-    
     const actions: CartAction[] = [];
 
-    if(newSessionKey) {
-      actions.push(this.setSession(newSessionKey))
+    if (newSessionKey && valid) {
+      actions.push(this.setSession(newSessionKey));
     }
 
     actions.push(
       ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
     );
 
-    actions.push(
-      ...(await this.addCustomLineItemsThatReflectDiscounts(
-        applicableCoupons,
-        cartObj,
-        taxCategory,
-      )),
-    );
+    if (valid) {
+      actions.push(
+        ...(await this.addCustomLineItemsThatReflectDiscounts(
+          applicableCoupons,
+          cartObj,
+          taxCategory,
+        )),
+      );
+    }
 
     actions.push(
       this.updateDiscountsCodes(applicableCoupons, notApplicableCoupons),

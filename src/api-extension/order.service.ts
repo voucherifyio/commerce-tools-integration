@@ -49,7 +49,10 @@ export class OrderService {
     const sessionKey = order.custom?.fields.session;
 
     const response =
-      await this.voucherifyConnectorService.reedemStackableVouchers(coupons, sessionKey);
+      await this.voucherifyConnectorService.reedemStackableVouchers(
+        coupons,
+        sessionKey,
+      );
     sendedCoupons.push(
       ...response.redemptions.map((redem) => {
         return {

@@ -62,7 +62,11 @@ export class VoucherifyConnectorService {
     });
   }
 
-  async validateStackableVouchersWithCTCart(coupons: string[], cart: Cart, sessionKey?: string | null) {
+  async validateStackableVouchersWithCTCart(
+    coupons: string[],
+    cart: Cart,
+    sessionKey?: string | null,
+  ) {
     return await this.getClient().validations.validateStackable({
       // options?: StackableOptions;
       redeemables: coupons.map((coupon) => {
@@ -72,8 +76,8 @@ export class VoucherifyConnectorService {
         };
       }),
       session: {
-        type: "LOCK",
-        ...(sessionKey) && {key: sessionKey},
+        type: 'LOCK',
+        ...(sessionKey && { key: sessionKey }),
       },
       order: {
         customer: {
