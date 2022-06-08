@@ -18,30 +18,21 @@ export class TypesService {
   );
 
   async findCouponType(): Promise<Type | null> {
-    return this.findType('couponCodes');
-  }
-  async findType(typeName: string): Promise<Type | null> {
     const ctClient = this.commerceToolsConnectorService.getClient();
-    const limit = 20;
-    let page = 0;
-    let allTypesCollected = false;
-
-    do {
-      const typesResult = await ctClient
-        .types()
-        .get({ queryArgs: { limit: limit, offset: page * limit } })
-        .execute();
-      const couponType = typesResult.body.results.find(
-        (type) => type.key === typeName,
-      );
-      if (couponType?.id) return couponType;
-      page++;
-      if (typesResult.body.total < page * limit) {
-        allTypesCollected = true;
-      }
-    } while (!allTypesCollected);
-
-    return null;
+    const response = await ctClient
+      .types()
+      .get({ queryArgs: { where: 'key="couponCodes"' } })
+      .execute();
+    if (
+      ![200, 201].includes(response.statusCode) ||
+      response.body.count !== 1
+    ) {
+      this.logger.info({ msg: 'Coupon type not found' });
+      return null;
+    }
+    const couponType = response.body.results[0];
+    this.logger.info({ msg: 'Coupon type found', id: couponType.id });
+    return couponType;
   }
 
   couponsFieldsDefinitions: FieldDefinition[] = [
