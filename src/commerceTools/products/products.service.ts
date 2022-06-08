@@ -1,12 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { Product } from '@commercetools/platform-sdk';
 import { CommerceToolsConnectorService } from '../commerce-tools-connector.service';
+import { JsonLogger, LoggerFactory } from 'json-logger-service';
 
 @Injectable()
 export class ProductsService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
   ) {}
+
+  private readonly logger: JsonLogger = LoggerFactory.createLogger(
+    ProductsService.name,
+  );
 
   async getListOfCountriesUsedInProducts(): Promise<string[]> {
     const countries: Set<string> = new Set();
@@ -27,7 +32,12 @@ export class ProductsService {
     for await (const product of this.getAllProducts()) {
       addValueToCountriesIfKeyFound(product, 'country');
     }
-    return [...countries];
+    const countiresArr = [...countries];
+    this.logger.info({
+      msg: 'All countries set for products',
+      countries: countiresArr.join(','),
+    });
+    return countiresArr;
   }
 
   async *getAllProducts(): AsyncGenerator<Product[]> {
@@ -46,13 +56,11 @@ export class ProductsService {
       if (productResult.body.total < page * limit) {
         allProductsCollected = true;
       }
-      console.log(
-        `${
-          productResult.body.total > page * limit
-            ? limit * page
-            : productResult.body.total
-        }/${productResult.body.total} products`,
-      );
+      this.logger.info({
+        msg: 'iterating over all products',
+        products: limit * page,
+        total: productResult.body.total,
+      });
     } while (!allProductsCollected);
   }
 }

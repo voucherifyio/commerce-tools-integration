@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { CommerceToolsConnectorService } from '../commerce-tools-connector.service';
 import { TaxCategory } from '@commercetools/platform-sdk';
 import { ProductsService } from '../products/products.service';
+import { JsonLogger, LoggerFactory } from 'json-logger-service';
+import { stat } from 'fs';
 
 @Injectable()
 export class TaxCategoriesService {
@@ -10,22 +12,46 @@ export class TaxCategoriesService {
     private readonly productsService: ProductsService,
   ) {}
 
-  async getAllTaxCategories(): Promise<TaxCategory[]> {
-    const ctClient = this.commerceToolsConnectorService.getClient();
-    const taxCategories = await ctClient
-      .taxCategories()
-      .get({ queryArgs: { limit: 100 } })
-      .execute();
-    return taxCategories.body.results;
-  }
+  private readonly logger: JsonLogger = LoggerFactory.createLogger(
+    TaxCategoriesService.name,
+  );
 
   async getCouponTaxCategory(): Promise<TaxCategory> {
-    const taxCategories = await this.getAllTaxCategories();
-    const couponTaxCategory = taxCategories.find(
-      (taxCategory) => taxCategory.name === 'coupon',
-    );
-    if (!couponTaxCategory) return null;
-    return couponTaxCategory;
+    const ctClient = this.commerceToolsConnectorService.getClient();
+    const { statusCode, body } = await ctClient
+      .taxCategories()
+      .get({ queryArgs: { where: 'name="coupon"' } })
+      .execute();
+
+    if ([200, 201].includes(statusCode) && body.count === 1) {
+      const taxCategory = body.results[0];
+      this.logger.info({
+        msg: 'Found existing coupon tax category',
+        taxCategoryId: taxCategory.id,
+      });
+      return taxCategory;
+    }
+
+    const response = await ctClient
+      .taxCategories()
+      .post({
+        body: {
+          name: 'coupon', //DO NOT change coupon name
+          rates: [],
+        },
+      })
+      .execute();
+
+    if (![200, 201].includes(response.statusCode)) {
+      return null;
+    }
+    const taxCategory = response.body;
+    this.logger.info({
+      msg: 'Created new tax category',
+      taxCategoryId: taxCategory.id,
+    });
+
+    return taxCategory;
   }
 
   async configureCouponTaxCategory(): Promise<{
@@ -33,22 +59,15 @@ export class TaxCategoriesService {
     couponTaxCategory: TaxCategory;
   }> {
     const ctClient = this.commerceToolsConnectorService.getClient();
-    const couponTaxCategoryResult = await this.getCouponTaxCategory();
-    let couponTaxCategory;
-    if (!couponTaxCategoryResult) {
-      couponTaxCategory = await ctClient
-        .taxCategories()
-        .post({
-          body: {
-            name: 'coupon', //DO NOT change coupon name
-            rates: [],
-          },
-        })
-        .execute();
-    } else {
-      couponTaxCategory = couponTaxCategoryResult;
-    }
+    const couponTaxCategory = await this.getCouponTaxCategory();
+
     const rates = couponTaxCategory?.rates;
+
+    this.logger.info({
+      msg: 'Configuring coupon tax categories',
+      couponTaxCategoryId: couponTaxCategory.id,
+      countryRates: rates.map((rate) => rate.country).join(', '),
+    });
 
     const listOfCountriesUsedInAllProducts =
       await this.productsService.getListOfCountriesUsedInProducts();
@@ -67,9 +86,17 @@ export class TaxCategoriesService {
       (rate) => !rates?.map((rate_) => rate_.country).includes(rate.country),
     );
 
-    const ratesToUpdate = desiredRates.filter((rate) =>
-      rates.map((rate_) => rate_.country).includes(rate.country),
-    );
+    const ratesToUpdate = desiredRates.filter((desiredRate) => {
+      const currentRate = rates.find(
+        (currentRate) => currentRate.country === desiredRate.country,
+      );
+      return (
+        currentRate &&
+        (currentRate.amount !== desiredRate.amount ||
+          currentRate.includedInPrice !== desiredRate.includedInPrice)
+      );
+    });
+
     const ratesToDelete = rates?.filter(
       (rate) =>
         !desiredRates.map((rate_) => rate_.country).includes(rate.country),
@@ -95,20 +122,39 @@ export class TaxCategoriesService {
       });
     }
 
-    if (actions.length) {
-      await ctClient
-        .taxCategories()
-        .withId({ ID: couponTaxCategory.id })
-        .post({
-          body: {
-            version: couponTaxCategory.version,
-            actions: [],
-          },
-        })
-        .execute();
+    this.logger.info({
+      msg: 'Calculated updates for countiries in coupon tax categories:',
+      actions,
+    });
+
+    if (!actions.length) {
+      return { success: true, couponTaxCategory };
     }
 
-    return { success: true, couponTaxCategory: couponTaxCategory };
+    const response = await ctClient
+      .taxCategories()
+      .withId({ ID: couponTaxCategory.id })
+      .post({
+        body: {
+          version: couponTaxCategory.version,
+          actions,
+        },
+      })
+      .execute();
+    const success = [200, 201].includes(response.statusCode);
+    if (success) {
+      this.logger.info({ msg: 'Updated countries for coupon tax category' });
+    } else {
+      const msg = 'Could not update countires for coupon tax category';
+      this.logger.error({
+        msg,
+      });
+    }
+
+    return {
+      success,
+      couponTaxCategory: await this.getCouponTaxCategory(),
+    };
   }
 
   async addCountryToCouponTaxCategory(
@@ -116,7 +162,7 @@ export class TaxCategoriesService {
     countryCode: string,
   ) {
     const ctClient = this.commerceToolsConnectorService.getClient();
-    return await ctClient
+    const response = await ctClient
       .taxCategories()
       .withId({ ID: taxCategory.id })
       .post({
@@ -136,5 +182,14 @@ export class TaxCategoriesService {
         },
       })
       .execute();
+    const sucess = [200, 201].includes(response.statusCode);
+    if (sucess) {
+      this.logger.info({ msg: 'Added country to coupon tax category' });
+    } else {
+      this.logger.error({
+        msg: 'Could not add country to coupon tax category',
+      });
+    }
+    return sucess;
   }
 }

@@ -6,6 +6,7 @@ import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import { Cart } from '@commercetools/platform-sdk';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
 import { desarializeCoupons, Coupon } from './coupon';
+
 type CartActionSetCustomType = {
   action: 'setCustomType';
   name: 'couponCodes';
@@ -208,7 +209,7 @@ export class CartService {
   private async removeOldCustomLineItemsWithDiscounts(cartObj: Cart) {
     // We recognize discount line items by name... wold be great to find more reliable way
     return (cartObj.customLineItems || [])
-      .filter((lineItem) => lineItem.name.en.startsWith('Coupon '))
+      .filter((lineItem) => lineItem.name.en.startsWith('Vouchers, '))
       .map(
         (lineItem) =>
           ({
@@ -234,49 +235,44 @@ export class CartService {
     const { amountOff, percentageOff, percentageDiscountValue } =
       await this.calculateDiscount(applicableCoupons, cartObj);
     const discountLines: CartActionAddCustomLineItem[] = [];
-    if (amountOff) {
+    if (amountOff || percentageOff) {
       const amountCouponsCodes = applicableCoupons
         .filter((coupon) => coupon.result.discount.type === 'AMOUNT')
-        .map((coupon) => coupon.id)
-        .join(', ');
+        .map((c) => `${c.id}`);
 
-      discountLines.push({
-        action: 'addCustomLineItem',
-        name: {
-          en: `Coupon ${amountOff / 100} ${currencyCode}`,
-        },
-        quantity: 1,
-        money: {
-          centAmount: -amountOff,
-          type: 'centPrecision',
-          currencyCode,
-        },
-        slug: amountCouponsCodes,
-        taxCategory: {
-          id: taxCategory.id,
-        },
-      });
-    }
-    if (percentageOff) {
       const percentageCouponsCodes = applicableCoupons
         .filter((coupon) => coupon.result.discount.type === 'PERCENT')
-        .map((coupon) => coupon.id)
-        .join(', ');
+        .map((c) => `${c.id}`);
+
+      const name = ['Vouchers'];
+      if (amountCouponsCodes) {
+        name.push(
+          `codes: ${amountCouponsCodes.join(', ')} results in ${
+            amountOff / 100
+          } ${currencyCode} discount`,
+        );
+      }
+
+      if (percentageDiscountValue) {
+        name.push(
+          `codes : ${percentageCouponsCodes.join(', ')} results in ${
+            percentageDiscountValue / 100
+          } ${currencyCode} discount`,
+        );
+      }
 
       discountLines.push({
         action: 'addCustomLineItem',
         name: {
-          en: `Coupon ${percentageOff}% => ${
-            percentageDiscountValue / 100
-          } ${currencyCode}`,
+          en: name.join(', '),
         },
         quantity: 1,
         money: {
-          centAmount: -percentageDiscountValue,
+          centAmount: -amountOff - percentageDiscountValue,
           type: 'centPrecision',
           currencyCode,
         },
-        slug: percentageCouponsCodes,
+        slug: [...amountCouponsCodes, ...percentageCouponsCodes].join(', '),
         taxCategory: {
           id: taxCategory.id,
         },

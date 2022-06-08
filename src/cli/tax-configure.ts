@@ -10,6 +10,7 @@ async function run() {
   const app = await NestFactory.createApplicationContext(AppModule);
   // Coupon types
   const typesService = app.get(TypesService);
+
   logger.log('Attempt to configure required coupon types in Commerce Tools');
   const { success: couponTypesCreated } =
     await typesService.configureCouponType();
