@@ -69,6 +69,8 @@ export class CartService {
     CartService.name,
   );
 
+  private couponCustomLineNamePrefix = 'Voucher, ';
+
   private async setCustomTypeForInitializedCart() {
     const couponType = await this.typesService.findCouponType();
     if (!couponType) {
@@ -183,7 +185,9 @@ export class CartService {
   private async removeOldCustomLineItemsWithDiscounts(cartObj: Cart) {
     // We recognize discount line items by name... wold be great to find more reliable way
     return (cartObj.customLineItems || [])
-      .filter((lineItem) => lineItem.name.en.startsWith('Vouchers, '))
+      .filter((lineItem) =>
+        lineItem.name.en.startsWith(this.couponCustomLineNamePrefix),
+      )
       .map(
         (lineItem) =>
           ({
@@ -206,7 +210,9 @@ export class CartService {
     discountLines.push({
       action: 'addCustomLineItem',
       name: {
-        en: `Coupon value => ${total_discount_amount}`,
+        en: `${this.couponCustomLineNamePrefix}coupon value => ${Math.round(
+          total_discount_amount / 100,
+        )}`,
       },
       quantity: 1,
       money: {
