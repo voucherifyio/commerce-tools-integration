@@ -5,7 +5,7 @@ import { Cart } from '@commercetools/platform-sdk';
 
 const getAmount = (item) => {
   try {
-    return item?.variant?.prices?.[0]?.value?.centAmount * item.quantity;
+    return item?.totalPrice?.centAmount;
   } catch (e) {
     return undefined;
   }
@@ -91,7 +91,8 @@ export class VoucherifyConnectorService {
         items: cart.lineItems.map((item) => {
           return {
             sku_id: item?.variant?.sku,
-            product_id: item?.id,
+            source_id: item?.variant?.sku,
+            product_id: item?.variant?.sku,
             related_object: 'sku',
             quantity: item?.quantity,
             price: item?.variant.prices?.[0]?.value?.centAmount,

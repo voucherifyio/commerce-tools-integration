@@ -130,6 +130,7 @@ export class CartService {
 
     const sessionKeyResponse = validatedCoupons.session?.key;
     const valid = validatedCoupons.valid;
+    const totalDiscountAmount = validatedCoupons.order?.total_discount_amount;
 
     this.logger.info({
       msg: 'Validated coupons',
@@ -141,6 +142,7 @@ export class CartService {
       customerId,
       sessionKey,
       sessionKeyResponse,
+      totalDiscountAmount,
     });
 
     return {
@@ -152,36 +154,8 @@ export class CartService {
           ? null
           : validatedCoupons.session?.key,
       valid,
+      totalDiscountAmount,
     };
-  }
-
-  private async calculateDiscount(
-    applicableCoupons: StackableRedeemableResponse[],
-    cartObj: Cart,
-  ) {
-    const { amountOff, percentageOff } = applicableCoupons.reduce(
-      (acc, redeemable) => {
-        return {
-          percentageOff:
-            redeemable.result.discount.type === 'PERCENT'
-              ? acc.percentageOff + redeemable.result.discount.percent_off
-              : acc.percentageOff,
-          amountOff:
-            redeemable.result.discount.type === 'AMOUNT'
-              ? acc.amountOff + redeemable.result.discount.amount_off
-              : acc.amountOff,
-        };
-      },
-      {
-        percentageOff: 0,
-        amountOff: 0,
-      },
-    );
-    const percentageDiscountValue = Math.round(
-      this.getTotalPriceWithoutaDiscount(cartObj) * (percentageOff / 100),
-    );
-
-    return { amountOff, percentageOff, percentageDiscountValue };
   }
 
   private async checkCouponTaxCategoryWithCountires(cartCountry?: string) {
@@ -218,70 +192,33 @@ export class CartService {
       );
   }
 
-  private getTotalPriceWithoutaDiscount(cartObj: Cart) {
-    return cartObj.lineItems.reduce((acc, lineItem) => {
-      const lineItemPrice = lineItem.totalPrice.centAmount || 0;
-      return acc + lineItemPrice;
-    }, 0);
-  }
-
-  private async addCustomLineItemsThatReflectDiscounts(
-    applicableCoupons: StackableRedeemableResponse[],
+  private addCustomLineItemWithDiscounts(
     cartObj: Cart,
+    total_discount_amount: number,
+    applicableCoupons,
     taxCategory,
-  ): Promise<CartActionAddCustomLineItem[]> {
+  ): CartActionAddCustomLineItem[] {
     const currencyCode = cartObj.totalPrice.currencyCode;
-    const { amountOff, percentageOff, percentageDiscountValue } =
-      await this.calculateDiscount(applicableCoupons, cartObj);
     const discountLines: CartActionAddCustomLineItem[] = [];
-    if (amountOff) {
-      const amountCouponsCodes = applicableCoupons
-        .filter((coupon) => coupon.result.discount.type === 'AMOUNT')
-        .map((coupon) => coupon.id)
-        .join(', ');
+    const couponCodes = applicableCoupons.map((coupon) => coupon.id).join(', ');
 
-      discountLines.push({
-        action: 'addCustomLineItem',
-        name: {
-          en: `Coupon ${amountOff / 100} ${currencyCode}`,
-        },
-        quantity: 1,
-        money: {
-          centAmount: -amountOff,
-          type: 'centPrecision',
-          currencyCode,
-        },
-        slug: amountCouponsCodes,
-        taxCategory: {
-          id: taxCategory.id,
-        },
-      });
-    }
-    if (percentageOff) {
-      const percentageCouponsCodes = applicableCoupons
-        .filter((coupon) => coupon.result.discount.type === 'PERCENT')
-        .map((coupon) => coupon.id)
-        .join(', ');
+    discountLines.push({
+      action: 'addCustomLineItem',
+      name: {
+        en: `Coupon value => ${total_discount_amount}`,
+      },
+      quantity: 1,
+      money: {
+        centAmount: -total_discount_amount,
+        type: 'centPrecision',
+        currencyCode,
+      },
+      slug: couponCodes,
+      taxCategory: {
+        id: taxCategory.id,
+      },
+    });
 
-      discountLines.push({
-        action: 'addCustomLineItem',
-        name: {
-          en: `Coupon ${percentageOff}% => ${
-            percentageDiscountValue / 100
-          } ${currencyCode}`,
-        },
-        quantity: 1,
-        money: {
-          centAmount: -percentageDiscountValue,
-          type: 'centPrecision',
-          currencyCode,
-        },
-        slug: percentageCouponsCodes,
-        taxCategory: {
-          id: taxCategory.id,
-        },
-      });
-    }
     return discountLines;
   }
 
@@ -345,6 +282,7 @@ export class CartService {
       skippedCoupons,
       notApplicableCoupons,
       newSessionKey,
+      totalDiscountAmount,
     } = await this.validateCoupons(cartObj, sessionKey);
 
     const actions: CartAction[] = [];
@@ -358,9 +296,10 @@ export class CartService {
         ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
       );
       actions.push(
-        ...(await this.addCustomLineItemsThatReflectDiscounts(
-          applicableCoupons,
+        ...(await this.addCustomLineItemWithDiscounts(
           cartObj,
+          totalDiscountAmount,
+          applicableCoupons,
           taxCategory,
         )),
       );

@@ -84,7 +84,7 @@ export class TypesService {
     return { success: true, type: newCouponType };
   }
 
-  async createCouponType(oldCouponType?: Type, newCouponField?: string) {
+  async createCouponType(oldCouponType?: Type) {
     const ctClient = this.commerceToolsConnectorService.getClient();
     if (oldCouponType) {
       const response = await ctClient
