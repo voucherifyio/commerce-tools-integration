@@ -31,7 +31,27 @@ graph LR;
 - Node.js >= 16.15.0
 - npm >= 8.5.5
 
-### Installatio steps:
+### Manual product migration from CommerceTools to Voucherify
+- Go to https://impex.commercetools.com/
+- Login with your merchant account credentials
+- Click `Commands` on a dropdown list button from the top bar and select `Product exporter`
+- Prepare template .csv file
+    - open Google Sheets, Microsoft Excel or similiar program
+    - create new file
+    - in first row insert following texts (each in new column): `name.en`, `sku`
+    - save file
+- Upload this file to Impex
+- Select `Fill all variant rows with product information` checkbox
+- Click run command and wait for a moment
+- After action was completed, click `Download file`
+- Go to https://www.voucherify.io/ and login
+- Select `Products` from the left panel
+- Click `Import` (top right corner)
+- Choose `Import Products` and `Import`
+- Upload file previously downloaded from Impex and click `Map fields`
+- Click `Import` and wait, after a moment migration should be completed successfully
+
+### Installation steps:
 
 - Install dependencies via CLI: `npm i`
 - Set environment variables with credentials to Voucherify and Commerce Tools APIs. For local development purposes, put configuration into `.env` file (please, look at `.env.example` configuration file template).
