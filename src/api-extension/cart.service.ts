@@ -6,6 +6,7 @@ import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import { Cart } from '@commercetools/platform-sdk';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
 import { desarializeCoupons, Coupon } from './coupon';
+
 type CartActionSetCustomType = {
   action: 'setCustomType';
   name: 'couponCodes';
@@ -182,7 +183,7 @@ export class CartService {
   private async removeOldCustomLineItemsWithDiscounts(cartObj: Cart) {
     // We recognize discount line items by name... wold be great to find more reliable way
     return (cartObj.customLineItems || [])
-      .filter((lineItem) => lineItem.name.en.startsWith('Coupon '))
+      .filter((lineItem) => lineItem.name.en.startsWith('Vouchers, '))
       .map(
         (lineItem) =>
           ({

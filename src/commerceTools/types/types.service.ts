@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { CommerceToolsConnectorService } from '../commerce-tools-connector.service';
-import { Type } from '@commercetools/platform-sdk';
+import {
+  Type,
+  FieldDefinition,
+  TypeUpdateAction,
+} from '@commercetools/platform-sdk';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
 
 @Injectable()
@@ -13,29 +17,10 @@ export class TypesService {
     TypesService.name,
   );
 
-  async getAllTypes(): Promise<Type[]> {
-    const ctClient = this.commerceToolsConnectorService.getClient();
-    const limit = 20;
-    const allTypes = [];
-    let page = 0;
-    let allTypesCollected = false;
-
-    do {
-      const typesResult = await ctClient
-        .types()
-        .get({ queryArgs: { limit: limit, offset: page * limit } })
-        .execute();
-      allTypes.push(...typesResult.body.results);
-      page++;
-      if (typesResult.body.total < page * limit) {
-        allTypesCollected = true;
-      }
-    } while (!allTypesCollected);
-
-    return allTypes.flat();
-  }
-
   async findCouponType(): Promise<Type | null> {
+    return this.findType('couponCodes');
+  }
+  async findType(typeName: string): Promise<Type | null> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 20;
     let page = 0;
@@ -47,7 +32,7 @@ export class TypesService {
         .get({ queryArgs: { limit: limit, offset: page * limit } })
         .execute();
       const couponType = typesResult.body.results.find(
-        (type) => type.key === 'couponCodes',
+        (type) => type.key === typeName,
       );
       if (couponType?.id) return couponType;
       page++;
@@ -59,131 +44,151 @@ export class TypesService {
     return null;
   }
 
-  async configureCouponType(): Promise<{ success: boolean; type: any }> {
+  couponsFieldsDefinitions: FieldDefinition[] = [
+    {
+      name: 'discount_codes',
+      label: {
+        en: 'discount_codes',
+      },
+      required: false,
+      type: {
+        name: 'Set',
+        elementType: { name: 'String' },
+      },
+      inputHint: 'SingleLine',
+    },
+    {
+      name: 'used_codes',
+      label: {
+        en: 'used_codes',
+      },
+      required: false,
+      type: {
+        name: 'Set',
+        elementType: { name: 'String' },
+      },
+      inputHint: 'SingleLine',
+    },
+    {
+      name: 'session',
+      label: {
+        en: 'session',
+      },
+      required: false,
+      type: {
+        name: 'String',
+      },
+      inputHint: 'SingleLine',
+    },
+  ];
+
+  async configureCouponType(): Promise<{ success: boolean; type: Type }> {
+    this.logger.info({
+      msg: 'Attempt to configure custom field type for order that keeps information about coupon codes.',
+    });
     const couponType = await this.findCouponType();
-    // if (couponType?.fieldDefinitions.length === 2) {
-    //   return { success: true, type: couponType };
-    // } else if (
-    //   couponType?.fieldDefinitions.length === 1 &&
-    //   couponType?.fieldDefinitions[0].name === 'discount_codes'
-    // ) {
-    //   const newCouponType = this.createCouponType(couponType, 'used_codes');
-    //   return { success: true, type: newCouponType };
-    // } else if (
-    //   couponType?.fieldDefinitions.length === 1 &&
-    //   couponType?.fieldDefinitions[0].name === 'used_codes'
-    // ) {
-    //   const newCouponType = this.createCouponType(couponType, 'discount_codes');
-    //   return { success: true, type: newCouponType };
-    // }
-    if (couponType) {
-      const updatedCouponType = this.createCouponType(couponType);
-      return { success: true, type: updatedCouponType };
+    if (!couponType) {
+      this.logger.info({
+        msg: 'No custom field type, creating new one from scratch.',
+      });
+      return { success: true, type: await this.createCouponType() };
     }
-    const newCouponType = this.createCouponType();
-    return { success: true, type: newCouponType };
+    const missingFields = this.couponsFieldsDefinitions.filter(
+      (fieldDefinition) =>
+        !couponType.fieldDefinitions.some(
+          (field) => field.name === fieldDefinition.name,
+        ),
+    );
+
+    if (missingFields.length) {
+      this.logger.info({
+        msg: 'We have custom couponCodes type registered but fields are outdated. We are going to update custom field type',
+        missingFields,
+      });
+      const actions: TypeUpdateAction[] = missingFields.map(
+        (fieldDefinition) => ({
+          action: 'addFieldDefinition',
+          fieldDefinition,
+        }),
+      );
+      return {
+        success: true,
+        type: await this.updateCouponType(couponType, actions),
+      };
+    }
+    this.logger.info({
+      msg: 'Custom field type and fields are up to date.',
+    });
+
+    return {
+      success: true,
+      type: couponType,
+    };
   }
 
-  async createCouponType(oldCouponType?: Type) {
+  async createCouponType() {
     const ctClient = this.commerceToolsConnectorService.getClient();
-    if (oldCouponType) {
-      const response = await ctClient
-        .types()
-        .withId({ ID: oldCouponType.id })
-        .post({
-          body: {
-            version: oldCouponType.version,
-            actions: [
-              {
-                action: 'addFieldDefinition',
-                fieldDefinition: {
-                  name: 'session',
-                  label: {
-                    en: 'session',
-                  },
-                  required: false,
-                  type: {
-                    name: 'String',
-                  },
-                  inputHint: 'SingleLine',
-                },
-              },
-            ],
-          },
-        })
-        .execute();
 
-      if (response.statusCode === 201) {
-        return response.body;
-      }
-      this.logger.error({
-        msg: 'couponCodes type cannot be updated',
-        statusCode: response.statusCode,
-        body: response.body,
-      });
-      throw new Error('couponCodes type cannot be updated');
-    } else {
-      const response = await ctClient
-        .types()
-        .post({
-          body: {
-            key: 'couponCodes', //DO NOT CHANGE the key
-            name: {
-              en: 'couponCodes',
-            },
-            description: {
-              en: 'couponCodes',
-            },
-            resourceTypeIds: ['order'],
-            fieldDefinitions: [
-              {
-                name: 'discount_codes',
-                label: {
-                  en: 'discount_codes',
-                },
-                required: false,
-                type: {
-                  name: 'Set',
-                  elementType: { name: 'String' },
-                },
-                inputHint: 'SingleLine',
-              },
-              {
-                name: 'used_codes',
-                label: {
-                  en: 'used_codes',
-                },
-                required: false,
-                type: {
-                  name: 'Set',
-                  elementType: { name: 'String' },
-                },
-                inputHint: 'SingleLine',
-              },
-              {
-                name: 'session',
-                label: {
-                  en: 'session',
-                },
-                required: false,
-                type: {
-                  name: 'String',
-                },
-                inputHint: 'SingleLine',
-              },
-            ],
+    const response = await ctClient
+      .types()
+      .post({
+        body: {
+          key: 'couponCodes', //DO NOT CHANGE the key
+          name: {
+            en: 'couponCodes',
           },
-        })
-        .execute();
-      if (response.statusCode === 201 || response.statusCode === 200) {
-        return response.body;
-      }
-      this.logger.error({
-        msg: 'couponCodes type cannot be created',
-        statusCode: response.statusCode,
-        body: response.body,
+          description: {
+            en: 'couponCodes',
+          },
+          resourceTypeIds: ['order'],
+          fieldDefinitions: this.couponsFieldsDefinitions,
+        },
+      })
+      .execute();
+    if ([200, 201].includes(response.statusCode)) {
+      this.logger.info({
+        msg: 'Type: "couponCodes" created',
+        type: response.body,
       });
-      throw new Error('couponCodes type cannot be created');
+      return response.body;
     }
+    const errorMsg = 'Type: "couponCodes" could not be created';
+    this.logger.error({
+      msg: errorMsg,
+      statusCode: response.statusCode,
+      body: response.body,
+    });
+    throw new Error(errorMsg);
+  }
+
+  async updateCouponType(oldCouponType: Type, actions: TypeUpdateAction[]) {
+    const ctClient = this.commerceToolsConnectorService.getClient();
+
+    const response = await ctClient
+      .types()
+      .withId({ ID: oldCouponType.id })
+      .post({
+        body: {
+          version: oldCouponType.version,
+          actions,
+        },
+      })
+      .execute();
+
+    if ([200, 201].includes(response.statusCode)) {
+      this.logger.info({
+        msg: 'Type: "couponCodes" updated',
+        type: response.body,
+      });
+      return response.body;
+    }
+    const errorMsg = 'Type: "couponCodes" could not be updated';
+
+    this.logger.error({
+      msg: errorMsg,
+      statusCode: response.statusCode,
+      body: response.body,
+    });
+    throw new Error(errorMsg);
   }
 }
