@@ -4,7 +4,10 @@ import { TypesService } from '../commerceTools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import { Cart } from '@commercetools/platform-sdk';
-import { StackableRedeemableResponse } from '@voucherify/sdk';
+import {
+  StackableRedeemableResponse,
+  ValidationValidateStackableResponse,
+} from '@voucherify/sdk';
 import { desarializeCoupons, Coupon } from './coupon';
 
 type CartActionSetCustomType = {
@@ -49,12 +52,29 @@ type CartActionAddCustomLineItem = {
   };
 };
 
+type CartActionAddLineItem = {
+  action: 'addLineItem';
+  sku: string;
+  quantity: number;
+  externalTotalPrice: {
+    price: {
+      centAmount: number;
+      currencyCode: string;
+    };
+    totalPrice: {
+      centAmount: number;
+      currencyCode: string;
+    };
+  };
+};
+
 type CartAction =
   | CartActionSetCustomType
   | CartActionSetCustomFieldWithCoupons
   | CartActionSetCustomFieldWithSession
   | CartActionRemoveCustomLineItem
-  | CartActionAddCustomLineItem;
+  | CartActionAddCustomLineItem
+  | CartActionAddLineItem;
 
 type CartResponse = { status: boolean; actions: CartAction[] };
 
@@ -94,6 +114,21 @@ export class CartService {
     };
   }
 
+  private checkForUnitTypeDiscounts(
+    response: ValidationValidateStackableResponse,
+  ) {
+    return response.redeemables
+      ?.filter((code) => code.result?.discount?.type === 'UNIT')
+      .map((unitTypeCode) => {
+        return {
+          effect: unitTypeCode.result?.discount?.effect,
+          quantity: unitTypeCode.result?.discount?.unit_off,
+          product: unitTypeCode.result?.discount?.product?.source_id,
+          units: unitTypeCode.result?.discount?.units,
+        };
+      });
+  }
+
   private async validateCoupons(cartObj: Cart, sessionKey?: string | null) {
     const { id, customerId } = cartObj;
     const coupons: Coupon[] = (cartObj.custom?.fields?.discount_codes ?? [])
@@ -105,6 +140,7 @@ export class CartService {
         applicableCoupons: [],
         notApplicableCoupons: [],
         skippedCoupons: [],
+        productsToAdd: [],
       };
     }
     this.logger.info({
@@ -135,6 +171,8 @@ export class CartService {
     const valid = validatedCoupons.valid;
     const totalDiscountAmount = validatedCoupons.order?.total_discount_amount;
 
+    const productsToAdd = this.checkForUnitTypeDiscounts(validatedCoupons);
+
     this.logger.info({
       msg: 'Validated coupons',
       applicableCoupons,
@@ -146,6 +184,7 @@ export class CartService {
       sessionKey,
       sessionKeyResponse,
       totalDiscountAmount,
+      productsToAdd,
     });
 
     return {
@@ -158,6 +197,7 @@ export class CartService {
           : validatedCoupons.session?.key,
       valid,
       totalDiscountAmount,
+      productsToAdd,
     };
   }
 
@@ -229,6 +269,37 @@ export class CartService {
     return discountLines;
   }
 
+  private addFreeLineItems(
+    cartObj: Cart,
+    productsToAdd,
+  ): CartActionAddLineItem[] {
+    const currencyCode = cartObj.totalPrice.currencyCode;
+    const lineItems: CartActionAddLineItem[] = [];
+    lineItems.push(
+      ...productsToAdd
+        .filter((product) => product.effect === 'ADD_NEW_ITEMS')
+        .map((product) => {
+          return {
+            action: 'addLineItem',
+            sku: product.product,
+            quantity: product.quantity,
+            externalTotalPrice: {
+              price: {
+                centAmount: 0,
+                currencyCode: currencyCode,
+              },
+              totalPrice: {
+                centAmount: 0,
+                currencyCode: currencyCode,
+              },
+            },
+          };
+        }),
+    );
+
+    return lineItems;
+  }
+
   private updateDiscountsCodes(
     applicableCoupons: StackableRedeemableResponse[],
     notApplicableCoupons: StackableRedeemableResponse[],
@@ -290,6 +361,7 @@ export class CartService {
       notApplicableCoupons,
       newSessionKey,
       totalDiscountAmount,
+      productsToAdd,
     } = await this.validateCoupons(cartObj, sessionKey);
 
     const actions: CartAction[] = [];
@@ -311,6 +383,8 @@ export class CartService {
         )),
       );
     }
+
+    actions.push(...this.addFreeLineItems(cartObj, productsToAdd));
 
     actions.push(
       this.updateDiscountsCodes(

@@ -3,7 +3,6 @@ import { CommerceToolsConnectorService } from '../commerce-tools-connector.servi
 import { TaxCategory } from '@commercetools/platform-sdk';
 import { ProductsService } from '../products/products.service';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
-import { stat } from 'fs';
 
 @Injectable()
 export class TaxCategoriesService {
