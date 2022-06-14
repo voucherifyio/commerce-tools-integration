@@ -4,7 +4,7 @@ import { TypesService } from '../commerceTools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import { Cart } from '@commercetools/platform-sdk';
-import { Orders, StackableRedeemableResponse } from '@voucherify/sdk';
+import { StackableRedeemableResponse } from '@voucherify/sdk';
 import { desarializeCoupons, Coupon } from './coupon';
 
 type CartActionSetCustomType = {
@@ -131,10 +131,12 @@ export class CartService {
           );
 
           return {
+            code: unitTypeCode.id,
             effect: unitTypeCode.result?.discount?.effect,
             quantity: unitTypeCode.result?.discount?.unit_off,
             product: unitTypeCode.result?.discount?.product?.source_id,
-            initial_quantity: freeItem?.initial_quantity
+            initial_quantity: freeItem?.initial_quantity,
+            applied_discount_amount: freeItem?.applied_discount_amount,
           };
         }
         if (unitTypeCode.result?.discount?.effect === 'ADD_MISSING_ITEMS') {
@@ -300,30 +302,43 @@ export class CartService {
     lineItems.push(
       ...productsToAdd
         .filter((product) => product.effect === 'ADD_NEW_ITEMS')
-        .filter(
-          (product) =>
-            !cartObj.lineItems.find(
-              (item) =>
-                item.variant?.sku === product.product &&
-                item.quantity === product.quantity &&
-                item.totalPrice.centAmount === 0,
+        .filter((product) => {
+          return !cartObj.lineItems.find((item) =>
+            item.custom?.fields.applied_codes.map(
+              (applied) => JSON.parse(applied).code === product.code,
             ),
-        )
+          );
+        })
         .map((product) => {
           return {
             action: 'addLineItem',
             sku: product.product,
             quantity: product.quantity,
-            ...(!product.initial_quantity && {externalTotalPrice: {
-              price: {
-                centAmount: 0,
-                currencyCode: currencyCode,
+            custom: {
+              typeKey: 'lineItemCodesType',
+              fields: {
+                applied_codes: [
+                  JSON.stringify({
+                    code: product.code,
+                    type: 'UNIT',
+                    effect: 'ADD_NEW_ITEMS',
+                    quantity: product.quantity,
+                  }),
+                ],
               },
-              totalPrice: {
-                centAmount: 0,
-                currencyCode: currencyCode,
+            },
+            ...(!product.applied_discount_amount && {
+              externalTotalPrice: {
+                price: {
+                  centAmount: 0,
+                  currencyCode: currencyCode,
+                },
+                totalPrice: {
+                  centAmount: 0,
+                  currencyCode: currencyCode,
+                },
               },
-            }})
+            }),
           };
         }),
     );
