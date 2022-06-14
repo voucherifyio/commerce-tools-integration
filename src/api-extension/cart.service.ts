@@ -4,10 +4,7 @@ import { TypesService } from '../commerceTools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import { Cart } from '@commercetools/platform-sdk';
-import {
-  StackableRedeemableResponse,
-  ValidationValidateStackableResponse,
-} from '@voucherify/sdk';
+import { Orders, StackableRedeemableResponse } from '@voucherify/sdk';
 import { desarializeCoupons, Coupon } from './coupon';
 
 type CartActionSetCustomType = {
@@ -56,7 +53,7 @@ type CartActionAddLineItem = {
   action: 'addLineItem';
   sku: string;
   quantity: number;
-  externalTotalPrice: {
+  externalTotalPrice?: {
     price: {
       centAmount: number;
       currencyCode: string;
@@ -68,13 +65,21 @@ type CartActionAddLineItem = {
   };
 };
 
+type CartActionRemoveLineItem = {
+  action: 'removeLineItem';
+  lineItemId: string;
+  quantity: number;
+  // externalTotalPrice: ,
+};
+
 type CartAction =
   | CartActionSetCustomType
   | CartActionSetCustomFieldWithCoupons
   | CartActionSetCustomFieldWithSession
   | CartActionRemoveCustomLineItem
   | CartActionAddCustomLineItem
-  | CartActionAddLineItem;
+  | CartActionAddLineItem
+  | CartActionRemoveLineItem;
 
 type CartResponse = { status: boolean; actions: CartAction[] };
 
@@ -114,18 +119,38 @@ export class CartService {
     };
   }
 
-  private checkForUnitTypeDiscounts(
-    response: ValidationValidateStackableResponse,
-  ) {
+  private checkForUnitTypeDiscounts(response) {
     return response.redeemables
       ?.filter((code) => code.result?.discount?.type === 'UNIT')
       .map((unitTypeCode) => {
-        return {
-          effect: unitTypeCode.result?.discount?.effect,
-          quantity: unitTypeCode.result?.discount?.unit_off,
-          product: unitTypeCode.result?.discount?.product?.source_id,
-          units: unitTypeCode.result?.discount?.units,
-        };
+        if (unitTypeCode.result?.discount?.effect === 'ADD_NEW_ITEMS') {
+          const freeItem = unitTypeCode.order?.items?.find(
+            (item) =>
+              item.product?.source_id ===
+              unitTypeCode.result?.discount?.product?.source_id,
+          );
+
+          return {
+            effect: unitTypeCode.result?.discount?.effect,
+            quantity: unitTypeCode.result?.discount?.unit_off,
+            product: unitTypeCode.result?.discount?.product?.source_id,
+            initial_quantity: freeItem?.initial_quantity
+          };
+        }
+        if (unitTypeCode.result?.discount?.effect === 'ADD_MISSING_ITEMS') {
+          const freeItem = unitTypeCode.order?.items?.find(
+            (item) =>
+              item.product?.source_id ===
+              unitTypeCode.result?.discount?.product?.source_id,
+          );
+
+          return {
+            effect: unitTypeCode.result?.discount?.effect,
+            discount_quantity: freeItem.discount_quantity,
+            initial_quantity: freeItem.initial_quantity,
+            product: unitTypeCode.result?.discount?.product?.source_id,
+          };
+        }
       });
   }
 
@@ -269,21 +294,27 @@ export class CartService {
     return discountLines;
   }
 
-  private addFreeLineItems(
-    cartObj: Cart,
-    productsToAdd,
-  ): CartActionAddLineItem[] {
+  private addFreeLineItems(cartObj: Cart, productsToAdd): CartAction[] {
     const currencyCode = cartObj.totalPrice.currencyCode;
-    const lineItems: CartActionAddLineItem[] = [];
+    const lineItems: CartAction[] = [];
     lineItems.push(
       ...productsToAdd
         .filter((product) => product.effect === 'ADD_NEW_ITEMS')
+        .filter(
+          (product) =>
+            !cartObj.lineItems.find(
+              (item) =>
+                item.variant?.sku === product.product &&
+                item.quantity === product.quantity &&
+                item.totalPrice.centAmount === 0,
+            ),
+        )
         .map((product) => {
           return {
             action: 'addLineItem',
             sku: product.product,
             quantity: product.quantity,
-            externalTotalPrice: {
+            ...(!product.initial_quantity && {externalTotalPrice: {
               price: {
                 centAmount: 0,
                 currencyCode: currencyCode,
@@ -292,7 +323,22 @@ export class CartService {
                 centAmount: 0,
                 currencyCode: currencyCode,
               },
-            },
+            }})
+          };
+        }),
+    );
+
+    lineItems.push(
+      ...productsToAdd
+        .filter((product) => product.effect === 'ADD_MISSING_ITEMS')
+        .filter(
+          (product) => product.discount_quantity > product.initial_quantity,
+        )
+        .map((product) => {
+          return {
+            action: 'addLineItem',
+            sku: product.product,
+            quantity: product.discount_quantity - product.initial_quantity,
           };
         }),
     );
