@@ -97,7 +97,7 @@ export class CartService {
   private couponCustomLineNamePrefix = 'Voucher, ';
 
   private async setCustomTypeForInitializedCart() {
-    const couponType = await this.typesService.findCouponType();
+    const couponType = await this.typesService.findCouponType('couponCodes');
     if (!couponType) {
       const msg = 'CouponType not found';
       this.logger.error({

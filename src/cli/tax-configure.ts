@@ -13,7 +13,7 @@ async function run() {
 
   logger.log('Attempt to configure required coupon types in Commerce Tools');
   const { success: couponTypesCreated } =
-    await typesService.configureCouponType();
+    await typesService.configureCouponTypes();
   if (couponTypesCreated) {
     logger.log('Coupon types configured');
   } else {
