@@ -52,6 +52,7 @@ export class OrderService {
       await this.voucherifyConnectorService.reedemStackableVouchers(
         coupons.map((coupon) => coupon.code),
         sessionKey,
+        order,
       );
     sendedCoupons.push(
       ...response.redemptions.map((redem) => {
