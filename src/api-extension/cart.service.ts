@@ -69,7 +69,6 @@ type CartActionRemoveLineItem = {
   action: 'removeLineItem';
   lineItemId: string;
   quantity: number;
-  // externalTotalPrice: ,
 };
 
 type CartAction =
@@ -119,41 +118,86 @@ export class CartService {
     };
   }
 
+  private parseAddNewItemsCoupon(couponInfo) {
+    const freeItem = couponInfo.order?.items?.find(
+      (item) =>
+        item.product?.source_id ===
+        couponInfo.result?.discount?.product?.source_id,
+    );
+
+    return {
+      code: couponInfo.id,
+      effect: couponInfo.result?.discount?.effect,
+      quantity: couponInfo.result?.discount?.unit_off,
+      product: couponInfo.result?.discount?.product?.source_id,
+      initial_quantity: freeItem?.initial_quantity,
+      applied_discount_amount: freeItem?.applied_discount_amount,
+    };
+  }
+
+  private parseAddMissingItemsCoupon(couponInfo) {
+    const freeItem = couponInfo.order?.items?.find(
+      (item) =>
+        item.product?.source_id ===
+        couponInfo.result?.discount?.product?.source_id,
+    );
+
+    return {
+      code: couponInfo.id,
+      effect: couponInfo.result?.discount?.effect,
+      discount_quantity: freeItem.discount_quantity,
+      initial_quantity: freeItem.initial_quantity,
+      product: couponInfo.result?.discount?.product?.source_id,
+    };
+  }
+
   private checkForUnitTypeDiscounts(response) {
-    return response.redeemables
+    const productsToAdd = [];
+    response.redeemables
       ?.filter((code) => code.result?.discount?.type === 'UNIT')
-      .map((unitTypeCode) => {
+      .forEach((unitTypeCode) => {
         if (unitTypeCode.result?.discount?.effect === 'ADD_NEW_ITEMS') {
-          const freeItem = unitTypeCode.order?.items?.find(
-            (item) =>
-              item.product?.source_id ===
-              unitTypeCode.result?.discount?.product?.source_id,
-          );
-
-          return {
-            code: unitTypeCode.id,
-            effect: unitTypeCode.result?.discount?.effect,
-            quantity: unitTypeCode.result?.discount?.unit_off,
-            product: unitTypeCode.result?.discount?.product?.source_id,
-            initial_quantity: freeItem?.initial_quantity,
-            applied_discount_amount: freeItem?.applied_discount_amount,
-          };
+          productsToAdd.push(this.parseAddNewItemsCoupon(unitTypeCode));
         }
-        if (unitTypeCode.result?.discount?.effect === 'ADD_MISSING_ITEMS') {
-          const freeItem = unitTypeCode.order?.items?.find(
-            (item) =>
-              item.product?.source_id ===
-              unitTypeCode.result?.discount?.product?.source_id,
-          );
 
-          return {
-            effect: unitTypeCode.result?.discount?.effect,
-            discount_quantity: freeItem.discount_quantity,
-            initial_quantity: freeItem.initial_quantity,
-            product: unitTypeCode.result?.discount?.product?.source_id,
-          };
+        if (unitTypeCode.result?.discount?.effect === 'ADD_MISSING_ITEMS') {
+          productsToAdd.push(this.parseAddMissingItemsCoupon(unitTypeCode));
+        }
+
+        if (unitTypeCode.result?.discount?.effect === 'ADD_MANY_ITEMS') {
+          unitTypeCode.result.discount.units.forEach((product) => {
+            if (product.effect === 'ADD_NEW_ITEMS') {
+              const freeItem = unitTypeCode.order?.items?.find(
+                (item) => item.product.source_id === product.product.source_id,
+              );
+
+              productsToAdd.push({
+                code: unitTypeCode.id,
+                effect: product.effect,
+                quantity: product.unit_off,
+                product: product.product.source_id,
+                initial_quantity: freeItem.initial_quantity,
+                applied_discount_amount: freeItem.applied_discount_amount,
+              });
+            }
+
+            if (product.effect === 'ADD_MISSING_ITEMS') {
+              const freeItem = unitTypeCode.order?.items?.find(
+                (item) => item.product.source_id === product.product.source_id,
+              );
+
+              productsToAdd.push({
+                code: unitTypeCode.id,
+                effect: 'ADD_MANY_MISSING_ITEMS', //product.effect,
+                discount_quantity: freeItem.discount_quantity,
+                initial_quantity: freeItem.initial_quantity,
+                product: product.product.source_id,
+              });
+            }
+          });
         }
       });
+    return productsToAdd;
   }
 
   private async validateCoupons(cartObj: Cart, sessionKey?: string | null) {
@@ -299,6 +343,7 @@ export class CartService {
   private addFreeLineItems(cartObj: Cart, productsToAdd): CartAction[] {
     const currencyCode = cartObj.totalPrice.currencyCode;
     const lineItems: CartAction[] = [];
+
     lineItems.push(
       ...productsToAdd
         .filter((product) => product.effect === 'ADD_NEW_ITEMS')
@@ -321,7 +366,7 @@ export class CartService {
                   JSON.stringify({
                     code: product.code,
                     type: 'UNIT',
-                    effect: 'ADD_NEW_ITEMS',
+                    effect: product.effect,
                     quantity: product.quantity,
                   }),
                 ],
@@ -354,11 +399,117 @@ export class CartService {
             action: 'addLineItem',
             sku: product.product,
             quantity: product.discount_quantity - product.initial_quantity,
+            custom: {
+              typeKey: 'lineItemCodesType',
+              fields: {
+                applied_codes: [
+                  JSON.stringify({
+                    code: product.code,
+                    type: 'UNIT',
+                    effect: product.effect,
+                    quantity: product.quantity,
+                  }),
+                ],
+              },
+            },
           };
         }),
     );
 
+    lineItems.push(
+      ...productsToAdd
+        .filter((product) => product.effect === 'ADD_MANY_MISSING_ITEMS')
+        .filter(
+          (product) => product.discount_quantity > product.initial_quantity,
+        )
+        .map((product) => {
+          if (product.initial_quantity === 0) {
+            return {
+              action: 'addLineItem',
+              sku: product.product,
+              quantity: product.discount_quantity - product.initial_quantity,
+              externalTotalPrice: {
+                price: {
+                  centAmount: 0,
+                  currencyCode: currencyCode,
+                },
+                totalPrice: {
+                  centAmount: 0,
+                  currencyCode: currencyCode,
+                },
+              },
+              custom: {
+                typeKey: 'lineItemCodesType',
+                fields: {
+                  applied_codes: [
+                    JSON.stringify({
+                      code: product.code,
+                      type: 'UNIT',
+                      effect: 'ADD_MANY_MISSING_ITEMS', //product.effect,
+                      quantity:
+                        product.discount_quantity - product.initial_quantity,
+                    }),
+                  ],
+                },
+              },
+            };
+          } else {
+            return {
+              action: 'addLineItem',
+              sku: product.product,
+              quantity: product.discount_quantity - product.initial_quantity,
+              custom: {
+                typeKey: 'lineItemCodesType',
+                fields: {
+                  applied_codes: [
+                    JSON.stringify({
+                      code: product.code,
+                      type: 'UNIT',
+                      effect: 'ADD_MANY_MISSING_ITEMS', //product.effect,
+                      quantity: product.quantity,
+                    }),
+                  ],
+                },
+              },
+            };
+          }
+        }),
+    );
+
     return lineItems;
+  }
+
+  private removeFreeLineItemsIfCouponNoLongerIsApplied(
+    cartObj: Cart,
+    unitCodes,
+  ): CartAction[] {
+    return cartObj.lineItems
+      .filter((item) => item.custom?.fields?.applied_codes)
+      .filter((item) => {
+        const isCouponWhichNoLongerExist = item.custom?.fields?.applied_codes
+          .map((code) => JSON.parse(code))
+          .filter((code) => code.type === 'UNIT')
+          .find((code) =>
+            unitCodes.map((unitCode) => unitCode.code).includes(code.code),
+          );
+
+        return !isCouponWhichNoLongerExist;
+      })
+      .map((item) => {
+        const quantityFromCode = item.custom?.fields.applied_codes
+          .map((code) => JSON.parse(code))
+          .filter((code) => code.type === 'UNIT')
+          .find(
+            (code) =>
+              !unitCodes.map((unitCode) => unitCode.code).includes(code.code),
+          ).quantity;
+
+        return {
+          action: 'removeLineItem',
+          lineItemId: item.id,
+          quantity: quantityFromCode,
+        };
+      });
   }
 
   private updateDiscountsCodes(
@@ -446,6 +597,12 @@ export class CartService {
     }
 
     actions.push(...this.addFreeLineItems(cartObj, productsToAdd));
+    actions.push(
+      ...this.removeFreeLineItemsIfCouponNoLongerIsApplied(
+        cartObj,
+        productsToAdd,
+      ),
+    );
 
     actions.push(
       this.updateDiscountsCodes(
