@@ -129,7 +129,7 @@ export class CartService {
       code: couponInfo.id,
       effect: couponInfo.result?.discount?.effect,
       quantity: couponInfo.result?.discount?.unit_off,
-      product: couponInfo.result?.discount?.product?.source_id,
+      product: couponInfo.result?.discount.sku.source_id,
       initial_quantity: freeItem?.initial_quantity,
       applied_discount_amount: freeItem?.applied_discount_amount,
     };
@@ -147,7 +147,7 @@ export class CartService {
       effect: couponInfo.result?.discount?.effect,
       discount_quantity: freeItem.discount_quantity,
       initial_quantity: freeItem.initial_quantity,
-      product: couponInfo.result?.discount?.product?.source_id,
+      product: couponInfo.result?.discount.sku.source_id,
     };
   }
 
@@ -156,6 +156,7 @@ export class CartService {
     response.redeemables
       ?.filter((code) => code.result?.discount?.type === 'UNIT')
       .forEach((unitTypeCode) => {
+        console.log(unitTypeCode.result.discount.units);
         if (unitTypeCode.result?.discount?.effect === 'ADD_NEW_ITEMS') {
           productsToAdd.push(this.parseAddNewItemsCoupon(unitTypeCode));
         }
@@ -175,7 +176,7 @@ export class CartService {
                 code: unitTypeCode.id,
                 effect: product.effect,
                 quantity: product.unit_off,
-                product: product.product.source_id,
+                product: product.sku.source_id,
                 initial_quantity: freeItem.initial_quantity,
                 applied_discount_amount: freeItem.applied_discount_amount,
               });
@@ -188,10 +189,10 @@ export class CartService {
 
               productsToAdd.push({
                 code: unitTypeCode.id,
-                effect: 'ADD_MANY_MISSING_ITEMS', //product.effect,
+                effect: 'ADD_MANY_MISSING_ITEMS',
                 discount_quantity: freeItem.discount_quantity,
                 initial_quantity: freeItem.initial_quantity,
-                product: product.product.source_id,
+                product: product.sku.source_id,
               });
             }
           });
@@ -445,7 +446,7 @@ export class CartService {
                     JSON.stringify({
                       code: product.code,
                       type: 'UNIT',
-                      effect: 'ADD_MANY_MISSING_ITEMS', //product.effect,
+                      effect: 'ADD_MANY_MISSING_ITEMS',
                       quantity:
                         product.discount_quantity - product.initial_quantity,
                     }),
@@ -465,7 +466,7 @@ export class CartService {
                     JSON.stringify({
                       code: product.code,
                       type: 'UNIT',
-                      effect: 'ADD_MANY_MISSING_ITEMS', //product.effect,
+                      effect: 'ADD_MANY_MISSING_ITEMS',
                       quantity: product.quantity,
                     }),
                   ],
