@@ -319,7 +319,7 @@ export class CartService {
       },
       quantity: 1,
       money: {
-        centAmount: -total_discount_amount,
+        centAmount: total_discount_amount ? -total_discount_amount : 0,
         type: 'centPrecision',
         currencyCode,
       },
@@ -339,11 +339,20 @@ export class CartService {
       ...productsToAdd
         .filter((product) => product.effect === 'ADD_NEW_ITEMS')
         .filter((product) => {
-          return !cartObj.lineItems.find((item) =>
+          const itemWithAppliedCode = cartObj.lineItems.find((item) =>
             item.custom?.fields.applied_codes.map(
               (applied) => JSON.parse(applied).code === product.code,
             ),
           );
+
+          if (
+            itemWithAppliedCode &&
+            itemWithAppliedCode.quantity >= product.quantity
+          ) {
+            return false;
+          }
+
+          return true;
         })
         .map((product) => {
           return {
@@ -501,7 +510,7 @@ export class CartService {
       actions.push(this.setSession(newSessionKey));
     }
 
-    if (valid) {
+    if (valid || !applicableCoupons.length) {
       actions.push(
         ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
       );
