@@ -39,7 +39,7 @@ graph LR;
     - open Google Sheets, Microsoft Excel or similiar program
     - create new file
     - in first row in first document insert following texts (each in new column): `id`, `name.en`
-    - in first row in second document insert following texts (each in new column): `id`, `name.en`, `sku`
+    - in first row in second document insert following texts (each in new column): `id`, `name.en`, `sku`, `prices`
     - save file
 - Upload first file to Impex
 - Select `Export only masterVariants`
@@ -49,16 +49,24 @@ graph LR;
 - Select `Fill all variant rows with product information` checkbox
 - Click run command and wait for a moment
 - After action was completed, click `Download file`
+- Parse second file - whatever is in `prices` column, you have to change it to be one number (integer or float) with proper price
 - Go to https://www.voucherify.io/ and login
 - Select `Products` from the left panel
 - Click `Import` (top right corner)
 - Choose `Import Products` and `Import`
 - Upload first file previously downloaded from Impex and click `Map fields`
+    - `id` => `Source id`
+    - `name.en` => `Name`
 - Click `Import` and wait (it can take a moment)
 - Again select `Products` from the left panel
 - Click `Import` (top right corner)
 - Choose `Import Skus` and `Import`
-- Upload second file, click `Map fields` and then `Import` and wait
+- Upload second file, click `Map fields`
+    - `id` => `Product id`
+    - `name.en` => `SKU`
+    - `sku` => `Source id`
+    - `prices` => `Price`
+- Click `Import` and wait
 - Import should be successfull
 ### Installatio steps:
 
