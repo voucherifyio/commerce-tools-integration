@@ -131,9 +131,6 @@ export class VoucherifyConnectorService {
         };
       }),
       order: {
-        customer: {
-          id: order?.createdBy?.clientId,
-        },
         amount: order.lineItems
           .map((item) => getAmount(item))
           .filter((price) => price)
@@ -141,9 +138,7 @@ export class VoucherifyConnectorService {
         discount_amount: 0,
         items: order.lineItems.map((item) => {
           return {
-            sku_id: item?.variant?.sku,
             source_id: item?.variant?.sku,
-            product_id: item?.variant?.sku,
             related_object: 'sku',
             quantity: item?.quantity,
             price: item?.variant.prices?.[0]?.value?.centAmount,
@@ -160,7 +155,16 @@ export class VoucherifyConnectorService {
         }),
       },
       customer: {
-        id: order?.createdBy?.clientId,
+        source_id: order?.createdBy?.clientId,
+        name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
+        email: order.shippingAddress?.email,
+        address: {
+          city: order.shippingAddress?.city,
+          country: order.shippingAddress?.country,
+          postal_code: order.shippingAddress?.postalCode,
+          line_1: order.shippingAddress?.streetName,
+        },
+        phone: order.shippingAddress?.phone,
       },
     });
   }
