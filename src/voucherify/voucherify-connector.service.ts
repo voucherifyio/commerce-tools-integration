@@ -11,6 +11,19 @@ const getAmount = (item) => {
   }
 };
 
+const getQuantity = (item) => {
+  const custom = item.custom?.fields?.applied_codes;
+  let itemQuantity = item?.quantity;
+
+  if (custom) {
+    custom
+      .map((code) => JSON.parse(code))
+      .filter((code) => code.type === 'UNIT')
+      .forEach((code) => (itemQuantity = itemQuantity - code.quantity));
+  }
+  return itemQuantity;
+};
+
 @Injectable()
 export class VoucherifyConnectorService {
   constructor(private configService: ConfigService) {}
@@ -83,30 +96,29 @@ export class VoucherifyConnectorService {
         customer: {
           id: cart?.createdBy?.clientId,
         },
-        amount: cart.lineItems
-          .map((item) => getAmount(item))
-          .filter((price) => price)
-          .reduce((a, b) => a + b, 0),
+        amount: cart.taxedPrice.totalGross.centAmount,
         discount_amount: 0,
-        items: cart.lineItems.map((item) => {
-          return {
-            sku_id: item?.variant?.sku,
-            source_id: item?.variant?.sku,
-            product_id: item?.variant?.sku,
-            related_object: 'sku',
-            quantity: item?.quantity,
-            price: item.price.value.centAmount,
-            amount: getAmount(item),
-            product: {
-              override: true,
-              name: Object?.values(item.name)?.[0],
-            },
-            sku: {
-              override: true,
-              sku: item?.variant?.sku,
-            },
-          };
-        }),
+        items: cart.lineItems
+          .filter((item) => getQuantity(item))
+          .map((item) => {
+            return {
+              sku_id: item?.variant?.sku,
+              source_id: item?.variant?.sku,
+              product_id: item?.variant?.sku,
+              related_object: 'sku',
+              quantity: getQuantity(item),
+              price: item.price.value.centAmount,
+              amount: item.price.value.centAmount * getQuantity(item),
+              product: {
+                override: true,
+                name: Object?.values(item.name)?.[0],
+              },
+              sku: {
+                override: true,
+                sku: item?.variant?.sku,
+              },
+            };
+          }),
       },
       customer: {
         id: cart?.createdBy?.clientId,
@@ -131,28 +143,27 @@ export class VoucherifyConnectorService {
         };
       }),
       order: {
-        amount: order.lineItems
-          .map((item) => getAmount(item))
-          .filter((price) => price)
-          .reduce((a, b) => a + b, 0),
+        amount: order.taxedPrice.totalGross.centAmount,
         discount_amount: 0,
-        items: order.lineItems.map((item) => {
-          return {
-            source_id: item?.variant?.sku,
-            related_object: 'sku',
-            quantity: item?.quantity,
-            price: item.price.value.centAmount,
-            amount: getAmount(item),
-            product: {
-              override: true,
-              name: Object?.values(item.name)?.[0],
-            },
-            sku: {
-              override: true,
-              sku: item?.variant?.sku,
-            },
-          };
-        }),
+        items: order.lineItems
+          .filter((item) => getQuantity(item))
+          .map((item) => {
+            return {
+              source_id: item?.variant?.sku,
+              related_object: 'sku',
+              quantity: getQuantity(item),
+              price: item.price.value.centAmount,
+              amount: item.price.value.centAmount * getQuantity(item),
+              product: {
+                override: true,
+                name: Object?.values(item.name)?.[0],
+              },
+              sku: {
+                override: true,
+                sku: item?.variant?.sku,
+              },
+            };
+          }),
       },
       customer: {
         source_id: order?.createdBy?.clientId,
