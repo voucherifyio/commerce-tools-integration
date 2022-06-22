@@ -95,7 +95,7 @@ export class VoucherifyConnectorService {
             product_id: item?.variant?.sku,
             related_object: 'sku',
             quantity: item?.quantity,
-            price: item?.variant.prices?.[0]?.value?.centAmount,
+            price: item.price.value.centAmount,
             amount: getAmount(item),
             product: {
               override: true,
@@ -141,7 +141,7 @@ export class VoucherifyConnectorService {
             source_id: item?.variant?.sku,
             related_object: 'sku',
             quantity: item?.quantity,
-            price: item?.variant.prices?.[0]?.value?.centAmount,
+            price: item.price.value.centAmount,
             amount: getAmount(item),
             product: {
               override: true,
