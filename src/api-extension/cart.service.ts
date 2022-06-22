@@ -49,12 +49,36 @@ type CartActionAddCustomLineItem = {
   };
 };
 
+type CartActionAddLineItem = {
+  action: 'addLineItem';
+  sku: string;
+  quantity: number;
+  externalTotalPrice?: {
+    price: {
+      centAmount: number;
+      currencyCode: string;
+    };
+    totalPrice: {
+      centAmount: number;
+      currencyCode: string;
+    };
+  };
+};
+
+type CartActionRemoveLineItem = {
+  action: 'removeLineItem';
+  lineItemId: string;
+  quantity: number;
+};
+
 type CartAction =
   | CartActionSetCustomType
   | CartActionSetCustomFieldWithCoupons
   | CartActionSetCustomFieldWithSession
   | CartActionRemoveCustomLineItem
-  | CartActionAddCustomLineItem;
+  | CartActionAddCustomLineItem
+  | CartActionAddLineItem
+  | CartActionRemoveLineItem;
 
 type CartResponse = { status: boolean; actions: CartAction[] };
 
@@ -72,7 +96,7 @@ export class CartService {
   private couponCustomLineNamePrefix = 'Voucher, ';
 
   private async setCustomTypeForInitializedCart() {
-    const couponType = await this.typesService.findCouponType();
+    const couponType = await this.typesService.findCouponType('couponCodes');
     if (!couponType) {
       const msg = 'CouponType not found';
       this.logger.error({
@@ -94,6 +118,80 @@ export class CartService {
     };
   }
 
+  private checkForUnitTypeDiscounts(response) {
+    const productsToAdd = [];
+    response.redeemables
+      ?.filter((code) => code.result?.discount?.type === 'UNIT')
+      .forEach((unitTypeCode) => {
+        if (unitTypeCode.result?.discount?.effect === 'ADD_NEW_ITEMS') {
+          const freeItem = unitTypeCode.order?.items?.find(
+            (item) =>
+              item.product?.source_id ===
+              unitTypeCode.result?.discount?.product?.source_id,
+          );
+
+          productsToAdd.push({
+            code: unitTypeCode.id,
+            effect: unitTypeCode.result?.discount?.effect,
+            quantity: unitTypeCode.result?.discount?.unit_off,
+            product: unitTypeCode.result?.discount.sku.source_id,
+            initial_quantity: freeItem?.initial_quantity,
+            applied_discount_amount: freeItem?.applied_discount_amount,
+          });
+        }
+
+        if (unitTypeCode.result?.discount?.effect === 'ADD_MISSING_ITEMS') {
+          const freeItem = unitTypeCode.order?.items?.find(
+            (item) =>
+              item.product?.source_id ===
+              unitTypeCode.result?.discount?.product?.source_id,
+          );
+
+          productsToAdd.push({
+            code: unitTypeCode.id,
+            effect: unitTypeCode.result?.discount?.effect,
+            discount_quantity: freeItem.discount_quantity,
+            initial_quantity: freeItem.initial_quantity,
+            product: unitTypeCode.result?.discount.sku.source_id,
+          });
+        }
+
+        if (unitTypeCode.result?.discount?.effect === 'ADD_MANY_ITEMS') {
+          unitTypeCode.result.discount.units.forEach((product) => {
+            if (product.effect === 'ADD_NEW_ITEMS') {
+              const freeItem = unitTypeCode.order?.items?.find(
+                (item) => item.product.source_id === product.product.source_id,
+              );
+
+              productsToAdd.push({
+                code: unitTypeCode.id,
+                effect: product.effect,
+                quantity: product.unit_off,
+                product: product.sku.source_id,
+                initial_quantity: freeItem.initial_quantity,
+                applied_discount_amount: freeItem.applied_discount_amount,
+              });
+            }
+
+            if (product.effect === 'ADD_MISSING_ITEMS') {
+              const freeItem = unitTypeCode.order?.items?.find(
+                (item) => item.product.source_id === product.product.source_id,
+              );
+
+              productsToAdd.push({
+                code: unitTypeCode.id,
+                effect: product.effect,
+                discount_quantity: freeItem.discount_quantity,
+                initial_quantity: freeItem.initial_quantity,
+                product: product.sku.source_id,
+              });
+            }
+          });
+        }
+      });
+    return productsToAdd;
+  }
+
   private async validateCoupons(cartObj: Cart, sessionKey?: string | null) {
     const { id, customerId } = cartObj;
     const coupons: Coupon[] = (cartObj.custom?.fields?.discount_codes ?? [])
@@ -105,6 +203,7 @@ export class CartService {
         applicableCoupons: [],
         notApplicableCoupons: [],
         skippedCoupons: [],
+        productsToAdd: [],
       };
     }
     this.logger.info({
@@ -135,6 +234,8 @@ export class CartService {
     const valid = validatedCoupons.valid;
     const totalDiscountAmount = validatedCoupons.order?.total_discount_amount;
 
+    const productsToAdd = this.checkForUnitTypeDiscounts(validatedCoupons);
+
     this.logger.info({
       msg: 'Validated coupons',
       applicableCoupons,
@@ -146,6 +247,7 @@ export class CartService {
       sessionKey,
       sessionKeyResponse,
       totalDiscountAmount,
+      productsToAdd,
     });
 
     return {
@@ -158,6 +260,7 @@ export class CartService {
           : validatedCoupons.session?.key,
       valid,
       totalDiscountAmount,
+      productsToAdd,
     };
   }
 
@@ -216,7 +319,7 @@ export class CartService {
       },
       quantity: 1,
       money: {
-        centAmount: -total_discount_amount,
+        centAmount: total_discount_amount ? -total_discount_amount : 0,
         type: 'centPrecision',
         currencyCode,
       },
@@ -227,6 +330,114 @@ export class CartService {
     });
 
     return discountLines;
+  }
+
+  private addFreeLineItems(cartObj: Cart, productsToAdd): CartAction[] {
+    const lineItems: CartAction[] = [];
+
+    lineItems.push(
+      ...productsToAdd
+        .filter((product) => product.effect === 'ADD_NEW_ITEMS')
+        .filter((product) => {
+          const itemWithAppliedCode = cartObj.lineItems.find((item) =>
+            item.custom?.fields.applied_codes.map(
+              (applied) => JSON.parse(applied).code === product.code,
+            ),
+          );
+
+          if (
+            itemWithAppliedCode &&
+            itemWithAppliedCode.quantity >= product.quantity
+          ) {
+            return false;
+          }
+
+          return true;
+        })
+        .map((product) => {
+          return {
+            action: 'addLineItem',
+            sku: product.product,
+            quantity: product.quantity,
+            custom: {
+              typeKey: 'lineItemCodesType',
+              fields: {
+                applied_codes: [
+                  JSON.stringify({
+                    code: product.code,
+                    type: 'UNIT',
+                    effect: product.effect,
+                    quantity: product.quantity,
+                  }),
+                ],
+              },
+            },
+          };
+        }),
+    );
+
+    lineItems.push(
+      ...productsToAdd
+        .filter((product) => product.effect === 'ADD_MISSING_ITEMS')
+        .filter(
+          (product) => product.discount_quantity > product.initial_quantity,
+        )
+        .map((product) => {
+          return {
+            action: 'addLineItem',
+            sku: product.product,
+            quantity: product.discount_quantity - product.initial_quantity,
+            custom: {
+              typeKey: 'lineItemCodesType',
+              fields: {
+                applied_codes: [
+                  JSON.stringify({
+                    code: product.code,
+                    type: 'UNIT',
+                    effect: product.effect,
+                    quantity: product.quantity,
+                  }),
+                ],
+              },
+            },
+          };
+        }),
+    );
+
+    return lineItems;
+  }
+
+  private removeFreeLineItemsIfCouponNoLongerIsApplied(
+    cartObj: Cart,
+    unitCodes,
+  ): CartAction[] {
+    return cartObj.lineItems
+      .filter((item) => item.custom?.fields?.applied_codes)
+      .filter((item) => {
+        const isCouponWhichNoLongerExist = item.custom?.fields?.applied_codes
+          .map((code) => JSON.parse(code))
+          .filter((code) => code.type === 'UNIT')
+          .find((code) =>
+            unitCodes.map((unitCode) => unitCode.code).includes(code.code),
+          );
+
+        return !isCouponWhichNoLongerExist;
+      })
+      .map((item) => {
+        const quantityFromCode = item.custom?.fields.applied_codes
+          .map((code) => JSON.parse(code))
+          .filter((code) => code.type === 'UNIT')
+          .find(
+            (code) =>
+              !unitCodes.map((unitCode) => unitCode.code).includes(code.code),
+          ).quantity;
+
+        return {
+          action: 'removeLineItem',
+          lineItemId: item.id,
+          quantity: quantityFromCode,
+        };
+      });
   }
 
   private updateDiscountsCodes(
@@ -290,6 +501,7 @@ export class CartService {
       notApplicableCoupons,
       newSessionKey,
       totalDiscountAmount,
+      productsToAdd,
     } = await this.validateCoupons(cartObj, sessionKey);
 
     const actions: CartAction[] = [];
@@ -298,7 +510,7 @@ export class CartService {
       actions.push(this.setSession(newSessionKey));
     }
 
-    if (valid) {
+    if (valid || !applicableCoupons.length) {
       actions.push(
         ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
       );
@@ -311,6 +523,14 @@ export class CartService {
         )),
       );
     }
+
+    actions.push(...this.addFreeLineItems(cartObj, productsToAdd));
+    actions.push(
+      ...this.removeFreeLineItemsIfCouponNoLongerIsApplied(
+        cartObj,
+        productsToAdd,
+      ),
+    );
 
     actions.push(
       this.updateDiscountsCodes(

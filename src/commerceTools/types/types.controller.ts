@@ -11,6 +11,6 @@ export class TypesController {
     success: boolean;
     couponTaxCategory?: Type;
   }> {
-    return await this.typesService.configureCouponType();
+    return await this.typesService.configureCouponTypes();
   }
 }
