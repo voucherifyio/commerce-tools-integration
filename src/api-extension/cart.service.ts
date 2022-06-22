@@ -379,9 +379,23 @@ export class CartService {
     lineItems.push(
       ...productsToAdd
         .filter((product) => product.effect === 'ADD_MISSING_ITEMS')
-        .filter(
-          (product) => product.discount_quantity > product.initial_quantity,
-        )
+        .filter((product) => {
+          const itemOfSameIdAsInCoupon = cartObj.lineItems.filter(
+            (item) => item.variant.sku === product.product,
+          );
+          if (itemOfSameIdAsInCoupon) {
+            let totalQuantity = 0;
+            itemOfSameIdAsInCoupon.forEach(
+              (item) => (totalQuantity += item.quantity),
+            );
+
+            if (totalQuantity < product.discount_quantity) {
+              return true;
+            }
+          }
+
+          return false;
+        })
         .map((product) => {
           return {
             action: 'addLineItem',
