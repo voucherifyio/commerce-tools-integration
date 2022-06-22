@@ -71,6 +71,12 @@ type CartActionRemoveLineItem = {
   quantity: number;
 };
 
+type CartActionSetLineItemCustomField = {
+  action: 'setLineItemCustomField';
+  lineItemId: string;
+  name: string;
+};
+
 type CartAction =
   | CartActionSetCustomType
   | CartActionSetCustomFieldWithCoupons
@@ -78,7 +84,8 @@ type CartAction =
   | CartActionRemoveCustomLineItem
   | CartActionAddCustomLineItem
   | CartActionAddLineItem
-  | CartActionRemoveLineItem;
+  | CartActionRemoveLineItem
+  | CartActionSetLineItemCustomField;
 
 type CartResponse = { status: boolean; actions: CartAction[] };
 
@@ -409,7 +416,8 @@ export class CartService {
                     code: product.code,
                     type: 'UNIT',
                     effect: product.effect,
-                    quantity: product.quantity,
+                    quantity:
+                      product.discount_quantity - product.initial_quantity,
                   }),
                 ],
               },
@@ -425,7 +433,8 @@ export class CartService {
     cartObj: Cart,
     unitCodes,
   ): CartAction[] {
-    return cartObj.lineItems
+    const cartActions: CartAction[] = [];
+    cartObj.lineItems
       .filter((item) => item.custom?.fields?.applied_codes)
       .filter((item) => {
         const isCouponWhichNoLongerExist = item.custom?.fields?.applied_codes
@@ -437,7 +446,7 @@ export class CartService {
 
         return !isCouponWhichNoLongerExist;
       })
-      .map((item) => {
+      .forEach((item) => {
         const quantityFromCode = item.custom?.fields.applied_codes
           .map((code) => JSON.parse(code))
           .filter((code) => code.type === 'UNIT')
@@ -446,12 +455,21 @@ export class CartService {
               !unitCodes.map((unitCode) => unitCode.code).includes(code.code),
           ).quantity;
 
-        return {
-          action: 'removeLineItem',
-          lineItemId: item.id,
-          quantity: quantityFromCode,
-        };
+        cartActions.push(
+          {
+            action: 'removeLineItem',
+            lineItemId: item.id,
+            quantity: quantityFromCode,
+          },
+          {
+            action: 'setLineItemCustomField',
+            lineItemId: item.id,
+            name: 'applied_codes',
+          },
+        );
       });
+
+    return cartActions;
   }
 
   private updateDiscountsCodes(
