@@ -456,18 +456,19 @@ export class CartService {
               !unitCodes.map((unitCode) => unitCode.code).includes(code.code),
           ).quantity;
 
-        cartActions.push(
-          {
-            action: 'removeLineItem',
-            lineItemId: item.id,
-            quantity: quantityFromCode,
-          },
-          {
+        if (item.quantity > quantityFromCode) {
+          cartActions.push({
             action: 'setLineItemCustomField',
             lineItemId: item.id,
             name: 'applied_codes',
-          },
-        );
+          });
+        }
+
+        cartActions.push({
+          action: 'removeLineItem',
+          lineItemId: item.id,
+          quantity: quantityFromCode,
+        });
       });
 
     return cartActions;
