@@ -4,7 +4,7 @@
 2. [Installation and configuration guide](#2-installation-and-configuration-guide)
 3. [CLI](#3-cli)
 4. [How to test your app](#4-how-to-test-your-app)
-
+ 
 # 1. Introduction
 
 This open-source application allows you to integrate Commerce Tools (headless e-commerce) with Voucherify (promotional engine) using their public APIs. This integration enables buyers to use coupons generated and configured in Voucherify in store.
@@ -112,3 +112,4 @@ For local development, you need to publicly expose your local environment so tha
 - `POST /api-extension` - handle api extension requests (cart) from Commerce Tools
 - `POST /types/configure` - trigger to configure coupon types in Commerce Tools
 - `POST /tax-categories/configure` - trigger to configure coupon tax categories in Commerce Tools
+ 
