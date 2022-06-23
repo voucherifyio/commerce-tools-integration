@@ -201,7 +201,6 @@ export class CartService {
 
   private async validateCoupons(cartObj: Cart, sessionKey?: string | null) {
     const { id, customerId, anonymousId } = cartObj;
-    console.log({ customerId, anonymousId });
     const coupons: Coupon[] = (cartObj.custom?.fields?.discount_codes ?? [])
       .map(desarializeCoupons)
       .filter((coupon) => coupon.status !== 'NOT_APPLIED'); // we already declined them, will be removed by frontend
@@ -485,6 +484,7 @@ export class CartService {
           ({
             code: coupon.id,
             status: 'APPLIED',
+            value: coupon.order?.total_applied_discount_amount,
           } as Coupon),
       ),
       ...notApplicableCoupons.map(
