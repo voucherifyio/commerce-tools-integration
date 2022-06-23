@@ -3,14 +3,6 @@ import { VoucherifyServerSide } from '@voucherify/sdk';
 import { ConfigService } from '@nestjs/config';
 import { Cart, Order } from '@commercetools/platform-sdk';
 
-const getAmount = (item) => {
-  try {
-    return item?.totalPrice?.centAmount;
-  } catch (e) {
-    return undefined;
-  }
-};
-
 const getQuantity = (item) => {
   const custom = item.custom?.fields?.applied_codes;
   let itemQuantity = item?.quantity;
@@ -82,7 +74,7 @@ export class VoucherifyConnectorService {
         customer: {
           source_id: cart.customerId || cart.anonymousId,
         },
-        amount: cart.taxedPrice.totalGross.centAmount,
+        amount: items.reduce((acc, item) => acc + item.amount, 0),
         discount_amount: 0,
         items,
       },
