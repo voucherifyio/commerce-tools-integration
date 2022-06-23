@@ -41,45 +41,31 @@ export class VoucherifyConnectorService {
     });
   }
 
-  async validateVoucherWithCTCart(coupon: string, cart: Cart) {
-    return await this.getClient().validations.validateVoucher(coupon, {
-      customer: {
-        id: cart?.createdBy?.clientId,
-      },
-      order: {
-        id: cart.id,
-        amount:
-          cart.lineItems
-            .map((item) => getAmount(item))
-            .filter((price) => price)
-            .reduce((a, b) => a + b, 0) * 10,
-        items: cart.lineItems.map((item) => {
-          return {
-            sku_id: item?.variant?.sku,
-            product_id: item?.id,
-            related_object: 'sku',
-            quantity: item?.quantity,
-            price: item?.variant.prices?.[0]?.value?.centAmount,
-            amount: getAmount(item) * 10,
-            product: {
-              override: true,
-              name: Object?.values(item.name)?.[0],
-            },
-            sku: {
-              override: true,
-              sku: item?.variant?.sku,
-            },
-          };
-        }),
-      },
-    });
-  }
-
   async validateStackableVouchersWithCTCart(
     coupons: string[],
     cart: Cart,
     sessionKey?: string | null,
   ) {
+    const items = cart.lineItems
+      .filter((item) => getQuantity(item))
+      .map((item) => {
+        return {
+          source_id: item?.variant?.sku,
+          related_object: 'sku' as 'sku' | 'product',
+          quantity: getQuantity(item),
+          price: item.price.value.centAmount,
+          amount: item.price.value.centAmount * getQuantity(item),
+          product: {
+            override: true,
+            name: Object?.values(item.name)?.[0],
+          },
+          sku: {
+            override: true,
+            sku: item?.variant?.sku,
+          },
+        };
+      });
+
     return await this.getClient().validations.validateStackable({
       // options?: StackableOptions;
       redeemables: coupons.map((coupon) => {
@@ -94,34 +80,14 @@ export class VoucherifyConnectorService {
       },
       order: {
         customer: {
-          id: cart?.createdBy?.clientId,
+          source_id: cart.customerId || cart.anonymousId,
         },
         amount: cart.taxedPrice.totalGross.centAmount,
         discount_amount: 0,
-        items: cart.lineItems
-          .filter((item) => getQuantity(item))
-          .map((item) => {
-            return {
-              sku_id: item?.variant?.sku,
-              source_id: item?.variant?.sku,
-              product_id: item?.variant?.sku,
-              related_object: 'sku',
-              quantity: getQuantity(item),
-              price: item.price.value.centAmount,
-              amount: item.price.value.centAmount * getQuantity(item),
-              product: {
-                override: true,
-                name: Object?.values(item.name)?.[0],
-              },
-              sku: {
-                override: true,
-                sku: item?.variant?.sku,
-              },
-            };
-          }),
+        items,
       },
       customer: {
-        id: cart?.createdBy?.clientId,
+        source_id: cart.customerId || cart.anonymousId,
       },
     });
   }
@@ -131,6 +97,26 @@ export class VoucherifyConnectorService {
     sessionKey: string,
     order: Order,
   ) {
+    const items = order.lineItems
+      .filter((item) => getQuantity(item))
+      .map((item) => {
+        return {
+          source_id: item?.variant?.sku,
+          related_object: 'sku' as 'sku' | 'product',
+          quantity: getQuantity(item),
+          price: item.price.value.centAmount,
+          amount: item.price.value.centAmount * getQuantity(item),
+          product: {
+            override: true,
+            name: Object?.values(item.name)?.[0],
+          },
+          sku: {
+            override: true,
+            sku: item?.variant?.sku,
+          },
+        };
+      });
+
     return this.getClient().redemptions.redeemStackable({
       session: {
         type: 'LOCK',
@@ -143,30 +129,12 @@ export class VoucherifyConnectorService {
         };
       }),
       order: {
-        amount: order.taxedPrice.totalGross.centAmount,
+        amount: items.reduce((acc, item) => acc + item.amount, 0),
         discount_amount: 0,
-        items: order.lineItems
-          .filter((item) => getQuantity(item))
-          .map((item) => {
-            return {
-              source_id: item?.variant?.sku,
-              related_object: 'sku',
-              quantity: getQuantity(item),
-              price: item.price.value.centAmount,
-              amount: item.price.value.centAmount * getQuantity(item),
-              product: {
-                override: true,
-                name: Object?.values(item.name)?.[0],
-              },
-              sku: {
-                override: true,
-                sku: item?.variant?.sku,
-              },
-            };
-          }),
+        items,
       },
       customer: {
-        source_id: order?.createdBy?.clientId,
+        source_id: order.customerId || order.anonymousId,
         name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
         email: order.shippingAddress?.email,
         address: {
