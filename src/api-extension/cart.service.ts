@@ -493,7 +493,7 @@ export class CartService {
           ({
             code: coupon.id,
             status: 'NOT_APPLIED',
-            errMsg: coupon.result?.error?.details,
+            errMsg: coupon.result?.error?.message,
           } as Coupon),
       ),
     ];
