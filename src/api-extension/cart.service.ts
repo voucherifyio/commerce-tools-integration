@@ -493,7 +493,9 @@ export class CartService {
           ({
             code: coupon.id,
             status: 'NOT_APPLIED',
-            errMsg: coupon.result?.error?.message,
+            errMsg: coupon.result?.error?.error?.message
+              ? coupon.result?.error?.error.message
+              : coupon.result?.error?.message,
           } as Coupon),
       ),
     ];
