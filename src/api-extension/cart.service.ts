@@ -444,7 +444,7 @@ export class CartService {
       .filter((product) => product.effect === 'ADD_MISSING_ITEMS')
       .filter((product) => {
         const itemWithAppliedCode = cartObj.lineItems.find((item) =>
-          item.custom?.fields.applied_codes.map(
+          item.custom?.fields?.applied_codes?.map(
             (applied) => JSON.parse(applied).code === product.code,
           ),
         );
@@ -470,7 +470,7 @@ export class CartService {
             quantity:
               itemWithSameSkuAsInCode.quantity +
               product.discount_quantity -
-              product.initial_quantity,
+              itemWithSameSkuAsInCode.quantity,
           });
 
           lineItems.push({
