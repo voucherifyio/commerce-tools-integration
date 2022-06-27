@@ -71,6 +71,7 @@ export class VoucherifyConnectorService {
         ...(sessionKey && { key: sessionKey }),
       },
       order: {
+        source_id: cart.id,
         customer: {
           source_id: cart.customerId || cart.anonymousId,
         },
@@ -121,6 +122,7 @@ export class VoucherifyConnectorService {
         };
       }),
       order: {
+        source_id: order.id,
         amount: items.reduce((acc, item) => acc + item.amount, 0),
         discount_amount: 0,
         items,
