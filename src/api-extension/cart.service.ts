@@ -451,7 +451,7 @@ export class CartService {
 
         if (
           itemWithAppliedCode &&
-          itemWithAppliedCode.quantity >= product.quantity
+          itemWithAppliedCode.quantity >= product.discount_quantity
         ) {
           return false;
         }
@@ -468,9 +468,9 @@ export class CartService {
             action: 'changeLineItemQuantity',
             lineItemId: itemWithSameSkuAsInCode.id,
             quantity:
-              itemWithSameSkuAsInCode.quantity +
-              product.discount_quantity -
-              itemWithSameSkuAsInCode.quantity,
+              itemWithSameSkuAsInCode.quantity >= product.discount_quantity
+                ? itemWithSameSkuAsInCode.quantity
+                : product.discount_quantity,
           });
 
           lineItems.push({
@@ -486,7 +486,10 @@ export class CartService {
                   type: 'UNIT',
                   effect: product.effect,
                   quantity:
-                    product.discount_quantity - product.initial_quantity,
+                    itemWithSameSkuAsInCode.quantity >=
+                    product.discount_quantity
+                      ? 0
+                      : itemWithSameSkuAsInCode.quantity,
                   totalDiscountQuantity: product.discount_quantity,
                 }),
               ],
