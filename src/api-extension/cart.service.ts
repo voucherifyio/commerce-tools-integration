@@ -570,9 +570,25 @@ export class CartService {
     applicableCoupons: StackableRedeemableResponse[],
     notApplicableCoupons: StackableRedeemableResponse[],
     skippedCoupons: StackableRedeemableResponse[],
+    cartObj: Cart,
   ): CartActionSetCustomFieldWithCoupons {
+    const oldCouponsCodes: Coupon[] = (
+      cartObj.custom?.fields?.discount_codes ?? []
+    ).map(desarializeCoupons);
+
     const coupons = [
-      ...[...applicableCoupons, ...skippedCoupons].map(
+      ...skippedCoupons.map(
+        (coupon) =>
+          ({
+            code: coupon.id,
+            status: 'APPLIED',
+            value:
+              oldCouponsCodes.find((oldCoupon) => coupon.id === oldCoupon.code)
+                ?.value || 0,
+          } as Coupon),
+      ),
+
+      ...applicableCoupons.map(
         (coupon) =>
           ({
             code: coupon.id,
@@ -641,7 +657,7 @@ export class CartService {
       actions.push(this.setSession(newSessionKey));
     }
 
-    if (valid || !applicableCoupons.length) {
+    if (valid || (!applicableCoupons.length && skippedCoupons.length === 0)) {
       actions.push(
         ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
       );
@@ -668,6 +684,7 @@ export class CartService {
         applicableCoupons,
         notApplicableCoupons,
         skippedCoupons,
+        cartObj,
       ),
     );
 
