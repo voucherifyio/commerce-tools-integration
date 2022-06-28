@@ -577,7 +577,9 @@ export class CartService {
           ({
             code: coupon.id,
             status: 'APPLIED',
-            value: coupon.order?.total_applied_discount_amount,
+            value: coupon.order?.total_applied_discount_amount
+              ? coupon.order?.total_applied_discount_amount
+              : 0,
           } as Coupon),
       ),
       ...notApplicableCoupons.map(

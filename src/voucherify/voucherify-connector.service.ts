@@ -53,7 +53,7 @@ export class VoucherifyConnectorService {
           },
           sku: {
             override: true,
-            sku: item?.variant?.sku,
+            sku: Object?.values(item.name)?.[0],
           },
         };
       });
@@ -105,7 +105,7 @@ export class VoucherifyConnectorService {
           },
           sku: {
             override: true,
-            sku: item?.variant?.sku,
+            sku: Object?.values(item.name)?.[0],
           },
         };
       });
