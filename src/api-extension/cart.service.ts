@@ -593,9 +593,11 @@ export class CartService {
           ({
             code: coupon.id,
             status: 'APPLIED',
-            value: coupon.order?.total_applied_discount_amount
-              ? coupon.order?.total_applied_discount_amount
-              : 0,
+            value:
+              coupon.order?.total_applied_discount_amount ||
+              oldCouponsCodes.find((oldCoupon) => coupon.id === oldCoupon.code)
+                ?.value ||
+              0,
           } as Coupon),
       ),
       ...notApplicableCoupons.map(
