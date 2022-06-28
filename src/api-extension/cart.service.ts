@@ -347,9 +347,9 @@ export class CartService {
     discountLines.push({
       action: 'addCustomLineItem',
       name: {
-        en: `${this.couponCustomLineNamePrefix}coupon value => ${Math.round(
-          total_discount_amount / 100,
-        )}`,
+        en: `${this.couponCustomLineNamePrefix}coupon value => ${(
+          total_discount_amount / 100
+        ).toFixed(2)}`,
       },
       quantity: 1,
       money: {
