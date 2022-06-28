@@ -63,6 +63,12 @@ type CartActionAddLineItem = {
       currencyCode: string;
     };
   };
+  custom?: {
+    typeKey: 'lineItemCodesType';
+    fields: {
+      applied_codes: string[];
+    };
+  };
 };
 
 type CartActionRemoveLineItem = {
@@ -75,6 +81,24 @@ type CartActionSetLineItemCustomField = {
   action: 'setLineItemCustomField';
   lineItemId: string;
   name: string;
+  value?: string;
+};
+
+type CartActionSetLineItemCustomType = {
+  action: 'setLineItemCustomType';
+  lineItemId: string;
+  type: {
+    key: 'lineItemCodesType';
+  };
+  fields: {
+    applied_codes: string[];
+  };
+};
+
+type CartActionChangeLineItemQuantity = {
+  action: 'changeLineItemQuantity';
+  lineItemId: string;
+  quantity: number;
 };
 
 type CartAction =
@@ -85,7 +109,9 @@ type CartAction =
   | CartActionAddCustomLineItem
   | CartActionAddLineItem
   | CartActionRemoveLineItem
-  | CartActionSetLineItemCustomField;
+  | CartActionSetLineItemCustomField
+  | CartActionChangeLineItemQuantity
+  | CartActionSetLineItemCustomType;
 
 type CartResponse = { status: boolean; actions: CartAction[] };
 
@@ -343,27 +369,56 @@ export class CartService {
   private addFreeLineItems(cartObj: Cart, productsToAdd): CartAction[] {
     const lineItems: CartAction[] = [];
 
-    lineItems.push(
-      ...productsToAdd
-        .filter((product) => product.effect === 'ADD_NEW_ITEMS')
-        .filter((product) => {
-          const itemWithAppliedCode = cartObj.lineItems.find((item) =>
-            item.custom?.fields.applied_codes.map(
-              (applied) => JSON.parse(applied).code === product.code,
-            ),
-          );
+    productsToAdd
+      .filter((product) => product.effect === 'ADD_NEW_ITEMS')
+      .filter((product) => {
+        const itemWithAppliedCode = cartObj.lineItems.find((item) =>
+          item.custom?.fields.applied_codes.map(
+            (applied) => JSON.parse(applied).code === product.code,
+          ),
+        );
 
-          if (
-            itemWithAppliedCode &&
-            itemWithAppliedCode.quantity >= product.quantity
-          ) {
-            return false;
-          }
+        if (
+          itemWithAppliedCode &&
+          itemWithAppliedCode.quantity >= product.quantity
+        ) {
+          return false;
+        }
 
-          return true;
-        })
-        .map((product) => {
-          return {
+        return true;
+      })
+      .forEach((product) => {
+        const itemWithSameSkuAsInCode = cartObj.lineItems.find(
+          (item) => item.variant.sku === product.product,
+        );
+
+        if (itemWithSameSkuAsInCode) {
+          lineItems.push({
+            action: 'changeLineItemQuantity',
+            lineItemId: itemWithSameSkuAsInCode.id,
+            quantity: itemWithSameSkuAsInCode.quantity + product.quantity,
+          });
+
+          lineItems.push({
+            action: 'setLineItemCustomType',
+            lineItemId: itemWithSameSkuAsInCode.id,
+            type: {
+              key: 'lineItemCodesType',
+            },
+            fields: {
+              applied_codes: [
+                JSON.stringify({
+                  code: product.code,
+                  type: 'UNIT',
+                  effect: product.effect,
+                  quantity: product.quantity,
+                  totalDiscountQuantity: product.quantity,
+                }),
+              ],
+            },
+          });
+        } else {
+          lineItems.push({
             action: 'addLineItem',
             sku: product.product,
             quantity: product.quantity,
@@ -376,36 +431,72 @@ export class CartService {
                     type: 'UNIT',
                     effect: product.effect,
                     quantity: product.quantity,
+                    totalDiscountQuantity: product.quantity,
                   }),
                 ],
               },
             },
-          };
-        }),
-    );
+          });
+        }
+      });
 
-    lineItems.push(
-      ...productsToAdd
-        .filter((product) => product.effect === 'ADD_MISSING_ITEMS')
-        .filter((product) => {
-          const itemOfSameIdAsInCoupon = cartObj.lineItems.filter(
-            (item) => item.variant.sku === product.product,
-          );
-          if (itemOfSameIdAsInCoupon) {
-            let totalQuantity = 0;
-            itemOfSameIdAsInCoupon.forEach(
-              (item) => (totalQuantity += item.quantity),
-            );
+    productsToAdd
+      .filter((product) => product.effect === 'ADD_MISSING_ITEMS')
+      .filter((product) => {
+        const itemWithAppliedCode = cartObj.lineItems.find((item) =>
+          item.custom?.fields?.applied_codes?.map(
+            (applied) => JSON.parse(applied).code === product.code,
+          ),
+        );
 
-            if (totalQuantity < product.discount_quantity) {
-              return true;
-            }
-          }
-
+        if (
+          itemWithAppliedCode &&
+          itemWithAppliedCode.quantity >= product.discount_quantity
+        ) {
           return false;
-        })
-        .map((product) => {
-          return {
+        }
+
+        return true;
+      })
+      .forEach((product) => {
+        const itemWithSameSkuAsInCode = cartObj.lineItems.find(
+          (item) => item.variant.sku === product.product,
+        );
+
+        if (itemWithSameSkuAsInCode) {
+          lineItems.push({
+            action: 'changeLineItemQuantity',
+            lineItemId: itemWithSameSkuAsInCode.id,
+            quantity:
+              itemWithSameSkuAsInCode.quantity >= product.discount_quantity
+                ? itemWithSameSkuAsInCode.quantity
+                : product.discount_quantity,
+          });
+
+          lineItems.push({
+            action: 'setLineItemCustomType',
+            lineItemId: itemWithSameSkuAsInCode.id,
+            type: {
+              key: 'lineItemCodesType',
+            },
+            fields: {
+              applied_codes: [
+                JSON.stringify({
+                  code: product.code,
+                  type: 'UNIT',
+                  effect: product.effect,
+                  quantity:
+                    itemWithSameSkuAsInCode.quantity >=
+                    product.discount_quantity
+                      ? 0
+                      : itemWithSameSkuAsInCode.quantity,
+                  totalDiscountQuantity: product.discount_quantity,
+                }),
+              ],
+            },
+          });
+        } else {
+          lineItems.push({
             action: 'addLineItem',
             sku: product.product,
             quantity: product.discount_quantity - product.initial_quantity,
@@ -419,13 +510,14 @@ export class CartService {
                     effect: product.effect,
                     quantity:
                       product.discount_quantity - product.initial_quantity,
+                    totalDiscountQuantity: product.discount_quantity,
                   }),
                 ],
               },
             },
-          };
-        }),
-    );
+          });
+        }
+      });
 
     return lineItems;
   }
