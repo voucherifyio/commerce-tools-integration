@@ -44,6 +44,7 @@
     "node-fetch": "^3.2.4",
     "node-fetch2": "npm:node-fetch@^2.6.7",
     "nodejs-base64": "^2.0.0",
+    "objects-to-csv": "^1.3.6",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0"

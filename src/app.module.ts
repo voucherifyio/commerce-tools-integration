@@ -16,6 +16,9 @@ import { ProductsService } from './commerceTools/products/products.service';
 import { OrderService } from './api-extension/order.service';
 import { APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ProductImport } from './import/product-import.service';
+import { ImportController } from './import/import.controller';
+import { OrderImport } from './import/order-import.service';
 
 @Module({
   imports: [
@@ -37,6 +40,7 @@ import { ValidationPipe } from '@nestjs/common';
     ApiExtensionController,
     TaxCategoriesController,
     TypesController,
+    ImportController,
   ],
   providers: [
     AppService,
@@ -48,6 +52,8 @@ import { ValidationPipe } from '@nestjs/common';
     TypesService,
     ProductsService,
     OrderService,
+    ProductImport,
+    OrderImport,
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({
