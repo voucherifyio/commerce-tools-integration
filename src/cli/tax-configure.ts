@@ -3,14 +3,19 @@ import { AppModule } from '../app.module';
 import { JsonLoggerService } from 'json-logger-service';
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
 import { TypesService } from '../commerceTools/types/types.service';
+import { ProductImportService } from 'src/import/product-import.service';
+import { OrderImportService } from 'src/import/order-import.service';
+import { CustomerImportService } from 'src/import/customer-import.service';
+import events = require('events');
 
 async function run() {
+  events.EventEmitter.defaultMaxListeners = 13;
   console.log('process.argv', process.argv);
   const logger = new JsonLoggerService('NestServer');
   const app = await NestFactory.createApplicationContext(AppModule);
+
   // Coupon types
   const typesService = app.get(TypesService);
-
   logger.log('Attempt to configure required coupon types in Commerce Tools');
   const { success: couponTypesCreated } =
     await typesService.configureCouponTypes();
@@ -19,6 +24,7 @@ async function run() {
   } else {
     logger.error('Could not configure coupon codes');
   }
+
   // Tax categories
   const taxCategoriesService = app.get(TaxCategoriesService);
   logger.log('Attempt to configure coupon tax categories in Commerce Tools');
@@ -28,6 +34,38 @@ async function run() {
     logger.log('Coupon tax categories configured');
   } else {
     logger.error('Could not configure coupon tax categories');
+  }
+
+  // Product migration
+  const productImportService = app.get(ProductImportService);
+  logger.log('Attempt to migrate products from Commerce Tools to Voucherify');
+  const { success: productsMigrated } =
+    await productImportService.migrateProducts();
+  if (productsMigrated) {
+    logger.log('Products migrated');
+  } else {
+    logger.log('Could not migrate products');
+  }
+
+  // Order migration
+  const orderImportService = app.get(OrderImportService);
+  logger.log('Attempt to migrate orders from Commerce Tools to Voucherify');
+  const { success: ordersMigrated } = await orderImportService.migrateOrders();
+  if (ordersMigrated) {
+    logger.log('Orders migrated');
+  } else {
+    logger.log('Could not migrate orders');
+  }
+
+  // Customers migration
+  const customerImportService = app.get(CustomerImportService);
+  logger.log('Attempt to migrate customers from Commerce Tools to Voucherify');
+  const { success: customersMigrated } =
+    await customerImportService.migrateCustomers();
+  if (customersMigrated) {
+    logger.log('Customers migrated');
+  } else {
+    logger.log('Could not migrate customers');
   }
 }
 

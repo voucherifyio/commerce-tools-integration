@@ -72,6 +72,7 @@ Set environment variables with credentials to Voucherify and Commerce Tools APIs
 - In Voucherify, you can find them in the `Project Dashboard > Project Settings > General Tab > Application Keys` section.
     - `VOUCHERIFY_APP_ID`
     - `VOUCHERIFY_SECRET_KEY`
+    - `VOUCHERIFY_API_URL`
 - In Commerce Tools, credentials are available only once; after new API Client creation. You can create a new API Client in `Settings > Developer Settings > Create new API client (top right corner)` using the `Admin client` scope template.
     - `COMMERCE_TOOLS_PROJECT_KEY`
     - `COMMERCE_TOOLS_AUTH_URL`
@@ -79,15 +80,16 @@ Set environment variables with credentials to Voucherify and Commerce Tools APIs
     - `COMMERCE_TOOLS_ID`
     - `COMMERCE_TOOLS_SECRET`
 - Additional configuration variables
+    - `COMMERCE_TOOLS_PRODUCTS_CURRENCY` - needed to select proper prices when syncing products. This one variable is required for this process
+    - (optional) `COMMERCE_TOOLS_PRODUCTS_COUNTRY` - needed to select proper prices when syncing products.
+    - (optional) `COMMERCE_TOOLS_PRODUCT_CHANNEL` - needed to select proper prices when syncing products.
+    - (optional) `COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP` - needed to select proper prices when syncing products.
     - (optional) `LOGGER_PRETTY_PRINT` - set environment variable to `true`, to have console output in a text format (by default it is in JSON format).
     - (optional) `COMMERCE_TOOLS_WITH_LOGGER_MIDDLEWARE` - set environment variable to `false`, to disable debugger mode in commerce tools connector.
     - (optional) `API_EXTENSION_BASIC_AUTH_PASSWORD` - set to any `String`, it will protect your exposed API Extension URL from unwanted traffic.
     - (optional) `CUSTOM_NGROK_BIN_PATH` - set if want to use custom path to Your ngrok binary file e.g /opt/homebrew/bin for Macbook M1 cpu
     - (optional) `PORT` - set application port (default is 3000)
     - (optional) `LOGGER_LEVEL` - setting lever of errors that will be login with npm run test. You can set it to `error` or `fatal` 
-
-For local development, you need to publicly expose your local environment so that Commerce Tools can make an API Extension HTTP request to your server. We suggest installing `ngrok` for that purpose by following the installation process described here: https://ngrok.com/docs/getting-started
-
 ### Instalation
 
 If you use Your CT Application for the first time be sure to make basic confgiuration with in your Commerce Tools application (provided by API keys).
@@ -143,7 +145,14 @@ To test application you can simply run `npm run test` command. Currently we cove
 - `npm run config` - it will handle the required basic configuration in Commerce Tools:
     1. custom coupon type - needed to hold coupons codes inside cart object
     2. coupon tax category - needed for any coupon or gift card with a fixed amount discount
+    3. syncronization of products, customers and orders between Commerce Tools and Voucherify
 - `npm run test` - will run JestJs tests
+- `npm run migrate-products` - it will sync all of the products from CT to Voucherify.
+    - you can add `period` argument to sync only from last X days (e.g `npm run migrate-products -- --period=5`)
+- `npm run migrate-customers` - it will sync all of the customers from CT to Voucherify.
+    - you can add `period` argument to sync only from last X days (e.g `npm run migrate-customers -- --period=5`)
+- `npm run migrate-orders` - it will sync all of the (paid) orders from CT to Voucherify. It is important to know that due to some restrictions speed of this operation is decreased.
+    - you can add `period` argument to sync only from last X days (e.g `npm run migrate-orders -- --period=5`)
 
 ## REST API Endpoints
 

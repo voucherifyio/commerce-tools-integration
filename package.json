@@ -22,7 +22,10 @@
     "prepare": "husky install",
     "config": "nest start --config nest-cli-tax-config.json",
     "register": "nest start --config nest-cli-api-extension-register.json",
-    "unregister": "nest start --config nest-cli-api-extension-unregister.json"
+    "unregister": "nest start --config nest-cli-api-extension-unregister.json",
+    "migrate-products": "nest start --config nest-cli-migrate-products.json --",
+    "migrate-orders": "nest start --config nest-cli-migrate-orders.json --",
+    "migrate-customers": "nest start --config nest-cli-migrate-customers.json --"
   },
   "dependencies": {
     "@commercetools/platform-sdk": "^2.7.0",
@@ -45,6 +48,7 @@
     "node-fetch": "^3.2.4",
     "node-fetch2": "npm:node-fetch@^2.6.7",
     "nodejs-base64": "^2.0.0",
+    "objects-to-csv": "^1.3.6",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0"

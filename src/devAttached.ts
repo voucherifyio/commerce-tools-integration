@@ -4,8 +4,10 @@ import { JsonLoggerService } from 'json-logger-service';
 import { RegisterService as RegisterApiEstension } from './api-extension/register.service';
 import * as ngrok from 'ngrok';
 import { join } from 'path';
+import events = require('events');
 
 async function bootstrap() {
+  events.EventEmitter.defaultMaxListeners = 13;
   const logger = new JsonLoggerService('NestServer');
   logger.log('Launching ngrok service');
   const customNgrokBinPath = process.env.CUSTOM_NGROK_BIN_PATH;
