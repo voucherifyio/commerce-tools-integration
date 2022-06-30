@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-const { createReadStream, unlink } = require('fs');
-const FormData = require('form-data');
+import { createReadStream, unlink } from 'fs';
+import FormData from 'form-data';
 import fetch from 'node-fetch2';
 import { CommerceToolsConnectorService } from 'src/commerceTools/commerce-tools-connector.service';
 import { Product } from '@commercetools/platform-sdk';
-const ObjectsToCsv = require('objects-to-csv');
+import ObjectsToCsv from 'objects-to-csv';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
