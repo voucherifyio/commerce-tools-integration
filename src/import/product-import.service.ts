@@ -6,6 +6,7 @@ import fetch from 'node-fetch2';
 import { CommerceToolsConnectorService } from 'src/commerceTools/commerce-tools-connector.service';
 import { Product } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
+import { JsonLogger, LoggerFactory } from 'json-logger-service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -13,17 +14,34 @@ const sleep = (time: number) => {
   });
 };
 @Injectable()
-export class ProductImport {
+export class ProductImportService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly configService: ConfigService,
   ) {}
+
+  private readonly logger: JsonLogger = LoggerFactory.createLogger(
+    ProductImportService.name,
+  );
 
   private async *getAllProducts(): AsyncGenerator<Product[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
     let page = 0;
     let allProductsCollected = false;
+
+    const currency = this.configService.get<string>(
+      'COMMERCE_TOOLS_PRODUCTS_CURRENCY',
+    );
+    const country = this.configService.get<string>(
+      'COMMERCE_TOOLS_PRODUCTS_COUNTRY',
+    );
+    const channel = this.configService.get<string>(
+      'COMMERCE_TOOLS_PRODUCT_CHANNEL',
+    );
+    const customerGroup = this.configService.get<string>(
+      'COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP',
+    );
 
     do {
       const productResult = await ctClient
@@ -32,8 +50,10 @@ export class ProductImport {
           queryArgs: {
             limit: limit,
             offset: page * limit,
-            priceCurrency: 'EUR',
-            priceCountry: 'DE',
+            priceCurrency: currency,
+            priceCountry: country,
+            priceCustomerGroup: customerGroup,
+            priceChannel: channel,
           },
         })
         .execute();
@@ -55,6 +75,7 @@ export class ProductImport {
           name: product.masterData.current.name.en,
           source_id: product.id,
         });
+
         product.masterData.current.variants.forEach((variant) => {
           skus.push({
             product_id: product.id,
@@ -113,8 +134,12 @@ export class ProductImport {
     };
     let status = 'IN_PROGRESS';
 
+    this.logger.info(
+      'Products are processing by Voucherify. It may take a few minutes',
+    );
+
     do {
-      await sleep(10000);
+      await sleep(20000);
       const response = await fetch(
         `${this.configService.get<string>(
           'VOUCHERIFY_API_URL',
@@ -123,12 +148,15 @@ export class ProductImport {
       );
       const responseJson = await response.json();
       status = responseJson.status;
-      console.log(status);
+
+      this.logger.info(`Processing status: ${status}`);
     } while (
       status === 'IN_PROGRESS' ||
       status === null ||
       status === undefined
     );
+
+    this.logger.info('Products were processed');
 
     return status;
   }
@@ -139,9 +167,16 @@ export class ProductImport {
     const productResult = await this.productUpload(products, 'products');
     const skusResult = await this.productUpload(skus, 'skus');
 
-    const productUploadStatus = this.checkIfDone(productResult.async_action_id);
-    const skusUploadStatus = this.checkIfDone(skusResult.async_action_id);
+    const productUploadStatus = await this.checkIfDone(
+      productResult.async_action_id,
+    );
+    const skusUploadStatus = await this.checkIfDone(skusResult.async_action_id);
 
-    return { productUploadStatus, skusUploadStatus };
+    // return { productUploadStatus, skusUploadStatus };
+    if (productUploadStatus === 'DONE' && skusUploadStatus === 'DONE') {
+      return { success: true };
+    } else {
+      return { success: false };
+    }
   }
 }
