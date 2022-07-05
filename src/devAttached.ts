@@ -9,8 +9,9 @@ async function bootstrap() {
   const logger = new JsonLoggerService('NestServer');
   logger.log('Launching ngrok service');
   const customNgrokBinPath = process.env.CUSTOM_NGROK_BIN_PATH;
+  const port = process.env.PORT || 3000;
   const url = await ngrok.connect({
-    addr: 3000,
+    addr: port,
     binPath: customNgrokBinPath
       ? () => join(`${customNgrokBinPath}`)
       : undefined,
@@ -18,7 +19,8 @@ async function bootstrap() {
   logger.log(`Application available ${url}`);
   const app = await NestFactory.create(AppModule);
   app.useLogger(logger);
-  await app.listen(3000);
+  await app.listen(port);
+  logger.log(`Application port - ${port}`)
   const registerService = app.get(RegisterApiEstension);
   const isApiExtensionRegistered = await registerService.register(url);
   if (isApiExtensionRegistered) {
