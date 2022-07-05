@@ -68,6 +68,9 @@ graph LR;
     - `prices` => `Price`
 - Click `Import` and wait
 - Import should be successfull
+
+### Automatic product migration
+Each time command `npm run config` is run, all products are migrated from Commerce Tools to Voucherify. However you can also use `npm run migrate-products` to migrate them whenever you want, additionally you can pass argument `npm run migrate-products -- --period=X` to migrate products which where created in the last X days (e.g. `npm run migrate-products -- --period=5`)
 ### Installatio steps:
 
 - Install dependencies via CLI: `npm i`

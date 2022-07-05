@@ -24,7 +24,9 @@ export class ProductImportService {
     ProductImportService.name,
   );
 
-  private async *getAllProducts(): AsyncGenerator<Product[]> {
+  private async *getAllProducts(
+    fetchPeriod?: number,
+  ): AsyncGenerator<Product[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
     let page = 0;
@@ -43,6 +45,11 @@ export class ProductImportService {
       'COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP',
     );
 
+    const date = new Date();
+    if (fetchPeriod) {
+      date.setDate(date.getDate() - fetchPeriod);
+    }
+
     do {
       const productResult = await ctClient
         .products()
@@ -54,6 +61,9 @@ export class ProductImportService {
             priceCountry: country,
             priceCustomerGroup: customerGroup,
             priceChannel: channel,
+            ...(fetchPeriod && {
+              where: `lastModifiedAt>="${date.toJSON()}" or createdAt>="${date.toJSON()}"`,
+            }),
           },
         })
         .execute();
@@ -65,17 +75,16 @@ export class ProductImportService {
     } while (!allProductsCollected);
   }
 
-  private async productImport() {
+  private async productImport(period?: number) {
     const products = [];
     const skus = [];
 
-    for await (const productsBatch of this.getAllProducts()) {
+    for await (const productsBatch of this.getAllProducts(period)) {
       productsBatch.forEach((product) => {
         products.push({
           name: product.masterData.current.name.en,
           source_id: product.id,
         });
-
         product.masterData.current.variants.forEach((variant) => {
           skus.push({
             product_id: product.id,
@@ -161,8 +170,8 @@ export class ProductImportService {
     return status;
   }
 
-  public async migrateProducts() {
-    const { products, skus } = await this.productImport();
+  public async migrateProducts(period?: number) {
+    const { products, skus } = await this.productImport(period);
 
     const productResult = await this.productUpload(products, 'products');
     const skusResult = await this.productUpload(skus, 'skus');
@@ -172,7 +181,6 @@ export class ProductImportService {
     );
     const skusUploadStatus = await this.checkIfDone(skusResult.async_action_id);
 
-    // return { productUploadStatus, skusUploadStatus };
     if (productUploadStatus === 'DONE' && skusUploadStatus === 'DONE') {
       return { success: true };
     } else {
