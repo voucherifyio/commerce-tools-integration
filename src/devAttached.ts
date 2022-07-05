@@ -20,7 +20,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useLogger(logger);
   await app.listen(port);
-  logger.log(`Application port - ${port}`)
+  logger.log(`Application port - ${port}`);
   const registerService = app.get(RegisterApiEstension);
   const isApiExtensionRegistered = await registerService.register(url);
   if (isApiExtensionRegistered) {
