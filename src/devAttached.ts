@@ -13,7 +13,7 @@ async function bootstrap() {
   const url = await ngrok.connect({
     addr: port,
     binPath: customNgrokBinPath
-      ? () => join(`${customNgrokBinPath}`)
+      ? () => join(customNgrokBinPath)
       : undefined,
   });
   logger.log(`Application available ${url}`);
