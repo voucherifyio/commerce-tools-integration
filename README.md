@@ -85,6 +85,13 @@ Each time command `npm run config` is run, all products are migrated from Commer
         - `COMMERCE_TOOLS_API_URL`
         - `COMMERCE_TOOLS_ID`
         - `COMMERCE_TOOLS_SECRET`
+
+    - To make possible products auto migration you have to set at least one of below env variables to indicate right price for products
+        - `COMMERCE_TOOLS_PRODUCTS_CURRENCY`
+        - `COMMERCE_TOOLS_PRODUCTS_COUNTRY`
+        - `COMMERCE_TOOLS_PRODUCT_CHANNEL`
+        - `COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP`
+
     - Additional configuration variables
         - (optional) `LOGGER_PRETTY_PRINT` - set environment variable to `true`, to have console output in a text format (by default it is in JSON format).
         - (optional) `COMMERCE_TOOLS_WITH_LOGGER_MIDDLEWARE` - set environment variable to `false`, to disable debugger mode in commerce tools connector.
