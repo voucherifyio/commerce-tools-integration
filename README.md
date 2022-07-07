@@ -89,7 +89,9 @@ Set environment variables with credentials to Voucherify and Commerce Tools APIs
     - (optional) `API_EXTENSION_BASIC_AUTH_PASSWORD` - set to any `String`, it will protect your exposed API Extension URL from unwanted traffic.
     - (optional) `CUSTOM_NGROK_BIN_PATH` - set if want to use custom path to Your ngrok binary file e.g /opt/homebrew/bin for Macbook M1 cpu
     - (optional) `PORT` - set application port (default is 3000)
-    - (optional) `LOGGER_LEVEL` - setting lever of errors that will be login with npm run test. You can set it to `error` or `fatal` 
+    - (optional) `LOGGER_LEVEL` - setting lever of errors that will be login with npm run test. You can set it to `error` or `fatal`
+    - (optional) `DEBUG_STORE_REQUESTS_IN_JSON` - set to `true` if you want to keep requests / response of external services calls to a JSON file
+    - (optional) `DEBUG_STORE_REQUESTS_DIR` - name of the directory where JSON files with request / responses are stored 
 ### Instalation
 
 If you use Your CT Application for the first time be sure to make basic confgiuration with in your Commerce Tools application (provided by API keys).

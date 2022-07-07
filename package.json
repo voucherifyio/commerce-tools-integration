@@ -44,6 +44,7 @@
     "dotenv": "^16.0.0",
     "joi": "^17.6.0",
     "json-logger-service": "^8.0.4",
+    "mkdirp": "^1.0.4",
     "ngrok": "^4.3.1",
     "node-fetch": "^3.2.4",
     "node-fetch2": "npm:node-fetch@^2.6.7",

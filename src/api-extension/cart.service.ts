@@ -1,11 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Cart } from '@commercetools/platform-sdk';
+import { Inject, Injectable } from '@nestjs/common';
+import { StackableRedeemableResponse } from '@voucherify/sdk';
+import { JsonLogger, LoggerFactory } from 'json-logger-service';
+
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
 import { TypesService } from '../commerceTools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
-import { JsonLogger, LoggerFactory } from 'json-logger-service';
-import { Cart } from '@commercetools/platform-sdk';
-import { StackableRedeemableResponse } from '@voucherify/sdk';
 import { desarializeCoupons, Coupon, CouponStatus } from './coupon';
+import {
+  RequestJsonLogger,
+  REQUEST_JSON_LOGGER,
+} from 'src/misc/request-json-logger';
 
 type CartActionSetCustomType = {
   action: 'setCustomType';
@@ -121,6 +126,8 @@ export class CartService {
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly typesService: TypesService,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
+    @Inject(REQUEST_JSON_LOGGER)
+    private readonly requestJsonLogger: RequestJsonLogger,
   ) {}
   private readonly logger: JsonLogger = LoggerFactory.createLogger(
     CartService.name,
@@ -130,6 +137,11 @@ export class CartService {
 
   private async setCustomTypeForInitializedCart() {
     const couponType = await this.typesService.findCouponType('couponCodes');
+    await this.requestJsonLogger.log(
+      'get-type',
+      'couponCodes',
+      couponType || 'CouponType not found!',
+    );
     if (!couponType) {
       const msg = 'CouponType not found';
       this.logger.error({
@@ -245,12 +257,18 @@ export class CartService {
       anonymousId,
     });
 
+    const couponCodes = coupons.map((coupon) => coupon.code);
     const validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
-        coupons.map((coupon) => coupon.code),
+        couponCodes,
         cartObj,
         sessionKey,
       );
+    await this.requestJsonLogger.log(
+      'voucherify-validate-stackable-vouchers-with-ct-cart',
+      { couponCodes, cartObj, sessionKey },
+      validatedCoupons,
+    );
 
     const notApplicableCoupons = validatedCoupons.redeemables.filter(
       (voucher) => voucher.status === 'INAPPLICABLE',
@@ -298,6 +316,11 @@ export class CartService {
 
   private async checkCouponTaxCategoryWithCountires(cartCountry?: string) {
     const taxCategory = await this.taxCategoriesService.getCouponTaxCategory();
+    await this.requestJsonLogger.log(
+      'tax-categories-get-coupon-tax-category',
+      null,
+      taxCategory || 'Coupon tax category not found!',
+    );
     if (!taxCategory) {
       const msg = 'Coupon tax category was not configured correctly';
       this.logger.error({
