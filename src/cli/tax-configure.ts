@@ -4,6 +4,7 @@ import { JsonLoggerService } from 'json-logger-service';
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
 import { TypesService } from '../commerceTools/types/types.service';
 import { ProductImportService } from 'src/import/product-import.service';
+import { OrderImportService } from 'src/import/order-import.service';
 
 async function run() {
   console.log('process.argv', process.argv);
@@ -38,9 +39,19 @@ async function run() {
   const { success: productsMigrated } =
     await productImportService.migrateProducts();
   if (productsMigrated) {
-    logger.log('Products configured');
+    logger.log('Products migrated');
   } else {
     logger.error('Could not migrate products');
+  }
+
+  // Order migration
+  const orderImportService = app.get(OrderImportService);
+  logger.log('Attempt to migrate orders from Commerce Tools to Voucherify');
+  const { success: ordersMigrated } = await orderImportService.migrateOrders();
+  if (ordersMigrated) {
+    logger.log('Orders migrated');
+  } else {
+    logger.error('Could not migrate orders');
   }
 }
 

@@ -2,54 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { Order } from '@commercetools/platform-sdk';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
+import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 
 @Injectable()
-export class OrderImport {
+export class OrderImportService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
+    private readonly voucherifyClient: VoucherifyConnectorService,
   ) {}
 
   private readonly logger: JsonLogger = LoggerFactory.createLogger(
-    OrderImport.name,
+    OrderImportService.name,
   );
-
-  public async orderImport() {
-    const orders = [];
-
-    for await (const ordersBatch of this.getAllOrders()) {
-      ordersBatch.forEach((order) => {
-        orders.push({
-          object: 'order',
-          source_id: order.id,
-          created_at: order.createdAt,
-          updated_at: order.lastModifiedAt,
-          customer: {
-            object: 'customer',
-            source_id: order.customerId || order.anonymousId,
-          },
-          amount: order.totalPrice.centAmount,
-          items: order.lineItems.map((item) => {
-            return {
-              source_id: item.variant.sku,
-              related_object: 'sku',
-              quantity: item.quantity,
-              price: item.price.value.centAmount,
-              amount: item.quantity * item.price.value.centAmount,
-              product: {
-                name: Object?.values(item.name)?.[0],
-              },
-              sku: {
-                sku: Object?.values(item.name)?.[0],
-              },
-            };
-          }),
-        });
-      });
-    }
-
-    console.log(orders);
-    // send to v%
-  }
 
   private async *getAllOrders(): AsyncGenerator<Order[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
@@ -73,5 +37,67 @@ export class OrderImport {
         total: ordersResult.body.total,
       });
     } while (!allOrdersCollected);
+  }
+
+  private async orderImport() {
+    const orders = [];
+
+    for await (const ordersBatch of this.getAllOrders()) {
+      ordersBatch.forEach((order) => {
+        if (order.paymentState !== 'Paid') {
+          return;
+        }
+
+        orders.push({
+          object: 'order',
+          source_id: order.id,
+          created_at: order.createdAt,
+          updated_at: order.lastModifiedAt,
+          status: 'PAID',
+          customer: {
+            object: 'customer',
+            source_id: order.customerId || order.anonymousId,
+            name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
+            email: order.shippingAddress?.email,
+            address: {
+              city: order.shippingAddress?.city,
+              country: order.shippingAddress?.country,
+              postal_code: order.shippingAddress?.postalCode,
+              line_1: order.shippingAddress?.streetName,
+            },
+            phone: order.shippingAddress?.phone,
+          },
+          amount: order.totalPrice.centAmount,
+          items: order.lineItems.map((item) => {
+            return {
+              source_id: item.variant.sku,
+              related_object: 'sku',
+              quantity: item.quantity,
+              price: item.price.value.centAmount,
+              amount: item.quantity * item.price.value.centAmount,
+              product: {
+                name: Object?.values(item.name)?.[0],
+              },
+              sku: {
+                sku: Object?.values(item.name)?.[0],
+              },
+            };
+          }),
+        });
+      });
+    }
+
+    const response = await Promise.all(
+      orders.map(async (order) => {
+        return await this.voucherifyClient.getClient().orders.create(order);
+      }),
+    );
+
+    return orders.length === response.length
+      ? { success: true }
+      : { success: false };
+  }
+  public async migrateOrders() {
+    return this.orderImport();
   }
 }

@@ -18,7 +18,7 @@ import { APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ProductImportService } from './import/product-import.service';
 import { ImportController } from './import/import.controller';
-import { OrderImport } from './import/order-import.service';
+import { OrderImportService } from './import/order-import.service';
 
 @Module({
   imports: [
@@ -58,7 +58,7 @@ import { OrderImport } from './import/order-import.service';
     ProductsService,
     OrderService,
     ProductImportService,
-    OrderImport,
+    OrderImportService,
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({

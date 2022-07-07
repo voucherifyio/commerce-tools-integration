@@ -1,18 +1,18 @@
 import { Controller, Get } from '@nestjs/common';
-import { OrderImport } from './order-import.service';
+import { OrderImportService } from './order-import.service';
 import { ProductImportService } from './product-import.service';
 
 @Controller('import')
 export class ImportController {
   constructor(
     private readonly productImportService: ProductImportService,
-    private readonly orderImport: OrderImport,
+    private readonly orderImportService: OrderImportService,
   ) {}
   @Get()
   async configure() {
     const migrationStatus = await this.productImportService.migrateProducts();
-    // this.orderImport.orderImport()
+    const orderStatus = this.orderImportService.migrateOrders();
 
-    return migrationStatus;
+    return { migrationStatus, orderStatus };
   }
 }
