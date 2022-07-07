@@ -15,7 +15,7 @@ async function run() {
 
   logger.log(`Attempt to migrate orders`);
   const result = await orderImportService.migrateOrders(period);
-  if (result) {
+  if (result.success) {
     logger.log('Orders successfully migrated');
   } else {
     logger.error('Could not migrate orders');
