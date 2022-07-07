@@ -22,7 +22,8 @@
     "prepare": "husky install",
     "config": "nest start --config nest-cli-tax-config.json",
     "register": "nest start --config nest-cli-api-extension-register.json",
-    "migrate-products": "nest start --config nest-cli-migrate-products.json --"
+    "migrate-products": "nest start --config nest-cli-migrate-products.json --",
+    "migrate-orders": "nest start --config nest-cli-migrate-orders.json --"
   },
   "dependencies": {
     "@commercetools/platform-sdk": "^2.7.0",

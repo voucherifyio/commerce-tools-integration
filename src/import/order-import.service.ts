@@ -15,16 +15,29 @@ export class OrderImportService {
     OrderImportService.name,
   );
 
-  private async *getAllOrders(): AsyncGenerator<Order[]> {
+  private async *getAllOrders(fetchPeriod?: number): AsyncGenerator<Order[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
     let page = 0;
     let allOrdersCollected = false;
 
+    const date = new Date();
+    if (fetchPeriod) {
+      date.setDate(date.getDate() - fetchPeriod);
+    }
+
     do {
       const ordersResult = await ctClient
         .orders()
-        .get({ queryArgs: { limit: limit, offset: page * limit } })
+        .get({
+          queryArgs: {
+            limit: limit,
+            offset: page * limit,
+            ...(fetchPeriod && {
+              where: `lastModifiedAt>="${date.toJSON()}" or createdAt>="${date.toJSON()}"`,
+            }),
+          },
+        })
         .execute();
       yield ordersResult.body.results;
       page++;
@@ -39,10 +52,10 @@ export class OrderImportService {
     } while (!allOrdersCollected);
   }
 
-  private async orderImport() {
+  public async migrateOrders(period?: number) {
     const orders = [];
 
-    for await (const ordersBatch of this.getAllOrders()) {
+    for await (const ordersBatch of this.getAllOrders(period)) {
       ordersBatch.forEach((order) => {
         if (order.paymentState !== 'Paid') {
           return;
@@ -87,6 +100,8 @@ export class OrderImportService {
       });
     }
 
+    this.logger.info(`Sending ${orders.length} orders to Voucherify`);
+
     const response = await Promise.all(
       orders.map(async (order) => {
         return await this.voucherifyClient.getClient().orders.create(order);
@@ -96,8 +111,5 @@ export class OrderImportService {
     return orders.length === response.length
       ? { success: true }
       : { success: false };
-  }
-  public async migrateOrders() {
-    return this.orderImport();
   }
 }
