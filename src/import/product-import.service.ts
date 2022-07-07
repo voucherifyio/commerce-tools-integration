@@ -142,10 +142,7 @@ export class ProductImportService {
       'X-App-Token': this.configService.get<string>('VOUCHERIFY_SECRET_KEY'),
     };
     let status = 'IN_PROGRESS';
-
-    this.logger.info(
-      'Products are processing by Voucherify. It may take a few minutes',
-    );
+    let result = null;
 
     do {
       await sleep(20000);
@@ -157,6 +154,7 @@ export class ProductImportService {
       );
       const responseJson = await response.json();
       status = responseJson.status;
+      result = responseJson.result;
 
       this.logger.info(`Processing status: ${status}`);
     } while (
@@ -165,26 +163,36 @@ export class ProductImportService {
       status === undefined
     );
 
-    this.logger.info('Products were processed');
-
-    return status;
+    return result;
   }
 
   public async migrateProducts(period?: number) {
     const { products, skus } = await this.productImport(period);
 
     const productResult = await this.productUpload(products, 'products');
-    const skusResult = await this.productUpload(skus, 'skus');
-
+    this.logger.info(
+      `Products are processing by Voucherify. It may take a few minutes. Async action id coupled with product import: ${productResult.async_action_id}`,
+    );
     const productUploadStatus = await this.checkIfDone(
       productResult.async_action_id,
     );
-    const skusUploadStatus = await this.checkIfDone(skusResult.async_action_id);
+    this.logger.info('Products were processed');
 
-    if (productUploadStatus === 'DONE' && skusUploadStatus === 'DONE') {
-      return { success: true };
-    } else {
-      return { success: false };
+    if (productUploadStatus.failed.length === 0) {
+      const skusResult = await this.productUpload(skus, 'skus');
+      this.logger.info(
+        `Skus are processing by Voucherify. It may take a few minutes. Async action id coupled with skus import: ${skusResult.async_action_id}`,
+      );
+      const skusUploadStatus = await this.checkIfDone(
+        skusResult.async_action_id,
+      );
+      this.logger.info('Skus were processed');
+
+      return skusUploadStatus.failed.length === 0
+        ? { success: true }
+        : { success: false };
     }
+
+    return { success: false };
   }
 }
