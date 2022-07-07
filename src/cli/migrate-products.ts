@@ -15,7 +15,7 @@ async function run() {
 
   logger.log(`Attempt to migrate products`);
   const result = await productImportService.migrateProducts(period);
-  if (result) {
+  if (result.success) {
     logger.log('Products successfully migrated');
   } else {
     logger.error('Could not migrate products');
