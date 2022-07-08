@@ -9,7 +9,7 @@ import { Cart, Order } from '@commercetools/platform-sdk';
 import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
-} from 'src/misc/request-json-logger';
+} from '../misc/request-json-logger';
 
 const getQuantity = (item) => {
   const custom = item.custom?.fields?.applied_codes;
