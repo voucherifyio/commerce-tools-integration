@@ -79,19 +79,19 @@ import { RequestJsonFileLogger } from './misc/request-json-file-logger';
     {
       provide: REQUEST_JSON_LOGGER,
       useFactory: async () => {
-        if (process.env.DEBUG_STORE_REQUESTS_IN_JSON === 'true') {
-          const requestsDir = process.env.DEBUG_STORE_REQUESTS_DIR;
-          if (!requestsDir) {
-            throw new Error(
-              'Please provide value of DEBUG_STORE_REQUESTS_DIR env variable!',
-            );
-          }
-
-          await mkdirp(path.join(process.cwd(), requestsDir));
-          return new RequestJsonFileLogger(requestsDir);
+        if (process.env.DEBUG_STORE_REQUESTS_IN_JSON !== 'true') {
+          return new NoOpRequestJsonLogger();
         }
 
-        return new NoOpRequestJsonLogger();
+        const requestsDir = process.env.DEBUG_STORE_REQUESTS_DIR;
+        if (!requestsDir) {
+          throw new Error(
+            'Please provide value of DEBUG_STORE_REQUESTS_DIR env variable!',
+          );
+        }
+
+        await mkdirp(path.join(process.cwd(), requestsDir));
+        return new RequestJsonFileLogger(requestsDir);
       },
     },
   ],
