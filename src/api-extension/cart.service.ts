@@ -227,9 +227,7 @@ export class CartService {
 
   private async validateCoupons(cartObj: Cart, sessionKey?: string | null) {
     const { id, customerId, anonymousId } = cartObj;
-    const coupons: Coupon[] = (cartObj.custom?.fields?.discount_codes ?? [])
-      .map(desarializeCoupons)
-      .filter((coupon) => coupon.status !== 'NOT_APPLIED'); // we already declined them, will be removed by frontend
+    const coupons: Coupon[] = this.getCouponsFromCart(cartObj);
 
     if (!coupons.length) {
       return {
@@ -659,7 +657,15 @@ export class CartService {
       actions.push(this.setSession(newSessionKey));
     }
 
-    if (valid || (!applicableCoupons.length && skippedCoupons.length === 0)) {
+    const ifOnlyNewCouponsFailed = this.checkIfOnlyNewCouponFailed(
+      this.getCouponsFromCart(cartObj),
+      applicableCoupons,
+      notApplicableCoupons,
+      skippedCoupons,
+    )
+
+    // if (valid || (!applicableCoupons.length && skippedCoupons.length === 0)) {
+    if (valid || !ifOnlyNewCouponsFailed) {
       actions.push(
         ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
       );
@@ -671,15 +677,15 @@ export class CartService {
           taxCategory,
         )),
       );
-    }
 
-    actions.push(...this.addFreeLineItems(cartObj, productsToAdd));
-    actions.push(
-      ...this.removeFreeLineItemsIfCouponNoLongerIsApplied(
-        cartObj,
-        productsToAdd,
-      ),
-    );
+      actions.push(...this.addFreeLineItems(cartObj, productsToAdd));
+      actions.push(
+        ...this.removeFreeLineItemsIfCouponNoLongerIsApplied(
+          cartObj,
+          productsToAdd,
+        ),
+      );
+    }
 
     actions.push(
       this.updateDiscountsCodes(
@@ -693,4 +699,39 @@ export class CartService {
     this.logger.info(actions);
     return { status: true, actions };
   }
+
+  private getCouponsFromCart(cartObj: Cart): Coupon[] {
+    return (cartObj.custom?.fields?.discount_codes ?? [])
+      .map(desarializeCoupons)
+      .filter((coupon) => coupon.status !== 'NOT_APPLIED');  // we already declined them, will be removed by frontend
+  }
+
+  private checkIfOnlyNewCouponFailed(
+    coupons: Coupon[], 
+    applicableCoupons: StackableRedeemableResponse[], 
+    notApplicableCoupons: StackableRedeemableResponse[], 
+    skippedCoupons: StackableRedeemableResponse[]
+  ) : boolean {
+
+    const areAllNewCouponsNotApplicale = this.checkCouponsValidatedAsState(coupons, notApplicableCoupons, 'NEW');
+    const areAllNewCouponsNotApplicable = this.checkCouponsValidatedAsState(coupons, applicableCoupons, 'APPLIED');
+    const areAlAppliedCouponsSkipped = this.checkCouponsValidatedAsState(coupons, skippedCoupons, 'APPLIED');
+
+    return areAllNewCouponsNotApplicale && (areAlAppliedCouponsSkipped || areAllNewCouponsNotApplicable);
+  }
+
+  private checkCouponsValidatedAsState(
+    coupons: Coupon[],
+    couponsAfterValidation: StackableRedeemableResponse[],
+    status: String,
+  ) : boolean{
+
+    return coupons
+      .filter(coupon => coupon.status === status)
+      .every(coupon => {
+        return couponsAfterValidation.find(element => element.id === coupon.code)
+      })
+  }
 }
+
+
