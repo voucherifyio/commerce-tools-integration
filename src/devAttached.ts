@@ -3,8 +3,10 @@ import { AppModule } from './app.module';
 import { JsonLoggerService } from 'json-logger-service';
 import { RegisterService as RegisterApiEstension } from './api-extension/register.service';
 import * as ngrok from 'ngrok';
+import events = require('events');
 
 async function bootstrap() {
+  events.EventEmitter.defaultMaxListeners = 13;
   const logger = new JsonLoggerService('NestServer');
   logger.log('Launching ngrok service');
   const url = await ngrok.connect(3000);
