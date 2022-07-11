@@ -111,6 +111,18 @@ const defaultCart = () => ({
   custom: <CustomFields>{},
 });
 
+const setupCouponCodes = (cart) => {
+  cart.custom = {
+    type: {
+      typeId: 'type',
+      id: defaultTypeId,
+    },
+    fields: {
+      discount_codes: [],
+    },
+  };
+};
+
 describe('CartService', () => {
   let cartService: CartService;
   let taxCategoriesService: MockedTaxCategoriesService;
@@ -220,6 +232,85 @@ describe('CartService', () => {
         expect(
           taxCategoriesService.addCountryToCouponTaxCategory,
         ).not.toBeCalled();
+      });
+    });
+
+    describe('when no coupon codes provided and have no previous voucherify session,', () => {
+      let cart;
+
+      beforeEach(() => {
+        cart = defaultCart();
+        cart.version = 2;
+        setupCouponCodes(cart);
+      });
+
+      it('should create "setCustomField" action with empty value', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        expect(result.actions).toEqual([
+          {
+            action: 'setCustomField',
+            name: 'discount_codes',
+            value: [],
+          },
+        ]);
+      });
+
+      it('should NOT call voucherify', async () => {
+        await cartService.checkCartAndMutate(cart);
+
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).not.toBeCalled();
+      });
+
+      it('should create "removeCustomLineItem" action if had customLineItems previously', async () => {
+        cart.customLineItems = [
+          {
+            id: 'custom-line-item-1',
+            name: {
+              en: 'Voucher, coupon value => 20.00',
+            },
+            quantity: 1,
+            money: buildPriceValue(2000, 'EUR'),
+            slug: 'voucher-20',
+            taxCategory: {
+              id: defaultGetCouponTaxCategoryResponse.id,
+            },
+          },
+        ];
+
+        const result = await cartService.checkCartAndMutate(cart);
+
+        expect(result.actions.length).toBeGreaterThanOrEqual(2);
+        const removeCustomLineItemAction = result.actions.find(
+          ({ action }) => action === 'removeCustomLineItem',
+        );
+        expect(removeCustomLineItemAction).toEqual({
+          action: 'removeCustomLineItem',
+          customLineItemId: 'custom-line-item-1',
+        });
+      });
+
+      it('should NOT create "removeCustomLineItem" action when cart contains unknown custom lines', async () => {
+        cart.customLineItems = [
+          {
+            id: 'custom-unknown-line-item-1',
+            name: {
+              en: 'Custom unknown line',
+            },
+            quantity: 1,
+            money: buildPriceValue(10000, 'EUR'),
+            slug: 'custom-unknown-line-item',
+          },
+        ];
+
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const removeCustomLineItemActions = result.actions.filter(
+          ({ action }) => action === 'removeCustomLineItem',
+        );
+        expect(removeCustomLineItemActions.length).toBe(0);
       });
     });
   });

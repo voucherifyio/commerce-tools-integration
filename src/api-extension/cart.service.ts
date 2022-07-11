@@ -343,6 +343,10 @@ export class CartService {
     const discountLines: CartActionAddCustomLineItem[] = [];
     const couponCodes = applicableCoupons.map((coupon) => coupon.id).join(', ');
 
+    if (applicableCoupons.length === 0) {
+      return discountLines;
+    }
+
     discountLines.push({
       action: 'addCustomLineItem',
       name: {
