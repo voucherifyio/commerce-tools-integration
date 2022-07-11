@@ -3,6 +3,7 @@ import { TaxCategoriesService } from '../tax-categories.service';
 
 interface MockedTaxCategoriesService extends TaxCategoriesService {
   __simulateDefaultGetCouponTaxCategories: () => void;
+  __simulateCouponTaxCategoryIsNotDefined: () => void;
 }
 
 const taxRateForCountry = (country) => ({
@@ -13,6 +14,38 @@ const taxRateForCountry = (country) => ({
   id: `sometax${country}`,
   subRates: [],
 });
+
+const COUNTRIES = [
+  'US',
+  'DE',
+  'IT',
+  'GB',
+  'BE',
+  'BG',
+  'DK',
+  'EE',
+  'FI',
+  'FR',
+  'GR',
+  'IE',
+  'HR',
+  'LV',
+  'LT',
+  'LU',
+  'MT',
+  'NL',
+  'AT',
+  'PL',
+  'PT',
+  'RO',
+  'SE',
+  'SK',
+  'SI',
+  'ES',
+  'CZ',
+  'HU',
+  'CY',
+];
 
 const defaultGetCouponTaxCategoryResponse = {
   id: '64a3b50d-245c-465a-bb5e-faf59d729031',
@@ -28,37 +61,7 @@ const defaultGetCouponTaxCategoryResponse = {
     isPlatformClient: false,
   },
   name: 'coupon',
-  rates: [
-    'US',
-    'DE',
-    'IT',
-    'GB',
-    'BE',
-    'BG',
-    'DK',
-    'EE',
-    'FI',
-    'FR',
-    'GR',
-    'IE',
-    'HR',
-    'LV',
-    'LT',
-    'LU',
-    'MT',
-    'NL',
-    'AT',
-    'PL',
-    'PT',
-    'RO',
-    'SE',
-    'SK',
-    'SI',
-    'ES',
-    'CZ',
-    'HU',
-    'CY',
-  ].map((country) => taxRateForCountry(country)),
+  rates: COUNTRIES.map((country) => taxRateForCountry(country)),
 } as TaxCategory;
 
 const taxCategoriesService = jest.createMockFromModule(
@@ -71,6 +74,17 @@ taxCategoriesService.__simulateDefaultGetCouponTaxCategories = () => {
   );
 };
 
-taxCategoriesService.__simulateDefaultGetCouponTaxCategories();
+taxCategoriesService.__simulateCouponTaxCategoryIsNotDefined = () => {
+  taxCategoriesService.getCouponTaxCategory = jest.fn(() =>
+    Promise.resolve(null),
+  );
+};
 
-export { taxCategoriesService as TaxCategoriesService };
+taxCategoriesService.__simulateDefaultGetCouponTaxCategories();
+taxCategoriesService.addCountryToCouponTaxCategory = jest.fn();
+
+export {
+  defaultGetCouponTaxCategoryResponse,
+  taxCategoriesService as TaxCategoriesService,
+  MockedTaxCategoriesService,
+};

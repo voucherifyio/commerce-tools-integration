@@ -6,8 +6,10 @@ interface MockedTypesService extends TypesService {
   __simulateCouponTypeIsNotDefined: () => void;
 }
 
+export const defaultTypeId = '5aa76235-9d61-41c7-9d57-278b2bcc2f75';
+
 const defaultGetTypeResponse = {
-  id: '5aa76235-9d61-41c7-9d57-278b2bcc2f75',
+  id: defaultTypeId,
   version: 1,
   createdAt: '2022-07-06T10:31:15.002Z',
   lastModifiedAt: '2022-07-06T10:31:15.002Z',
@@ -78,4 +80,4 @@ typesService.__simulateCouponTypeIsNotDefined = () => {
 
 typesService.__simulateDefaultFindCouponType();
 
-export { typesService as TypesService };
+export { typesService as TypesService, MockedTypesService };

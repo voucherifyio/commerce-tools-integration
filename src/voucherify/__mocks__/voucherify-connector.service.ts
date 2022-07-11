@@ -181,4 +181,7 @@ voucherifyConnectorService.__simulateDefaultValidateStackable = () => {
 
 voucherifyConnectorService.__simulateDefaultValidateStackable();
 
-export { voucherifyConnectorService as VoucherifyConnectorService };
+export {
+  voucherifyConnectorService as VoucherifyConnectorService,
+  MockedVoucherifyConnectorService,
+};

@@ -79,6 +79,7 @@
     "webpack": "^5.72.0"
   },
   "jest": {
+    "clearMocks": true,
     "moduleFileExtensions": [
       "js",
       "json",
