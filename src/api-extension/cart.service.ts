@@ -671,7 +671,6 @@ export class CartService {
       skippedCoupons,
     );
 
-    // if (valid || (!applicableCoupons.length && skippedCoupons.length === 0)) {
     if (valid || !onlyNewCouponsFailed) {
       actions.push(
         ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
