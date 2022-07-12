@@ -28,6 +28,8 @@ jest.mock('../../commerceTools/tax-categories/tax-categories.service');
 jest.mock('../../commerceTools/types/types.service');
 jest.mock('../../voucherify/voucherify-connector.service');
 
+const DEFAULT_ITEM_PRICE = 26500;
+
 function buildPriceValue(value, currency = 'EUR'): TypedMoney {
   return {
     type: 'centPrecision',
@@ -58,13 +60,13 @@ const defaultLineItem = () =>
       prices: [
         {
           id: 'product-prices-1-id',
-          value: buildPriceValue(26500, 'EUR'),
+          value: buildPriceValue(DEFAULT_ITEM_PRICE, 'EUR'),
         },
       ],
     },
     price: {
       id: 'product-prices-1-id',
-      value: buildPriceValue(26500, 'EUR'),
+      value: buildPriceValue(DEFAULT_ITEM_PRICE, 'EUR'),
       country: 'DE',
     },
     quantity: 1,
@@ -86,14 +88,33 @@ const defaultLineItem = () =>
       },
     ],
     priceMode: 'Platform',
-    totalPrice: buildPriceValue(26500, 'EUR'),
+    totalPrice: buildPriceValue(DEFAULT_ITEM_PRICE, 'EUR'),
     taxedPrice: {
       totalNet: buildPriceValue(22269, 'EUR'),
-      totalGross: buildPriceValue(26500, 'EUR'),
+      totalGross: buildPriceValue(DEFAULT_ITEM_PRICE, 'EUR'),
       totalTax: buildPriceValue(4231, 'EUR'),
     },
     lineItemMode: 'Standard',
   } as LineItem);
+
+declare type itemAmountProvider = (item: LineItem) => number;
+
+const doubleFirstLineItem = (cart) => {
+  const item = cart.lineItems[0];
+  item.quantity *= 2;
+  item.state[0].quantity *= 2;
+  item.totalPrice.centAmount *= 2;
+  item.taxedPrice.totalNet.centAmount *= 2;
+  item.taxedPrice.totalGross.centAmount *= 2;
+  item.taxedPrice.totalTax.centAmount *= 2;
+
+  const sum = (provider: itemAmountProvider) =>
+    cart.lineItems.reduce(
+      (total: number, item: LineItem) => total + provider(item),
+      0,
+    );
+  cart.totalPrice.centAmount = sum((item) => item.totalPrice.centAmount);
+};
 
 const defaultCart = () => ({
   id: 'cart-id',
@@ -104,7 +125,7 @@ const defaultCart = () => ({
   country: 'DE',
   lineItems: [defaultLineItem()],
   customLineItems: [],
-  totalPrice: buildPriceValue(26500, 'EUR'),
+  totalPrice: buildPriceValue(DEFAULT_ITEM_PRICE, 'EUR'),
   cartState: 'Active' as CartState,
   taxMode: <TaxMode>{},
   taxRoundingMode: <RoundingMode>{},
@@ -606,6 +627,105 @@ describe('CartService', () => {
               code: FIRST_COUPON_CODE,
               status: 'APPLIED',
               value: 2650,
+            }),
+            JSON.stringify({
+              code: SECOND_COUPON_CODE,
+              status: 'APPLIED',
+              value: 2000,
+            }),
+          ],
+        });
+      });
+    });
+
+    describe('when two discount codes (percentage and amount) are already applied and quantity of items have been updated', () => {
+      let cart;
+      const FIRST_COUPON_CODE = 'PERC10';
+      const SECOND_COUPON_CODE = 'AMOUNT20';
+      const SESSION_KEY = 'existing-session-id';
+
+      beforeEach(() => {
+        cart = defaultCart();
+        cart.version = 20;
+        doubleFirstLineItem(cart);
+        setupCouponCodes(
+          cart,
+          {
+            code: FIRST_COUPON_CODE,
+            status: 'APPLIED',
+            value: 2650,
+          } as Coupon,
+          {
+            code: SECOND_COUPON_CODE,
+            status: 'APPLIED',
+            value: 2000,
+          } as Coupon,
+        );
+        cart.custom.fields.session = SESSION_KEY;
+
+        voucherifyConnectorService
+          .__simulateDefaultValidateStackable()
+          .__useCartAsOrderReference(cart)
+          .__addPercentageRateCoupon(FIRST_COUPON_CODE, 10)
+          .__addDiscountCoupon(SECOND_COUPON_CODE, 2000)
+          .__useSessionKey(SESSION_KEY);
+      });
+
+      it('should call voucherify to validate applied coupons again against updated cart', async () => {
+        await cartService.checkCartAndMutate(cart);
+
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledTimes(1);
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledWith(
+          [FIRST_COUPON_CODE, SECOND_COUPON_CODE],
+          cart,
+          SESSION_KEY,
+        );
+      });
+
+      it('should create one `addCustomLineItem` action with all coupons value combined', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const addCustomLineItemActions = result.actions.filter(
+          byActionType('addCustomLineItem'),
+        );
+        expect(addCustomLineItemActions.length).toBe(1);
+        expect(addCustomLineItemActions[0]).toEqual({
+          action: 'addCustomLineItem',
+          name: {
+            en: 'Voucher, coupon value => 73.00',
+          },
+          quantity: 1,
+          money: {
+            centAmount: -7300,
+            type: 'centPrecision',
+            currencyCode: 'EUR',
+          },
+          slug: `${FIRST_COUPON_CODE}, ${SECOND_COUPON_CODE}`,
+          taxCategory: {
+            id: defaultGetCouponTaxCategoryResponse.id,
+          },
+        });
+      });
+
+      it('should create one `setCustomField` action with all coupons applied', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const setCustomFieldActions = result.actions.filter(
+          byActionType('setCustomField'),
+        );
+        expect(setCustomFieldActions.length).toBe(1);
+        expect(setCustomFieldActions[0]).toEqual({
+          action: 'setCustomField',
+          name: 'discount_codes',
+          value: [
+            JSON.stringify({
+              code: FIRST_COUPON_CODE,
+              status: 'APPLIED',
+              value: 5300,
             }),
             JSON.stringify({
               code: SECOND_COUPON_CODE,

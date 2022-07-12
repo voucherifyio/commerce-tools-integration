@@ -587,9 +587,10 @@ export class CartService {
             code: coupon.id,
             status: 'APPLIED',
             value:
+              coupon.order?.applied_discount_amount ||
+              coupon.result?.discount?.amount_off ||
               oldCouponsCodes.find((oldCoupon) => coupon.id === oldCoupon.code)
                 ?.value ||
-              coupon.result?.discount?.amount_off ||
               0,
           } as Coupon),
       ),
