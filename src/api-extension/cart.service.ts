@@ -5,7 +5,7 @@ import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.s
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import { Cart } from '@commercetools/platform-sdk';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
-import { desarializeCoupons, Coupon } from './coupon';
+import { desarializeCoupons, Coupon, CouponStatus } from './coupon';
 
 type CartActionSetCustomType = {
   action: 'setCustomType';
@@ -657,7 +657,7 @@ export class CartService {
       actions.push(this.setSession(newSessionKey));
     }
 
-    const ifOnlyNewCouponsFailed = this.checkIfOnlyNewCouponFailed(
+    const onlyNewCouponsFailed = this.checkIfOnlyNewCouponFailed(
       this.getCouponsFromCart(cartObj),
       applicableCoupons,
       notApplicableCoupons,
@@ -665,7 +665,7 @@ export class CartService {
     )
 
     // if (valid || (!applicableCoupons.length && skippedCoupons.length === 0)) {
-    if (valid || !ifOnlyNewCouponsFailed) {
+    if (valid || !onlyNewCouponsFailed) {
       actions.push(
         ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
       );
@@ -713,23 +713,23 @@ export class CartService {
     skippedCoupons: StackableRedeemableResponse[]
   ) : boolean {
 
-    const areAllNewCouponsNotApplicale = this.checkCouponsValidatedAsState(coupons, notApplicableCoupons, 'NEW');
-    const areAllNewCouponsNotApplicable = this.checkCouponsValidatedAsState(coupons, applicableCoupons, 'APPLIED');
-    const areAlAppliedCouponsSkipped = this.checkCouponsValidatedAsState(coupons, skippedCoupons, 'APPLIED');
+    const areAllNewCouponsNotApplicable = this.checkCouponsValidatedAsState(coupons, notApplicableCoupons, 'NEW');
+    const areAllNewCouponsApplicable = this.checkCouponsValidatedAsState(coupons, applicableCoupons, 'APPLIED');
+    const areAllAppliedCouponsSkipped = this.checkCouponsValidatedAsState(coupons, skippedCoupons, 'APPLIED');
 
-    return areAllNewCouponsNotApplicale && (areAlAppliedCouponsSkipped || areAllNewCouponsNotApplicable);
+    return areAllNewCouponsNotApplicable && (areAllAppliedCouponsSkipped || areAllNewCouponsApplicable);
   }
 
   private checkCouponsValidatedAsState(
     coupons: Coupon[],
-    couponsAfterValidation: StackableRedeemableResponse[],
-    status: String,
+    validatedCoupons: StackableRedeemableResponse[],
+    status: CouponStatus,
   ) : boolean{
 
     return coupons
       .filter(coupon => coupon.status === status)
       .every(coupon => {
-        return couponsAfterValidation.find(element => element.id === coupon.code)
+        return validatedCoupons.find(element => element.id === coupon.code)
       })
   }
 }

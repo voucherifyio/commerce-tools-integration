@@ -1,9 +1,11 @@
 export type Coupon = {
   code: string;
-  status: 'NEW' | 'APPLIED' | 'NOT_APPLIED';
+  status: CouponStatus;
   errMsg?: string;
   value?: number;
 };
+
+export type CouponStatus = 'NEW' | 'APPLIED' | 'NOT_APPLIED';
 
 export function desarializeCoupons(serializedDiscountOrCode: string): Coupon {
   if (serializedDiscountOrCode.startsWith('{')) {
