@@ -662,7 +662,7 @@ export class CartService {
       applicableCoupons,
       notApplicableCoupons,
       skippedCoupons,
-    )
+    );
 
     // if (valid || (!applicableCoupons.length && skippedCoupons.length === 0)) {
     if (valid || !onlyNewCouponsFailed) {
@@ -703,35 +703,46 @@ export class CartService {
   private getCouponsFromCart(cartObj: Cart): Coupon[] {
     return (cartObj.custom?.fields?.discount_codes ?? [])
       .map(desarializeCoupons)
-      .filter((coupon) => coupon.status !== 'NOT_APPLIED');  // we already declined them, will be removed by frontend
+      .filter((coupon) => coupon.status !== 'NOT_APPLIED'); // we already declined them, will be removed by frontend
   }
 
   private checkIfOnlyNewCouponFailed(
-    coupons: Coupon[], 
-    applicableCoupons: StackableRedeemableResponse[], 
-    notApplicableCoupons: StackableRedeemableResponse[], 
-    skippedCoupons: StackableRedeemableResponse[]
-  ) : boolean {
+    coupons: Coupon[],
+    applicableCoupons: StackableRedeemableResponse[],
+    notApplicableCoupons: StackableRedeemableResponse[],
+    skippedCoupons: StackableRedeemableResponse[],
+  ): boolean {
+    const areAllNewCouponsNotApplicable = this.checkCouponsValidatedAsState(
+      coupons,
+      notApplicableCoupons,
+      'NEW',
+    );
+    const areAllNewCouponsApplicable = this.checkCouponsValidatedAsState(
+      coupons,
+      applicableCoupons,
+      'APPLIED',
+    );
+    const areAllAppliedCouponsSkipped = this.checkCouponsValidatedAsState(
+      coupons,
+      skippedCoupons,
+      'APPLIED',
+    );
 
-    const areAllNewCouponsNotApplicable = this.checkCouponsValidatedAsState(coupons, notApplicableCoupons, 'NEW');
-    const areAllNewCouponsApplicable = this.checkCouponsValidatedAsState(coupons, applicableCoupons, 'APPLIED');
-    const areAllAppliedCouponsSkipped = this.checkCouponsValidatedAsState(coupons, skippedCoupons, 'APPLIED');
-
-    return areAllNewCouponsNotApplicable && (areAllAppliedCouponsSkipped || areAllNewCouponsApplicable);
+    return (
+      areAllNewCouponsNotApplicable &&
+      (areAllAppliedCouponsSkipped || areAllNewCouponsApplicable)
+    );
   }
 
   private checkCouponsValidatedAsState(
     coupons: Coupon[],
     validatedCoupons: StackableRedeemableResponse[],
     status: CouponStatus,
-  ) : boolean{
-
+  ): boolean {
     return coupons
-      .filter(coupon => coupon.status === status)
-      .every(coupon => {
-        return validatedCoupons.find(element => element.id === coupon.code)
-      })
+      .filter((coupon) => coupon.status === status)
+      .every((coupon) => {
+        return validatedCoupons.find((element) => element.id === coupon.code);
+      });
   }
 }
-
-
