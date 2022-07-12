@@ -519,5 +519,102 @@ describe('CartService', () => {
         });
       });
     });
+
+    describe('when another -20€ amount voucher is provided after -10% coupon in one session', () => {
+      let cart;
+      const FIRST_COUPON_CODE = 'PERC10';
+      const SECOND_COUPON_CODE = 'AMOUNT20';
+      const SESSION_KEY = 'existing-session-id';
+
+      beforeEach(() => {
+        cart = defaultCart();
+        cart.version = 2;
+        setupCouponCodes(
+          cart,
+          {
+            code: FIRST_COUPON_CODE,
+            status: 'APPLIED',
+            value: 2650,
+          } as Coupon,
+          {
+            code: SECOND_COUPON_CODE,
+            status: 'NEW',
+          } as Coupon,
+        );
+        cart.custom.fields.session = SESSION_KEY;
+
+        voucherifyConnectorService
+          .__simulateDefaultValidateStackable()
+          .__useCartAsOrderReference(cart)
+          .__addPercentageRateCoupon(FIRST_COUPON_CODE, 10)
+          .__addDiscountCoupon(SECOND_COUPON_CODE, 2000)
+          .__useSessionKey(SESSION_KEY);
+      });
+
+      it('should call voucherify once', async () => {
+        await cartService.checkCartAndMutate(cart);
+
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledTimes(1);
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledWith(
+          [FIRST_COUPON_CODE, SECOND_COUPON_CODE],
+          cart,
+          SESSION_KEY,
+        );
+      });
+
+      it('should create one `addCustomLineItem` action with all coupons value combined', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const addCustomLineItemActions = result.actions.filter(
+          byActionType('addCustomLineItem'),
+        );
+        expect(addCustomLineItemActions.length).toBe(1);
+        expect(addCustomLineItemActions[0]).toEqual({
+          action: 'addCustomLineItem',
+          name: {
+            en: 'Voucher, coupon value => 46.50',
+          },
+          quantity: 1,
+          money: {
+            centAmount: -4650,
+            type: 'centPrecision',
+            currencyCode: 'EUR',
+          },
+          slug: `${FIRST_COUPON_CODE}, ${SECOND_COUPON_CODE}`,
+          taxCategory: {
+            id: defaultGetCouponTaxCategoryResponse.id,
+          },
+        });
+      });
+
+      it('should create one `setCustomField` action with all coupons applied', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const setCustomFieldActions = result.actions.filter(
+          byActionType('setCustomField'),
+        );
+        expect(setCustomFieldActions.length).toBe(1);
+        expect(setCustomFieldActions[0]).toEqual({
+          action: 'setCustomField',
+          name: 'discount_codes',
+          value: [
+            JSON.stringify({
+              code: FIRST_COUPON_CODE,
+              status: 'APPLIED',
+              value: 2650,
+            }),
+            JSON.stringify({
+              code: SECOND_COUPON_CODE,
+              status: 'APPLIED',
+              value: 2000,
+            }),
+          ],
+        });
+      });
+    });
   });
 });

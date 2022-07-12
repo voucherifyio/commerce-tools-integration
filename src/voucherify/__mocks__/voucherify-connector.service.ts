@@ -21,6 +21,11 @@ interface MockedVoucherifyConnectorService extends VoucherifyConnectorService {
     amount: number,
     status?: StackableRedeemableResponseStatus,
   ) => MockedVoucherifyConnectorService;
+  __addPercentageRateCoupon: (
+    couponCode: string,
+    percentage: number,
+    status?: StackableRedeemableResponseStatus,
+  ) => MockedVoucherifyConnectorService;
   __useSessionKey: (sessionKey: string) => MockedVoucherifyConnectorService;
   __simulateInvalidValidation: () => MockedVoucherifyConnectorService;
   __withInapplicableCoupon: (
@@ -228,6 +233,41 @@ voucherifyConnectorService.__addDiscountCoupon = (
       applied_discount_amount: order.applied_discount_amount + amount,
       total_applied_discount_amount:
         order.total_applied_discount_amount + amount,
+    },
+  );
+  return voucherifyConnectorService;
+};
+
+voucherifyConnectorService.__addPercentageRateCoupon = (
+  couponCode: string,
+  percentage: number,
+  status = 'APPLICABLE',
+) => {
+  voucherifyConnectorService.__useRedeemable({
+    id: couponCode,
+    status,
+    object: 'voucher',
+    result: {
+      discount: {
+        type: 'PERCENT',
+        effect: 'APPLY_TO_ORDER',
+        percent_off: percentage,
+      },
+    },
+  });
+
+  const { order } =
+    voucherifyConnectorService.__currentValidateVouchersResponse;
+  const discount = Math.round((order.amount * percentage) / 100);
+
+  Object.assign(
+    voucherifyConnectorService.__currentValidateVouchersResponse.order,
+    {
+      discount_amount: order.discount_amount + discount,
+      total_discount_amount: order.total_discount_amount + discount,
+      applied_discount_amount: order.applied_discount_amount + discount,
+      total_applied_discount_amount:
+        order.total_applied_discount_amount + discount,
     },
   );
   return voucherifyConnectorService;
