@@ -712,25 +712,27 @@ export class CartService {
     notApplicableCoupons: StackableRedeemableResponse[],
     skippedCoupons: StackableRedeemableResponse[],
   ): boolean {
+
     const areAllNewCouponsNotApplicable = this.checkCouponsValidatedAsState(
       coupons,
       notApplicableCoupons,
       'NEW',
     );
-    const areAllNewCouponsApplicable = this.checkCouponsValidatedAsState(
+
+    const areAllAppliedCouponsApplicable = applicableCoupons.length === 0 || this.checkCouponsValidatedAsState(
       coupons,
       applicableCoupons,
       'APPLIED',
     );
-    const areAllAppliedCouponsSkipped = this.checkCouponsValidatedAsState(
+
+    const areAllAppliedCouponsSkipped = skippedCoupons.length === 0 || this.checkCouponsValidatedAsState(
       coupons,
       skippedCoupons,
       'APPLIED',
     );
 
     return (
-      areAllNewCouponsNotApplicable &&
-      (areAllAppliedCouponsSkipped || areAllNewCouponsApplicable)
+      notApplicableCoupons.length !== 0 && areAllNewCouponsNotApplicable && areAllAppliedCouponsSkipped && areAllAppliedCouponsApplicable
     );
   }
 
