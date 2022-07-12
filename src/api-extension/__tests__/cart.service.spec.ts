@@ -111,7 +111,13 @@ const defaultCart = () => ({
   taxCalculationMode: <TaxCalculationMode>{},
   refusedGifts: [],
   origin: <CartOrigin>{},
-  custom: <CustomFields>{},
+  custom: <CustomFields>{
+    type: {
+      typeId: 'type',
+      id: defaultTypeId,
+    },
+    fields: {},
+  },
 });
 
 const setupCouponCodes = (cart, ...coupons: Coupon[]) => {
@@ -406,6 +412,109 @@ describe('CartService', () => {
               status: 'APPLIED',
               value: 2000,
             }),
+          ],
+        });
+      });
+    });
+
+    describe('when one-time -20€ amount voucher is provided in another cart within another session', () => {
+      let cart;
+      const COUPON_CODE = 'AMOUNT20';
+      const NEW_SESSION_ID = 'new-session-id';
+
+      beforeEach(() => {
+        cart = defaultCart();
+        cart.version = 2;
+        setupCouponCodes(cart, {
+          code: COUPON_CODE,
+          status: 'NEW',
+        } as Coupon);
+        cart.custom.fields.session = NEW_SESSION_ID;
+
+        voucherifyConnectorService
+          .__simulateInvalidValidation()
+          .__withInapplicableCoupon(COUPON_CODE);
+      });
+
+      it('should call voucherify exactly once using session identifier', async () => {
+        await cartService.checkCartAndMutate(cart);
+
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledTimes(1);
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledWith([COUPON_CODE], cart, NEW_SESSION_ID);
+      });
+
+      it('should return only one `setCustomField` action with information about failure', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        expect(result).toEqual({
+          status: true,
+          actions: [
+            {
+              action: 'setCustomField',
+              name: 'discount_codes',
+              value: [
+                JSON.stringify({
+                  code: COUPON_CODE,
+                  status: 'NOT_APPLIED',
+                  errMsg: 'quantity exceeded',
+                }),
+              ],
+            },
+          ],
+        });
+      });
+    });
+
+    describe('when trying to apply inexistent coupon code', () => {
+      let cart;
+      const COUPON_CODE = 'NOT EXIST';
+
+      beforeEach(() => {
+        cart = defaultCart();
+        cart.version = 2;
+        setupCouponCodes(cart, {
+          code: COUPON_CODE,
+          status: 'NEW',
+        } as Coupon);
+
+        voucherifyConnectorService
+          .__simulateInvalidValidation()
+          .__withInexistentCoupon(COUPON_CODE);
+      });
+
+      it('should call voucherify exactly once', async () => {
+        await cartService.checkCartAndMutate(cart);
+
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledTimes(1);
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledWith([COUPON_CODE], cart, null);
+      });
+
+      it('should return only one `setCustomField` action with information about failure', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+        console.log(JSON.stringify(result, null, 2));
+
+        expect(result).toEqual({
+          status: true,
+          actions: [
+            {
+              action: 'setCustomField',
+              name: 'discount_codes',
+              value: [
+                JSON.stringify({
+                  code: COUPON_CODE,
+                  status: 'NOT_APPLIED',
+                  errMsg: 'Resource not found',
+                }),
+              ],
+            },
           ],
         });
       });

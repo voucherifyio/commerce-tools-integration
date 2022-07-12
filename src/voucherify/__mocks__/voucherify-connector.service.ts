@@ -22,6 +22,13 @@ interface MockedVoucherifyConnectorService extends VoucherifyConnectorService {
     status?: StackableRedeemableResponseStatus,
   ) => MockedVoucherifyConnectorService;
   __useSessionKey: (sessionKey: string) => MockedVoucherifyConnectorService;
+  __simulateInvalidValidation: () => MockedVoucherifyConnectorService;
+  __withInapplicableCoupon: (
+    couponCode: string,
+  ) => MockedVoucherifyConnectorService;
+  __withInexistentCoupon: (
+    couponCode: string,
+  ) => MockedVoucherifyConnectorService;
   __currentValidateVouchersResponse: ValidationValidateStackableResponse;
 }
 
@@ -229,6 +236,54 @@ voucherifyConnectorService.__addDiscountCoupon = (
 voucherifyConnectorService.__useSessionKey = (sessionKey) => {
   voucherifyConnectorService.__currentValidateVouchersResponse.session.key =
     sessionKey;
+  return voucherifyConnectorService;
+};
+
+voucherifyConnectorService.__simulateInvalidValidation = () => {
+  voucherifyConnectorService.__currentValidateVouchersResponse = {
+    valid: false,
+    redeemables: [],
+  };
+  return voucherifyConnectorService;
+};
+
+voucherifyConnectorService.__withInapplicableCoupon = (couponCode: string) => {
+  voucherifyConnectorService.__currentValidateVouchersResponse.redeemables.push(
+    {
+      status: 'INAPPLICABLE',
+      id: couponCode,
+      object: 'voucher',
+      result: {
+        error: {
+          code: 400,
+          key: 'quantity_exceeded',
+          message: 'quantity exceeded',
+          details: couponCode,
+          request_id: 'v-123123123123',
+        },
+      },
+    },
+  );
+  return voucherifyConnectorService;
+};
+
+voucherifyConnectorService.__withInexistentCoupon = (couponCode: string) => {
+  voucherifyConnectorService.__currentValidateVouchersResponse.redeemables.push(
+    {
+      status: 'INAPPLICABLE',
+      id: couponCode,
+      object: 'voucher',
+      result: {
+        error: {
+          code: 404,
+          key: 'not_found',
+          message: 'Resource not found',
+          details: `Cannot find voucher with id ${couponCode}`,
+          request_id: 'v-123123123123',
+        },
+      },
+    },
+  );
   return voucherifyConnectorService;
 };
 
