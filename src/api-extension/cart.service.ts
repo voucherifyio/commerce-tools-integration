@@ -102,7 +102,7 @@ type CartActionChangeLineItemQuantity = {
   quantity: number;
 };
 
-type CartAction =
+export type CartAction =
   | CartActionSetCustomType
   | CartActionSetCustomFieldWithCoupons
   | CartActionSetCustomFieldWithSession
@@ -644,7 +644,7 @@ export class CartService {
 
   async checkCartAndMutate(cartObj: Cart): Promise<CartResponse> {
     if (cartObj.version === 1) {
-      return await this.setCustomTypeForInitializedCart();
+      return this.setCustomTypeForInitializedCart();
     }
 
     const taxCategory = await this.checkCouponTaxCategoryWithCountires(

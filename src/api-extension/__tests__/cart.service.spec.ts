@@ -9,7 +9,7 @@ import {
   TypedMoney,
 } from '@commercetools/platform-sdk';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CartService } from '../cart.service';
+import { CartAction, CartService } from '../cart.service';
 import { TaxCategoriesService } from '../../commerceTools/tax-categories/tax-categories.service';
 import { TypesService } from '../../commerceTools/types/types.service';
 import {
@@ -22,17 +22,20 @@ import {
   MockedTaxCategoriesService,
 } from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
 import { MockedVoucherifyConnectorService } from '../../voucherify/__mocks__/voucherify-connector.service';
+import { Coupon } from '../coupon';
 
 jest.mock('../../commerceTools/tax-categories/tax-categories.service');
 jest.mock('../../commerceTools/types/types.service');
 jest.mock('../../voucherify/voucherify-connector.service');
 
-const buildPriceValue = (value, currency = 'EUR') => ({
-  type: 'centPrecision',
-  currencyCode: currency,
-  centAmount: value,
-  fractionDigits: 2,
-});
+function buildPriceValue(value, currency = 'EUR'): TypedMoney {
+  return {
+    type: 'centPrecision',
+    currencyCode: currency,
+    centAmount: value,
+    fractionDigits: 2,
+  };
+}
 
 const defaultLineItem = () =>
   ({
@@ -101,7 +104,7 @@ const defaultCart = () => ({
   country: 'DE',
   lineItems: [defaultLineItem()],
   customLineItems: [],
-  totalPrice: <TypedMoney>{},
+  totalPrice: buildPriceValue(26500, 'EUR'),
   cartState: 'Active' as CartState,
   taxMode: <TaxMode>{},
   taxRoundingMode: <RoundingMode>{},
@@ -111,17 +114,22 @@ const defaultCart = () => ({
   custom: <CustomFields>{},
 });
 
-const setupCouponCodes = (cart) => {
+const setupCouponCodes = (cart, ...coupons: Coupon[]) => {
   cart.custom = {
     type: {
       typeId: 'type',
       id: defaultTypeId,
     },
     fields: {
-      discount_codes: [],
+      discount_codes: coupons.map((coupon) => JSON.stringify(coupon)),
     },
   };
 };
+
+const byActionType = (actionName: string) => (action: CartAction) =>
+  action.action === actionName;
+const byCustomField = (fieldName: string) => (action: CartAction) =>
+  action.action === 'setCustomField' && action.name === fieldName;
 
 describe('CartService', () => {
   let cartService: CartService;
@@ -284,7 +292,7 @@ describe('CartService', () => {
 
         expect(result.actions.length).toBeGreaterThanOrEqual(2);
         const removeCustomLineItemAction = result.actions.find(
-          ({ action }) => action === 'removeCustomLineItem',
+          byActionType('removeCustomLineItem'),
         );
         expect(removeCustomLineItemAction).toEqual({
           action: 'removeCustomLineItem',
@@ -308,9 +316,98 @@ describe('CartService', () => {
         const result = await cartService.checkCartAndMutate(cart);
 
         const removeCustomLineItemActions = result.actions.filter(
-          ({ action }) => action === 'removeCustomLineItem',
+          byActionType('removeCustomLineItem'),
         );
         expect(removeCustomLineItemActions.length).toBe(0);
+      });
+    });
+
+    describe('when one -20€ amount voucher is provided in new session', () => {
+      let cart;
+      const COUPON_CODE = 'AMOUNT20';
+      const SESSION_KEY = 'new-session-id';
+
+      beforeEach(() => {
+        cart = defaultCart();
+        cart.version = 2;
+        setupCouponCodes(cart, {
+          code: COUPON_CODE,
+          status: 'NEW',
+        } as Coupon);
+
+        voucherifyConnectorService
+          .__simulateDefaultValidateStackable()
+          .__useCartAsOrderReference(cart)
+          .__addDiscountCoupon(COUPON_CODE, 2000)
+          .__useSessionKey(SESSION_KEY);
+      });
+
+      it('should call voucherify exactly once', async () => {
+        await cartService.checkCartAndMutate(cart);
+
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledTimes(1);
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledWith([COUPON_CODE], cart, null);
+      });
+
+      it('should assign new session with voucherify and store in cart', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const setSessionCustomFieldAction = result.actions.find(
+          byCustomField('session'),
+        );
+        expect(setSessionCustomFieldAction).toEqual({
+          action: 'setCustomField',
+          name: 'session',
+          value: SESSION_KEY,
+        });
+      });
+
+      it('should create "addCustomLineItem" action with coupons total value', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const addCustomLineItemActions = result.actions.filter(
+          byActionType('addCustomLineItem'),
+        );
+        expect(addCustomLineItemActions.length).toBe(1);
+        expect(addCustomLineItemActions[0]).toEqual({
+          action: 'addCustomLineItem',
+          name: {
+            en: 'Voucher, coupon value => 20.00',
+          },
+          quantity: 1,
+          money: {
+            centAmount: -2000,
+            type: 'centPrecision',
+            currencyCode: 'EUR',
+          },
+          slug: COUPON_CODE,
+          taxCategory: {
+            id: defaultGetCouponTaxCategoryResponse.id,
+          },
+        });
+      });
+
+      it('should create "setCustomField" action with validated coupons', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const setDiscountCodesAction = result.actions.find(
+          byCustomField('discount_codes'),
+        );
+        expect(setDiscountCodesAction).toEqual({
+          action: 'setCustomField',
+          name: 'discount_codes',
+          value: [
+            JSON.stringify({
+              code: COUPON_CODE,
+              status: 'APPLIED',
+              value: 2000,
+            }),
+          ],
+        });
       });
     });
   });
