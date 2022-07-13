@@ -5,7 +5,7 @@ import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.s
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import { Cart } from '@commercetools/platform-sdk';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
-import { desarializeCoupons, Coupon } from './coupon';
+import { desarializeCoupons, Coupon, CouponStatus } from './coupon';
 
 type CartActionSetCustomType = {
   action: 'setCustomType';
@@ -227,9 +227,7 @@ export class CartService {
 
   private async validateCoupons(cartObj: Cart, sessionKey?: string | null) {
     const { id, customerId, anonymousId } = cartObj;
-    const coupons: Coupon[] = (cartObj.custom?.fields?.discount_codes ?? [])
-      .map(desarializeCoupons)
-      .filter((coupon) => coupon.status !== 'NOT_APPLIED'); // we already declined them, will be removed by frontend
+    const coupons: Coupon[] = this.getCouponsFromCart(cartObj);
 
     if (!coupons.length) {
       return {
@@ -571,23 +569,13 @@ export class CartService {
     notApplicableCoupons: StackableRedeemableResponse[],
     skippedCoupons: StackableRedeemableResponse[],
     cartObj: Cart,
+    onlyNewCouponsFailed: boolean,
   ): CartActionSetCustomFieldWithCoupons {
     const oldCouponsCodes: Coupon[] = (
       cartObj.custom?.fields?.discount_codes ?? []
     ).map(desarializeCoupons);
 
     const coupons = [
-      ...skippedCoupons.map(
-        (coupon) =>
-          ({
-            code: coupon.id,
-            status: 'APPLIED',
-            value:
-              oldCouponsCodes.find((oldCoupon) => coupon.id === oldCoupon.code)
-                ?.value || 0,
-          } as Coupon),
-      ),
-
       ...applicableCoupons.map(
         (coupon) =>
           ({
@@ -611,6 +599,23 @@ export class CartService {
           } as Coupon),
       ),
     ];
+
+    if (onlyNewCouponsFailed) {
+      coupons.push(
+        ...skippedCoupons.map(
+          (coupon) =>
+            ({
+              code: coupon.id,
+              status: 'APPLIED',
+              value:
+                oldCouponsCodes.find(
+                  (oldCoupon) => coupon.id === oldCoupon.code,
+                )?.value || 0,
+            } as Coupon),
+        ),
+      );
+    }
+
     return {
       action: 'setCustomField',
       name: 'discount_codes',
@@ -659,7 +664,14 @@ export class CartService {
       actions.push(this.setSession(newSessionKey));
     }
 
-    if (valid || (!applicableCoupons.length && skippedCoupons.length === 0)) {
+    const onlyNewCouponsFailed = this.checkIfOnlyNewCouponFailed(
+      this.getCouponsFromCart(cartObj),
+      applicableCoupons,
+      notApplicableCoupons,
+      skippedCoupons,
+    );
+
+    if (valid || !onlyNewCouponsFailed) {
       actions.push(
         ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
       );
@@ -671,15 +683,15 @@ export class CartService {
           taxCategory,
         )),
       );
-    }
 
-    actions.push(...this.addFreeLineItems(cartObj, productsToAdd));
-    actions.push(
-      ...this.removeFreeLineItemsIfCouponNoLongerIsApplied(
-        cartObj,
-        productsToAdd,
-      ),
-    );
+      actions.push(...this.addFreeLineItems(cartObj, productsToAdd));
+      actions.push(
+        ...this.removeFreeLineItemsIfCouponNoLongerIsApplied(
+          cartObj,
+          productsToAdd,
+        ),
+      );
+    }
 
     actions.push(
       this.updateDiscountsCodes(
@@ -687,10 +699,57 @@ export class CartService {
         notApplicableCoupons,
         skippedCoupons,
         cartObj,
+        onlyNewCouponsFailed,
       ),
     );
 
     this.logger.info(actions);
     return { status: true, actions };
+  }
+
+  private getCouponsFromCart(cartObj: Cart): Coupon[] {
+    return (cartObj.custom?.fields?.discount_codes ?? [])
+      .map(desarializeCoupons)
+      .filter((coupon) => coupon.status !== 'NOT_APPLIED'); // we already declined them, will be removed by frontend
+  }
+
+  private checkIfOnlyNewCouponFailed(
+    coupons: Coupon[],
+    applicableCoupons: StackableRedeemableResponse[],
+    notApplicableCoupons: StackableRedeemableResponse[],
+    skippedCoupons: StackableRedeemableResponse[],
+  ): boolean {
+    const areAllNewCouponsNotApplicable = this.checkCouponsValidatedAsState(
+      coupons,
+      notApplicableCoupons,
+      'NEW',
+    );
+
+    const areAllAppliedCouponsApplicable =
+      applicableCoupons.length === 0 ||
+      this.checkCouponsValidatedAsState(coupons, applicableCoupons, 'APPLIED');
+
+    const areAllAppliedCouponsSkipped =
+      skippedCoupons.length === 0 ||
+      this.checkCouponsValidatedAsState(coupons, skippedCoupons, 'APPLIED');
+
+    return (
+      notApplicableCoupons.length !== 0 &&
+      areAllNewCouponsNotApplicable &&
+      areAllAppliedCouponsSkipped &&
+      areAllAppliedCouponsApplicable
+    );
+  }
+
+  private checkCouponsValidatedAsState(
+    coupons: Coupon[],
+    validatedCoupons: StackableRedeemableResponse[],
+    status: CouponStatus,
+  ): boolean {
+    return coupons
+      .filter((coupon) => coupon.status === status)
+      .every((coupon) => {
+        return validatedCoupons.find((element) => element.id === coupon.code);
+      });
   }
 }
