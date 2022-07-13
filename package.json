@@ -21,7 +21,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prepare": "husky install",
     "config": "nest start --config nest-cli-tax-config.json",
-    "register": "nest start --config nest-cli-api-extension-register.json"
+    "register": "nest start --config nest-cli-api-extension-register.json",
+    "unregister": "nest start --config nest-cli-api-extension-unregister.json"
   },
   "dependencies": {
     "@commercetools/platform-sdk": "^2.7.0",
