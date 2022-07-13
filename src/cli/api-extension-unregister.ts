@@ -10,15 +10,17 @@ async function run() {
   const registerService = app.get(RegisterService);
   const configService = app.get(ConfigService);
   const url = configService.get<string>('APP_URL');
-  logger.log(`Attempt to unregister commerce tool api extension for ur: ${url}`);
-
-  await registerService.unregister()
+  logger.log(
+    `Attempt to unregister commerce tool api extension for ur: ${url}`,
+  );
+  await registerService
+    .unregister()
     .then(() => {
-        logger.log('Api extension unregistered');
+      logger.log('Api extension unregistered');
     })
     .catch((error) => {
-        logger.error(`Could not unregister api extension error - ${error}`);
-  })
+      logger.error(`Could not unregister api extension error - ${error}`);
+    });
 }
 
 run();

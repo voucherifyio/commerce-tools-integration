@@ -12,9 +12,7 @@ async function bootstrap() {
   const port = process.env.PORT || 3000;
   const url = await ngrok.connect({
     addr: port,
-    binPath: customNgrokBinPath
-      ? () => join(customNgrokBinPath)
-      : undefined,
+    binPath: customNgrokBinPath ? () => join(customNgrokBinPath) : undefined,
   });
   logger.log(`Application available ${url}`);
   const app = await NestFactory.create(AppModule);
