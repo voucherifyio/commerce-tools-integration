@@ -1,5 +1,6 @@
 import { Cart } from '@commercetools/platform-sdk';
 import {
+  DiscountVouchersEffectTypes,
   OrdersCreateResponse,
   OrdersItem,
   StackableRedeemableResponse,
@@ -29,9 +30,17 @@ interface MockedVoucherifyConnectorService extends VoucherifyConnectorService {
     status?: StackableRedeemableResponseStatus,
   ) => MockedVoucherifyConnectorService;
   __addProductDiscount: (
-    productId: string,
     couponCode: string,
+    productId: string,
     amount: number,
+    status?: StackableRedeemableResponseStatus,
+  ) => MockedVoucherifyConnectorService;
+  __addGiftProductToCartDiscount: (
+    couponCode: string,
+    skuId: string,
+    productId: string,
+    productPrice: number,
+    effect?: DiscountVouchersEffectTypes,
     status?: StackableRedeemableResponseStatus,
   ) => MockedVoucherifyConnectorService;
   __useSessionKey: (sessionKey: string) => MockedVoucherifyConnectorService;
@@ -317,8 +326,8 @@ voucherifyConnectorService.__addPercentageRateCoupon = (
 };
 
 voucherifyConnectorService.__addProductDiscount = (
-  productId: string,
   couponCode: string,
+  productId: string,
   amount: number,
   status = 'APPLICABLE',
 ) => {
@@ -381,6 +390,88 @@ voucherifyConnectorService.__addProductDiscount = (
         order.items_applied_discount_amount + amount,
     },
   );
+
+  return voucherifyConnectorService;
+};
+
+voucherifyConnectorService.__addGiftProductToCartDiscount = (
+  couponCode,
+  skuId,
+  productId,
+  productPrice,
+  effect = 'ADD_NEW_ITEMS',
+  status = 'APPLICABLE',
+) => {
+  voucherifyConnectorService.__useRedeemable(
+    {
+      id: couponCode,
+      status,
+      object: 'voucher',
+      result: {
+        discount: {
+          type: 'UNIT',
+          effect,
+          unit_off: 1,
+          unit_type: productId,
+          sku: {
+            id: 'sku-id',
+            source_id: skuId,
+          },
+          product: {
+            id: 'product-id',
+            source_id: productId,
+          },
+        },
+      },
+    },
+    productPrice,
+    true,
+  );
+  const { order } =
+    voucherifyConnectorService.__currentValidateVouchersResponse;
+
+  Object.assign(
+    voucherifyConnectorService.__currentValidateVouchersResponse.order,
+    {
+      initial_amount: order.amount,
+      amount: order.amount + productPrice,
+      items_discount_amount: order.items_discount_amount + productPrice,
+      total_discount_amount: order.total_discount_amount + productPrice,
+      items_applied_discount_amount:
+        order.items_applied_discount_amount + productPrice,
+      total_applied_discount_amount:
+        order.total_applied_discount_amount + productPrice,
+    },
+  );
+  const { redeemables } =
+    voucherifyConnectorService.__currentValidateVouchersResponse;
+  const lastRedeemable = redeemables[redeemables.length - 1];
+  lastRedeemable.order.items = lastRedeemable.order.items || [];
+  lastRedeemable.order.items.push({
+    source_id: skuId,
+    related_object: 'sku',
+    product_id: productId,
+    quantity: 1,
+    discount_quantity: 1,
+    initial_quantity: 1,
+    amount: productPrice,
+    discount_amount: productPrice,
+    initial_amount: productPrice,
+    applied_discount_amount: productPrice,
+    price: productPrice,
+    subtotal_amount: 0,
+    product: {
+      id: 'product-id',
+      source_id: productId,
+      override: true,
+    },
+    sku: {
+      id: 'sku-id',
+      source_id: skuId,
+      price: productPrice,
+      override: true,
+    },
+  } as any);
 
   return voucherifyConnectorService;
 };

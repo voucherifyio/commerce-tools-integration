@@ -49,6 +49,8 @@ interface CreateLineItemProps {
   quantity?: number;
 }
 
+let lineItemCounter = 0;
+
 const createLineItem = (
   props: CreateLineItemProps = {
     productId: 'product-id',
@@ -61,7 +63,7 @@ const createLineItem = (
   },
 ) =>
   ({
-    id: 'line-item-id',
+    id: `line-item-id-${++lineItemCounter}`,
     productId: props.productId,
     name: {
       en: props.name,
@@ -540,7 +542,6 @@ describe('CartService', () => {
 
       it('should return only one `setCustomField` action with information about failure', async () => {
         const result = await cartService.checkCartAndMutate(cart);
-        console.log(JSON.stringify(result, null, 2));
 
         expect(result).toEqual({
           status: true,
@@ -788,7 +789,7 @@ describe('CartService', () => {
         voucherifyConnectorService
           .__simulateDefaultValidateStackable()
           .__useCartAsOrderReference(cart)
-          .__addProductDiscount(PRODUCT_ID, COUPON_CODE, 3000)
+          .__addProductDiscount(COUPON_CODE, PRODUCT_ID, 3000)
           .__useSessionKey(SESSION_KEY);
       });
 
@@ -843,6 +844,367 @@ describe('CartService', () => {
               code: COUPON_CODE,
               status: 'APPLIED',
               value: 3000,
+            }),
+          ],
+        });
+      });
+    });
+
+    describe('when applying discount code which adds free product to the cart', () => {
+      let cart;
+      const COUPON_CODE = 'ADD_GIFT';
+      const SKU_ID = 'gift-sku-id';
+      const PRODUCT_ID = 'gift-product-id';
+      const SESSION_KEY = 'existing-session-id';
+      const PRODUCT_PRICE = 6500;
+
+      beforeEach(() => {
+        cart = defaultCart();
+        cart.version = 2;
+        setupCouponCodes(cart, {
+          status: 'NEW',
+          code: COUPON_CODE,
+        } as Coupon);
+        cart.custom.fields.session = SESSION_KEY;
+
+        voucherifyConnectorService
+          .__simulateDefaultValidateStackable()
+          .__useCartAsOrderReference(cart)
+          .__addGiftProductToCartDiscount(
+            COUPON_CODE,
+            SKU_ID,
+            PRODUCT_ID,
+            PRODUCT_PRICE,
+          )
+          .__useSessionKey(SESSION_KEY);
+      });
+
+      it('should call voucherify once', async () => {
+        await cartService.checkCartAndMutate(cart);
+
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledTimes(1);
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledWith([COUPON_CODE], cart, SESSION_KEY);
+      });
+
+      it('should create `addLineItem` action with gift product', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const addLineItemActions = result.actions.filter(
+          byActionType('addLineItem'),
+        );
+        expect(addLineItemActions.length).toBe(1);
+        expect(addLineItemActions[0]).toEqual({
+          action: 'addLineItem',
+          sku: SKU_ID,
+          quantity: 1,
+          custom: {
+            typeKey: 'lineItemCodesType',
+            fields: {
+              applied_codes: [
+                JSON.stringify({
+                  code: COUPON_CODE,
+                  type: 'UNIT',
+                  effect: 'ADD_NEW_ITEMS',
+                  quantity: 1,
+                  totalDiscountQuantity: 1,
+                }),
+              ],
+            },
+          },
+        });
+      });
+
+      it('should create `addCustomLineItem` action with total coupons value applied', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const addCustomLineItemActions = result.actions.filter(
+          byActionType('addCustomLineItem'),
+        );
+        expect(addCustomLineItemActions.length).toBe(1);
+        expect(addCustomLineItemActions[0]).toEqual({
+          action: 'addCustomLineItem',
+          name: {
+            en: 'Voucher, coupon value => 65.00',
+          },
+          quantity: 1,
+          money: {
+            centAmount: -6500,
+            type: 'centPrecision',
+            currencyCode: 'EUR',
+          },
+          slug: COUPON_CODE,
+          taxCategory: {
+            id: defaultGetCouponTaxCategoryResponse.id,
+          },
+        });
+      });
+
+      it('should create `setCustomField` action with storing coupon details to the cart', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const setCustomFieldActions = result.actions.filter(
+          byActionType('setCustomField'),
+        );
+        expect(setCustomFieldActions.length).toBe(1);
+        expect(setCustomFieldActions[0]).toEqual({
+          action: 'setCustomField',
+          name: 'discount_codes',
+          value: [
+            JSON.stringify({
+              code: COUPON_CODE,
+              status: 'APPLIED',
+              value: 6500,
+            }),
+          ],
+        });
+      });
+    });
+
+    describe('when adding new product to the cart with free product already applied (via coupon)', () => {
+      let cart;
+      const COUPON_CODE = 'ADD_GIFT';
+      const SKU_ID = 'gift-sku-id';
+      const PRODUCT_ID = 'gift-product-id';
+      const SESSION_KEY = 'existing-session-id';
+      const PRODUCT_PRICE = 6500;
+
+      beforeEach(() => {
+        cart = defaultCart();
+        cart.version = 20;
+        const item = createLineItem({
+          name: 'Free product',
+          productId: PRODUCT_ID,
+          sku: SKU_ID,
+          price: PRODUCT_PRICE,
+          netPrice: 5462,
+          vatValue: 1038,
+          quantity: 1,
+        }) as any;
+        item.custom = {
+          fields: {
+            applied_codes: [
+              JSON.stringify({ code: COUPON_CODE, type: 'UNIT', quantity: 1 }),
+            ],
+          },
+        };
+        cart.lineItems.push(item);
+        cart.amount += PRODUCT_PRICE;
+        cart.discount_amount = PRODUCT_PRICE;
+        setupCouponCodes(cart, {
+          status: 'APPLIED',
+          code: COUPON_CODE,
+          value: PRODUCT_PRICE,
+        } as Coupon);
+        cart.custom.fields.session = SESSION_KEY;
+
+        voucherifyConnectorService
+          .__simulateDefaultValidateStackable()
+          .__useCartAsOrderReference(cart)
+          .__addGiftProductToCartDiscount(
+            COUPON_CODE,
+            SKU_ID,
+            PRODUCT_ID,
+            PRODUCT_PRICE,
+          )
+          .__useSessionKey(SESSION_KEY);
+      });
+
+      it('should call voucherify once', async () => {
+        await cartService.checkCartAndMutate(cart);
+
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledTimes(1);
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledWith([COUPON_CODE], cart, SESSION_KEY);
+      });
+
+      it('should create one `addCustomLineItem` action with summary of applied coupon', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const addCustomLineItemActions = result.actions.filter(
+          byActionType('addCustomLineItem'),
+        );
+        expect(addCustomLineItemActions.length).toBe(1);
+        expect(addCustomLineItemActions[0]).toEqual({
+          action: 'addCustomLineItem',
+          name: {
+            en: 'Voucher, coupon value => 65.00',
+          },
+          quantity: 1,
+          money: {
+            centAmount: -PRODUCT_PRICE,
+            type: 'centPrecision',
+            currencyCode: 'EUR',
+          },
+          slug: COUPON_CODE,
+          taxCategory: {
+            id: defaultGetCouponTaxCategoryResponse.id,
+          },
+        });
+      });
+
+      it('should create one `setCustomField` action with coupon codes applied', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const setCustomFieldActions = result.actions.filter(
+          byActionType('setCustomField'),
+        );
+        expect(setCustomFieldActions.length).toBe(1);
+        expect(setCustomFieldActions[0]).toEqual({
+          action: 'setCustomField',
+          name: 'discount_codes',
+          value: [
+            JSON.stringify({
+              code: COUPON_CODE,
+              status: 'APPLIED',
+              value: PRODUCT_PRICE,
+            }),
+          ],
+        });
+      });
+    });
+
+    describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` effect and having that product already in cart', () => {
+      let cart;
+      const COUPON_CODE = 'ADD_GIFT';
+      const SKU_ID = 'gift-sku-id';
+      const PRODUCT_ID = 'gift-product-id';
+      const SESSION_KEY = 'existing-session-id';
+      const PRODUCT_PRICE = 6500;
+      let lineItemId;
+
+      beforeEach(() => {
+        cart = defaultCart();
+        cart.version = 20;
+        const item = createLineItem({
+          name: 'Free product',
+          productId: PRODUCT_ID,
+          sku: SKU_ID,
+          price: PRODUCT_PRICE,
+          netPrice: 5462,
+          vatValue: 1038,
+          quantity: 1,
+        });
+        lineItemId = item.id;
+        cart.lineItems.push(item);
+        setupCouponCodes(cart, {
+          code: COUPON_CODE,
+          status: 'NEW',
+        });
+        cart.amount += PRODUCT_PRICE;
+        cart.custom.fields.session = SESSION_KEY;
+
+        voucherifyConnectorService
+          .__simulateDefaultValidateStackable()
+          .__useCartAsOrderReference(cart)
+          .__addGiftProductToCartDiscount(
+            COUPON_CODE,
+            SKU_ID,
+            PRODUCT_ID,
+            PRODUCT_PRICE,
+            'ADD_MISSING_ITEMS',
+          )
+          .__useSessionKey(SESSION_KEY);
+      });
+
+      it('should call voucherify once', async () => {
+        await cartService.checkCartAndMutate(cart);
+
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledTimes(1);
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledWith([COUPON_CODE], cart, SESSION_KEY);
+      });
+
+      it('should create one `addCustomLineItem` with applied coupon summary', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const addCustomLineItemActions = result.actions.filter(
+          byActionType('addCustomLineItem'),
+        );
+        expect(addCustomLineItemActions.length).toBe(1);
+        expect(addCustomLineItemActions[0]).toEqual({
+          action: 'addCustomLineItem',
+          name: {
+            en: 'Voucher, coupon value => 65.00',
+          },
+          quantity: 1,
+          money: {
+            centAmount: -PRODUCT_PRICE,
+            type: 'centPrecision',
+            currencyCode: 'EUR',
+          },
+          slug: COUPON_CODE,
+          taxCategory: {
+            id: defaultGetCouponTaxCategoryResponse.id,
+          },
+        });
+      });
+
+      it('should create one `changeLineItemQuantity` action with the id of the discounted product', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const changeLineItemQuantityActions = result.actions.filter(
+          byActionType('changeLineItemQuantity'),
+        );
+        expect(changeLineItemQuantityActions.length).toBe(1);
+        expect(changeLineItemQuantityActions[0]).toEqual({
+          action: 'changeLineItemQuantity',
+          lineItemId,
+          quantity: 1,
+        });
+      });
+
+      it("should create one `setLineItemCustomType` action to apply items' applied_codes", async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const setLineItemCustomTypeActions = result.actions.filter(
+          byActionType('setLineItemCustomType'),
+        );
+        expect(setLineItemCustomTypeActions.length).toBe(1);
+        expect(setLineItemCustomTypeActions[0]).toEqual({
+          action: 'setLineItemCustomType',
+          lineItemId,
+          type: {
+            key: 'lineItemCodesType',
+          },
+          fields: {
+            applied_codes: [
+              JSON.stringify({
+                code: COUPON_CODE,
+                type: 'UNIT',
+                effect: 'ADD_MISSING_ITEMS',
+                quantity: 0,
+                totalDiscountQuantity: 1,
+              }),
+            ],
+          },
+        });
+      });
+
+      it('should create one `setCustomField` action with coupon codes applied', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const setCustomFieldActions = result.actions.filter(
+          byActionType('setCustomField'),
+        );
+        expect(setCustomFieldActions.length).toBe(1);
+        expect(setCustomFieldActions[0]).toEqual({
+          action: 'setCustomField',
+          name: 'discount_codes',
+          value: [
+            JSON.stringify({
+              code: COUPON_CODE,
+              status: 'APPLIED',
+              value: PRODUCT_PRICE,
             }),
           ],
         });

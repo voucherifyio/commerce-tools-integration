@@ -376,7 +376,7 @@ export class CartService {
       .filter((product) => product.effect === 'ADD_NEW_ITEMS')
       .filter((product) => {
         const itemWithAppliedCode = cartObj.lineItems.find((item) =>
-          item.custom?.fields.applied_codes.map(
+          item.custom?.fields?.applied_codes?.map(
             (applied) => JSON.parse(applied).code === product.code,
           ),
         );
