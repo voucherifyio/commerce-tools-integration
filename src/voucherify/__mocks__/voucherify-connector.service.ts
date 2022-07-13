@@ -15,6 +15,8 @@ interface MockedVoucherifyConnectorService extends VoucherifyConnectorService {
   __emptyRedeemables: () => MockedVoucherifyConnectorService;
   __useRedeemable: (
     redeemable: StackableRedeemableResponse,
+    redeemedAmount: number,
+    applyToItems?: boolean,
   ) => MockedVoucherifyConnectorService;
   __addDiscountCoupon: (
     couponCode: string,
@@ -24,6 +26,12 @@ interface MockedVoucherifyConnectorService extends VoucherifyConnectorService {
   __addPercentageRateCoupon: (
     couponCode: string,
     percentage: number,
+    status?: StackableRedeemableResponseStatus,
+  ) => MockedVoucherifyConnectorService;
+  __addProductDiscount: (
+    productId: string,
+    couponCode: string,
+    amount: number,
     status?: StackableRedeemableResponseStatus,
   ) => MockedVoucherifyConnectorService;
   __useSessionKey: (sessionKey: string) => MockedVoucherifyConnectorService;
@@ -183,10 +191,39 @@ voucherifyConnectorService.__emptyRedeemables = () => {
 
 voucherifyConnectorService.__useRedeemable = (
   redeemable: StackableRedeemableResponse,
+  redeemedAmount: number,
+  applyToItems = false,
 ) => {
+  const { order } =
+    voucherifyConnectorService.__currentValidateVouchersResponse;
+  const discountRedeemedAlready =
+    voucherifyConnectorService.__currentValidateVouchersResponse.redeemables.reduce(
+      (total, redeemable) => total + redeemable.order.applied_discount_amount,
+      0,
+    );
+  const itemsRedeemedAlready =
+    voucherifyConnectorService.__currentValidateVouchersResponse.redeemables.reduce(
+      (total, redeemable) =>
+        total + redeemable.order.items_applied_discount_amount,
+      0,
+    );
+
   voucherifyConnectorService.__currentValidateVouchersResponse.redeemables.push(
     {
-      order: voucherifyConnectorService.__currentValidateVouchersResponse.order,
+      order: {
+        ...order,
+        discount_amount:
+          discountRedeemedAlready + (!applyToItems ? redeemedAmount : 0),
+        items_discount_amount:
+          itemsRedeemedAlready + (applyToItems ? redeemedAmount : 0),
+        total_discount_amount: discountRedeemedAlready + redeemedAmount,
+        // total_amount: order.amount - redeemedAlready - redeemedAmount,
+        items_applied_discount_amount:
+          itemsRedeemedAlready + (applyToItems ? redeemedAmount : 0),
+        total_applied_discount_amount:
+          discountRedeemedAlready + itemsRedeemedAlready + redeemedAmount,
+        applied_discount_amount: !applyToItems ? redeemedAmount : 0,
+      },
       applicable_to: {
         data: [],
         total: 0,
@@ -209,18 +246,21 @@ voucherifyConnectorService.__addDiscountCoupon = (
   amount: number,
   status = 'APPLICABLE',
 ) => {
-  voucherifyConnectorService.__useRedeemable({
-    id: couponCode,
-    status,
-    object: 'voucher',
-    result: {
-      discount: {
-        type: 'AMOUNT',
-        effect: 'APPLY_TO_ORDER',
-        amount_off: amount,
+  voucherifyConnectorService.__useRedeemable(
+    {
+      id: couponCode,
+      status,
+      object: 'voucher',
+      result: {
+        discount: {
+          type: 'AMOUNT',
+          effect: 'APPLY_TO_ORDER',
+          amount_off: amount,
+        },
       },
     },
-  });
+    amount,
+  );
 
   const { order } =
     voucherifyConnectorService.__currentValidateVouchersResponse;
@@ -243,22 +283,25 @@ voucherifyConnectorService.__addPercentageRateCoupon = (
   percentage: number,
   status = 'APPLICABLE',
 ) => {
-  voucherifyConnectorService.__useRedeemable({
-    id: couponCode,
-    status,
-    object: 'voucher',
-    result: {
-      discount: {
-        type: 'PERCENT',
-        effect: 'APPLY_TO_ORDER',
-        percent_off: percentage,
-      },
-    },
-  });
-
   const { order } =
     voucherifyConnectorService.__currentValidateVouchersResponse;
   const discount = Math.round((order.amount * percentage) / 100);
+
+  voucherifyConnectorService.__useRedeemable(
+    {
+      id: couponCode,
+      status,
+      object: 'voucher',
+      result: {
+        discount: {
+          type: 'PERCENT',
+          effect: 'APPLY_TO_ORDER',
+          percent_off: percentage,
+        },
+      },
+    },
+    discount,
+  );
 
   Object.assign(
     voucherifyConnectorService.__currentValidateVouchersResponse.order,
@@ -270,6 +313,75 @@ voucherifyConnectorService.__addPercentageRateCoupon = (
         order.total_applied_discount_amount + discount,
     },
   );
+  return voucherifyConnectorService;
+};
+
+voucherifyConnectorService.__addProductDiscount = (
+  productId: string,
+  couponCode: string,
+  amount: number,
+  status = 'APPLICABLE',
+) => {
+  voucherifyConnectorService.__useRedeemable(
+    {
+      id: couponCode,
+      status,
+      object: 'voucher',
+      result: {
+        discount: {
+          type: 'AMOUNT',
+          effect: 'APPLY_TO_ITEMS',
+          amount_off: amount,
+        },
+      },
+      applicable_to: {
+        data: [
+          {
+            object: 'products_collection',
+            id: 'pc_id',
+            effect: 'APPLY_TO_EVERY',
+            strict: false,
+          },
+          {
+            object: 'sku',
+            id: `sku${productId}`,
+            source_id: productId,
+            strict: true,
+            effect: 'APPLY_TO_EVERY',
+          },
+        ],
+        total: 2,
+        object: 'list',
+      },
+    },
+    amount,
+    true,
+  );
+  const item =
+    voucherifyConnectorService.__currentValidateVouchersResponse.order.items.find(
+      (i) => i.product_id === productId,
+    );
+  if (item) {
+    Object.assign(item, {
+      discount_amount: amount,
+      applied_discount_amount: amount,
+      subtotal_amount: item.amount - amount,
+    });
+  }
+  const { order } =
+    voucherifyConnectorService.__currentValidateVouchersResponse;
+
+  Object.assign(
+    voucherifyConnectorService.__currentValidateVouchersResponse.order,
+    {
+      discount_amount: order.discount_amount + amount,
+      total_discount_amount: order.total_discount_amount + amount,
+      items_discount_amount: order.items_discount_amount + amount,
+      items_applied_discount_amount:
+        order.items_applied_discount_amount + amount,
+    },
+  );
+
   return voucherifyConnectorService;
 };
 

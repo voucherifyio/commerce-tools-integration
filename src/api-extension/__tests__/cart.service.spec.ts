@@ -39,12 +39,32 @@ function buildPriceValue(value, currency = 'EUR'): TypedMoney {
   };
 }
 
-const defaultLineItem = () =>
+interface CreateLineItemProps {
+  productId?: string;
+  name?: string;
+  sku?: string;
+  price?: number;
+  netPrice?: number;
+  vatValue?: number;
+  quantity?: number;
+}
+
+const createLineItem = (
+  props: CreateLineItemProps = {
+    productId: 'product-id',
+    name: 'Some product',
+    sku: 'product-sku1',
+    price: DEFAULT_ITEM_PRICE,
+    netPrice: 22269,
+    vatValue: 4231,
+    quantity: 1,
+  },
+) =>
   ({
     id: 'line-item-id',
-    productId: 'product-id',
+    productId: props.productId,
     name: {
-      en: 'Some product',
+      en: props.name,
     },
     productType: {
       typeId: 'product-type',
@@ -55,21 +75,21 @@ const defaultLineItem = () =>
     },
     variant: {
       id: 1,
-      sku: 'product-sku1',
+      sku: props.sku,
       key: 'product-key1',
       prices: [
         {
           id: 'product-prices-1-id',
-          value: buildPriceValue(DEFAULT_ITEM_PRICE, 'EUR'),
+          value: buildPriceValue(props.price, 'EUR'),
         },
       ],
     },
     price: {
       id: 'product-prices-1-id',
-      value: buildPriceValue(DEFAULT_ITEM_PRICE, 'EUR'),
+      value: buildPriceValue(props.price, 'EUR'),
       country: 'DE',
     },
-    quantity: 1,
+    quantity: props.quantity,
     discountedPricePerQuantity: [],
     taxRate: {
       name: '19% incl.',
@@ -80,7 +100,7 @@ const defaultLineItem = () =>
     },
     state: [
       {
-        quantity: 1,
+        quantity: props.quantity,
         state: {
           typeId: 'state',
           id: 'state-type-id',
@@ -88,11 +108,11 @@ const defaultLineItem = () =>
       },
     ],
     priceMode: 'Platform',
-    totalPrice: buildPriceValue(DEFAULT_ITEM_PRICE, 'EUR'),
+    totalPrice: buildPriceValue(props.price, 'EUR'),
     taxedPrice: {
-      totalNet: buildPriceValue(22269, 'EUR'),
-      totalGross: buildPriceValue(DEFAULT_ITEM_PRICE, 'EUR'),
-      totalTax: buildPriceValue(4231, 'EUR'),
+      totalNet: buildPriceValue(props.netPrice, 'EUR'),
+      totalGross: buildPriceValue(props.price, 'EUR'),
+      totalTax: buildPriceValue(props.vatValue, 'EUR'),
     },
     lineItemMode: 'Standard',
   } as LineItem);
@@ -123,7 +143,7 @@ const defaultCart = () => ({
   version: 1,
   lastModifiedAt: new Date().toISOString(),
   country: 'DE',
-  lineItems: [defaultLineItem()],
+  lineItems: [createLineItem()],
   customLineItems: [],
   totalPrice: buildPriceValue(DEFAULT_ITEM_PRICE, 'EUR'),
   cartState: 'Active' as CartState,
@@ -731,6 +751,98 @@ describe('CartService', () => {
               code: SECOND_COUPON_CODE,
               status: 'APPLIED',
               value: 2000,
+            }),
+          ],
+        });
+      });
+    });
+
+    describe('when applying discount code on a specific product in the cart', () => {
+      let cart;
+      const COUPON_CODE = 'SNEAKERS30';
+      const PRODUCT_ID = 'discounted-sneakers';
+      const SESSION_KEY = 'existing-session-id';
+      const PRICE = 20000;
+
+      beforeEach(() => {
+        cart = defaultCart();
+        cart.version = 2;
+        cart.lineItems = [
+          createLineItem({
+            name: 'Sneakers',
+            productId: PRODUCT_ID,
+            sku: `sku${PRODUCT_ID}`,
+            price: PRICE,
+            netPrice: 16807,
+            vatValue: 3193,
+            quantity: 1,
+          }),
+        ];
+        cart.totalPrice = buildPriceValue(PRICE, 'EUR');
+        setupCouponCodes(cart, {
+          status: 'NEW',
+          code: COUPON_CODE,
+        } as Coupon);
+        cart.custom.fields.session = SESSION_KEY;
+
+        voucherifyConnectorService
+          .__simulateDefaultValidateStackable()
+          .__useCartAsOrderReference(cart)
+          .__addProductDiscount(PRODUCT_ID, COUPON_CODE, 3000)
+          .__useSessionKey(SESSION_KEY);
+      });
+
+      it('call voucherify once', async () => {
+        await cartService.checkCartAndMutate(cart);
+
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledTimes(1);
+        expect(
+          voucherifyConnectorService.validateStackableVouchersWithCTCart,
+        ).toBeCalledWith([COUPON_CODE], cart, SESSION_KEY);
+      });
+
+      it('should create `addCustomLineItem` action with total coupons value applied', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const addCustomLineItemActions = result.actions.filter(
+          byActionType('addCustomLineItem'),
+        );
+        expect(addCustomLineItemActions.length).toBe(1);
+        expect(addCustomLineItemActions[0]).toEqual({
+          action: 'addCustomLineItem',
+          name: {
+            en: 'Voucher, coupon value => 30.00',
+          },
+          quantity: 1,
+          money: {
+            centAmount: -3000,
+            type: 'centPrecision',
+            currencyCode: 'EUR',
+          },
+          slug: COUPON_CODE,
+          taxCategory: {
+            id: defaultGetCouponTaxCategoryResponse.id,
+          },
+        });
+      });
+
+      it('should create `setCustomField` action with storing coupon details to the cart', async () => {
+        const result = await cartService.checkCartAndMutate(cart);
+
+        const setCustomFieldActions = result.actions.filter(
+          byActionType('setCustomField'),
+        );
+        expect(setCustomFieldActions.length).toBe(1);
+        expect(setCustomFieldActions[0]).toEqual({
+          action: 'setCustomField',
+          name: 'discount_codes',
+          value: [
+            JSON.stringify({
+              code: COUPON_CODE,
+              status: 'APPLIED',
+              value: 3000,
             }),
           ],
         });
