@@ -114,4 +114,17 @@ For local development, you need to publicly expose your local environment so tha
 - `POST /api-extension` - handle api extension requests (cart) from Commerce Tools
 - `POST /types/configure` - trigger to configure coupon types in Commerce Tools
 - `POST /tax-categories/configure` - trigger to configure coupon tax categories in Commerce Tools
+
+## 6. Heroku deployment
+
+### Requirements
+
+- [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
+- [Git](https://devcenter.heroku.com/articles/heroku-cli) installed
+
+### Instalation
+
+1. Fork this repository
+2. heroku login
+
  
