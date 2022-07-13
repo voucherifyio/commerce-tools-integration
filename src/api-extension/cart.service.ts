@@ -582,10 +582,9 @@ export class CartService {
             code: coupon.id,
             status: 'APPLIED',
             value:
-              coupon.order?.total_applied_discount_amount ??
-              coupon.order?.total_discount_amount ??
+              coupon.order?.total_applied_discount_amount ||
               oldCouponsCodes.find((oldCoupon) => coupon.id === oldCoupon.code)
-                ?.value ??
+                ?.value ||
               0,
           } as Coupon),
       ),
