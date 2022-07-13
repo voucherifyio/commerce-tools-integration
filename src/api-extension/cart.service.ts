@@ -569,23 +569,13 @@ export class CartService {
     notApplicableCoupons: StackableRedeemableResponse[],
     skippedCoupons: StackableRedeemableResponse[],
     cartObj: Cart,
+    onlyNewCouponsFailed: Boolean,
   ): CartActionSetCustomFieldWithCoupons {
     const oldCouponsCodes: Coupon[] = (
       cartObj.custom?.fields?.discount_codes ?? []
     ).map(desarializeCoupons);
 
     const coupons = [
-      ...skippedCoupons.map(
-        (coupon) =>
-          ({
-            code: coupon.id,
-            status: 'APPLIED',
-            value:
-              oldCouponsCodes.find((oldCoupon) => coupon.id === oldCoupon.code)
-                ?.value || 0,
-          } as Coupon),
-      ),
-
       ...applicableCoupons.map(
         (coupon) =>
           ({
@@ -609,6 +599,21 @@ export class CartService {
           } as Coupon),
       ),
     ];
+
+    if(onlyNewCouponsFailed){
+      coupons.push(
+        ...skippedCoupons.map(
+        (coupon) =>
+          ({
+            code: coupon.id,
+            status: 'APPLIED',
+            value:
+              oldCouponsCodes.find((oldCoupon) => coupon.id === oldCoupon.code)
+                ?.value || 0,
+          } as Coupon),
+      ),)
+    }
+
     return {
       action: 'setCustomField',
       name: 'discount_codes',
@@ -693,6 +698,7 @@ export class CartService {
         notApplicableCoupons,
         skippedCoupons,
         cartObj,
+        onlyNewCouponsFailed
       ),
     );
 
@@ -712,27 +718,25 @@ export class CartService {
     notApplicableCoupons: StackableRedeemableResponse[],
     skippedCoupons: StackableRedeemableResponse[],
   ): boolean {
-
     const areAllNewCouponsNotApplicable = this.checkCouponsValidatedAsState(
       coupons,
       notApplicableCoupons,
       'NEW',
     );
 
-    const areAllAppliedCouponsApplicable = applicableCoupons.length === 0 || this.checkCouponsValidatedAsState(
-      coupons,
-      applicableCoupons,
-      'APPLIED',
-    );
+    const areAllAppliedCouponsApplicable =
+      applicableCoupons.length === 0 ||
+      this.checkCouponsValidatedAsState(coupons, applicableCoupons, 'APPLIED');
 
-    const areAllAppliedCouponsSkipped = skippedCoupons.length === 0 || this.checkCouponsValidatedAsState(
-      coupons,
-      skippedCoupons,
-      'APPLIED',
-    );
+    const areAllAppliedCouponsSkipped =
+      skippedCoupons.length === 0 ||
+      this.checkCouponsValidatedAsState(coupons, skippedCoupons, 'APPLIED');
 
     return (
-      notApplicableCoupons.length !== 0 && areAllNewCouponsNotApplicable && areAllAppliedCouponsSkipped && areAllAppliedCouponsApplicable
+      notApplicableCoupons.length !== 0 &&
+      areAllNewCouponsNotApplicable &&
+      areAllAppliedCouponsSkipped &&
+      areAllAppliedCouponsApplicable
     );
   }
 
