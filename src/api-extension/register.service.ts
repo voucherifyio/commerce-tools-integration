@@ -52,8 +52,13 @@ export class RegisterService {
     return addResponse.body?.id || false;
   }
 
+  async unregister(): Promise<void> {
+    return await this.removeExistingApiExtensions();
+  }
+
   async register(url: string): Promise<string | false> {
-    await this.removeExistingApiExtensions();
-    return await this.addApiExtensions(url);
+    return await this.unregister().then(async () => {
+      return await this.addApiExtensions(url);
+    });
   }
 }
