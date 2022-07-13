@@ -68,7 +68,7 @@ graph LR;
     - `prices` => `Price`
 - Click `Import` and wait
 - Import should be successfull
-### Installatio steps:
+### Installation steps:
 
 - Install dependencies via CLI: `npm i`
 - Set environment variables with credentials to Voucherify and Commerce Tools APIs. For local development purposes, put configuration into `.env` file (please, look at `.env.example` configuration file template).
@@ -122,10 +122,25 @@ For local development, you need to publicly expose your local environment so tha
 - [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
 - [Git](https://devcenter.heroku.com/articles/heroku-cli) installed
 
+
+### Configuration
+
+1. Create new application on your Heroku account with given <application_name>
+2. Go you your <application_name> -> Settings -> Reveal Config Vars
+3. Post there all need environment variables which was [mentioned here](#installation-steps)
+
 ### Instalation
 
 
-1. Fork this repository
-2. heroku login
 
+1. Fork this repository
+2. Clone your fork
+```
+git clone <fork_name>
+```bash
+3. Login to Heroku account
+```bash
+heroku login
+```
+4. heroku git:remote -a commerce-tools-integration
  
