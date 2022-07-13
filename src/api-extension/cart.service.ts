@@ -569,7 +569,7 @@ export class CartService {
     notApplicableCoupons: StackableRedeemableResponse[],
     skippedCoupons: StackableRedeemableResponse[],
     cartObj: Cart,
-    onlyNewCouponsFailed: Boolean,
+    onlyNewCouponsFailed: boolean,
   ): CartActionSetCustomFieldWithCoupons {
     const oldCouponsCodes: Coupon[] = (
       cartObj.custom?.fields?.discount_codes ?? []
@@ -600,18 +600,20 @@ export class CartService {
       ),
     ];
 
-    if(onlyNewCouponsFailed){
+    if (onlyNewCouponsFailed) {
       coupons.push(
         ...skippedCoupons.map(
-        (coupon) =>
-          ({
-            code: coupon.id,
-            status: 'APPLIED',
-            value:
-              oldCouponsCodes.find((oldCoupon) => coupon.id === oldCoupon.code)
-                ?.value || 0,
-          } as Coupon),
-      ),)
+          (coupon) =>
+            ({
+              code: coupon.id,
+              status: 'APPLIED',
+              value:
+                oldCouponsCodes.find(
+                  (oldCoupon) => coupon.id === oldCoupon.code,
+                )?.value || 0,
+            } as Coupon),
+        ),
+      );
     }
 
     return {
@@ -698,7 +700,7 @@ export class CartService {
         notApplicableCoupons,
         skippedCoupons,
         cartObj,
-        onlyNewCouponsFailed
+        onlyNewCouponsFailed,
       ),
     );
 
