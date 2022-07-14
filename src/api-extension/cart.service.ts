@@ -1,4 +1,4 @@
-import { Cart } from '@commercetools/platform-sdk';
+import { Cart, TaxCategory, TypedMoney } from '@commercetools/platform-sdk';
 import { Injectable } from '@nestjs/common';
 import {
   DiscountVouchersEffectTypes,
@@ -42,15 +42,9 @@ type CartActionAddCustomLineItem = {
     en: string;
   };
   quantity: number;
-  money: {
-    centAmount: number;
-    currencyCode: string;
-    type: 'centPrecision';
-  };
+  money: TypedMoney;
   slug: string;
-  taxCategory: {
-    id: string;
-  };
+  taxCategory: Pick<TaxCategory, 'id'>;
 };
 
 type CartActionAddLineItem = {
@@ -58,14 +52,8 @@ type CartActionAddLineItem = {
   sku: string;
   quantity: number;
   externalTotalPrice?: {
-    price: {
-      centAmount: number;
-      currencyCode: string;
-    };
-    totalPrice: {
-      centAmount: number;
-      currencyCode: string;
-    };
+    price: TypedMoney;
+    totalPrice: TypedMoney;
   };
   custom?: {
     typeKey: 'lineItemCodesType';
@@ -138,56 +126,379 @@ type ValidateCouponsResult = {
   totalDiscountAmount: number;
   productsToAdd: ProductToAdd[];
   onlyNewCouponsFailed?: boolean;
+  taxCategory?: TaxCategory;
 };
 
 type CartActionsBuilder = (
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
-) => Promise<CartAction[]>;
+) => CartAction[];
 
-function setCustomTypeActionsBuilder(
-  typesService: TypesService,
-  logger: JsonLogger,
-): CartActionsBuilder {
-  return async (): Promise<CartActionSetCustomType[]> => {
-    const couponType = await typesService.findCouponType('couponCodes');
-    if (!couponType) {
-      const msg = 'CouponType not found';
-      logger.error({ msg });
-      throw new Error(msg);
-    }
-
-    return [
-      {
-        action: 'setCustomType',
-        type: {
-          id: couponType.id,
-        },
-        name: 'couponCodes',
-      },
-    ];
-  };
+function getSession(cart: Cart): string | null {
+  return cart.custom?.fields?.session ?? null;
 }
 
-const cartActionsResolver = async (
-  cartActionBuilders: CartActionsBuilder[],
+type SessionValidateResult = Pick<
+  ValidateCouponsResult,
+  'valid' | 'newSessionKey'
+>;
+function setSessionAsCustomField(
   cart: Cart,
-  validatedCouponsResult?: ValidateCouponsResult,
-) => {
-  const actions = await cartActionBuilders.reduce(
-    async (_: Promise<CartAction[]>, builder) => {
-      const result: CartAction[] = await _;
-      result.push(...(await builder(cart, validatedCouponsResult)));
-      return result;
+  { valid, newSessionKey }: SessionValidateResult,
+): CartActionSetCustomFieldWithSession[] {
+  const sessionKey = getSession(cart);
+  if (!valid || !newSessionKey || newSessionKey === sessionKey) {
+    return [];
+  }
+  return [
+    {
+      action: 'setCustomField',
+      name: 'session',
+      value: newSessionKey,
     },
-    Promise.resolve([]),
-  );
+  ];
+}
 
-  return {
-    status: true,
-    actions,
-  };
-};
+const COUPON_CUSTOM_LINE_NAME_PREFIX = 'Voucher, ';
+
+function removeDiscountedCustomLineItems(
+  cart: Cart,
+): CartActionRemoveCustomLineItem[] {
+  return (cart.customLineItems || [])
+    .filter((lineItem) =>
+      lineItem.name.en.startsWith(COUPON_CUSTOM_LINE_NAME_PREFIX),
+    )
+    .map(
+      (lineItem) =>
+        ({
+          action: 'removeCustomLineItem',
+          customLineItemId: lineItem.id,
+        } as CartActionRemoveCustomLineItem),
+    );
+}
+
+// TODO don't create addCustomLineItem action if the summary doesn't actually change
+function addCustomLineItemWithDiscountSummary(
+  cart: Cart,
+  validateCouponsResult: ValidateCouponsResult,
+): CartActionAddCustomLineItem[] {
+  const { totalDiscountAmount, applicableCoupons, taxCategory } =
+    validateCouponsResult;
+
+  if (applicableCoupons.length === 0) return [];
+  const { currencyCode } = cart.totalPrice;
+  const couponCodes = applicableCoupons.map((coupon) => coupon.id).join(', ');
+
+  return [
+    {
+      action: 'addCustomLineItem',
+      name: {
+        en: `${COUPON_CUSTOM_LINE_NAME_PREFIX}coupon value => ${(
+          totalDiscountAmount / 100
+        ).toFixed(2)}`,
+      },
+      quantity: 1,
+      money: {
+        centAmount: totalDiscountAmount ? -totalDiscountAmount : 0,
+        type: 'centPrecision',
+        currencyCode,
+      },
+      slug: couponCodes,
+      taxCategory: {
+        id: taxCategory.id,
+      },
+    } as CartActionAddCustomLineItem,
+  ];
+}
+
+type ValidatedProductsToAdd = Pick<ValidateCouponsResult, 'productsToAdd'>;
+function addFreeLineItems(
+  cart: Cart,
+  { productsToAdd }: ValidatedProductsToAdd,
+): CartAction[] {
+  const cartActions = [] as CartAction[];
+
+  productsToAdd
+    .filter((product) => product.effect === 'ADD_NEW_ITEMS')
+    .filter((product) => {
+      const itemWithAppliedCode = cart.lineItems.find((item) =>
+        item.custom?.fields?.applied_codes?.map(
+          (applied) => JSON.parse(applied).code === product.code,
+        ),
+      );
+
+      if (
+        itemWithAppliedCode &&
+        itemWithAppliedCode.quantity >= product.quantity
+      ) {
+        return false;
+      }
+
+      return true;
+    })
+    .forEach((product) => {
+      const itemWithSameSkuAsInCode = cart.lineItems.find(
+        (item) => item.variant.sku === product.product,
+      );
+
+      if (itemWithSameSkuAsInCode) {
+        cartActions.push({
+          action: 'changeLineItemQuantity',
+          lineItemId: itemWithSameSkuAsInCode.id,
+          quantity: itemWithSameSkuAsInCode.quantity + product.quantity,
+        });
+
+        cartActions.push({
+          action: 'setLineItemCustomType',
+          lineItemId: itemWithSameSkuAsInCode.id,
+          type: {
+            key: 'lineItemCodesType',
+          },
+          fields: {
+            applied_codes: [
+              JSON.stringify({
+                code: product.code,
+                type: 'UNIT',
+                effect: product.effect,
+                quantity: product.quantity,
+                totalDiscountQuantity: product.quantity,
+              }),
+            ],
+          },
+        });
+      } else {
+        cartActions.push({
+          action: 'addLineItem',
+          sku: product.product,
+          quantity: product.quantity,
+          custom: {
+            typeKey: 'lineItemCodesType',
+            fields: {
+              applied_codes: [
+                JSON.stringify({
+                  code: product.code,
+                  type: 'UNIT',
+                  effect: product.effect,
+                  quantity: product.quantity,
+                  totalDiscountQuantity: product.quantity,
+                }),
+              ],
+            },
+          },
+        });
+      }
+    });
+
+  productsToAdd
+    .filter((product) => product.effect === 'ADD_MISSING_ITEMS')
+    .filter((product) => {
+      const itemWithAppliedCode = cart.lineItems.find((item) =>
+        item.custom?.fields?.applied_codes?.map(
+          (applied) => JSON.parse(applied).code === product.code,
+        ),
+      );
+
+      if (
+        itemWithAppliedCode &&
+        itemWithAppliedCode.quantity >= product.discount_quantity
+      ) {
+        return false;
+      }
+
+      return true;
+    })
+    .forEach((product) => {
+      const itemWithSameSkuAsInCode = cart.lineItems.find(
+        (item) => item.variant.sku === product.product,
+      );
+
+      if (itemWithSameSkuAsInCode) {
+        cartActions.push({
+          action: 'changeLineItemQuantity',
+          lineItemId: itemWithSameSkuAsInCode.id,
+          quantity:
+            itemWithSameSkuAsInCode.quantity >= product.discount_quantity
+              ? itemWithSameSkuAsInCode.quantity
+              : product.discount_quantity,
+        });
+
+        cartActions.push({
+          action: 'setLineItemCustomType',
+          lineItemId: itemWithSameSkuAsInCode.id,
+          type: {
+            key: 'lineItemCodesType',
+          },
+          fields: {
+            applied_codes: [
+              JSON.stringify({
+                code: product.code,
+                type: 'UNIT',
+                effect: product.effect,
+                quantity:
+                  itemWithSameSkuAsInCode.quantity >= product.discount_quantity
+                    ? 0
+                    : itemWithSameSkuAsInCode.quantity,
+                totalDiscountQuantity: product.discount_quantity,
+              }),
+            ],
+          },
+        });
+      } else {
+        cartActions.push({
+          action: 'addLineItem',
+          sku: product.product,
+          quantity: product.discount_quantity - product.initial_quantity,
+          custom: {
+            typeKey: 'lineItemCodesType',
+            fields: {
+              applied_codes: [
+                JSON.stringify({
+                  code: product.code,
+                  type: 'UNIT',
+                  effect: product.effect,
+                  quantity:
+                    product.discount_quantity - product.initial_quantity,
+                  totalDiscountQuantity: product.discount_quantity,
+                }),
+              ],
+            },
+          },
+        });
+      }
+    });
+
+  return cartActions;
+}
+
+function removeFreeLineItemsForNonApplicableCoupon(
+  cart: Cart,
+  { productsToAdd }: ValidatedProductsToAdd,
+): CartAction[] {
+  const cartActions: CartAction[] = [];
+  cart.lineItems
+    .filter((item) => item.custom?.fields?.applied_codes)
+    .filter((item) => {
+      const isCouponWhichNoLongerExist = item.custom?.fields?.applied_codes
+        .map((code) => JSON.parse(code))
+        .filter((code) => code.type === 'UNIT')
+        .find((code) =>
+          productsToAdd.map((product) => product.code).includes(code.code),
+        );
+
+      return !isCouponWhichNoLongerExist;
+    })
+    .forEach((item) => {
+      const quantityFromCode = item.custom?.fields.applied_codes
+        .map((code) => JSON.parse(code))
+        .filter((code) => code.type === 'UNIT')
+        .find(
+          (code) =>
+            !productsToAdd.map((unitCode) => unitCode.code).includes(code.code),
+        ).quantity;
+
+      if (item.quantity > quantityFromCode) {
+        cartActions.push({
+          action: 'setLineItemCustomField',
+          lineItemId: item.id,
+          name: 'applied_codes',
+        });
+      }
+
+      cartActions.push({
+        action: 'removeLineItem',
+        lineItemId: item.id,
+        quantity: quantityFromCode,
+      });
+    });
+
+  return cartActions;
+}
+
+function updateDiscountsCodes(
+  cart: Cart,
+  validateCouponsResult: ValidateCouponsResult,
+): CartActionSetCustomFieldWithCoupons[] {
+  const {
+    applicableCoupons,
+    notApplicableCoupons,
+    skippedCoupons,
+    onlyNewCouponsFailed,
+  } = validateCouponsResult;
+  const oldCouponsCodes: Coupon[] = (
+    cart.custom?.fields?.discount_codes ?? []
+  ).map(desarializeCoupons);
+
+  const coupons = [
+    ...applicableCoupons.map(
+      (coupon) =>
+        ({
+          code: coupon.id,
+          status: 'APPLIED',
+          value:
+            coupon.order?.applied_discount_amount ||
+            coupon.order?.items_applied_discount_amount ||
+            coupon.result?.discount?.amount_off ||
+            oldCouponsCodes.find((oldCoupon) => coupon.id === oldCoupon.code)
+              ?.value ||
+            0,
+        } as Coupon),
+    ),
+    ...notApplicableCoupons.map(
+      (coupon) =>
+        ({
+          code: coupon.id,
+          status: 'NOT_APPLIED',
+          errMsg: coupon.result?.error?.error?.message
+            ? coupon.result?.error?.error.message
+            : coupon.result?.error?.message,
+        } as Coupon),
+    ),
+  ];
+
+  if (onlyNewCouponsFailed) {
+    coupons.push(
+      ...skippedCoupons.map(
+        (coupon) =>
+          ({
+            code: coupon.id,
+            status: 'APPLIED',
+            value:
+              oldCouponsCodes.find((oldCoupon) => coupon.id === oldCoupon.code)
+                ?.value || 0,
+          } as Coupon),
+      ),
+    );
+  }
+
+  return [
+    {
+      action: 'setCustomField',
+      name: 'discount_codes',
+      value: coupons.map((coupon) => JSON.stringify(coupon)) as string[],
+    },
+  ];
+}
+
+function getCartActionBuilders(
+  validateCouponsResult: ValidateCouponsResult,
+): CartActionsBuilder[] {
+  const { valid, onlyNewCouponsFailed } = validateCouponsResult;
+
+  const cartActionBuilders = [setSessionAsCustomField] as CartActionsBuilder[];
+  if (valid || !onlyNewCouponsFailed) {
+    cartActionBuilders.push(
+      ...[
+        removeDiscountedCustomLineItems,
+        addCustomLineItemWithDiscountSummary,
+        addFreeLineItems,
+        removeFreeLineItemsForNonApplicableCoupon,
+      ],
+    );
+  }
+  cartActionBuilders.push(updateDiscountsCodes);
+
+  return cartActionBuilders;
+}
 
 @Injectable()
 export class CartService {
@@ -199,12 +510,6 @@ export class CartService {
   private readonly logger: JsonLogger = LoggerFactory.createLogger(
     CartService.name,
   );
-
-  private couponCustomLineNamePrefix = 'Voucher, ';
-
-  private readonly initializedCartActionBuilders: CartActionsBuilder[] = [
-    setCustomTypeActionsBuilder(this.typesService, this.logger),
-  ];
 
   private checkForUnitTypeDiscounts(response): ProductToAdd[] {
     const productsToAdd = [] as ProductToAdd[];
@@ -281,11 +586,14 @@ export class CartService {
   }
 
   private async validateCoupons(
-    cartObj: Cart,
+    cart: Cart,
     sessionKey?: string | null,
   ): Promise<ValidateCouponsResult> {
-    const { id, customerId, anonymousId } = cartObj;
-    const coupons: Coupon[] = this.getCouponsFromCart(cartObj);
+    const { id, customerId, anonymousId } = cart;
+    const coupons: Coupon[] = this.getCouponsFromCart(cart);
+    const taxCategory = await this.checkCouponTaxCategoryWithCountries(
+      cart?.country,
+    );
 
     if (!coupons.length) {
       return {
@@ -308,7 +616,7 @@ export class CartService {
     const validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
         coupons.map((coupon) => coupon.code),
-        cartObj,
+        cart,
         sessionKey,
       );
 
@@ -348,6 +656,7 @@ export class CartService {
       totalDiscountAmount,
       productsToAdd,
       onlyNewCouponsFailed,
+      taxCategory,
     });
 
     return {
@@ -362,16 +671,15 @@ export class CartService {
       totalDiscountAmount,
       productsToAdd,
       onlyNewCouponsFailed,
+      taxCategory,
     };
   }
 
-  private async checkCouponTaxCategoryWithCountires(cartCountry?: string) {
+  private async checkCouponTaxCategoryWithCountries(cartCountry?: string) {
     const taxCategory = await this.taxCategoriesService.getCouponTaxCategory();
     if (!taxCategory) {
       const msg = 'Coupon tax category was not configured correctly';
-      this.logger.error({
-        msg,
-      });
+      this.logger.error({ msg });
       throw new Error(msg);
     }
     if (
@@ -386,390 +694,45 @@ export class CartService {
     return taxCategory;
   }
 
-  private async removeOldCustomLineItemsWithDiscounts(cartObj: Cart) {
-    // We recognize discount line items by name... wold be great to find more reliable way
-    return (cartObj.customLineItems || [])
-      .filter((lineItem) =>
-        lineItem.name.en.startsWith(this.couponCustomLineNamePrefix),
-      )
-      .map(
-        (lineItem) =>
-          ({
-            action: 'removeCustomLineItem',
-            customLineItemId: lineItem.id,
-          } as CartActionRemoveCustomLineItem),
-      );
-  }
-
-  private addCustomLineItemWithDiscounts(
-    cartObj: Cart,
-    total_discount_amount: number,
-    applicableCoupons,
-    taxCategory,
-  ): CartActionAddCustomLineItem[] {
-    const currencyCode = cartObj.totalPrice.currencyCode;
-    const discountLines: CartActionAddCustomLineItem[] = [];
-    const couponCodes = applicableCoupons.map((coupon) => coupon.id).join(', ');
-
-    if (applicableCoupons.length === 0) {
-      return discountLines;
-    }
-
-    discountLines.push({
-      action: 'addCustomLineItem',
-      name: {
-        en: `${this.couponCustomLineNamePrefix}coupon value => ${(
-          total_discount_amount / 100
-        ).toFixed(2)}`,
-      },
-      quantity: 1,
-      money: {
-        centAmount: total_discount_amount ? -total_discount_amount : 0,
-        type: 'centPrecision',
-        currencyCode,
-      },
-      slug: couponCodes,
-      taxCategory: {
-        id: taxCategory.id,
-      },
-    });
-
-    return discountLines;
-  }
-
-  private addFreeLineItems(cartObj: Cart, productsToAdd): CartAction[] {
-    const lineItems: CartAction[] = [];
-
-    productsToAdd
-      .filter((product) => product.effect === 'ADD_NEW_ITEMS')
-      .filter((product) => {
-        const itemWithAppliedCode = cartObj.lineItems.find((item) =>
-          item.custom?.fields?.applied_codes?.map(
-            (applied) => JSON.parse(applied).code === product.code,
-          ),
-        );
-
-        if (
-          itemWithAppliedCode &&
-          itemWithAppliedCode.quantity >= product.quantity
-        ) {
-          return false;
-        }
-
-        return true;
-      })
-      .forEach((product) => {
-        const itemWithSameSkuAsInCode = cartObj.lineItems.find(
-          (item) => item.variant.sku === product.product,
-        );
-
-        if (itemWithSameSkuAsInCode) {
-          lineItems.push({
-            action: 'changeLineItemQuantity',
-            lineItemId: itemWithSameSkuAsInCode.id,
-            quantity: itemWithSameSkuAsInCode.quantity + product.quantity,
-          });
-
-          lineItems.push({
-            action: 'setLineItemCustomType',
-            lineItemId: itemWithSameSkuAsInCode.id,
-            type: {
-              key: 'lineItemCodesType',
-            },
-            fields: {
-              applied_codes: [
-                JSON.stringify({
-                  code: product.code,
-                  type: 'UNIT',
-                  effect: product.effect,
-                  quantity: product.quantity,
-                  totalDiscountQuantity: product.quantity,
-                }),
-              ],
-            },
-          });
-        } else {
-          lineItems.push({
-            action: 'addLineItem',
-            sku: product.product,
-            quantity: product.quantity,
-            custom: {
-              typeKey: 'lineItemCodesType',
-              fields: {
-                applied_codes: [
-                  JSON.stringify({
-                    code: product.code,
-                    type: 'UNIT',
-                    effect: product.effect,
-                    quantity: product.quantity,
-                    totalDiscountQuantity: product.quantity,
-                  }),
-                ],
-              },
-            },
-          });
-        }
-      });
-
-    productsToAdd
-      .filter((product) => product.effect === 'ADD_MISSING_ITEMS')
-      .filter((product) => {
-        const itemWithAppliedCode = cartObj.lineItems.find((item) =>
-          item.custom?.fields?.applied_codes?.map(
-            (applied) => JSON.parse(applied).code === product.code,
-          ),
-        );
-
-        if (
-          itemWithAppliedCode &&
-          itemWithAppliedCode.quantity >= product.discount_quantity
-        ) {
-          return false;
-        }
-
-        return true;
-      })
-      .forEach((product) => {
-        const itemWithSameSkuAsInCode = cartObj.lineItems.find(
-          (item) => item.variant.sku === product.product,
-        );
-
-        if (itemWithSameSkuAsInCode) {
-          lineItems.push({
-            action: 'changeLineItemQuantity',
-            lineItemId: itemWithSameSkuAsInCode.id,
-            quantity:
-              itemWithSameSkuAsInCode.quantity >= product.discount_quantity
-                ? itemWithSameSkuAsInCode.quantity
-                : product.discount_quantity,
-          });
-
-          lineItems.push({
-            action: 'setLineItemCustomType',
-            lineItemId: itemWithSameSkuAsInCode.id,
-            type: {
-              key: 'lineItemCodesType',
-            },
-            fields: {
-              applied_codes: [
-                JSON.stringify({
-                  code: product.code,
-                  type: 'UNIT',
-                  effect: product.effect,
-                  quantity:
-                    itemWithSameSkuAsInCode.quantity >=
-                    product.discount_quantity
-                      ? 0
-                      : itemWithSameSkuAsInCode.quantity,
-                  totalDiscountQuantity: product.discount_quantity,
-                }),
-              ],
-            },
-          });
-        } else {
-          lineItems.push({
-            action: 'addLineItem',
-            sku: product.product,
-            quantity: product.discount_quantity - product.initial_quantity,
-            custom: {
-              typeKey: 'lineItemCodesType',
-              fields: {
-                applied_codes: [
-                  JSON.stringify({
-                    code: product.code,
-                    type: 'UNIT',
-                    effect: product.effect,
-                    quantity:
-                      product.discount_quantity - product.initial_quantity,
-                    totalDiscountQuantity: product.discount_quantity,
-                  }),
-                ],
-              },
-            },
-          });
-        }
-      });
-
-    return lineItems;
-  }
-
-  private removeFreeLineItemsIfCouponNoLongerIsApplied(
-    cartObj: Cart,
-    unitCodes,
-  ): CartAction[] {
-    const cartActions: CartAction[] = [];
-    cartObj.lineItems
-      .filter((item) => item.custom?.fields?.applied_codes)
-      .filter((item) => {
-        const isCouponWhichNoLongerExist = item.custom?.fields?.applied_codes
-          .map((code) => JSON.parse(code))
-          .filter((code) => code.type === 'UNIT')
-          .find((code) =>
-            unitCodes.map((unitCode) => unitCode.code).includes(code.code),
-          );
-
-        return !isCouponWhichNoLongerExist;
-      })
-      .forEach((item) => {
-        const quantityFromCode = item.custom?.fields.applied_codes
-          .map((code) => JSON.parse(code))
-          .filter((code) => code.type === 'UNIT')
-          .find(
-            (code) =>
-              !unitCodes.map((unitCode) => unitCode.code).includes(code.code),
-          ).quantity;
-
-        if (item.quantity > quantityFromCode) {
-          cartActions.push({
-            action: 'setLineItemCustomField',
-            lineItemId: item.id,
-            name: 'applied_codes',
-          });
-        }
-
-        cartActions.push({
-          action: 'removeLineItem',
-          lineItemId: item.id,
-          quantity: quantityFromCode,
-        });
-      });
-
-    return cartActions;
-  }
-
-  private updateDiscountsCodes(
-    applicableCoupons: StackableRedeemableResponse[],
-    notApplicableCoupons: StackableRedeemableResponse[],
-    skippedCoupons: StackableRedeemableResponse[],
-    cartObj: Cart,
-    onlyNewCouponsFailed: boolean,
-  ): CartActionSetCustomFieldWithCoupons {
-    const oldCouponsCodes: Coupon[] = (
-      cartObj.custom?.fields?.discount_codes ?? []
-    ).map(desarializeCoupons);
-
-    const coupons = [
-      ...applicableCoupons.map(
-        (coupon) =>
-          ({
-            code: coupon.id,
-            status: 'APPLIED',
-            value:
-              coupon.order?.applied_discount_amount ||
-              coupon.order?.items_applied_discount_amount ||
-              coupon.result?.discount?.amount_off ||
-              oldCouponsCodes.find((oldCoupon) => coupon.id === oldCoupon.code)
-                ?.value ||
-              0,
-          } as Coupon),
-      ),
-      ...notApplicableCoupons.map(
-        (coupon) =>
-          ({
-            code: coupon.id,
-            status: 'NOT_APPLIED',
-            errMsg: coupon.result?.error?.error?.message
-              ? coupon.result?.error?.error.message
-              : coupon.result?.error?.message,
-          } as Coupon),
-      ),
-    ];
-
-    if (onlyNewCouponsFailed) {
-      coupons.push(
-        ...skippedCoupons.map(
-          (coupon) =>
-            ({
-              code: coupon.id,
-              status: 'APPLIED',
-              value:
-                oldCouponsCodes.find(
-                  (oldCoupon) => coupon.id === oldCoupon.code,
-                )?.value || 0,
-            } as Coupon),
-        ),
-      );
+  private async setCustomTypeForInitializedCart(): Promise<CartResponse> {
+    const couponType = await this.typesService.findCouponType('couponCodes');
+    if (!couponType) {
+      const msg = 'CouponType not found';
+      this.logger.error({ msg });
+      throw new Error(msg);
     }
 
     return {
-      action: 'setCustomField',
-      name: 'discount_codes',
-      value: coupons.map((coupon) => JSON.stringify(coupon)) as string[],
-    };
-  }
-
-  private getSession(cart: Cart): string | null {
-    return cart.custom?.fields?.session ?? null;
-  }
-
-  private setSession(sessionKey: string): CartActionSetCustomFieldWithSession {
-    return {
-      action: 'setCustomField',
-      name: 'session',
-      value: sessionKey,
+      status: true,
+      actions: [
+        {
+          action: 'setCustomType',
+          type: {
+            id: couponType.id,
+          },
+          name: 'couponCodes',
+        },
+      ],
     };
   }
 
   async checkCartAndMutate(cart: Cart): Promise<CartResponse> {
     if (cart.version === 1) {
-      return cartActionsResolver(this.initializedCartActionBuilders, cart);
+      return this.setCustomTypeForInitializedCart();
     }
 
-    const taxCategory = await this.checkCouponTaxCategoryWithCountires(
-      cart?.country,
-    );
-
-    const sessionKey = this.getSession(cart);
+    const sessionKey = getSession(cart);
     const validateCouponsResult = await this.validateCoupons(cart, sessionKey);
-    const {
-      valid,
-      applicableCoupons,
-      skippedCoupons,
-      notApplicableCoupons,
-      newSessionKey,
-      totalDiscountAmount,
-      productsToAdd,
-      onlyNewCouponsFailed,
-    } = validateCouponsResult;
 
-    const actions: CartAction[] = [];
-
-    if (newSessionKey && valid && newSessionKey !== sessionKey) {
-      actions.push(this.setSession(newSessionKey));
-    }
-
-    if (valid || !onlyNewCouponsFailed) {
-      actions.push(...(await this.removeOldCustomLineItemsWithDiscounts(cart)));
-      actions.push(
-        ...(await this.addCustomLineItemWithDiscounts(
-          cart,
-          totalDiscountAmount,
-          applicableCoupons,
-          taxCategory,
-        )),
-      );
-
-      actions.push(...this.addFreeLineItems(cart, productsToAdd));
-      actions.push(
-        ...this.removeFreeLineItemsIfCouponNoLongerIsApplied(
-          cart,
-          productsToAdd,
-        ),
-      );
-    }
-
-    actions.push(
-      this.updateDiscountsCodes(
-        applicableCoupons,
-        notApplicableCoupons,
-        skippedCoupons,
-        cart,
-        onlyNewCouponsFailed,
-      ),
+    const actions = getCartActionBuilders(validateCouponsResult).flatMap(
+      (builder) => builder(cart, validateCouponsResult),
     );
 
     this.logger.info(actions);
-    return { status: true, actions };
+    return {
+      status: true,
+      actions,
+    };
   }
 
   private getCouponsFromCart(cartObj: Cart): Coupon[] {
