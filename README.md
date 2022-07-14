@@ -129,7 +129,9 @@ For local development, you need to publicly expose your local environment so tha
 3. Post there all needed environment variables which was [mentioned here](#installation-steps)
     - for your APP_URL it must be URL provided by Heroku four you application. It should be something like https://<application_name>.herokuapp.com 
 
-### Instalation
+### Deployment
+
+To install and deploy CT Integration you cant fork this repository or download source code and init new Git repository. Both ways are described below.
 
 #### Fork deploy
 1. Fork this repository
@@ -179,7 +181,7 @@ git commit -m "Init"
 After successful deploy application, the last step You need to do is to register your API Extension. You can do it by Heroku CLI.
 
 1. Go you your <application_name> -> More -> Run console
-2. Run command npm `run run register` 
+2. Run command `npm run register` 
 
-This command need to be done only once. Unless you run `npm run unregister`.
+This command need to be done only once. Unless you run command `npm run unregister`.
  
