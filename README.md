@@ -148,13 +148,7 @@ heroku login
 heroku git:remote -a <application_name>
 ```
 5. You dont need to add any Procfile. By default Heroku recognize package.json and run `npm install` and `npm start` commands.
-6. Commit and push your changes
-```bash
-git add .
-git commit -am "Added Procfile"
-git push
-```
-7. Deploy code
+6. Deploy code
 ```bash
 git push heroku master #for master branch
 git push heroku main #for main branch
@@ -174,7 +168,7 @@ git init
 git add .
 git commit -m "Init"
 ```
-5. Follow steps 4-7 from [Fork deploy](#fork-deploy)
+5. Follow steps 4-6 from [Fork deploy](#fork-deploy)
 
 ### API Extension Registration
 
@@ -183,5 +177,12 @@ After successful deploy application, the last step You need to do is to register
 1. Go you your <application_name> -> More -> Run console
 2. Run command `npm run register` 
 
-This command need to be done only once. Unless you run command `npm run unregister`.
+### CT Configuration
+
+If you use Your CT Application for the first time, You need to configurate it.
+
+1. Go you your <application_name> -> More -> Run console
+2. Run command `npm run config` 
+
+This command need to be done only once or if You want to use new CT Application with new credentials.
  
