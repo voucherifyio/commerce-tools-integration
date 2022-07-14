@@ -1,6 +1,6 @@
 # commerce-tools-integration
 
-[![Licence]
+[![Licence](https://img.shields.io/github/license/voucherifyio/commerce-tools-integration)]()
 [![version](https://img.shields.io/github/package-json/v/voucherifyio/commerce-tools-integration)]()
 [![code size](https://img.shields.io/github/languages/code-size/voucherifyio/commerce-tools-integration)]()
 
@@ -21,6 +21,8 @@ graph LR;
     I-.  REST API .->V
 ```
 
+![https://www.voucherify.io/?utm_source=github&utm_medium=repo&utm_campaign=opensource](./public/voucherify.png)
+
 ---
 
 ## Table of contents
@@ -39,6 +41,7 @@ graph LR;
     2. [Configuration](#Configuration)
     3. [Deployment](#deployment)
     4. [API Extension Registration](#api-extension-registration)
+    5. [CT Configuration](#ct-configuration)
 8. [Contributing](#contributing)
 9. [Contact](#contact)
 10. [Licence](#licence)
@@ -162,7 +165,7 @@ To test application you can simply run `npm run test` command. Currently we cove
 
 1. Create new application on your Heroku account with given <application_name>
 2. Go you your <application_name> -> Settings -> Reveal Config Vars
-3. Post there all needed environment variables which was [mentioned here](#installation-steps)
+3. Configurate yor CT Application and post there all needed environment variables which was [mentioned here](#configuration)
     - for your APP_URL it must be URL provided by Heroku four you application. It should be something like https://<application_name>.herokuapp.com 
 
 ### Deployment
@@ -215,6 +218,15 @@ After successful deploy application, the last step You need to do is to register
 
 This command need to be done only once. Unless you run command `npm run unregister`.
 
+### CT Configuration
+
+If you use Your CT Application for the first time, You need to configurate it.
+
+1. Go you your <application_name> -> More -> Run console
+2. Run command `npm run config` 
+
+This command need to be done only once or if You want to use new CT Application with new credentials.
+
 
 ## Contributing
 
@@ -225,8 +237,8 @@ Bug reports and pull requests are welcome through [GitHub Issues](https://github
 Use our contact form https://www.voucherify.io/contact-sales
 
 ## Licence
-
 ``` 
+MIT
 ```
 
  
