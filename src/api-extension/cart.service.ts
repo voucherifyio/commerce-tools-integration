@@ -1,6 +1,9 @@
 import { Cart } from '@commercetools/platform-sdk';
 import { Injectable } from '@nestjs/common';
-import { StackableRedeemableResponse } from '@voucherify/sdk';
+import {
+  DiscountVouchersEffectTypes,
+  StackableRedeemableResponse,
+} from '@voucherify/sdk';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
 
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
@@ -116,6 +119,32 @@ export type CartAction =
 
 type CartResponse = { status: boolean; actions: CartAction[] };
 
+type ProductToAdd = {
+  code: string; // coupon code
+  effect: DiscountVouchersEffectTypes;
+  quantity?: number;
+  discount_quantity?: number;
+  initial_quantity: number;
+  applied_discount_amount?: number;
+  product: string; // sku source_id
+};
+
+type ValidateCouponsResult = {
+  applicableCoupons: StackableRedeemableResponse[];
+  notApplicableCoupons: StackableRedeemableResponse[];
+  skippedCoupons: StackableRedeemableResponse[];
+  newSessionKey?: string;
+  valid: boolean;
+  totalDiscountAmount: number;
+  productsToAdd: ProductToAdd[];
+  onlyNewCouponsFailed?: boolean;
+};
+
+type CartActionsBuilder = (
+  cart: Cart,
+  validateCouponsResult: ValidateCouponsResult,
+) => CartAction[];
+
 @Injectable()
 export class CartService {
   constructor(
@@ -152,8 +181,8 @@ export class CartService {
     };
   }
 
-  private checkForUnitTypeDiscounts(response) {
-    const productsToAdd = [];
+  private checkForUnitTypeDiscounts(response): ProductToAdd[] {
+    const productsToAdd = [] as ProductToAdd[];
     response.redeemables
       ?.filter((code) => code.result?.discount?.type === 'UNIT')
       .forEach((unitTypeCode) => {
@@ -226,16 +255,21 @@ export class CartService {
     return productsToAdd;
   }
 
-  private async validateCoupons(cartObj: Cart, sessionKey?: string | null) {
+  private async validateCoupons(
+    cartObj: Cart,
+    sessionKey?: string | null,
+  ): Promise<ValidateCouponsResult> {
     const { id, customerId, anonymousId } = cartObj;
     const coupons: Coupon[] = this.getCouponsFromCart(cartObj);
 
     if (!coupons.length) {
       return {
+        valid: false,
         applicableCoupons: [],
         notApplicableCoupons: [],
         skippedCoupons: [],
         productsToAdd: [],
+        totalDiscountAmount: 0,
       };
     }
     this.logger.info({
@@ -631,9 +665,7 @@ export class CartService {
   }
 
   private getSession(cartObj: Cart): string | null {
-    return cartObj.custom?.fields?.session
-      ? cartObj.custom?.fields?.session
-      : null;
+    return cartObj.custom?.fields?.session ?? null;
   }
 
   private setSession(sessionKey: string): CartActionSetCustomFieldWithSession {
