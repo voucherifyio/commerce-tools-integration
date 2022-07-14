@@ -21,7 +21,7 @@ graph LR;
     I-.  REST API .->V
 ```
 
-![https://www.voucherify.io/?utm_source=github&utm_medium=repo&utm_campaign=opensource](https://www.voucherify.io)
+![https://www.voucherify.io/?utm_source=github&utm_medium=repo&utm_campaign=opensource](./public/voucherify.png)
 
 ---
 
@@ -238,8 +238,7 @@ Bug reports and pull requests are welcome through [GitHub Issues](https://github
 Use our contact form https://www.voucherify.io/contact-sales
 
 ## Licence
-``` 
 [MIT](./LICENSE.md) Copyright (c) 2022 voucherify.io
-```
+
 
  
