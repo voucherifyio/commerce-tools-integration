@@ -122,25 +122,65 @@ For local development, you need to publicly expose your local environment so tha
 - [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
 - [Git](https://devcenter.heroku.com/articles/heroku-cli) installed
 
-
 ### Configuration
 
 1. Create new application on your Heroku account with given <application_name>
 2. Go you your <application_name> -> Settings -> Reveal Config Vars
-3. Post there all need environment variables which was [mentioned here](#installation-steps)
+3. Post there all needed environment variables which was [mentioned here](#installation-steps)
+    - for your APP_URL it must be URL provided by Heroku four you application. It should be something like https://<application_name>.herokuapp.com 
 
 ### Instalation
 
-
-
+#### Fork deploy
 1. Fork this repository
 2. Clone your fork
-```
-git clone <fork_name>
 ```bash
+git clone <fork_name>
+```
 3. Login to Heroku account
 ```bash
 heroku login
 ```
-4. heroku git:remote -a commerce-tools-integration
+4. Create remote branch for Heroku deploy 
+```bash
+heroku git:remote -a <application_name>
+```
+5. Add Procfile to your repository that includes solusion how to run application
+```Procfile
+web: npm start
+```
+6. Commit and push your changes
+```bash
+git add .
+git commit -am "Added Procfile"
+git push
+```
+7. Deploy code
+```bash
+git push heroku master #for master branch
+git push heroku main #for main branch
+git push heroku <branch_name>:main #for other branch
+```
+
+#### New repository deploy
+If you dont want to use fork you can initialize new repository
+1. Go to folder with your source code
+2. Login to Heroku account
+```bash
+heroku login
+```
+3. Init git repository
+```bash
+git init
+git add .
+git commit -m "Init"
+```
+5. Follow steps 4-7 from [Fork deploy](#fork-deploy)
+
+### API Extension Registration
+
+The last step You need to do is to register your API Extension. You can do it by CLI.
+
+1. In your .env file change your APP_URL to URL provided by Heroku. https://<application_name>.herokuapp.com 
+2. Run command npm `run run register` 
  
