@@ -145,10 +145,7 @@ heroku login
 ```bash
 heroku git:remote -a <application_name>
 ```
-5. Add Procfile to your repository that includes solusion how to run application
-```Procfile
-web: npm start
-```
+5. You dont need to add any Procfile. By default Heroku recognize package.json and run `npm install` and `npm start` commands.
 6. Commit and push your changes
 ```bash
 git add .
