@@ -220,56 +220,65 @@ function addFreeLineItems(
   { productsToAdd }: ValidatedProductsToAdd,
 ): CartAction[] {
   const cartActions = [] as CartAction[];
+  const findLineItemRelatedTo = (product: ProductToAdd) =>
+    cart.lineItems.find((item) =>
+      item.custom?.fields?.applied_codes?.map(
+        (applied) => JSON.parse(applied).code === product.code,
+      ),
+    );
+  const findLineItemBySku = (sku: string) =>
+    cart.lineItems.find((item) => item.variant.sku === sku);
+  const convertToAppliedCode = (
+    product: ProductToAdd,
+    quantity: number,
+    totalDiscountQuantity: number,
+  ) =>
+    JSON.stringify({
+      code: product.code,
+      type: 'UNIT',
+      effect: product.effect,
+      quantity,
+      totalDiscountQuantity,
+    });
 
   productsToAdd
     .filter((product) => product.effect === 'ADD_NEW_ITEMS')
     .filter((product) => {
-      const itemWithAppliedCode = cart.lineItems.find((item) =>
-        item.custom?.fields?.applied_codes?.map(
-          (applied) => JSON.parse(applied).code === product.code,
-        ),
-      );
-
-      if (
-        itemWithAppliedCode &&
-        itemWithAppliedCode.quantity >= product.quantity
-      ) {
-        return false;
-      }
-
-      return true;
+      const item = findLineItemRelatedTo(product);
+      return !item || item.quantity < product.quantity;
     })
     .forEach((product) => {
-      const itemWithSameSkuAsInCode = cart.lineItems.find(
-        (item) => item.variant.sku === product.product,
-      );
+      const item = findLineItemBySku(product.product);
 
-      if (itemWithSameSkuAsInCode) {
+      if (item) {
         cartActions.push({
           action: 'changeLineItemQuantity',
-          lineItemId: itemWithSameSkuAsInCode.id,
-          quantity: itemWithSameSkuAsInCode.quantity + product.quantity,
+          lineItemId: item.id,
+          quantity: item.quantity + product.quantity,
         });
 
+        const appliedCode = convertToAppliedCode(
+          product,
+          product.quantity,
+          product.quantity,
+        );
         cartActions.push({
           action: 'setLineItemCustomType',
-          lineItemId: itemWithSameSkuAsInCode.id,
+          lineItemId: item.id,
           type: {
             key: 'lineItemCodesType',
           },
           fields: {
-            applied_codes: [
-              JSON.stringify({
-                code: product.code,
-                type: 'UNIT',
-                effect: product.effect,
-                quantity: product.quantity,
-                totalDiscountQuantity: product.quantity,
-              }),
-            ],
+            applied_codes: [appliedCode],
           },
         });
       } else {
+        const appliedCode = convertToAppliedCode(
+          product,
+          product.quantity,
+          product.quantity,
+        );
+
         cartActions.push({
           action: 'addLineItem',
           sku: product.product,
@@ -277,15 +286,7 @@ function addFreeLineItems(
           custom: {
             typeKey: 'lineItemCodesType',
             fields: {
-              applied_codes: [
-                JSON.stringify({
-                  code: product.code,
-                  type: 'UNIT',
-                  effect: product.effect,
-                  quantity: product.quantity,
-                  totalDiscountQuantity: product.quantity,
-                }),
-              ],
+              applied_codes: [appliedCode],
             },
           },
         });
@@ -295,58 +296,48 @@ function addFreeLineItems(
   productsToAdd
     .filter((product) => product.effect === 'ADD_MISSING_ITEMS')
     .filter((product) => {
-      const itemWithAppliedCode = cart.lineItems.find((item) =>
-        item.custom?.fields?.applied_codes?.map(
-          (applied) => JSON.parse(applied).code === product.code,
-        ),
-      );
-
-      if (
-        itemWithAppliedCode &&
-        itemWithAppliedCode.quantity >= product.discount_quantity
-      ) {
-        return false;
-      }
-
-      return true;
+      const item = findLineItemRelatedTo(product);
+      return !item || item.quantity < product.discount_quantity;
     })
     .forEach((product) => {
-      const itemWithSameSkuAsInCode = cart.lineItems.find(
-        (item) => item.variant.sku === product.product,
-      );
+      const item = findLineItemBySku(product.product);
 
-      if (itemWithSameSkuAsInCode) {
+      if (item) {
+        const quantity =
+          item.quantity >= product.discount_quantity
+            ? item.quantity
+            : product.discount_quantity;
+        const appliedCodeQuantity =
+          item.quantity >= product.discount_quantity ? 0 : item.quantity;
+
         cartActions.push({
           action: 'changeLineItemQuantity',
-          lineItemId: itemWithSameSkuAsInCode.id,
-          quantity:
-            itemWithSameSkuAsInCode.quantity >= product.discount_quantity
-              ? itemWithSameSkuAsInCode.quantity
-              : product.discount_quantity,
+          lineItemId: item.id,
+          quantity,
         });
 
+        const appliedCode = convertToAppliedCode(
+          product,
+          appliedCodeQuantity,
+          product.discount_quantity,
+        );
         cartActions.push({
           action: 'setLineItemCustomType',
-          lineItemId: itemWithSameSkuAsInCode.id,
+          lineItemId: item.id,
           type: {
             key: 'lineItemCodesType',
           },
           fields: {
-            applied_codes: [
-              JSON.stringify({
-                code: product.code,
-                type: 'UNIT',
-                effect: product.effect,
-                quantity:
-                  itemWithSameSkuAsInCode.quantity >= product.discount_quantity
-                    ? 0
-                    : itemWithSameSkuAsInCode.quantity,
-                totalDiscountQuantity: product.discount_quantity,
-              }),
-            ],
+            applied_codes: [appliedCode],
           },
         });
       } else {
+        const appliedCode = convertToAppliedCode(
+          product,
+          product.discount_quantity - product.initial_quantity,
+          product.discount_quantity,
+        );
+
         cartActions.push({
           action: 'addLineItem',
           sku: product.product,
@@ -354,16 +345,7 @@ function addFreeLineItems(
           custom: {
             typeKey: 'lineItemCodesType',
             fields: {
-              applied_codes: [
-                JSON.stringify({
-                  code: product.code,
-                  type: 'UNIT',
-                  effect: product.effect,
-                  quantity:
-                    product.discount_quantity - product.initial_quantity,
-                  totalDiscountQuantity: product.discount_quantity,
-                }),
-              ],
+              applied_codes: [appliedCode],
             },
           },
         });
@@ -637,9 +619,7 @@ export class CartService {
   ): Promise<ValidateCouponsResult> {
     const { id, customerId, anonymousId } = cart;
     const coupons: Coupon[] = getCouponsFromCart(cart);
-    const taxCategory = await this.checkCouponTaxCategoryWithCountries(
-      cart?.country,
-    );
+    const taxCategory = await this.checkCouponTaxCategoryWithCountries(cart);
 
     if (!coupons.length) {
       this.logger.debug({
@@ -723,22 +703,25 @@ export class CartService {
     };
   }
 
-  private async checkCouponTaxCategoryWithCountries(cartCountry?: string) {
+  private async checkCouponTaxCategoryWithCountries(cart: Cart) {
+    const { country } = cart;
     const taxCategory = await this.taxCategoriesService.getCouponTaxCategory();
     if (!taxCategory) {
       const msg = 'Coupon tax category was not configured correctly';
       this.logger.error({ msg });
       throw new Error(msg);
     }
+
     if (
-      cartCountry &&
-      !taxCategory?.rates?.find((rate) => rate.country === cartCountry)
+      country &&
+      !taxCategory?.rates?.find((rate) => rate.country === country)
     ) {
       await this.taxCategoriesService.addCountryToCouponTaxCategory(
         taxCategory,
-        cartCountry,
+        country,
       );
     }
+
     return taxCategory;
   }
 
