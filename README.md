@@ -1,14 +1,10 @@
-## Table of contents
+# commerce-tools-integration
 
-1. [Introduction](#1-installation-and-configuration-guide)
-2. [Installation and configuration guide](#2-installation-and-configuration-guide)
-3. [CLI](#3-cli)
-4. [How to test your app](#4-how-to-test-your-app)
- 
-# 1. Introduction
+[![Licence]
+[![version](https://img.shields.io/github/package-json/v/voucherifyio/commerce-tools-integration)]()
+[![code size](https://img.shields.io/github/languages/code-size/voucherifyio/commerce-tools-integration)]()
 
-This open-source application allows you to integrate Commerce Tools (headless e-commerce) with Voucherify (promotional engine) using their public APIs. This integration enables buyers to use coupons generated and configured in Voucherify in store.
-
+This open-source application allows you to integrate [Commerce Tools](https://commercetools.com/?location=emea) (headless e-commerce) with [Voucherify](https://www.voucherify.io) (promotional engine) using their public APIs. This integration enables buyers to use coupons generated and configured in Voucherify in store.
 
 ``` mermaid
 graph LR;
@@ -25,52 +21,48 @@ graph LR;
     I-.  REST API .->V
 ```
 
-## 2. Installation and configuration guide
+## Table of contents
+
+1. [Related applications](#related-applications)
+2. [Prerequisites](#prerequisites)
+3. [Installation and configuration guide](#installation-and-configuration-guide)
+    1. [Dependencies](#dependencies)
+    2. [Installation steps](#installation-steps)
+4. [CLI](#cli)
+5. [How to test your app](#how-to-test-your-app)
+6. [REST API Endpoints](#rest-api-endpoints)
+7. [Heroku deployment](#heroku-deployment)
+    1. [Requirements](#requirements)
+    2. [Configuration](#Configuration)
+    3. [Deployment](#deployment)
+    4. [API Extension Registration](#api-extension-registration)
+8. [Contributing](#contributing)
+9. [Contact](#contact)
+10. [Licence](#licence)
+
+
+## Related applications
+
+- Voucherify https://www.voucherify.io
+- Commerce Tools https://commercetools.com/?location=emea
+- Sunrise for Commerce Tools Integration https://github.com/voucherifyio/sunrise-for-commerce-tools-integration/tree/main
+
+## Prerequisites
+
+Before you begin, ensure you have following requirements
+
+- Voucherify account and valid API keys
+- Commerce Tools account with created API Client and valid API keys
+
+## Installation and configuration guide
 
 ### Dependencies
 - Node.js >= 16.15.0
 - npm >= 8.5.5
 
-### Manual product migration from CommerceTools to Voucherify
-- Go to https://impex.commercetools.com/
-- Login with your merchant account credentials
-- Click `Commands` on a dropdown list button from the top bar and select `Product exporter`
-- Prepare two .csv files
-    - open Google Sheets, Microsoft Excel or similiar program
-    - create new file
-    - in first row in first document insert following texts (each in new column): `id`, `name.en`
-    - in first row in second document insert following texts (each in new column): `id`, `name.en`, `sku`, `prices`
-    - save file
-- Upload first file to Impex
-- Select `Export only masterVariants`
-- Click run command and wait for a moment
-- After action was completed, click `Download file`
-- Upload second file to Impex
-- Select `Fill all variant rows with product information` checkbox
-- Click run command and wait for a moment
-- After action was completed, click `Download file`
-- Parse second file - whatever is in `prices` column, you have to change it to be one number (integer or float) with proper price
-- Go to https://www.voucherify.io/ and login
-- Select `Products` from the left panel
-- Click `Import` (top right corner)
-- Choose `Import Products` and `Import`
-- Upload first file previously downloaded from Impex and click `Map fields`
-    - `id` => `Source id`
-    - `name.en` => `Name`
-- Click `Import` and wait (it can take a moment)
-- Again select `Products` from the left panel
-- Click `Import` (top right corner)
-- Choose `Import Skus` and `Import`
-- Upload second file, click `Map fields`
-    - `id` => `Product id`
-    - `name.en` => `SKU`
-    - `sku` => `Source id`
-    - `prices` => `Price`
-- Click `Import` and wait
-- Import should be successfull
 ### Installation steps:
 
-- Install dependencies via CLI: `npm i`
+- Install dependencies via CLI: `npm inarall`
 - Set environment variables with credentials to Voucherify and Commerce Tools APIs. For local development purposes, put configuration into `.env` file (please, look at `.env.example` configuration file template).
     - `APP_URL` - the public URL where this application is available. Commerce Tools will use this URL to make API Exteniosn HTTP requests to our integration application. This configuration is ignored for local development servers as ngrok provides this public dynamically. 
     - In Voucherify, you can find them in the `Project Dashboard > Project Settings > General Tab > Application Keys` section.
@@ -88,14 +80,17 @@ graph LR;
         - (optional) `API_EXTENSION_BASIC_AUTH_PASSWORD` - set to any `String`, it will protect your exposed API Extension URL from unwanted traffic.
         - (optional) `CUSTOM_NGROK_BIN_PATH` - set if want to use custom path to Your ngrok binary file e.g /opt/homebrew/bin for Macbook M1 cpu
         - (optional) `PORT` - set application port (default is 3000)
+        - (optional) `LOGGER_LEVEL` - setting lever of errors that will be login with npm run test. You can set it to `error` or `fatal` 
+
 For local development, you need to publicly expose your local environment so that Commerce Tools can make an API Extension HTTP request to your server. We suggest installing `ngrok` for that purpose by following the installation process described here: https://ngrok.com/docs/getting-started
 
 ---
 
-## 3. CLI
+## CLI
 
 - `npm run start` - start the application in production mode
 - `npm run dev` - start the application in development mode
+- `npm run register` - configure Commerce Tools API Extension to point to our development server
 - `npm run dev:attach` - start application in development mode including:
     - launching ngrok and collecting dynamically generated URL
     - configure Commerce Tools API Extension to point to our development server
@@ -104,18 +99,27 @@ For local development, you need to publicly expose your local environment so tha
     2. coupon tax category - needed for any coupon or gift card with a fixed amount discount
 - `npm run test` - will run JestJs tests
 
-## 4. How to test your app
+## How to test your app
 
-@todo
+To test application you can simply run `npm run test` command. Currently we covered following scenarios:
+- creating new cart (cart.version = 1)
+- runing API extenstion without any applied coupons (testing integration between V% and CT)
+- runing API extenstion with removing currently applied coupons
+- adding amount type coupon
+- adding percentage type coupon
+- adding this same single use coupon in different session
+- adding coupons which is not exists
+- adding second amount type coupons right after percentage type coupon
+- changing quantity of products with applied amount and percentage type coupons
 
-## 5. REST API Endpoints
+## REST API Endpoints
 
 - `GET /` - welcome application messgae
 - `POST /api-extension` - handle api extension requests (cart) from Commerce Tools
 - `POST /types/configure` - trigger to configure coupon types in Commerce Tools
 - `POST /tax-categories/configure` - trigger to configure coupon tax categories in Commerce Tools
 
-## 6. Heroku deployment
+## Heroku deployment
 
 ### Requirements
 
@@ -184,4 +188,19 @@ After successful deploy application, the last step You need to do is to register
 2. Run command `npm run register` 
 
 This command need to be done only once. Unless you run command `npm run unregister`.
+
+
+## Contributing
+
+Bug reports and pull requests are welcome through [GitHub Issues](https://github.com/voucherifyio/commerce-tools-integration).
+
+## Contact
+
+Use our contact form https://www.voucherify.io/contact-sales
+
+## Licence
+
+``` 
+```
+
  
