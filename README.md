@@ -238,7 +238,7 @@ Use our contact form https://www.voucherify.io/contact-sales
 
 ## Licence
 ``` 
-MIT
+[MIT](LICENSE) Copyright (c) 2022 voucherify.io
 ```
 
  
