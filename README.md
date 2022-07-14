@@ -21,7 +21,7 @@ graph LR;
     I-.  REST API .->V
 ```
 
-![https://www.voucherify.io/?utm_source=github&utm_medium=repo&utm_campaign=opensource](./public/voucherify.png)
+![https://www.voucherify.io/?utm_source=github&utm_medium=repo&utm_campaign=opensource](https://www.voucherify.io)
 
 ---
 
@@ -227,6 +227,7 @@ If you use Your CT Application for the first time, You need to configurate it.
 
 This command need to be done only once or if You want to use new CT Application with new credentials.
 
+---
 
 ## Contributing
 
@@ -238,7 +239,7 @@ Use our contact form https://www.voucherify.io/contact-sales
 
 ## Licence
 ``` 
-[MIT](LICENSE) Copyright (c) 2022 voucherify.io
+[MIT](./LICENSE.md) Copyright (c) 2022 voucherify.io
 ```
 
  
