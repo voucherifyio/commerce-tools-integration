@@ -179,8 +179,10 @@ git commit -m "Init"
 
 ### API Extension Registration
 
-The last step You need to do is to register your API Extension. You can do it by CLI.
+After successful deploy application, the last step You need to do is to register your API Extension. You can do it by Heroku CLI.
 
-1. In your .env file change your APP_URL to URL provided by Heroku. https://<application_name>.herokuapp.com 
+1. Go you your <application_name> -> More -> Run console
 2. Run command npm `run run register` 
+
+This command need to be done only once. Unless you run `npm run unregister`.
  
