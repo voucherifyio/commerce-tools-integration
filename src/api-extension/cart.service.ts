@@ -2,7 +2,10 @@ import { Cart, TaxCategory, TypedMoney } from '@commercetools/platform-sdk';
 import { Injectable } from '@nestjs/common';
 import {
   DiscountVouchersEffectTypes,
+  OrdersItem,
   StackableRedeemableResponse,
+  StackableRedeemableResponseStatus,
+  ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
 
@@ -500,6 +503,123 @@ function getCartActionBuilders(
   return cartActionBuilders;
 }
 
+// TODO: to delete once @voucherify/sdk is being updated
+interface ExtendedOrdersItem extends OrdersItem {
+  initial_quantity?: number;
+  applied_discount_amount?: number;
+  discount_quantity?: number;
+  product?: {
+    source_id: string;
+    override?: boolean;
+    name?: string;
+    metadata?: Record<string, any>;
+  };
+}
+
+function convertUnitTypeCouponsToFreeProducts(
+  response: ValidationValidateStackableResponse,
+): ProductToAdd[] {
+  return response.redeemables
+    ?.filter((redeemable) => redeemable.result?.discount?.type === 'UNIT')
+    .flatMap((unitTypeRedeemable) => {
+      const freeItem = unitTypeRedeemable.order?.items?.find(
+        (item: ExtendedOrdersItem) =>
+          item.product?.source_id ===
+          unitTypeRedeemable.result?.discount?.product?.source_id,
+      ) as ExtendedOrdersItem;
+      const { effect: discountEffect } = unitTypeRedeemable.result?.discount;
+      if (['ADD_NEW_ITEMS', 'ADD_MISSING_ITEMS'].includes(discountEffect)) {
+        return [
+          {
+            code: unitTypeRedeemable.id,
+            effect: unitTypeRedeemable.result?.discount?.effect,
+            quantity: unitTypeRedeemable.result?.discount?.unit_off,
+            product: unitTypeRedeemable.result?.discount.sku.source_id,
+            initial_quantity: freeItem?.initial_quantity,
+            discount_quantity: freeItem?.discount_quantity,
+            applied_discount_amount: freeItem?.applied_discount_amount,
+          },
+        ];
+      }
+
+      if (discountEffect === 'ADD_MANY_ITEMS') {
+        return unitTypeRedeemable.result.discount.units
+          .filter((product) =>
+            ['ADD_NEW_ITEMS', 'ADD_MISSING_ITEMS'].includes(product.effect),
+          )
+          .map((product) => {
+            const freeItem = unitTypeRedeemable.order?.items?.find(
+              (item: ExtendedOrdersItem) =>
+                item.product.source_id === product.product.source_id,
+            ) as ExtendedOrdersItem;
+            return {
+              code: unitTypeRedeemable.id,
+              effect: product.effect,
+              quantity: product.unit_off,
+              product: product.sku.source_id,
+              initial_quantity: freeItem.initial_quantity,
+              discount_quantity: freeItem.discount_quantity,
+              applied_discount_amount: freeItem.applied_discount_amount,
+            };
+          });
+      }
+      return [];
+    });
+}
+
+function getCouponsFromCart(cart: Cart): Coupon[] {
+  return (cart.custom?.fields?.discount_codes ?? [])
+    .map(desarializeCoupons)
+    .filter((coupon) => coupon.status !== 'NOT_APPLIED'); // we already declined them, will be removed by frontend
+}
+
+function checkCouponsValidatedAsState(
+  coupons: Coupon[],
+  validatedCoupons: StackableRedeemableResponse[],
+  status: CouponStatus,
+): boolean {
+  return (
+    validatedCoupons.length === 0 ||
+    coupons
+      .filter((coupon) => coupon.status === status)
+      .every((coupon) =>
+        validatedCoupons.find((element) => element.id === coupon.code),
+      )
+  );
+}
+
+function checkIfOnlyNewCouponsFailed(
+  coupons: Coupon[],
+  applicableCoupons: StackableRedeemableResponse[],
+  notApplicableCoupons: StackableRedeemableResponse[],
+  skippedCoupons: StackableRedeemableResponse[],
+): boolean {
+  const areAllNewCouponsNotApplicable = checkCouponsValidatedAsState(
+    coupons,
+    notApplicableCoupons,
+    'NEW',
+  );
+
+  const areAllAppliedCouponsApplicable = checkCouponsValidatedAsState(
+    coupons,
+    applicableCoupons,
+    'APPLIED',
+  );
+
+  const areAllAppliedCouponsSkipped = checkCouponsValidatedAsState(
+    coupons,
+    skippedCoupons,
+    'APPLIED',
+  );
+
+  return (
+    notApplicableCoupons.length !== 0 &&
+    areAllNewCouponsNotApplicable &&
+    areAllAppliedCouponsSkipped &&
+    areAllAppliedCouponsApplicable
+  );
+}
+
 @Injectable()
 export class CartService {
   constructor(
@@ -511,91 +631,21 @@ export class CartService {
     CartService.name,
   );
 
-  private checkForUnitTypeDiscounts(response): ProductToAdd[] {
-    const productsToAdd = [] as ProductToAdd[];
-    response.redeemables
-      ?.filter((code) => code.result?.discount?.type === 'UNIT')
-      .forEach((unitTypeCode) => {
-        if (unitTypeCode.result?.discount?.effect === 'ADD_NEW_ITEMS') {
-          const freeItem = unitTypeCode.order?.items?.find(
-            (item) =>
-              item.product?.source_id ===
-              unitTypeCode.result?.discount?.product?.source_id,
-          );
-
-          productsToAdd.push({
-            code: unitTypeCode.id,
-            effect: unitTypeCode.result?.discount?.effect,
-            quantity: unitTypeCode.result?.discount?.unit_off,
-            product: unitTypeCode.result?.discount.sku.source_id,
-            initial_quantity: freeItem?.initial_quantity,
-            applied_discount_amount: freeItem?.applied_discount_amount,
-          });
-        }
-
-        if (unitTypeCode.result?.discount?.effect === 'ADD_MISSING_ITEMS') {
-          const freeItem = unitTypeCode.order?.items?.find(
-            (item) =>
-              item.product?.source_id ===
-              unitTypeCode.result?.discount?.product?.source_id,
-          );
-
-          productsToAdd.push({
-            code: unitTypeCode.id,
-            effect: unitTypeCode.result?.discount?.effect,
-            discount_quantity: freeItem.discount_quantity,
-            initial_quantity: freeItem.initial_quantity,
-            product: unitTypeCode.result?.discount.sku.source_id,
-          });
-        }
-
-        if (unitTypeCode.result?.discount?.effect === 'ADD_MANY_ITEMS') {
-          unitTypeCode.result.discount.units.forEach((product) => {
-            if (product.effect === 'ADD_NEW_ITEMS') {
-              const freeItem = unitTypeCode.order?.items?.find(
-                (item) => item.product.source_id === product.product.source_id,
-              );
-
-              productsToAdd.push({
-                code: unitTypeCode.id,
-                effect: product.effect,
-                quantity: product.unit_off,
-                product: product.sku.source_id,
-                initial_quantity: freeItem.initial_quantity,
-                applied_discount_amount: freeItem.applied_discount_amount,
-              });
-            }
-
-            if (product.effect === 'ADD_MISSING_ITEMS') {
-              const freeItem = unitTypeCode.order?.items?.find(
-                (item) => item.product.source_id === product.product.source_id,
-              );
-
-              productsToAdd.push({
-                code: unitTypeCode.id,
-                effect: product.effect,
-                discount_quantity: freeItem.discount_quantity,
-                initial_quantity: freeItem.initial_quantity,
-                product: product.sku.source_id,
-              });
-            }
-          });
-        }
-      });
-    return productsToAdd;
-  }
-
   private async validateCoupons(
     cart: Cart,
     sessionKey?: string | null,
   ): Promise<ValidateCouponsResult> {
     const { id, customerId, anonymousId } = cart;
-    const coupons: Coupon[] = this.getCouponsFromCart(cart);
+    const coupons: Coupon[] = getCouponsFromCart(cart);
     const taxCategory = await this.checkCouponTaxCategoryWithCountries(
       cart?.country,
     );
 
     if (!coupons.length) {
+      this.logger.debug({
+        msg: 'No coupons applied, skipping voucherify call',
+      });
+
       return {
         valid: false,
         applicableCoupons: [],
@@ -620,23 +670,23 @@ export class CartService {
         sessionKey,
       );
 
-    const notApplicableCoupons = validatedCoupons.redeemables.filter(
-      (voucher) => voucher.status === 'INAPPLICABLE',
-    );
-    const skippedCoupons = validatedCoupons.redeemables.filter(
-      (voucher) => voucher.status === 'SKIPPED',
-    );
-    const applicableCoupons = validatedCoupons.redeemables.filter(
-      (voucher) => voucher.status === 'APPLICABLE',
-    );
+    const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
+      validatedCoupons.redeemables.filter(
+        (redeemable) => redeemable.status === status,
+      );
+    const notApplicableCoupons = getCouponsByStatus('INAPPLICABLE');
+    const skippedCoupons = getCouponsByStatus('SKIPPED');
+    const applicableCoupons = getCouponsByStatus('APPLICABLE');
 
     const sessionKeyResponse = validatedCoupons.session?.key;
-    const valid = validatedCoupons.valid;
-    const totalDiscountAmount = validatedCoupons.order?.total_discount_amount;
+    const { valid } = validatedCoupons;
+    const totalDiscountAmount =
+      validatedCoupons.order?.total_discount_amount ?? 0;
 
-    const productsToAdd = this.checkForUnitTypeDiscounts(validatedCoupons);
+    const productsToAdd =
+      convertUnitTypeCouponsToFreeProducts(validatedCoupons);
 
-    const onlyNewCouponsFailed = this.checkIfOnlyNewCouponsFailed(
+    const onlyNewCouponsFailed = checkIfOnlyNewCouponsFailed(
       coupons,
       applicableCoupons,
       notApplicableCoupons,
@@ -658,15 +708,13 @@ export class CartService {
       onlyNewCouponsFailed,
       taxCategory,
     });
+    const newSessionKey = !sessionKey || valid ? sessionKeyResponse : null;
 
     return {
       applicableCoupons,
       notApplicableCoupons,
       skippedCoupons,
-      newSessionKey:
-        sessionKey && !validatedCoupons.valid
-          ? null
-          : validatedCoupons.session?.key,
+      newSessionKey,
       valid,
       totalDiscountAmount,
       productsToAdd,
@@ -733,51 +781,5 @@ export class CartService {
       status: true,
       actions,
     };
-  }
-
-  private getCouponsFromCart(cartObj: Cart): Coupon[] {
-    return (cartObj.custom?.fields?.discount_codes ?? [])
-      .map(desarializeCoupons)
-      .filter((coupon) => coupon.status !== 'NOT_APPLIED'); // we already declined them, will be removed by frontend
-  }
-
-  private checkIfOnlyNewCouponsFailed(
-    coupons: Coupon[],
-    applicableCoupons: StackableRedeemableResponse[],
-    notApplicableCoupons: StackableRedeemableResponse[],
-    skippedCoupons: StackableRedeemableResponse[],
-  ): boolean {
-    const areAllNewCouponsNotApplicable = this.checkCouponsValidatedAsState(
-      coupons,
-      notApplicableCoupons,
-      'NEW',
-    );
-
-    const areAllAppliedCouponsApplicable =
-      applicableCoupons.length === 0 ||
-      this.checkCouponsValidatedAsState(coupons, applicableCoupons, 'APPLIED');
-
-    const areAllAppliedCouponsSkipped =
-      skippedCoupons.length === 0 ||
-      this.checkCouponsValidatedAsState(coupons, skippedCoupons, 'APPLIED');
-
-    return (
-      notApplicableCoupons.length !== 0 &&
-      areAllNewCouponsNotApplicable &&
-      areAllAppliedCouponsSkipped &&
-      areAllAppliedCouponsApplicable
-    );
-  }
-
-  private checkCouponsValidatedAsState(
-    coupons: Coupon[],
-    validatedCoupons: StackableRedeemableResponse[],
-    status: CouponStatus,
-  ): boolean {
-    return coupons
-      .filter((coupon) => coupon.status === status)
-      .every((coupon) => {
-        return validatedCoupons.find((element) => element.id === coupon.code);
-      });
   }
 }
