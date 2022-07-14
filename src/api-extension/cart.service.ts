@@ -143,7 +143,51 @@ type ValidateCouponsResult = {
 type CartActionsBuilder = (
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
-) => CartAction[];
+) => Promise<CartAction[]>;
+
+function setCustomTypeActionsBuilder(
+  typesService: TypesService,
+  logger: JsonLogger,
+): CartActionsBuilder {
+  return async (): Promise<CartActionSetCustomType[]> => {
+    const couponType = await typesService.findCouponType('couponCodes');
+    if (!couponType) {
+      const msg = 'CouponType not found';
+      logger.error({ msg });
+      throw new Error(msg);
+    }
+
+    return [
+      {
+        action: 'setCustomType',
+        type: {
+          id: couponType.id,
+        },
+        name: 'couponCodes',
+      },
+    ];
+  };
+}
+
+const cartActionsResolver = async (
+  cartActionBuilders: CartActionsBuilder[],
+  cart: Cart,
+  validatedCouponsResult?: ValidateCouponsResult,
+) => {
+  const actions = await cartActionBuilders.reduce(
+    async (_: Promise<CartAction[]>, builder) => {
+      const result: CartAction[] = await _;
+      result.push(...(await builder(cart, validatedCouponsResult)));
+      return result;
+    },
+    Promise.resolve([]),
+  );
+
+  return {
+    status: true,
+    actions,
+  };
+};
 
 @Injectable()
 export class CartService {
@@ -158,28 +202,9 @@ export class CartService {
 
   private couponCustomLineNamePrefix = 'Voucher, ';
 
-  private async setCustomTypeForInitializedCart() {
-    const couponType = await this.typesService.findCouponType('couponCodes');
-    if (!couponType) {
-      const msg = 'CouponType not found';
-      this.logger.error({
-        msg,
-      });
-      throw new Error(msg);
-    }
-    return {
-      status: true,
-      actions: [
-        {
-          action: 'setCustomType',
-          type: {
-            id: couponType.id,
-          },
-          name: 'couponCodes',
-        } as CartActionSetCustomType,
-      ] as [CartActionSetCustomType],
-    };
-  }
+  private readonly initializedCartActionBuilders: CartActionsBuilder[] = [
+    setCustomTypeActionsBuilder(this.typesService, this.logger),
+  ];
 
   private checkForUnitTypeDiscounts(response): ProductToAdd[] {
     const productsToAdd = [] as ProductToAdd[];
@@ -303,6 +328,13 @@ export class CartService {
 
     const productsToAdd = this.checkForUnitTypeDiscounts(validatedCoupons);
 
+    const onlyNewCouponsFailed = this.checkIfOnlyNewCouponsFailed(
+      coupons,
+      applicableCoupons,
+      notApplicableCoupons,
+      skippedCoupons,
+    );
+
     this.logger.info({
       msg: 'Validated coupons',
       applicableCoupons,
@@ -315,6 +347,7 @@ export class CartService {
       sessionKeyResponse,
       totalDiscountAmount,
       productsToAdd,
+      onlyNewCouponsFailed,
     });
 
     return {
@@ -328,6 +361,7 @@ export class CartService {
       valid,
       totalDiscountAmount,
       productsToAdd,
+      onlyNewCouponsFailed,
     };
   }
 
@@ -664,8 +698,8 @@ export class CartService {
     };
   }
 
-  private getSession(cartObj: Cart): string | null {
-    return cartObj.custom?.fields?.session ?? null;
+  private getSession(cart: Cart): string | null {
+    return cart.custom?.fields?.session ?? null;
   }
 
   private setSession(sessionKey: string): CartActionSetCustomFieldWithSession {
@@ -676,17 +710,17 @@ export class CartService {
     };
   }
 
-  async checkCartAndMutate(cartObj: Cart): Promise<CartResponse> {
-    if (cartObj.version === 1) {
-      return this.setCustomTypeForInitializedCart();
+  async checkCartAndMutate(cart: Cart): Promise<CartResponse> {
+    if (cart.version === 1) {
+      return cartActionsResolver(this.initializedCartActionBuilders, cart);
     }
 
     const taxCategory = await this.checkCouponTaxCategoryWithCountires(
-      cartObj?.country,
+      cart?.country,
     );
 
-    const sessionKey = this.getSession(cartObj);
-
+    const sessionKey = this.getSession(cart);
+    const validateCouponsResult = await this.validateCoupons(cart, sessionKey);
     const {
       valid,
       applicableCoupons,
@@ -695,7 +729,8 @@ export class CartService {
       newSessionKey,
       totalDiscountAmount,
       productsToAdd,
-    } = await this.validateCoupons(cartObj, sessionKey);
+      onlyNewCouponsFailed,
+    } = validateCouponsResult;
 
     const actions: CartAction[] = [];
 
@@ -703,30 +738,21 @@ export class CartService {
       actions.push(this.setSession(newSessionKey));
     }
 
-    const onlyNewCouponsFailed = this.checkIfOnlyNewCouponFailed(
-      this.getCouponsFromCart(cartObj),
-      applicableCoupons,
-      notApplicableCoupons,
-      skippedCoupons,
-    );
-
     if (valid || !onlyNewCouponsFailed) {
-      actions.push(
-        ...(await this.removeOldCustomLineItemsWithDiscounts(cartObj)),
-      );
+      actions.push(...(await this.removeOldCustomLineItemsWithDiscounts(cart)));
       actions.push(
         ...(await this.addCustomLineItemWithDiscounts(
-          cartObj,
+          cart,
           totalDiscountAmount,
           applicableCoupons,
           taxCategory,
         )),
       );
 
-      actions.push(...this.addFreeLineItems(cartObj, productsToAdd));
+      actions.push(...this.addFreeLineItems(cart, productsToAdd));
       actions.push(
         ...this.removeFreeLineItemsIfCouponNoLongerIsApplied(
-          cartObj,
+          cart,
           productsToAdd,
         ),
       );
@@ -737,7 +763,7 @@ export class CartService {
         applicableCoupons,
         notApplicableCoupons,
         skippedCoupons,
-        cartObj,
+        cart,
         onlyNewCouponsFailed,
       ),
     );
@@ -752,7 +778,7 @@ export class CartService {
       .filter((coupon) => coupon.status !== 'NOT_APPLIED'); // we already declined them, will be removed by frontend
   }
 
-  private checkIfOnlyNewCouponFailed(
+  private checkIfOnlyNewCouponsFailed(
     coupons: Coupon[],
     applicableCoupons: StackableRedeemableResponse[],
     notApplicableCoupons: StackableRedeemableResponse[],
