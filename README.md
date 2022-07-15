@@ -4,13 +4,15 @@
 [![version](https://img.shields.io/github/package-json/v/voucherifyio/commerce-tools-integration)]()
 [![code size](https://img.shields.io/github/languages/code-size/voucherifyio/commerce-tools-integration)]()
 
-This open-source application allows you to integrate [Commerce Tools](https://commercetools.com/?location=emea) (headless e-commerce) with [Voucherify](https://www.voucherify.io) (promotional engine) using their public APIs. This integration enables buyers to use coupons generated and configured in Voucherify in store.
+Voucherify's [commercetools](https://commercetools.com/) connector extends its discount capabilities with unique promo codes and advanced incentives, as well as with referral, gift card, and loyalty programs supported by [Voucherify promotion engine](https://www.voucherify.io).
+
+Demo store https://github.com/voucherifyio/sunrise-for-commerce-tools-integration/
 
 ``` mermaid
 graph LR;
     U((User))
     SF(Store front)
-    CT(Commerce Tools)
+    CT(commercetools)
     V(Voucherify)
     I(Integration App)
 
@@ -21,43 +23,37 @@ graph LR;
     I-.  REST API .->V
 ```
 
-![https://www.voucherify.io/?utm_source=github&utm_medium=repo&utm_campaign=opensource](./public/voucherify.png)
+![https://www.voucherify.io/](./public/voucherify.png)
 
 ---
 
-## Table of contents
-
-1. [Related applications](#related-applications)
-2. [Prerequisites](#prerequisites)
-3. [Installation and configuration guide](#installation-and-configuration-guide)
-    1. [Dependencies](#dependencies)
-    2. [Configuration](#configuration)
-    3. [Instalation](#installation)
-4. [CLI](#cli)
-5. [How to test your app](#how-to-test-your-app)
-6. [REST API Endpoints](#rest-api-endpoints)
-7. [Heroku deployment](#heroku-deployment)
-    1. [Requirements](#requirements)
-    2. [Configuration](#Configuration)
-    3. [Deployment](#deployment)
-    4. [API Extension Registration](#api-extension-registration)
-    5. [CT Configuration](#ct-configuration)
-8. [Contributing](#contributing)
-9. [Contact](#contact)
-10. [Licence](#licence)
-
-## Related applications
-
-- Voucherify https://www.voucherify.io
-- Commerce Tools https://commercetools.com/?location=emea
-- Sunrise for Commerce Tools Integration https://github.com/voucherifyio/sunrise-for-commerce-tools-integration/tree/main
+  * [Prerequisites](#prerequisites)
+  * [Installation and configuration guide](#installation-and-configuration-guide)
+    + [Dependencies](#dependencies)
+    + [Configuration](#configuration)
+    + [Installation](#installation)
+      - For production
+      - For local development (ngrok required)
+      - For development with public URL
+  * [Tests](#tests)
+  * [CLI](#cli)
+  * [REST API Endpoints](#rest-api-endpoints)
+  * [Heroku deployment](#heroku-deployment)
+    + [Requirements](#requirements)
+    + [Configuration](#configuration)
+    + [Deployment](#deployment)
+      - [Fork](#fork)
+      - [New repository](#new-repository)
+    + [Register API Extension](#register-api-extension)
+    + [Configure commercetools](#configure-commercetools)
+  * [Contributing](#contributing)
+  * [Contact](#contact)
+  * [Licence](#licence)
 
 ## Prerequisites
 
-Before you begin, ensure you have following requirements
-
-- Voucherify account and valid API keys
-- Commerce Tools account with created API Client and valid API keys
+- Voucherify [account](http://app.voucherify.io/#/signup) and [API keys](https://docs.voucherify.io/docs/authentication)
+- commercetools [account](https://commercetools.com/free-trial) with API Client and API keys
 
 ## Installation and configuration guide
 
@@ -65,41 +61,40 @@ Before you begin, ensure you have following requirements
 - Node.js >= 16.15.0
 - npm >= 8.5.5
 
-### Configuration:
+### Configuration
 
-Set environment variables with credentials to Voucherify and Commerce Tools APIs. For local development purposes, put configuration into `.env` file (please, look at `.env.example` configuration file template).
-- `APP_URL` - the public URL where this application is available. Commerce Tools will use this URL to make API Exteniosn HTTP requests to our integration application. This configuration is ignored for local development servers as ngrok provides this public dynamically. 
-- In Voucherify, you can find them in the `Project Dashboard > Project Settings > General Tab > Application Keys` section.
+Set environment variables with credentials to Voucherify and commercetools APIs. For local development, put the configuration into `.env` file (see `.env.example` configuration template).
+- `APP_URL` - a public URL where the application is hosted. commercetools will use this URL to make [API Extension HTTP requests](https://docs.commercetools.com/api/projects/api-extensions). This configuration is ignored for local development servers as ngrok provides a public URL dynamically. 
+- In Voucherify, go to `Project Dashboard > Project Settings > General Tab > Application Keys`.
     - `VOUCHERIFY_APP_ID`
     - `VOUCHERIFY_SECRET_KEY`
     - `VOUCHERIFY_API_URL`
-- In Commerce Tools, credentials are available only once; after new API Client creation. You can create a new API Client in `Settings > Developer Settings > Create new API client (top right corner)` using the `Admin client` scope template.
+- In commercetools, credentials are available when a new API Client is created. You can create it in `Settings > Developer Settings > Create new API client (top right corner)` using the `Admin client` scope template.
     - `COMMERCE_TOOLS_PROJECT_KEY`
     - `COMMERCE_TOOLS_AUTH_URL`
     - `COMMERCE_TOOLS_API_URL`
     - `COMMERCE_TOOLS_ID`
     - `COMMERCE_TOOLS_SECRET`
 - Additional configuration variables
-    - `COMMERCE_TOOLS_PRODUCTS_CURRENCY` - (e.g. EUR) - needed to select proper prices when syncing products. This one variable is required for this process, it can be found in `*any product* > Variants > *any variant* > Prices (column currency, row adequate to prices in your shop)`.
-    - (optional) `COMMERCE_TOOLS_PRODUCTS_COUNTRY` - (e.g. DE) - needed to select proper prices when syncing products. It can be found similiar to above example.
-    - (optional) `COMMERCE_TOOLS_PRODUCT_CHANNEL` - (e.g. Store London) - needed to select proper prices when syncing products. It can be found similiar to above example.
-    - (optional) `COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP` - (e.g. b2b) - needed to select proper prices when syncing products. It can be found similiar to above example.
-    - (optional) `LOGGER_PRETTY_PRINT` - set environment variable to `true`, to have console output in a text format (by default it is in JSON format).
-    - (optional) `COMMERCE_TOOLS_WITH_LOGGER_MIDDLEWARE` - set environment variable to `false`, to disable debugger mode in commerce tools connector.
-    - (optional) `API_EXTENSION_BASIC_AUTH_PASSWORD` - set to any `String`, it will protect your exposed API Extension URL from unwanted traffic.
-    - (optional) `CUSTOM_NGROK_BIN_PATH` - set if want to use custom path to Your ngrok binary file e.g /opt/homebrew/bin for Macbook M1 cpu
-    - (optional) `PORT` - set application port (default is 3000)
-    - (optional) `LOGGER_LEVEL` - setting lever of errors that will be login with npm run test. You can set it to `error` or `fatal`
-    - (optional) `DEBUG_STORE_REQUESTS_IN_JSON` - set to `true` if you want to keep requests / response of external services calls to a JSON file
-    - (optional) `DEBUG_STORE_REQUESTS_DIR` - name of the directory where JSON files with request / responses are stored 
-### Instalation
+    - `COMMERCE_TOOLS_PRODUCTS_CURRENCY` - (e.g. EUR) - required to select proper prices when syncing products (can be found in `*any product* > Variants > *any variant* > Prices (column currency, row adequate to prices in your shop)`).
+    - (optional) `COMMERCE_TOOLS_PRODUCTS_COUNTRY` - (e.g. DE)
+    - (optional) `COMMERCE_TOOLS_PRODUCT_CHANNEL` - (e.g. Store London)
+    - (optional) `COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP` - (e.g. b2b)
+    - (optional) `LOGGER_PRETTY_PRINT` - `true` to get console output in the text format (JSON by default).
+    - (optional) `COMMERCE_TOOLS_WITH_LOGGER_MIDDLEWARE` - `false` to disable debugger mode in commercetools connector.
+    - (optional) `API_EXTENSION_BASIC_AUTH_PASSWORD` - (`String`) protects your API Extension URL from unwanted traffic.
+    - (optional) `CUSTOM_NGROK_BIN_PATH` - a custom path to your ngrok binary file e.g /opt/homebrew/bin for Macbook M1 cpu
+    - (optional) `PORT` - application port (default is 3000)
+    - (optional) `LOGGER_LEVEL` - logging level for `npm run test`. You can set it to `error` or `fatal`.
+    - (optional) `DEBUG_STORE_REQUESTS_IN_JSON` - `true` if you want to keep external requests / response in a JSON file.
+    - (optional) `DEBUG_STORE_REQUESTS_DIR` - name of the directory where JSON files with request / responses are stored.
 
-If you use Your CT Application for the first time be sure to make basic confgiuration with in your Commerce Tools application (provided by API keys).
+### Installation
+
+Set up the configuration for the first run.
 ```
 npm run config
 ```
-
-Then go for to following steps depends on the environment
 
 #### For production
 ```bash
@@ -114,7 +109,7 @@ npm install
 npm run dev:attach 
 ```
 
-#### For developement with public URL
+#### For development with public URL
 ```bash
 npm install
 npm run dev
@@ -122,45 +117,47 @@ npm run register
 ```
 ---
 
-## How to test your app
+## Tests
 
-To test application you can simply run `npm run test` command. Currently we covered following scenarios:
-- creating new cart (cart.version = 1)
-- runing API extenstion without any applied coupons (testing integration between V% and CT)
-- runing API extenstion with removing currently applied coupons
-- adding amount type coupon
-- adding percentage type coupon
-- adding this same single use coupon in different session
-- adding coupons which is not exists
-- adding second amount type coupons right after percentage type coupon
-- changing quantity of products with applied amount and percentage type coupons
+`npm run test`
+
+Currently we cover the following scenarios:
+- creating a new cart (cart.version = 1)
+- running API extension without any applied coupons (testing integration between V% and CT)
+- running API extension when removing currently applied coupons
+- adding an amount type coupon
+- adding a percentage type coupon
+- adding the same single use coupon in a different session
+- adding coupons which don't exist
+- adding a second amount type coupons right after a percentage type coupon
+- changing the quantity of products with an applied amount and percentage type coupons
 
 ## CLI
 
 - `npm run start` - start the application in production mode
 - `npm run dev` - start the application in development mode
-- `npm run register` - configure Commerce Tools API Extension to point to our development server
-- `npm run unregister` - unregister your CT API Extension to allow configurate given URL for other application
-- `npm run dev:attach` - start application in development mode including:
+- `npm run register` - configure commercetools API Extension to point to your development server
+- `npm run unregister` - unregister commercetools API Extension
+- `npm run dev:attach` - start the application in development mode including:
     - launching ngrok and collecting dynamically generated URL
-    - configure Commerce Tools API Extension to point to our development server
-- `npm run config` - it will handle the required basic configuration in Commerce Tools:
-    1. custom coupon type - needed to hold coupons codes inside cart object
+    - configuring commercetools API Extension to point to our development server
+- `npm run config` - set up the required basic configuration in commercetools:
+    1. custom coupon type - needed to store coupons codes inside the [Cart](https://docs.commercetools.com/api/projects/carts) object
     2. coupon tax category - needed for any coupon or gift card with a fixed amount discount
-- `npm run test` - will run JestJs tests
-- `npm run migrate-products` - it will sync all of the products from CT to Voucherify.
-    - you can add `period` argument to sync only from last X days (e.g `npm run migrate-products -- --period=5`)
-- `npm run migrate-customers` - it will sync all of the customers from CT to Voucherify.
-    - you can add `period` argument to sync only from last X days (e.g `npm run migrate-customers -- --period=5`)
-- `npm run migrate-orders` - it will sync all of the (paid) orders from CT to Voucherify. It is important to know that due to some restrictions speed of this operation is decreased.
-    - you can add `period` argument to sync only from last X days (e.g `npm run migrate-orders -- --period=5`)
+- `npm run test` - run Jest tests
+- `npm run migrate-products` - sync all products from commercetools to Voucherify.
+    - add `period` argument to sync products from last X days (e.g. `npm run migrate-products -- --period=5`)
+- `npm run migrate-customers` - sync all customers from commercetools to Voucherify.
+    - add `period` argument to sync customers from last X days (e.g. `npm run migrate-customers -- --period=5`)
+- `npm run migrate-orders` - sync all of the `PAID` orders from commercetools to Voucherify. (might be throttled by Voucherify)
+    - add `period` argument to sync orders from last X days (e.g. `npm run migrate-orders -- --period=5`)
 
 ## REST API Endpoints
 
-- `GET /` - welcome application messgae
-- `POST /api-extension` - handle api extension requests (cart) from Commerce Tools
-- `POST /types/configure` - trigger to configure coupon types in Commerce Tools
-- `POST /tax-categories/configure` - trigger to configure coupon tax categories in Commerce Tools
+- `GET /` - welcome application message
+- `POST /api-extension` - handle API extension requests (cart) from commercetools
+- `POST /types/configure` - trigger coupon types configuration
+- `POST /tax-categories/configure` - trigger coupon tax configuration
 
 ---
 
@@ -173,40 +170,38 @@ To test application you can simply run `npm run test` command. Currently we cove
 
 ### Configuration
 
-1. Create new application on your Heroku account with given <application_name>
-2. Go you your <application_name> -> Settings -> Reveal Config Vars
-3. Configurate yor CT Application and post there all needed environment variables which was [mentioned here](#configuration)
-    - for your APP_URL it must be URL provided by Heroku four you application. It should be something like https://<application_name>.herokuapp.com 
+1. Create a new application on your Heroku account with a given <application_name>
+2. Go to your <application_name> -> Settings -> Reveal Config Vars
+3. Configure your commercetools application and set up environment variables [see Configuration](#configuration)
 
 ### Deployment
 
-To install and deploy CT Integration you cant fork this repository or download source code and init new Git repository. Both ways are described below.
 
-#### Fork deploy
+#### Fork
 1. Fork this repository
 2. Clone your fork
 ```bash
 git clone <fork_name>
 ```
-3. Login to Heroku account
+3. Login to your Heroku account
 ```bash
 heroku login
 ```
-4. Create remote branch for Heroku deploy 
+4. Create a remote branch for Heroku deploy 
 ```bash
 heroku git:remote -a <application_name>
 ```
-5. You dont need to add any Procfile. By default Heroku recognize package.json and run `npm install` and `npm start` commands.
-6. Deploy code
+5. You don't need to create any procfile. By default, Heroku recognizes package.json and run `npm install` and `npm start`.
+6. Deploy the code
 ```bash
 git push heroku master #for master branch
 git push heroku main #for main branch
 git push heroku <branch_name>:main #for other branch
 ```
 
-#### New repository deploy
-If you dont want to use fork you can initialize new repository
-1. Go to folder with your source code
+#### New repository
+
+1. Go to the source code folder
 2. Login to Heroku account
 ```bash
 heroku login
@@ -217,35 +212,44 @@ git init
 git add .
 git commit -m "Init"
 ```
-5. Follow steps 4-7 from [Fork deploy](#fork-deploy)
+4. Create a remote branch for Heroku deploy 
+```bash
+heroku git:remote -a <application_name>
+```
+5. Deploy the code
+```bash
+git push heroku master #for master branch
+git push heroku main #for main branch
+git push heroku <branch_name>:main #for other branch
+```
 
-### API Extension Registration
+### Register API Extension
 
-After successful deploy application, the last step You need to do is to register your API Extension. You can do it by Heroku CLI.
+1. Go to your <application_name> -> More -> Run console
+2. Run `npm run register` 
 
-1. Go you your <application_name> -> More -> Run console
-2. Run command `npm run register` 
+This command should be run once (or each time after `npm run unregister`).
 
-This command need to be done only once. Unless you run command `npm run unregister`.
+### Configure commercetools
 
-### CT Configuration
+1. Go to your <application_name> -> More -> Run console
+2. Run `npm run config` 
 
-If you use Your CT Application for the first time, You need to configurate it.
-
-1. Go you your <application_name> -> More -> Run console
-2. Run command `npm run config` 
-
-This command need to be done only once or if You want to use new CT Application with new credentials.
+This command should be run once for every commercetool application.
 
 ---
 
 ## Contributing
 
-Bug reports and pull requests are welcome through [GitHub Issues](https://github.com/voucherifyio/commerce-tools-integration).
+If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Contact
 
-Use our contact form https://www.voucherify.io/contact-sales
+If you have questions, comments, or need help with the code, we're here to help:
+* on [Slack](https://www.voucherify.io/community)
+* by [email](https://www.voucherify.io/contact-support)
+
+For more tutorials and full API reference, visit Voucherify [Developer Hub](https://docs.voucherify.io).
 
 ## Licence
 [MIT](./LICENSE.md) Copyright (c) 2022 voucherify.io
