@@ -9,7 +9,7 @@ import {
   TypedMoney,
 } from '@commercetools/platform-sdk';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CartAction, CartService } from '../cart.service';
+import { CartService } from '../cart.service';
 import { TaxCategoriesService } from '../../commerceTools/tax-categories/tax-categories.service';
 import { TypesService } from '../../commerceTools/types/types.service';
 import {
@@ -23,6 +23,7 @@ import {
 } from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
 import { MockedVoucherifyConnectorService } from '../../voucherify/__mocks__/voucherify-connector.service';
 import { Coupon } from '../coupon';
+import { CartAction } from '../cartActions/CartAction';
 
 jest.mock('../../commerceTools/tax-categories/tax-categories.service');
 jest.mock('../../commerceTools/types/types.service');
