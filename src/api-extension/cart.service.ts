@@ -1,10 +1,11 @@
+import { Cart } from '@commercetools/platform-sdk';
 import { Injectable } from '@nestjs/common';
+import { StackableRedeemableResponse } from '@voucherify/sdk';
+import { JsonLogger, LoggerFactory } from 'json-logger-service';
+
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
 import { TypesService } from '../commerceTools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
-import { JsonLogger, LoggerFactory } from 'json-logger-service';
-import { Cart } from '@commercetools/platform-sdk';
-import { StackableRedeemableResponse } from '@voucherify/sdk';
 import { desarializeCoupons, Coupon, CouponStatus } from './coupon';
 
 type CartActionSetCustomType = {

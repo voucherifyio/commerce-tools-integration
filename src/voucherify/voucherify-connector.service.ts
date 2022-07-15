@@ -1,7 +1,15 @@
-import { Injectable } from '@nestjs/common';
-import { VoucherifyServerSide } from '@voucherify/sdk';
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  RedemptionsRedeemStackableParams,
+  ValidationsValidateStackableParams,
+  VoucherifyServerSide,
+} from '@voucherify/sdk';
 import { ConfigService } from '@nestjs/config';
 import { Cart, Order } from '@commercetools/platform-sdk';
+import {
+  RequestJsonLogger,
+  REQUEST_JSON_LOGGER,
+} from 'src/misc/request-json-logger';
 
 const getQuantity = (item) => {
   const custom = item.custom?.fields?.applied_codes;
@@ -18,7 +26,11 @@ const getQuantity = (item) => {
 
 @Injectable()
 export class VoucherifyConnectorService {
-  constructor(private configService: ConfigService) {}
+  constructor(
+    private configService: ConfigService,
+    @Inject(REQUEST_JSON_LOGGER)
+    private readonly requestJsonLogger: RequestJsonLogger,
+  ) {}
 
   private readonly applicationId: string =
     this.configService.get<string>('VOUCHERIFY_APP_ID');
@@ -58,7 +70,7 @@ export class VoucherifyConnectorService {
         };
       });
 
-    return await this.getClient().validations.validateStackable({
+    const request = {
       // options?: StackableOptions;
       redeemables: coupons.map((coupon) => {
         return {
@@ -82,7 +94,19 @@ export class VoucherifyConnectorService {
       customer: {
         source_id: cart.customerId || cart.anonymousId,
       },
-    });
+    } as ValidationsValidateStackableParams;
+
+    const response = await this.getClient().validations.validateStackable(
+      request,
+    );
+
+    await this.requestJsonLogger.log(
+      'voucherify-client-validate-stackable',
+      request,
+      response,
+    );
+
+    return response;
   }
 
   async reedemStackableVouchers(
@@ -110,7 +134,7 @@ export class VoucherifyConnectorService {
         };
       });
 
-    return this.getClient().redemptions.redeemStackable({
+    const request = {
       session: {
         type: 'LOCK',
         key: sessionKey,
@@ -139,6 +163,18 @@ export class VoucherifyConnectorService {
         },
         phone: order.shippingAddress?.phone,
       },
-    });
+    } as RedemptionsRedeemStackableParams;
+
+    const response = await this.getClient().redemptions.redeemStackable(
+      request,
+    );
+
+    await this.requestJsonLogger.log(
+      'voucherify-client-redeem-stackable',
+      request,
+      response,
+    );
+
+    return response;
   }
 }

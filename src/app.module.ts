@@ -1,25 +1,33 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { APP_PIPE } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import * as Joi from 'joi';
+import * as path from 'path';
+import * as mkdirp from 'mkdirp';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import * as Joi from 'joi';
 import { VoucherifyConnectorService } from './voucherify/voucherify-connector.service';
 import { CommerceToolsConnectorService } from './commerceTools/commerce-tools-connector.service';
 import { ApiExtensionController } from './api-extension/api-extension.controller';
 import { CartService } from './api-extension/cart.service';
 import { RegisterService } from './api-extension/register.service';
-import { ConfigModule } from '@nestjs/config';
 import { TaxCategoriesService } from './commerceTools/tax-categories/tax-categories.service';
 import { TaxCategoriesController } from './commerceTools/tax-categories/tax-categories.controller';
 import { TypesController } from './commerceTools/types/types.controller';
 import { TypesService } from './commerceTools/types/types.service';
 import { ProductsService } from './commerceTools/products/products.service';
 import { OrderService } from './api-extension/order.service';
-import { APP_PIPE } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { ProductImportService } from './import/product-import.service';
 import { ImportController } from './import/import.controller';
 import { OrderImportService } from './import/order-import.service';
 import { CustomerImportService } from './import/customer-import.service';
+import {
+  NoOpRequestJsonLogger,
+  REQUEST_JSON_LOGGER,
+} from './misc/request-json-logger';
+import { RequestJsonFileLogger } from './misc/request-json-file-logger';
 
 @Module({
   imports: [
@@ -67,6 +75,24 @@ import { CustomerImportService } from './import/customer-import.service';
         transform: true,
         enableDebugMessages: true,
       }),
+    },
+    {
+      provide: REQUEST_JSON_LOGGER,
+      useFactory: async () => {
+        if (process.env.DEBUG_STORE_REQUESTS_IN_JSON !== 'true') {
+          return new NoOpRequestJsonLogger();
+        }
+
+        const requestsDir = process.env.DEBUG_STORE_REQUESTS_DIR;
+        if (!requestsDir) {
+          throw new Error(
+            'Please provide value of DEBUG_STORE_REQUESTS_DIR env variable!',
+          );
+        }
+
+        await mkdirp(path.join(process.cwd(), requestsDir));
+        return new RequestJsonFileLogger(requestsDir);
+      },
     },
   ],
 })
