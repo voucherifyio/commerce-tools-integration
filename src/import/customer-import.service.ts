@@ -8,6 +8,7 @@ import { Customer } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import crypto = require('crypto');
+import { OrderImportService } from './order-import.service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -21,6 +22,7 @@ export class CustomerImportService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly configService: ConfigService,
+    private readonly orderImportService: OrderImportService,
   ) {}
 
   private readonly logger: JsonLogger = LoggerFactory.createLogger(
@@ -78,6 +80,30 @@ export class CustomerImportService {
             line_1: customer.addresses[0].streetName,
           },
           phone: customer.addresses.length ?? customer.addresses[0].phone,
+        });
+      });
+    }
+
+    for await (const ordersBatch of this.orderImportService.getAllOrders(
+      period,
+    )) {
+      ordersBatch.forEach((order) => {
+        if (order.paymentState !== 'Paid') {
+          return;
+        }
+
+        customers.push({
+          object: 'customer',
+          source_id: order.customerId || order.anonymousId,
+          name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
+          email: order.shippingAddress?.email,
+          address: {
+            city: order.shippingAddress?.city,
+            country: order.shippingAddress?.country,
+            postal_code: order.shippingAddress?.postalCode,
+            line_1: order.shippingAddress?.streetName,
+          },
+          phone: order.shippingAddress?.phone,
         });
       });
     }

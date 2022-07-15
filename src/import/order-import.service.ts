@@ -23,7 +23,7 @@ export class OrderImportService {
     OrderImportService.name,
   );
 
-  private async *getAllOrders(fetchPeriod?: number): AsyncGenerator<Order[]> {
+  public async *getAllOrders(fetchPeriod?: number): AsyncGenerator<Order[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
     let page = 0;
