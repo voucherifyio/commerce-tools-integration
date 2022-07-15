@@ -40,8 +40,8 @@ graph LR;
     1. [Requirements](#requirements)
     2. [Configuration](#Configuration)
     3. [Deployment](#deployment)
-    4. [API Extension Registration](#api-extension-registration)
-    5. [CT Configuration](#ct-configuration)
+    4. [CT Configuration](#ct-configuration)
+    5. [API Extension Registration](#api-extension-registration)
 8. [Contributing](#contributing)
 9. [Contact](#contact)
 10. [Licence](#licence)
@@ -219,6 +219,15 @@ git commit -m "Init"
 ```
 5. Follow steps 4-7 from [Fork deploy](#fork-deploy)
 
+### CT Configuration
+
+If you use Your CT Application for the first time, You need to configurate it.
+
+1. Go you your <application_name> -> More -> Run console
+2. Run command `npm run config` 
+
+This command need to be done only once or if You want to use new CT Application with new credentials. Runing this command may take a while.
+
 ### API Extension Registration
 
 After successful deploy application, the last step You need to do is to register your API Extension. You can do it by Heroku CLI.
@@ -227,15 +236,6 @@ After successful deploy application, the last step You need to do is to register
 2. Run command `npm run register` 
 
 This command need to be done only once. Unless you run command `npm run unregister`.
-
-### CT Configuration
-
-If you use Your CT Application for the first time, You need to configurate it.
-
-1. Go you your <application_name> -> More -> Run console
-2. Run command `npm run config` 
-
-This command need to be done only once or if You want to use new CT Application with new credentials.
 
 ---
 
