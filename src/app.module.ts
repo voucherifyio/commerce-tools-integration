@@ -16,6 +16,10 @@ import { ProductsService } from './commerceTools/products/products.service';
 import { OrderService } from './api-extension/order.service';
 import { APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ProductImportService } from './import/product-import.service';
+import { ImportController } from './import/import.controller';
+import { OrderImportService } from './import/order-import.service';
+import { CustomerImportService } from './import/customer-import.service';
 
 @Module({
   imports: [
@@ -24,11 +28,16 @@ import { ValidationPipe } from '@nestjs/common';
         APP_URL: Joi.string(),
         VOUCHERIFY_APP_ID: Joi.string().required(),
         VOUCHERIFY_SECRET_KEY: Joi.string().required(),
+        VOUCHERIFY_API_URL: Joi.string().required(),
         COMMERCE_TOOLS_PROJECT_KEY: Joi.string().required(),
         COMMERCE_TOOLS_AUTH_URL: Joi.string().required(),
         COMMERCE_TOOLS_API_URL: Joi.string().required(),
         COMMERCE_TOOLS_ID: Joi.string().required(),
         COMMERCE_TOOLS_SECRET: Joi.string().required(),
+        COMMERCE_TOOLS_PRODUCTS_CURRENCY: Joi.string().required(),
+        COMMERCE_TOOLS_PRODUCTS_COUNTRY: Joi.string().optional(),
+        COMMERCE_TOOLS_PRODUCT_CHANNEL: Joi.string().optional(),
+        COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP: Joi.string().optional(),
       }),
     }),
   ],
@@ -37,6 +46,7 @@ import { ValidationPipe } from '@nestjs/common';
     ApiExtensionController,
     TaxCategoriesController,
     TypesController,
+    ImportController,
   ],
   providers: [
     AppService,
@@ -48,6 +58,9 @@ import { ValidationPipe } from '@nestjs/common';
     TypesService,
     ProductsService,
     OrderService,
+    ProductImportService,
+    OrderImportService,
+    CustomerImportService,
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({

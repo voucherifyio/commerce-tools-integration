@@ -2,10 +2,12 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { JsonLoggerService } from 'json-logger-service';
 import { ConfigService } from '@nestjs/config';
+import events = require('events');
 
 import { RegisterService } from '../api-extension/register.service';
 
 async function run() {
+  events.EventEmitter.defaultMaxListeners = 13;
   const logger = new JsonLoggerService('NestServer');
   const app = await NestFactory.createApplicationContext(AppModule);
   const registerService = app.get(RegisterService);
