@@ -142,13 +142,13 @@ export class ProductImportService {
 
     unlink(
       dataType === 'products' ? 'productsCsv.csv' : 'skusCsv.csv',
-      (err) => err || console.log(err),
+      (err) => this.logger.error(err),
     );
 
     return result;
   }
 
-  private async checkIfDone(asyncActionId) {
+  private async waitUntilDone(asyncActionId) {
     const headers = {
       'X-App-Id': this.configService.get<string>('VOUCHERIFY_APP_ID'),
       'X-App-Token': this.configService.get<string>('VOUCHERIFY_SECRET_KEY'),
@@ -185,7 +185,7 @@ export class ProductImportService {
     this.logger.info(
       `Products are processing by Voucherify. It may take a few minutes. Async action id coupled with product import: ${productResult.async_action_id}`,
     );
-    const productUploadStatus = await this.checkIfDone(
+    const productUploadStatus = await this.waitUntilDone(
       productResult.async_action_id,
     );
     this.logger.info('Products were processed');
@@ -195,7 +195,7 @@ export class ProductImportService {
       this.logger.info(
         `Skus are processing by Voucherify. It may take a few minutes. Async action id coupled with skus import: ${skusResult.async_action_id}`,
       );
-      const skusUploadStatus = await this.checkIfDone(
+      const skusUploadStatus = await this.waitUntilDone(
         skusResult.async_action_id,
       );
       this.logger.info('Skus were processed');

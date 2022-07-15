@@ -80,10 +80,10 @@ Set environment variables with credentials to Voucherify and Commerce Tools APIs
     - `COMMERCE_TOOLS_ID`
     - `COMMERCE_TOOLS_SECRET`
 - Additional configuration variables
-    - `COMMERCE_TOOLS_PRODUCTS_CURRENCY` - needed to select proper prices when syncing products. This one variable is required for this process
-    - (optional) `COMMERCE_TOOLS_PRODUCTS_COUNTRY` - needed to select proper prices when syncing products.
-    - (optional) `COMMERCE_TOOLS_PRODUCT_CHANNEL` - needed to select proper prices when syncing products.
-    - (optional) `COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP` - needed to select proper prices when syncing products.
+    - `COMMERCE_TOOLS_PRODUCTS_CURRENCY` - (e.g. EUR) - needed to select proper prices when syncing products. This one variable is required for this process, it can be found in `*any product* > Variants > *any variant* > Prices (column currency, row adequate to prices in your shop)`.
+    - (optional) `COMMERCE_TOOLS_PRODUCTS_COUNTRY` - (e.g. DE) - needed to select proper prices when syncing products. It can be found similiar to above example.
+    - (optional) `COMMERCE_TOOLS_PRODUCT_CHANNEL` - (e.g. Store London) - needed to select proper prices when syncing products. It can be found similiar to above example.
+    - (optional) `COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP` - (e.g. b2b) - needed to select proper prices when syncing products. It can be found similiar to above example.
     - (optional) `LOGGER_PRETTY_PRINT` - set environment variable to `true`, to have console output in a text format (by default it is in JSON format).
     - (optional) `COMMERCE_TOOLS_WITH_LOGGER_MIDDLEWARE` - set environment variable to `false`, to disable debugger mode in commerce tools connector.
     - (optional) `API_EXTENSION_BASIC_AUTH_PASSWORD` - set to any `String`, it will protect your exposed API Extension URL from unwanted traffic.
@@ -145,7 +145,6 @@ To test application you can simply run `npm run test` command. Currently we cove
 - `npm run config` - it will handle the required basic configuration in Commerce Tools:
     1. custom coupon type - needed to hold coupons codes inside cart object
     2. coupon tax category - needed for any coupon or gift card with a fixed amount discount
-    3. syncronization of products, customers and orders between Commerce Tools and Voucherify
 - `npm run test` - will run JestJs tests
 - `npm run migrate-products` - it will sync all of the products from CT to Voucherify.
     - you can add `period` argument to sync only from last X days (e.g `npm run migrate-products -- --period=5`)

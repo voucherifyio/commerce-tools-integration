@@ -105,12 +105,12 @@ export class CustomerImportService {
     });
     const result = await response.json();
 
-    unlink('customersCsv.csv', (err) => err || console.log(err));
+    unlink('customersCsv.csv', (err) => this.logger.error(err));
 
     return result;
   }
 
-  private async checkIfDone(asyncActionId) {
+  private async waitUntilDone(asyncActionId) {
     const headers = {
       'X-App-Id': this.configService.get<string>('VOUCHERIFY_APP_ID'),
       'X-App-Token': this.configService.get<string>('VOUCHERIFY_SECRET_KEY'),
@@ -147,7 +147,7 @@ export class CustomerImportService {
     this.logger.info(
       `Customers are processing by Voucherify. It may take a few minutes. Async action id coupled with customer import: ${customerResult.async_action_id}`,
     );
-    const customerUploadStatus = await this.checkIfDone(
+    const customerUploadStatus = await this.waitUntilDone(
       customerResult.async_action_id,
     );
     this.logger.info('Customers were processed');

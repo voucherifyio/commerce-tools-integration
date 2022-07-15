@@ -34,7 +34,7 @@ import { CustomerImportService } from './import/customer-import.service';
         COMMERCE_TOOLS_API_URL: Joi.string().required(),
         COMMERCE_TOOLS_ID: Joi.string().required(),
         COMMERCE_TOOLS_SECRET: Joi.string().required(),
-        COMMERCE_TOOLS_PRODUCTS_CURRENCY: Joi.string().optional(),
+        COMMERCE_TOOLS_PRODUCTS_CURRENCY: Joi.string().required(),
         COMMERCE_TOOLS_PRODUCTS_COUNTRY: Joi.string().optional(),
         COMMERCE_TOOLS_PRODUCT_CHANNEL: Joi.string().optional(),
         COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP: Joi.string().optional(),

@@ -119,7 +119,6 @@ export class OrderImportService {
     };
 
     do {
-      console.log(orders.length);
       const response = await fetch(url, {
         method: 'POST',
         headers: headers,
