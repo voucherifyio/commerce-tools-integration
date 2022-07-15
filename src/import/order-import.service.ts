@@ -114,15 +114,17 @@ export class OrderImportService {
       'VOUCHERIFY_API_URL',
     )}/v1/orders`;
     const headers = {
+      Accept: '*/*',
       'X-App-Id': this.configService.get<string>('VOUCHERIFY_APP_ID'),
       'X-App-Token': this.configService.get<string>('VOUCHERIFY_SECRET_KEY'),
+      'content-type': 'application/json',
     };
 
     do {
       const response = await fetch(url, {
         method: 'POST',
         headers: headers,
-        body: orders.pop(),
+        body: JSON.stringify(orders.pop()),
       });
 
       if ((await response.json()).code === 400) {
