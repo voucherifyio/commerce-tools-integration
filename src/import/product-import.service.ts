@@ -7,6 +7,7 @@ import { CommerceToolsConnectorService } from 'src/commerceTools/commerce-tools-
 import { Product } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
+import crypto = require('crypto');
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -116,9 +117,8 @@ export class ProductImportService {
   }
 
   private async productUpload(importedData, dataType: 'products' | 'skus') {
-    await new ObjectsToCsv(importedData).toDisk(
-      dataType === 'products' ? 'productsCsv.csv' : 'skusCsv.csv',
-    );
+    const randomFileName = `${crypto.randomBytes(20).toString('hex')}.csv`;
+    await new ObjectsToCsv(importedData).toDisk(randomFileName);
     const url = `${this.configService.get<string>('VOUCHERIFY_API_URL')}/v1/${
       dataType === 'products' ? 'products' : 'skus'
     }/importCSV`;
@@ -129,9 +129,7 @@ export class ProductImportService {
       Accept: '*/*',
     };
 
-    const stream = createReadStream(
-      dataType === 'products' ? 'productsCsv.csv' : 'skusCsv.csv',
-    );
+    const stream = createReadStream(randomFileName);
     const form = new FormData();
     form.append('file', stream);
 
@@ -142,14 +140,11 @@ export class ProductImportService {
     });
     const result = await response.json();
 
-    unlink(
-      dataType === 'products' ? 'productsCsv.csv' : 'skusCsv.csv',
-      (err) => {
-        if (err) {
-          this.logger.error(err);
-        }
-      },
-    );
+    unlink(randomFileName, (err) => {
+      if (err) {
+        this.logger.error(err);
+      }
+    });
 
     return result;
   }

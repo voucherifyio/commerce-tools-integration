@@ -7,6 +7,7 @@ import { CommerceToolsConnectorService } from 'src/commerceTools/commerce-tools-
 import { Customer } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
 import { JsonLogger, LoggerFactory } from 'json-logger-service';
+import crypto = require('crypto');
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -85,7 +86,8 @@ export class CustomerImportService {
   }
 
   private async customerUpload(importedData) {
-    await new ObjectsToCsv(importedData).toDisk('customersCsv.csv');
+    const randomFileName = `${crypto.randomBytes(20).toString('hex')}.csv`;
+    await new ObjectsToCsv(importedData).toDisk(randomFileName);
     const url = `${this.configService.get<string>(
       'VOUCHERIFY_API_URL',
     )}/v1/customers/importCSV`;
@@ -96,7 +98,7 @@ export class CustomerImportService {
       Accept: '*/*',
     };
 
-    const stream = createReadStream('customersCsv.csv');
+    const stream = createReadStream(randomFileName);
     const form = new FormData();
     form.append('file', stream);
 
@@ -107,7 +109,7 @@ export class CustomerImportService {
     });
     const result = await response.json();
 
-    unlink('customersCsv.csv', (err) => {
+    unlink(randomFileName, (err) => {
       if (err) {
         this.logger.error(err);
       }
