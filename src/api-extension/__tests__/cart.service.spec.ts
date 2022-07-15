@@ -20,7 +20,7 @@ import { VoucherifyConnectorService } from '../../voucherify/voucherify-connecto
 import {
   defaultGetCouponTaxCategoryResponse,
   MockedTaxCategoriesService,
-} from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
+} from '../../commerceTools/tax-categories/__mocks__/tax-categories.service.spec';
 import { MockedVoucherifyConnectorService } from '../../voucherify/__mocks__/voucherify-connector.service';
 import { Coupon } from '../coupon';
 import { CartAction } from '../cartActions/CartAction';
