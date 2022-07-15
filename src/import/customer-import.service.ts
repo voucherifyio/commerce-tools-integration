@@ -10,7 +10,9 @@ import { JsonLogger, LoggerFactory } from 'json-logger-service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
-    setTimeout(resolve, time);
+    setTimeout(() => {
+      resolve(true);
+    }, time);
   });
 };
 @Injectable()
@@ -105,7 +107,11 @@ export class CustomerImportService {
     });
     const result = await response.json();
 
-    unlink('customersCsv.csv', (err) => this.logger.error(err));
+    unlink('customersCsv.csv', (err) => {
+      if (err) {
+        this.logger.error(err);
+      }
+    });
 
     return result;
   }
@@ -119,7 +125,6 @@ export class CustomerImportService {
     let result = null;
 
     do {
-      await sleep(20000);
       const response = await fetch(
         `${this.configService.get<string>(
           'VOUCHERIFY_API_URL',
@@ -132,9 +137,8 @@ export class CustomerImportService {
 
       this.logger.info(`Processing status: ${status}`);
     } while (
-      status === 'IN_PROGRESS' ||
-      status === null ||
-      status === undefined
+      (status === 'IN_PROGRESS' || status === null || status === undefined) &&
+      (await sleep(20000))
     );
 
     return result;

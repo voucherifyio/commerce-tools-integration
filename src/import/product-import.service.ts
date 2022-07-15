@@ -10,7 +10,9 @@ import { JsonLogger, LoggerFactory } from 'json-logger-service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
-    setTimeout(resolve, time);
+    setTimeout(() => {
+      resolve(true);
+    }, time);
   });
 };
 @Injectable()
@@ -85,18 +87,18 @@ export class ProductImportService {
           name: product.masterData.current.name.en,
           source_id: product.id,
         });
-        
-        if(product.masterData.current.variants.length) {
+
+        if (product.masterData.current.variants.length) {
           product.masterData.current.variants.forEach((variant) => {
             skus.push({
               product_id: product.id,
               sku: product.masterData.current.name.en,
               source_id: variant.sku,
               price:
-                product.masterData.current.masterVariant.price.value.centAmount /
-                100,
+                product.masterData.current.masterVariant.price.value
+                  .centAmount / 100,
             });
-          });          
+          });
         } else {
           skus.push({
             product_id: product.id,
@@ -105,7 +107,7 @@ export class ProductImportService {
             price:
               product.masterData.current.masterVariant.price.value.centAmount /
               100,
-          })
+          });
         }
       });
     }
@@ -142,7 +144,11 @@ export class ProductImportService {
 
     unlink(
       dataType === 'products' ? 'productsCsv.csv' : 'skusCsv.csv',
-      (err) => this.logger.error(err),
+      (err) => {
+        if (err) {
+          this.logger.error(err);
+        }
+      },
     );
 
     return result;
@@ -157,7 +163,6 @@ export class ProductImportService {
     let result = null;
 
     do {
-      await sleep(20000);
       const response = await fetch(
         `${this.configService.get<string>(
           'VOUCHERIFY_API_URL',
@@ -170,9 +175,8 @@ export class ProductImportService {
 
       this.logger.info(`Processing status: ${status}`);
     } while (
-      status === 'IN_PROGRESS' ||
-      status === null ||
-      status === undefined
+      (status === 'IN_PROGRESS' || status === null || status === undefined) &&
+      (await sleep(20000))
     );
 
     return result;
