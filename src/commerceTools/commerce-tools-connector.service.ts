@@ -15,7 +15,7 @@ import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/dec
 import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
-} from 'src/misc/request-json-logger';
+} from '../misc/request-json-logger';
 
 @Injectable()
 export class CommerceToolsConnectorService {
