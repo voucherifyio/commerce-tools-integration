@@ -1,6 +1,8 @@
+import { performance } from 'perf_hooks';
 import { Inject, Injectable } from '@nestjs/common';
 import fetch from 'node-fetch2';
 import { ConfigService } from '@nestjs/config';
+import { JsonLoggerService } from 'json-logger-service';
 import {
   ClientBuilder,
   AuthMiddlewareOptions,
@@ -9,6 +11,7 @@ import {
   createHttpClient,
   createAuthForClientCredentialsFlow,
   createLoggerMiddleware,
+  ClientRequest,
 } from '@commercetools/sdk-client-v2';
 import { createApiBuilderFromCtpClient } from '@commercetools/platform-sdk';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
@@ -16,6 +19,9 @@ import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
+
+type MeasurementKey = '__start' | '__httpStart';
+type ExtendedRequest = ClientRequest & Record<MeasurementKey, number>;
 
 @Injectable()
 export class CommerceToolsConnectorService {
@@ -39,6 +45,8 @@ export class CommerceToolsConnectorService {
   private readonly clientSecret: string = this.configService.get<string>(
     'COMMERCE_TOOLS_SECRET',
   );
+  private readonly logger = new JsonLoggerService('CT-connector');
+  private ctClient: ByProjectKeyRequestBuilder = null;
 
   private readonly authMiddlewareOptions: AuthMiddlewareOptions = {
     host: this.authUrl,
@@ -65,13 +73,42 @@ export class CommerceToolsConnectorService {
     };
   }
 
+  private measureRequestStart(key: MeasurementKey): Middleware {
+    return (next) => (request: ExtendedRequest, response) => {
+      request[key] = performance.now();
+      next(request, response);
+    };
+  }
+
+  private get performanceMeasurent(): Middleware {
+    return (next) => (request: ExtendedRequest, response) => {
+      const now = performance.now();
+      const overall = (now - request.__start).toFixed(3);
+      const httpRequest = (now - request.__httpStart).toFixed(3);
+      const auth = (request.__httpStart - request.__start).toFixed(3);
+      this.logger.debug(
+        `CT Operation. Overall: ${overall}ms, auth: ${auth}ms, http alone: ${httpRequest}ms`,
+      );
+
+      next(request, response);
+    };
+  }
+
   public getClient(): ByProjectKeyRequestBuilder {
+    if (this.ctClient) {
+      return this.ctClient;
+    }
+
+    const start = performance.now();
     const clientBuilder = new ClientBuilder()
+      .withMiddleware(this.measureRequestStart('__start'))
       .withProjectKey(this.projectKey)
       .withMiddleware(
         createAuthForClientCredentialsFlow(this.authMiddlewareOptions),
       )
+      .withMiddleware(this.measureRequestStart('__httpStart'))
       .withMiddleware(createHttpClient(this.httpMiddlewareOptions))
+      .withMiddleware(this.performanceMeasurent)
       .withMiddleware(this.jsonLoggerMiddleware);
 
     if (process.env.COMMERCE_TOOLS_WITH_LOGGER_MIDDLEWARE === 'true') {
@@ -79,8 +116,12 @@ export class CommerceToolsConnectorService {
     }
 
     const ctpClient = clientBuilder.build();
-    return createApiBuilderFromCtpClient(ctpClient).withProjectKey({
+    this.ctClient = createApiBuilderFromCtpClient(ctpClient).withProjectKey({
       projectKey: this.projectKey,
     });
+    const end = performance.now();
+    this.logger.debug(`CT getClient creation: ${end - start}ms`);
+
+    return this.ctClient;
   }
 }

@@ -1,3 +1,4 @@
+import { performance } from 'perf_hooks';
 import { Inject, Injectable } from '@nestjs/common';
 import {
   RedemptionsRedeemStackableParams,
@@ -6,6 +7,7 @@ import {
 } from '@voucherify/sdk';
 import { ConfigService } from '@nestjs/config';
 import { Cart, Order } from '@commercetools/platform-sdk';
+import { JsonLoggerService } from 'json-logger-service';
 import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
@@ -24,6 +26,10 @@ const getQuantity = (item) => {
   return itemQuantity;
 };
 
+function elapsedTime(start: number, end: number): string {
+  return `Time: ${(end - start).toFixed(3)}ms`;
+}
+
 @Injectable()
 export class VoucherifyConnectorService {
   constructor(
@@ -37,12 +43,18 @@ export class VoucherifyConnectorService {
   private readonly secretKey: string = this.configService.get<string>(
     'VOUCHERIFY_SECRET_KEY',
   );
+  private readonly logger = new JsonLoggerService('V-connector');
 
   getClient(): ReturnType<typeof VoucherifyServerSide> {
-    return VoucherifyServerSide({
+    const start = performance.now();
+    const voucherify = VoucherifyServerSide({
       applicationId: this.applicationId,
       secretKey: this.secretKey,
     });
+    const end = performance.now();
+    this.logger.debug(`V% getClient creation: ${end - start}ms`);
+
+    return voucherify;
   }
 
   async validateStackableVouchersWithCTCart(
@@ -96,14 +108,20 @@ export class VoucherifyConnectorService {
       },
     } as ValidationsValidateStackableParams;
 
+    const start = performance.now();
     const response = await this.getClient().validations.validateStackable(
       request,
     );
+    const end = performance.now();
 
+    this.logger.debug(`Validate: ${elapsedTime(start, end)}`);
     await this.requestJsonLogger.log(
       'voucherify-client-validate-stackable',
       request,
       response,
+      {
+        elapsedTime: elapsedTime(start, end),
+      },
     );
 
     return response;
@@ -165,14 +183,20 @@ export class VoucherifyConnectorService {
       },
     } as RedemptionsRedeemStackableParams;
 
+    const start = performance.now();
     const response = await this.getClient().redemptions.redeemStackable(
       request,
     );
+    const end = performance.now();
+    this.logger.debug(`Redeem: ${elapsedTime(start, end)}`);
 
     await this.requestJsonLogger.log(
       'voucherify-client-redeem-stackable',
       request,
       response,
+      {
+        elapsedTime: elapsedTime(start, end),
+      },
     );
 
     return response;

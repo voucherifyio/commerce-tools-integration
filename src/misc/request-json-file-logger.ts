@@ -5,7 +5,12 @@ import { RequestJsonLogger } from './request-json-logger';
 export class RequestJsonFileLogger implements RequestJsonLogger {
   constructor(private readonly loggingDirectory: string) {}
 
-  log(label: string, request: unknown, response: unknown) {
+  log(
+    label: string,
+    request: unknown,
+    response: unknown,
+    additional?: Record<any, any>,
+  ) {
     const fileName = path.join(
       process.cwd(),
       this.loggingDirectory,
@@ -20,6 +25,7 @@ export class RequestJsonFileLogger implements RequestJsonLogger {
           label,
           request,
           response,
+          ...additional,
         },
         null,
         2,
