@@ -27,28 +27,28 @@ graph LR;
 
 ---
 
-  * [Prerequisites](#prerequisites)
-  * [Installation and configuration guide](#installation-and-configuration-guide)
-    + [Dependencies](#dependencies)
-    + [Configuration](#configuration)
-    + [Installation](#installation)
-      - For production
-      - For local development (ngrok required)
-      - For development with public URL
-  * [Tests](#tests)
-  * [CLI](#cli)
-  * [REST API Endpoints](#rest-api-endpoints)
-  * [Heroku deployment](#heroku-deployment)
-    + [Requirements](#requirements)
-    + [Configuration](#configuration)
-    + [Deployment](#deployment)
-      - [Fork](#fork)
-      - [New repository](#new-repository)
-    + [Register API Extension](#register-api-extension)
-    + [Configure commercetools](#configure-commercetools)
-  * [Contributing](#contributing)
-  * [Contact](#contact)
-  * [Licence](#licence)
+* [Prerequisites](#prerequisites)
+* [Installation and configuration guide](#installation-and-configuration-guide)
+  + [Dependencies](#dependencies)
+  + [Configuration](#configuration)
+  + [Installation](#installation)
+    - For production
+    - For local development (ngrok required)
+    - For development with public URL
+* [Tests](#tests)
+* [CLI](#cli)
+* [REST API Endpoints](#rest-api-endpoints)
+* [Heroku deployment](#heroku-deployment)
+  + [Requirements](#requirements)
+  + [Configuration](#configuration)
+  + [Deployment](#deployment)
+    - [Fork](#fork)
+    - [New repository](#new-repository)
+  + [Configure commercetools](#configure-commercetools)
+  + [Register API Extension](#register-api-extension)
+* [Contributing](#contributing)
+* [Contact](#contact)
+* [Licence](#licence)
 
 ## Prerequisites
 
@@ -223,13 +223,6 @@ git push heroku main #for main branch
 git push heroku <branch_name>:main #for other branch
 ```
 
-### Register API Extension
-
-1. Go to your <application_name> -> More -> Run console
-2. Run `npm run register` 
-
-This command should be run once (or each time after `npm run unregister`).
-
 ### Configure commercetools
 
 1. Go to your <application_name> -> More -> Run console
@@ -237,6 +230,12 @@ This command should be run once (or each time after `npm run unregister`).
 
 This command should be run once for every commercetool application.
 
+### Register API Extension
+
+1. Go to your <application_name> -> More -> Run console
+2. Run `npm run register` 
+
+This command should be run once (or each time after `npm run unregister`).
 ---
 
 ## Contributing
