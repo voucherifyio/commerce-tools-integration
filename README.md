@@ -194,9 +194,9 @@ heroku git:remote -a <application_name>
 5. You don't need to create any procfile. By default, Heroku recognizes package.json and run `npm install` and `npm start`.
 6. Deploy the code
 ```bash
-git push heroku master #for master branch
-git push heroku main #for main branch
-git push heroku <branch_name>:main #for other branch
+git push heroku master # For master branch
+git push heroku main # For main branch
+git push heroku <branch_name>:main # For other branch
 ```
 
 #### New repository
@@ -218,9 +218,9 @@ heroku git:remote -a <application_name>
 ```
 5. Deploy the code
 ```bash
-git push heroku master #for master branch
-git push heroku main #for main branch
-git push heroku <branch_name>:main #for other branch
+git push heroku master # For master branch
+git push heroku main # For main branch
+git push heroku <branch_name>:main # For other branch
 ```
 
 ### Configure commercetools
