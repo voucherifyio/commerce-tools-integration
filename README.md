@@ -236,6 +236,7 @@ This command should be run once for every commercetool application.
 2. Run `npm run register` 
 
 This command should be run once (or each time after `npm run unregister`).
+
 ---
 
 ## Contributing
