@@ -31,8 +31,8 @@ export class ProductImportService {
     fetchPeriod?: number,
   ): AsyncGenerator<Product[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
-    const limit = 10;
-    let page = 265;
+    const limit = 100;
+    let page = 0;
     let allProductsCollected = false;
 
     const currency = this.configService.get<string>(
