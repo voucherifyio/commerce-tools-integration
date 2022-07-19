@@ -15,13 +15,13 @@ import { TypesService } from '../../commerceTools/types/types.service';
 import {
   defaultTypeId,
   MockedTypesService,
-} from '../../commerceTools/types/__mocks__/types.service.spec';
+} from '../../commerceTools/types/__mocks__/types.service';
 import { VoucherifyConnectorService } from '../../voucherify/voucherify-connector.service';
 import {
   defaultGetCouponTaxCategoryResponse,
   MockedTaxCategoriesService,
-} from '../../commerceTools/tax-categories/__mocks__/tax-categories.service.spec';
-import { MockedVoucherifyConnectorService } from '../../voucherify/__mocks__/voucherify-connector.service.spec';
+} from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
+import { MockedVoucherifyConnectorService } from '../../voucherify/__mocks__/voucherify-connector.service';
 import { Coupon } from '../coupon';
 import { CartAction } from '../cartActions/CartAction';
 
