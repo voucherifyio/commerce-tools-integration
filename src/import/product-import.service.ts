@@ -84,13 +84,27 @@ export class ProductImportService {
 
     for await (const productsBatch of this.getAllProducts(period)) {
       productsBatch.forEach((product) => {
+        const attrNames = product.masterData.current.masterVariant.attributes
+          .map((attr) => attr.name)
+          .join(',');
+
         products.push({
           name: product.masterData.current.name.en,
           source_id: product.id,
+          attributes: attrNames,
         });
 
         if (product.masterData.current.variants.length) {
           product.masterData.current.variants.forEach((variant) => {
+            const attrs = variant.attributes
+              .map((attr) => {
+                const name = attr.name;
+                const value = attr.value;
+                return `'${name}':'${value}'`;
+              })
+              .join(',');
+
+            console.log(attrs);
             skus.push({
               product_id: product.id,
               sku: product.masterData.current.name.en,
@@ -98,9 +112,18 @@ export class ProductImportService {
               price:
                 product.masterData.current.masterVariant.price.value
                   .centAmount / 100,
+              attributes: `{${attrs}}`,
             });
           });
         } else {
+          const attrs = product.masterData.current.masterVariant.attributes
+            .map((attr) => {
+              const name = attr.name;
+              const value = attr.value;
+              return `'${name}':'${value}'`;
+            })
+            .join(',');
+
           skus.push({
             product_id: product.id,
             sku: product.masterData.current.name.en,
@@ -108,6 +131,7 @@ export class ProductImportService {
             price:
               product.masterData.current.masterVariant.price.value.centAmount /
               100,
+            attributes: `{${attrs}}`,
           });
         }
       });
