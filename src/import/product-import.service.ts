@@ -16,6 +16,16 @@ const sleep = (time: number) => {
     }, time);
   });
 };
+
+const getAttributes = (attrsContainer, attrNames) => {
+  const parsed = attrsContainer
+    .filter((attr) => typeof attr.value !== 'object')
+    .filter((attr) => attrNames.includes(attr.name))
+    .map((attr) => `'${attr.name}':'${attr.value}'`)
+    .join(',');
+
+  return `{${parsed}}`;
+};
 @Injectable()
 export class ProductImportService {
   constructor(
@@ -82,10 +92,19 @@ export class ProductImportService {
     const products = [];
     const skus = [];
 
+    const allowedAttrs = this.configService.get<string>(
+      'COMMERCE_TOOLS_PRODUCT_ATTRIBUTES',
+    )
+      ? this.configService
+          .get<string>('COMMERCE_TOOLS_PRODUCT_ATTRIBUTES')
+          .split(',')
+      : false;
+
     for await (const productsBatch of this.getAllProducts(period)) {
       productsBatch.forEach((product) => {
         const attrNames = product.masterData.current.masterVariant.attributes
           .map((attr) => attr.name)
+          .filter((attr) => !allowedAttrs || allowedAttrs.includes(attr))
           .join(',');
 
         products.push({
@@ -96,15 +115,6 @@ export class ProductImportService {
 
         if (product.masterData.current.variants.length) {
           product.masterData.current.variants.forEach((variant) => {
-            const attrs = variant.attributes
-              .map((attr) => {
-                const name = attr.name;
-                const value = attr.value;
-                return `'${name}':'${value}'`;
-              })
-              .join(',');
-
-            console.log(attrs);
             skus.push({
               product_id: product.id,
               sku: product.masterData.current.name.en,
@@ -112,18 +122,10 @@ export class ProductImportService {
               price:
                 product.masterData.current.masterVariant.price.value
                   .centAmount / 100,
-              attributes: `{${attrs}}`,
+              attributes: getAttributes(variant.attributes, attrNames),
             });
           });
         } else {
-          const attrs = product.masterData.current.masterVariant.attributes
-            .map((attr) => {
-              const name = attr.name;
-              const value = attr.value;
-              return `'${name}':'${value}'`;
-            })
-            .join(',');
-
           skus.push({
             product_id: product.id,
             sku: product.masterData.current.name.en,
@@ -131,7 +133,10 @@ export class ProductImportService {
             price:
               product.masterData.current.masterVariant.price.value.centAmount /
               100,
-            attributes: `{${attrs}}`,
+            attributes: getAttributes(
+              product.masterData.current.masterVariant.attributes,
+              attrNames,
+            ),
           });
         }
       });

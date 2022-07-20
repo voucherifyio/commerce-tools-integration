@@ -80,6 +80,7 @@ Set environment variables with credentials to Voucherify and commercetools APIs.
     - (optional) `COMMERCE_TOOLS_PRODUCTS_COUNTRY` - (e.g. DE)
     - (optional) `COMMERCE_TOOLS_PRODUCT_CHANNEL` - (e.g. Store London)
     - (optional) `COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP` - (e.g. b2b)
+    - (optional) `COMMERCE_TOOLS_PRODUCT_ATTRIBUTES` - (e.g articleNumberManufacturer,gender,size) - attributes which will be used when migrating products. If omitted, all attributes will be mapped
     - (optional) `LOGGER_PRETTY_PRINT` - `true` to get console output in the text format (JSON by default).
     - (optional) `COMMERCE_TOOLS_WITH_LOGGER_MIDDLEWARE` - `false` to disable debugger mode in commercetools connector.
     - (optional) `API_EXTENSION_BASIC_AUTH_PASSWORD` - (`String`) protects your API Extension URL from unwanted traffic.
