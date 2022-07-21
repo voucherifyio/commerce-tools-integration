@@ -88,13 +88,13 @@ export class CustomerImportService {
       period,
     )) {
       ordersBatch.forEach((order) => {
-        if (order.paymentState !== 'Paid') {
+        if (order.paymentState !== 'Paid' || !order.anonymousId) {
           return;
         }
 
         customers.push({
           object: 'customer',
-          source_id: order.customerId || order.anonymousId,
+          source_id: order.anonymousId,
           name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
           email: order.shippingAddress?.email,
           address: {
