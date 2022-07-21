@@ -76,10 +76,10 @@ Set environment variables with credentials to Voucherify and commercetools APIs.
     - `COMMERCE_TOOLS_ID`
     - `COMMERCE_TOOLS_SECRET`
 - Additional configuration variables
-    - `COMMERCE_TOOLS_PRODUCTS_CURRENCY` - (e.g. EUR) - required to select proper prices when syncing products (can be found in `*any product* > Variants > *any variant* > Prices (column currency, row adequate to prices in your shop)`).
-    - (optional) `COMMERCE_TOOLS_PRODUCTS_COUNTRY` - (e.g. DE)
-    - (optional) `COMMERCE_TOOLS_PRODUCT_CHANNEL` - (e.g. Store London)
-    - (optional) `COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP` - (e.g. b2b)
+    - `COMMERCE_TOOLS_PRODUCTS_CURRENCY` - (e.g. EUR) [*]
+    - (optional) `COMMERCE_TOOLS_PRODUCTS_COUNTRY` - (e.g. DE) [*]
+    - (optional) `COMMERCE_TOOLS_PRODUCT_CHANNEL` - (e.g. Store London) [*]
+    - (optional) `COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP` - (e.g. b2b) [*]
     - (optional) `LOGGER_PRETTY_PRINT` - `true` to get console output in the text format (JSON by default).
     - (optional) `COMMERCE_TOOLS_WITH_LOGGER_MIDDLEWARE` - `false` to disable debugger mode in commercetools connector.
     - (optional) `API_EXTENSION_BASIC_AUTH_PASSWORD` - (`String`) protects your API Extension URL from unwanted traffic.
@@ -88,6 +88,8 @@ Set environment variables with credentials to Voucherify and commercetools APIs.
     - (optional) `LOGGER_LEVEL` - logging level for `npm run test`. You can set it to `error` or `fatal`.
     - (optional) `DEBUG_STORE_REQUESTS_IN_JSON` - `true` if you want to keep external requests / response in a JSON file.
     - (optional) `DEBUG_STORE_REQUESTS_DIR` - name of the directory where JSON files with request / responses are stored.
+
+[*] Due to the fact that in the commercetools there can be a lot of possible prices per one product, but in Voucherify there is only one, it is needed to choose proper price. You can find proper values by searching in `*any product* > Variants > *any variant* > Prices` for row which have proper price scope for your project. Depends on sitiuation you may need to use all of four variables or less, but at least the `COMMERCE_TOOLS_PRODUCTS_CURRENCY` variable is required. In case when you does not choose right values, then some functionallities won't work properly (e.g. adding free item with coupon). [Here](https://docs.commercetools.com/api/projects/products#price-selection) you can read more about commercetools mechanism called "Price Selection" which we used. 
 
 ### Installation
 
