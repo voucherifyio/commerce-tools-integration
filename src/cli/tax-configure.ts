@@ -26,7 +26,7 @@ async function run() {
   const taxCategoriesService = app.get(TaxCategoriesService);
   logger.log('Attempt to configure coupon tax categories in Commerce Tools');
   const { success: couponTaxCategoriesCreated } =
-    await taxCategoriesService.configureCouponTaxCategory();
+    await taxCategoriesService.configureCouponTaxCategory({});
   if (couponTaxCategoriesCreated) {
     logger.log('Coupon tax categories configured');
   } else {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createReadStream, unlink } from 'fs';
 import FormData from 'form-data';
@@ -6,7 +6,7 @@ import fetch from 'node-fetch2';
 import { CommerceToolsConnectorService } from 'src/commerceTools/commerce-tools-connector.service';
 import { Product } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
-import { JsonLogger, LoggerFactory } from 'json-logger-service';
+
 import crypto = require('crypto');
 
 const sleep = (time: number) => {
@@ -20,12 +20,9 @@ const sleep = (time: number) => {
 export class ProductImportService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
+    private readonly logger: Logger,
     private readonly configService: ConfigService,
   ) {}
-
-  private readonly logger: JsonLogger = LoggerFactory.createLogger(
-    ProductImportService.name,
-  );
 
   private async *getAllProducts(
     fetchPeriod?: number,
@@ -168,7 +165,7 @@ export class ProductImportService {
       status = responseJson.status;
       result = responseJson.result;
 
-      this.logger.info(`Processing status: ${status}`);
+      this.logger.debug(`Processing status: ${status}`);
     } while (
       (status === 'IN_PROGRESS' || status === null || status === undefined) &&
       (await sleep(20000))
@@ -181,23 +178,23 @@ export class ProductImportService {
     const { products, skus } = await this.productImport(period);
 
     const productResult = await this.productUpload(products, 'products');
-    this.logger.info(
+    this.logger.debug(
       `Products are processing by Voucherify. It may take a few minutes. Async action id coupled with product import: ${productResult.async_action_id}`,
     );
     const productUploadStatus = await this.waitUntilDone(
       productResult.async_action_id,
     );
-    this.logger.info('Products were processed');
+    this.logger.debug('Products were processed');
 
     if (productUploadStatus.failed.length === 0) {
       const skusResult = await this.productUpload(skus, 'skus');
-      this.logger.info(
+      this.logger.debug(
         `Skus are processing by Voucherify. It may take a few minutes. Async action id coupled with skus import: ${skusResult.async_action_id}`,
       );
       const skusUploadStatus = await this.waitUntilDone(
         skusResult.async_action_id,
       );
-      this.logger.info('Skus were processed');
+      this.logger.debug('Skus were processed');
 
       return skusUploadStatus.failed.length === 0
         ? { success: true }

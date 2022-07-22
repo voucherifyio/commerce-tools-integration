@@ -1,10 +1,9 @@
 import { Cart } from '@commercetools/platform-sdk';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   StackableRedeemableResponse,
   StackableRedeemableResponseStatus,
 } from '@voucherify/sdk';
-import { JsonLogger, LoggerFactory } from 'json-logger-service';
 
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
 import { TypesService } from '../commerceTools/types/types.service';
@@ -76,11 +75,9 @@ export class CartService {
   constructor(
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly typesService: TypesService,
+    private readonly logger: Logger,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
   ) {}
-  private readonly logger: JsonLogger = LoggerFactory.createLogger(
-    CartService.name,
-  );
 
   private async validateCoupons(
     cart: Cart,
@@ -104,7 +101,7 @@ export class CartService {
         totalDiscountAmount: 0,
       };
     }
-    this.logger.info({
+    this.logger.debug({
       msg: 'Attempt to apply coupons',
       coupons,
       id,
@@ -142,7 +139,7 @@ export class CartService {
       skippedCoupons,
     );
 
-    this.logger.info({
+    this.logger.debug({
       msg: 'Validated coupons',
       applicableCoupons,
       notApplicableCoupons,
@@ -228,7 +225,7 @@ export class CartService {
       (builder) => builder(cart, validateCouponsResult),
     );
 
-    this.logger.info(actions);
+    this.logger.debug(actions);
     return {
       status: true,
       actions,
