@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { JsonLoggerService } from 'json-logger-service';
 import events = require('events');
+import { parseTimeInput } from '../misc/time-parametr-parser';
 
 import { ProductImportService } from '../import/product-import.service';
 
@@ -11,12 +12,10 @@ async function run() {
   const app = await NestFactory.createApplicationContext(AppModule);
   const productImportService = app.get(ProductImportService);
 
-  const period = parseInt(
-    process.argv.find((arg) => arg.includes('period'))?.match(/[0-9]{1,}/g)[0],
-  );
+  const time = parseTimeInput(process.argv);
 
   logger.log(`Attempt to migrate products`);
-  const result = await productImportService.migrateProducts(period);
+  const result = await productImportService.migrateProducts(time);
   if (result.success) {
     logger.log('Products successfully migrated');
   } else {

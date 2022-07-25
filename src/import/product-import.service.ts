@@ -28,7 +28,7 @@ export class ProductImportService {
   );
 
   private async *getAllProducts(
-    fetchPeriod?: number,
+    fetchPeriod?: string,
   ): AsyncGenerator<Product[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
@@ -48,11 +48,6 @@ export class ProductImportService {
       'COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP',
     );
 
-    const date = new Date();
-    if (fetchPeriod) {
-      date.setDate(date.getDate() - fetchPeriod);
-    }
-
     do {
       const productResult = await ctClient
         .products()
@@ -65,7 +60,7 @@ export class ProductImportService {
             priceCustomerGroup: customerGroup,
             priceChannel: channel,
             ...(fetchPeriod && {
-              where: `lastModifiedAt>="${date.toJSON()}" or createdAt>="${date.toJSON()}"`,
+              where: `lastModifiedAt>="${fetchPeriod}" or createdAt>="${fetchPeriod}"`,
             }),
           },
         })
@@ -78,7 +73,7 @@ export class ProductImportService {
     } while (!allProductsCollected);
   }
 
-  private async productImport(period?: number) {
+  private async productImport(period?: string) {
     const products = [];
     const skus = [];
 
@@ -177,7 +172,7 @@ export class ProductImportService {
     return result;
   }
 
-  public async migrateProducts(period?: number) {
+  public async migrateProducts(period?: string) {
     const { products, skus } = await this.productImport(period);
 
     const productResult = await this.productUpload(products, 'products');

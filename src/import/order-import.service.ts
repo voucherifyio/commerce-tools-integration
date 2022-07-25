@@ -23,16 +23,11 @@ export class OrderImportService {
     OrderImportService.name,
   );
 
-  public async *getAllOrders(fetchPeriod?: number): AsyncGenerator<Order[]> {
+  public async *getAllOrders(fetchPeriod?: string): AsyncGenerator<Order[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
     let page = 0;
     let allOrdersCollected = false;
-
-    const date = new Date();
-    if (fetchPeriod) {
-      date.setDate(date.getDate() - fetchPeriod);
-    }
 
     do {
       const ordersResult = await ctClient
@@ -42,7 +37,7 @@ export class OrderImportService {
             limit: limit,
             offset: page * limit,
             ...(fetchPeriod && {
-              where: `lastModifiedAt>="${date.toJSON()}" or createdAt>="${date.toJSON()}"`,
+              where: `lastModifiedAt>="${fetchPeriod}" or createdAt>="${fetchPeriod}"`,
             }),
           },
         })
@@ -60,7 +55,7 @@ export class OrderImportService {
     } while (!allOrdersCollected);
   }
 
-  public async migrateOrders(period?: number) {
+  public async migrateOrders(period?: string) {
     const orders = [];
 
     for await (const ordersBatch of this.getAllOrders(period)) {

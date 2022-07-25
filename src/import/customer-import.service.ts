@@ -30,17 +30,12 @@ export class CustomerImportService {
   );
 
   private async *getAllCustomers(
-    fetchPeriod?: number,
+    fetchPeriod?: string,
   ): AsyncGenerator<Customer[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
     let page = 0;
     let allCustomersCollected = false;
-
-    const date = new Date();
-    if (fetchPeriod) {
-      date.setDate(date.getDate() - fetchPeriod);
-    }
 
     do {
       const customerResult = await ctClient
@@ -50,7 +45,7 @@ export class CustomerImportService {
             limit: limit,
             offset: page * limit,
             ...(fetchPeriod && {
-              where: `lastModifiedAt>="${date.toJSON()}" or createdAt>="${date.toJSON()}"`,
+              where: `lastModifiedAt>="${fetchPeriod}" or createdAt>="${fetchPeriod}"`,
             }),
           },
         })
@@ -63,7 +58,7 @@ export class CustomerImportService {
     } while (!allCustomersCollected);
   }
 
-  private async customerImport(period?: number) {
+  private async customerImport(period?: string) {
     const customers = [];
 
     for await (const customersBatch of this.getAllCustomers(period)) {
@@ -172,7 +167,7 @@ export class CustomerImportService {
     return result;
   }
 
-  public async migrateCustomers(period?: number) {
+  public async migrateCustomers(period?: string) {
     const { customers } = await this.customerImport(period);
 
     const customerResult = await this.customerUpload(customers);
