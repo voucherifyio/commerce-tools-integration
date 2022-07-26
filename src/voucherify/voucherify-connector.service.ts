@@ -1,5 +1,5 @@
 import { performance } from 'perf_hooks';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   RedemptionsRedeemStackableParams,
   ValidationsValidateStackableParams,
@@ -7,7 +7,6 @@ import {
 } from '@voucherify/sdk';
 import { ConfigService } from '@nestjs/config';
 import { Cart, Order } from '@commercetools/platform-sdk';
-import { JsonLoggerService } from 'json-logger-service';
 import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
@@ -34,6 +33,7 @@ function elapsedTime(start: number, end: number): string {
 export class VoucherifyConnectorService {
   constructor(
     private configService: ConfigService,
+    private logger: Logger,
     @Inject(REQUEST_JSON_LOGGER)
     private readonly requestJsonLogger: RequestJsonLogger,
   ) {}
@@ -43,7 +43,6 @@ export class VoucherifyConnectorService {
   private readonly secretKey: string = this.configService.get<string>(
     'VOUCHERIFY_SECRET_KEY',
   );
-  private readonly logger = new JsonLoggerService('V-connector');
 
   getClient(): ReturnType<typeof VoucherifyServerSide> {
     const start = performance.now();

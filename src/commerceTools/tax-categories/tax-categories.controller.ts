@@ -11,6 +11,6 @@ export class TaxCategoriesController {
     success: boolean;
     couponTaxCategory?: TaxCategory;
   }> {
-    return await this.taxCategoriesService.configureCouponTaxCategory();
+    return await this.taxCategoriesService.configureCouponTaxCategory({});
   }
 }

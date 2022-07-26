@@ -1,8 +1,7 @@
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { performance } from 'perf_hooks';
-import { Inject, Injectable } from '@nestjs/common';
 import fetch from 'node-fetch2';
 import { ConfigService } from '@nestjs/config';
-import { JsonLoggerService } from 'json-logger-service';
 import {
   ClientBuilder,
   AuthMiddlewareOptions,
@@ -27,6 +26,7 @@ type ExtendedRequest = ClientRequest & Record<MeasurementKey, number>;
 export class CommerceToolsConnectorService {
   constructor(
     private configService: ConfigService,
+    private logger: Logger,
     @Inject(REQUEST_JSON_LOGGER)
     private readonly requestJsonLogger: RequestJsonLogger,
   ) {}
@@ -45,7 +45,7 @@ export class CommerceToolsConnectorService {
   private readonly clientSecret: string = this.configService.get<string>(
     'COMMERCE_TOOLS_SECRET',
   );
-  private readonly logger = new JsonLoggerService('CT-connector');
+
   private ctClient: ByProjectKeyRequestBuilder = null;
 
   private readonly authMiddlewareOptions: AuthMiddlewareOptions = {

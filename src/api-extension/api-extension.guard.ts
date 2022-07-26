@@ -1,12 +1,14 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  Logger,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { JsonLogger, LoggerFactory } from 'json-logger-service';
 
 @Injectable()
 export class ApiExtensionGuard implements CanActivate {
-  private readonly logger: JsonLogger = LoggerFactory.createLogger(
-    ApiExtensionGuard.name,
-  );
+  constructor(private readonly logger: Logger) {}
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {

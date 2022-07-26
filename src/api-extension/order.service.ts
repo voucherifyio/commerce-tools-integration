@@ -1,6 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
-import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import { Order } from '@commercetools/platform-sdk';
 import { desarializeCoupons, Coupon } from './coupon';
 
@@ -11,11 +10,9 @@ type SendedCoupons = {
 
 @Injectable()
 export class OrderService {
-  private readonly logger: JsonLogger = LoggerFactory.createLogger(
-    OrderService.name,
-  );
   constructor(
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
+    private readonly logger: Logger,
   ) {}
 
   public async redeemVoucherifyCoupons(
@@ -28,7 +25,7 @@ export class OrderService {
     const { id, customerId } = order;
 
     if (!coupons.length || order.paymentState !== 'Paid') {
-      this.logger.info({
+      this.logger.debug({
         msg: 'No coupons provided or order is not paid',
         id,
         customerId,
@@ -36,7 +33,7 @@ export class OrderService {
       return { status: true, actions: [] };
     }
 
-    this.logger.info({
+    this.logger.debug({
       msg: 'Attempt to redeem vouchers',
       coupons,
       id,
@@ -63,7 +60,7 @@ export class OrderService {
       }),
     );
 
-    this.logger.info({
+    this.logger.debug({
       msg: 'Voucherify redeem response',
       id,
       customerId,
@@ -77,7 +74,7 @@ export class OrderService {
         notUsedCoupons.push(sendedCoupon.coupon);
       }
     });
-    this.logger.info({
+    this.logger.debug({
       msg: 'Realized coupons',
       id,
       customerId,

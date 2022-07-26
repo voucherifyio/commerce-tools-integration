@@ -1,19 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Product } from '@commercetools/platform-sdk';
 import { CommerceToolsConnectorService } from '../commerce-tools-connector.service';
-import { JsonLogger, LoggerFactory } from 'json-logger-service';
 
+export type OnProgress = (progress: number) => void;
 @Injectable()
 export class ProductsService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
+    private readonly logger: Logger,
   ) {}
 
-  private readonly logger: JsonLogger = LoggerFactory.createLogger(
-    ProductsService.name,
-  );
-
-  async getListOfCountriesUsedInProducts(): Promise<string[]> {
+  async getListOfCountriesUsedInProducts({
+    onProgress,
+  }: {
+    onProgress?: (progress: number) => void;
+  }): Promise<string[]> {
     const countries: Set<string> = new Set();
 
     const addValueToCountriesIfKeyFound = (e: object, key: string) => {
@@ -29,18 +30,23 @@ export class ProductsService {
       return e;
     };
 
-    for await (const product of this.getAllProducts()) {
+    for await (const product of this.getAllProducts({ onProgress })) {
       addValueToCountriesIfKeyFound(product, 'country');
     }
     const countiresArr = [...countries];
-    this.logger.info({
+    this.logger.debug({
       msg: 'All countries set for products',
       countries: countiresArr.join(','),
     });
     return countiresArr;
   }
 
-  async *getAllProducts(): AsyncGenerator<Product[]> {
+  async *getAllProducts({
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    onProgress = () => {},
+  }: {
+    onProgress: OnProgress;
+  }): AsyncGenerator<Product[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
     let page = 0;
@@ -56,7 +62,10 @@ export class ProductsService {
       if (productResult.body.total < page * limit) {
         allProductsCollected = true;
       }
-      this.logger.info({
+
+      onProgress((limit * page) / productResult.body.total);
+
+      this.logger.debug({
         msg: 'iterating over all products',
         products: limit * page,
         total: productResult.body.total,

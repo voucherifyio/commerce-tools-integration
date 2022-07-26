@@ -5,13 +5,13 @@ import {
   HttpException,
   UseGuards,
   UseInterceptors,
+  Logger,
 } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { OrderService } from './order.service';
 import { TimeLoggingInterceptor } from 'src/misc/time-logging.interceptor';
 import { CartOrderDto } from 'src/api-extension/CartOrder.dto';
 import { ApiExtensionGuard } from './api-extension.guard';
-import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import { Cart, Order } from '@commercetools/platform-sdk';
 
 @UseInterceptors(TimeLoggingInterceptor)
@@ -21,11 +21,8 @@ export class ApiExtensionController {
   constructor(
     private readonly apiExtensionService: CartService,
     private readonly orderService: OrderService,
+    private readonly logger: Logger,
   ) {}
-
-  private readonly logger: JsonLogger = LoggerFactory.createLogger(
-    ApiExtensionController.name,
-  );
 
   @Post()
   async handleApiExtensionRequest(@Body() body: CartOrderDto): Promise<any> {
@@ -33,7 +30,7 @@ export class ApiExtensionController {
     const action = body.action;
     const id = body.resource?.obj?.id;
 
-    this.logger.info({
+    this.logger.debug({
       msg: 'Handle Commerce Tools API Extension',
       type,
       id,
