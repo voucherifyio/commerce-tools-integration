@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Product } from '@commercetools/platform-sdk';
 import { CommerceToolsConnectorService } from '../commerce-tools-connector.service';
 
+export type OnProgress = (progress: number) => void;
 @Injectable()
 export class ProductsService {
   constructor(
@@ -41,9 +42,10 @@ export class ProductsService {
   }
 
   async *getAllProducts({
-    onProgress,
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    onProgress = () => {},
   }: {
-    onProgress?: (progress: number) => void;
+    onProgress: OnProgress;
   }): AsyncGenerator<Product[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
@@ -60,9 +62,9 @@ export class ProductsService {
       if (productResult.body.total < page * limit) {
         allProductsCollected = true;
       }
-      if (typeof onProgress === 'function') {
-        onProgress((limit * page) / productResult.body.total);
-      }
+
+      onProgress((limit * page) / productResult.body.total);
+
       this.logger.debug({
         msg: 'iterating over all products',
         products: limit * page,
