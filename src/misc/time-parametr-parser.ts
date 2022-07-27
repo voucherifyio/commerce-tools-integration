@@ -22,20 +22,19 @@ export function parseTimeInput(args: string[]): string {
         const date = new Date();
 
         switch (allowedArg.argName) {
-          case('days'):
+          case 'days':
             date.setDate(date.getDate() - parseInt(matched[0]));
-            break
-          case('hours'):
+            break;
+          case 'hours':
             date.setHours(date.getHours() - parseInt(matched[0]));
-            break
-          case('ms'):
+            break;
+          case 'ms':
             date.setMilliseconds(date.getMilliseconds() - parseInt(matched[0]));
-            break
-          case('date'):
-          case('longdate'):
+            break;
+          case 'date':
+          case 'longdate':
             date.setTime(Date.parse(matched[0]));
-            break
-          
+            break;
         }
         time = date.toJSON();
       }
