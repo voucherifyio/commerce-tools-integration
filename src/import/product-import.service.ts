@@ -28,7 +28,7 @@ export class ProductImportService {
   );
 
   private async *getAllProducts(
-    fetchPeriod?: string,
+    minDateTime?: string,
   ): AsyncGenerator<Product[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
@@ -59,8 +59,8 @@ export class ProductImportService {
             priceCountry: country,
             priceCustomerGroup: customerGroup,
             priceChannel: channel,
-            ...(fetchPeriod && {
-              where: `lastModifiedAt>="${fetchPeriod}" or createdAt>="${fetchPeriod}"`,
+            ...(minDateTime && {
+              where: `lastModifiedAt>="${minDateTime}" or createdAt>="${minDateTime}"`,
             }),
           },
         })

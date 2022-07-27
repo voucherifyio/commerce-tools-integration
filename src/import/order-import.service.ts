@@ -23,7 +23,7 @@ export class OrderImportService {
     OrderImportService.name,
   );
 
-  public async *getAllOrders(fetchPeriod?: string): AsyncGenerator<Order[]> {
+  public async *getAllOrders(minDateTime?: string): AsyncGenerator<Order[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
     let page = 0;
@@ -36,8 +36,8 @@ export class OrderImportService {
           queryArgs: {
             limit: limit,
             offset: page * limit,
-            ...(fetchPeriod && {
-              where: `lastModifiedAt>="${fetchPeriod}" or createdAt>="${fetchPeriod}"`,
+            ...(minDateTime && {
+              where: `lastModifiedAt>="${minDateTime}" or createdAt>="${minDateTime}"`,
             }),
           },
         })

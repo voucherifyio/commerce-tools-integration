@@ -30,7 +30,7 @@ export class CustomerImportService {
   );
 
   private async *getAllCustomers(
-    fetchPeriod?: string,
+    minDateTime?: string,
   ): AsyncGenerator<Customer[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
@@ -44,8 +44,8 @@ export class CustomerImportService {
           queryArgs: {
             limit: limit,
             offset: page * limit,
-            ...(fetchPeriod && {
-              where: `lastModifiedAt>="${fetchPeriod}" or createdAt>="${fetchPeriod}"`,
+            ...(minDateTime && {
+              where: `lastModifiedAt>="${minDateTime}" or createdAt>="${minDateTime}"`,
             }),
           },
         })
