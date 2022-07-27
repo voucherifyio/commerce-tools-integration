@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createReadStream, unlink } from 'fs';
 import FormData from 'form-data';
@@ -6,7 +6,6 @@ import fetch from 'node-fetch2';
 import { CommerceToolsConnectorService } from 'src/commerceTools/commerce-tools-connector.service';
 import { Customer } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
-import { JsonLogger, LoggerFactory } from 'json-logger-service';
 import crypto = require('crypto');
 import { OrderImportService } from './order-import.service';
 
@@ -23,11 +22,8 @@ export class CustomerImportService {
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly configService: ConfigService,
     private readonly orderImportService: OrderImportService,
+    private readonly logger: Logger,
   ) {}
-
-  private readonly logger: JsonLogger = LoggerFactory.createLogger(
-    CustomerImportService.name,
-  );
 
   private async *getAllCustomers(
     minDateTime?: string,
@@ -158,7 +154,7 @@ export class CustomerImportService {
       status = responseJson.status;
       result = responseJson.result;
 
-      this.logger.info(`Processing status: ${status}`);
+      this.logger.debug(`Processing status: ${status}`);
     } while (
       (status === 'IN_PROGRESS' || status === null || status === undefined) &&
       (await sleep(20000))
@@ -171,13 +167,13 @@ export class CustomerImportService {
     const { customers } = await this.customerImport(period);
 
     const customerResult = await this.customerUpload(customers);
-    this.logger.info(
+    this.logger.debug(
       `Customers are processing by Voucherify. It may take a few minutes. Async action id coupled with customer import: ${customerResult.async_action_id}`,
     );
     const customerUploadStatus = await this.waitUntilDone(
       customerResult.async_action_id,
     );
-    this.logger.info('Customers were processed');
+    this.logger.debug('Customers were processed');
 
     return customerUploadStatus.failed.length === 0
       ? { success: true }
