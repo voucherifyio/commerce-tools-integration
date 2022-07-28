@@ -6,6 +6,7 @@ import fetch from 'node-fetch2';
 import { CommerceToolsConnectorService } from 'src/commerceTools/commerce-tools-connector.service';
 import { Customer } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
+import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import crypto = require('crypto');
 
 const sleep = (time: number) => {
@@ -21,6 +22,7 @@ export class CustomerImportService {
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly configService: ConfigService,
     private readonly logger: Logger,
+    private readonly voucherifyClient: VoucherifyConnectorService,
   ) {}
 
   private async *getAllCustomers(
@@ -58,6 +60,9 @@ export class CustomerImportService {
   }
 
   private async customerImport(period?: number) {
+    const meatdataSchemas = await this.voucherifyClient.getClient().metadataSchemas.list()
+    const metadataSchema = meatdataSchemas.schemas.find(schema => schema.related_object === 'customer')
+    const metadataSchemaProperties = Object.keys(metadataSchema.properties)
     const customers = [];
 
     for await (const customersBatch of this.getAllCustomers(period)) {
@@ -74,6 +79,10 @@ export class CustomerImportService {
             line_1: customer.addresses[0].streetName,
           },
           phone: customer.addresses.length ?? customer.addresses[0].phone,
+          ...Object.fromEntries(Object.keys(customer.custom.fields)
+              .filter(attr => metadataSchemaProperties.includes(attr))
+              .map(attr => [attr, customer.custom.fields[attr]])
+          )
         });
       });
     }

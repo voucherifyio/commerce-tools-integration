@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Order } from '@commercetools/platform-sdk';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
+import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { ConfigService } from '@nestjs/config';
 import fetch from 'node-fetch2';
 
@@ -15,6 +16,7 @@ export class OrderImportService {
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly logger: Logger,
     private readonly configService: ConfigService,
+    private readonly voucherifyClient: VoucherifyConnectorService,
   ) {}
 
   private async *getAllOrders(fetchPeriod?: number): AsyncGenerator<Order[]> {
@@ -55,6 +57,9 @@ export class OrderImportService {
   }
 
   public async migrateOrders(period?: number) {
+    const meatdataSchemas = await this.voucherifyClient.getClient().metadataSchemas.list()
+    const metadataSchema = meatdataSchemas.schemas.find(schema => schema.related_object === 'order')
+    const metadataSchemaProperties = Object.keys(metadataSchema.properties)
     const orders = [];
 
     for await (const ordersBatch of this.getAllOrders(period)) {
@@ -62,8 +67,17 @@ export class OrderImportService {
         if (order.paymentState !== 'Paid') {
           return;
         }
+        const tmp = Object.keys(order.custom?.fields ? order.custom?.fields : {})
+          .filter(customField => metadataSchemaProperties.includes(customField))
+          .map(customField => {
+            return [[customField], order.custom?.fields[customField]]
+          }
+        )
+        if(Object.keys(tmp).length){
+          console.log('tmp obj',tmp,Object.fromEntries(tmp))
+        }
 
-        orders.push({
+        const orderObj = {
           object: 'order',
           source_id: order.id,
           created_at: order.createdAt,
@@ -97,8 +111,10 @@ export class OrderImportService {
                 sku: Object?.values(item.name)?.[0],
               },
             };
-          }),
-        });
+          })
+        }
+
+        orders.push(Object.keys(tmp).length ? {...orderObj, metadata : Object.fromEntries(tmp)} : orderObj);
       });
     }
 

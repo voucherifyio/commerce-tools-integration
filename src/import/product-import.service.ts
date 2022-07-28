@@ -8,6 +8,7 @@ import { Product } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
 
 import crypto = require('crypto');
+import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -16,30 +17,21 @@ const sleep = (time: number) => {
     }, time);
   });
 };
-
-const getAttributes = (attrsContainer, attrNames) => {
-  const parsed = attrsContainer
-    .filter((attr) => typeof attr.value !== 'object')
-    .filter((attr) => attrNames.includes(attr.name))
-    .map((attr) => `'${attr.name}':'${attr.value}'`)
-    .join(',');
-
-  return `{${parsed}}`;
-};
 @Injectable()
 export class ProductImportService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly logger: Logger,
     private readonly configService: ConfigService,
+    private readonly voucherifyClient: VoucherifyConnectorService,
   ) {}
 
   private async *getAllProducts(
     fetchPeriod?: number,
   ): AsyncGenerator<Product[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
-    const limit = 100;
-    let page = 0;
+    const limit = 10;
+    let page = 265;
     let allProductsCollected = false;
 
     const currency = this.configService.get<string>(
@@ -86,6 +78,10 @@ export class ProductImportService {
   }
 
   private async productImport(period?: number) {
+    const meatdataSchemas = await this.voucherifyClient.getClient().metadataSchemas.list()
+    const metadataSchema = meatdataSchemas.schemas.find(schema => schema.related_object === 'product')
+    const metadataSchemaProperties = Object.keys(metadataSchema.properties)
+
     const products = [];
     const skus = [];
 
@@ -99,15 +95,14 @@ export class ProductImportService {
 
     for await (const productsBatch of this.getAllProducts(period)) {
       productsBatch.forEach((product) => {
-        const attrNames = product.masterData.current.masterVariant.attributes
-          .map((attr) => attr.name)
-          .filter((attr) => !allowedAttrs || allowedAttrs.includes(attr))
-          .join(',');
 
         products.push({
           name: product.masterData.current.name.en,
           source_id: product.id,
-          attributes: attrNames,
+          ...Object.fromEntries(product.masterData.current.masterVariant.attributes
+            .filter(attr => metadataSchemaProperties.includes(attr.name))
+            .map(attr => [attr.name, attr.value])
+          )
         });
 
         if (product.masterData.current.variants.length) {
@@ -119,7 +114,6 @@ export class ProductImportService {
               price:
                 product.masterData.current.masterVariant.price.value
                   .centAmount / 100,
-              attributes: getAttributes(variant.attributes, attrNames),
             });
           });
         } else {
@@ -130,10 +124,6 @@ export class ProductImportService {
             price:
               product.masterData.current.masterVariant.price.value.centAmount /
               100,
-            attributes: getAttributes(
-              product.masterData.current.masterVariant.attributes,
-              attrNames,
-            ),
           });
         }
       });
