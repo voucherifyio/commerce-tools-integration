@@ -1,17 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CommerceToolsConnectorService } from '../commerce-tools-connector.service';
 import { Type, TypeUpdateAction } from '@commercetools/platform-sdk';
-import { JsonLogger, LoggerFactory } from 'json-logger-service';
 
 @Injectable()
 export class TypesService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
+    private readonly logger: Logger,
   ) {}
-
-  private readonly logger: JsonLogger = LoggerFactory.createLogger(
-    TypesService.name,
-  );
 
   async findCouponType(typeName: string): Promise<Type | null> {
     const ctClient = this.commerceToolsConnectorService.getClient();
@@ -23,11 +19,11 @@ export class TypesService {
       ![200, 201].includes(response.statusCode) ||
       response.body.count === 0
     ) {
-      this.logger.info({ msg: `${typeName} type not found` });
+      this.logger.debug({ msg: `${typeName} type not found` });
       return null;
     }
     const couponType = response.body.results[0];
-    this.logger.info({ msg: `${typeName} type found`, id: couponType.id });
+    this.logger.debug({ msg: `${typeName} type found`, id: couponType.id });
     return couponType;
   }
 
@@ -111,12 +107,12 @@ export class TypesService {
   async configureCouponType(
     typeDefinition,
   ): Promise<{ success: boolean; type: Type }> {
-    this.logger.info({
+    this.logger.debug({
       msg: 'Attempt to configure custom field type for order that keeps information about coupon codes.',
     });
     const couponType = await this.findCouponType(typeDefinition.body.key);
     if (!couponType) {
-      this.logger.info({
+      this.logger.debug({
         msg: 'No custom field type, creating new one from scratch.',
       });
       return {
@@ -132,7 +128,7 @@ export class TypesService {
     );
 
     if (missingFields.length) {
-      this.logger.info({
+      this.logger.debug({
         msg: `We have custom ${typeDefinition.body.key} type registered but fields are outdated. We are going to update custom field type`,
         missingFields,
       });
@@ -147,7 +143,7 @@ export class TypesService {
         type: await this.updateCouponType(couponType, actions),
       };
     }
-    this.logger.info({
+    this.logger.debug({
       msg: 'Custom field type and fields are up to date.',
     });
 
@@ -166,12 +162,12 @@ export class TypesService {
     );
 
     if (orderConfig.success && productConfig.success) {
-      this.logger.info({
+      this.logger.debug({
         msg: 'All types are configured properly',
       });
       return { success: true };
     } else {
-      this.logger.info({
+      this.logger.debug({
         msg: 'Types are not configured properly',
       });
       return { success: false };
@@ -183,7 +179,7 @@ export class TypesService {
 
     const response = await ctClient.types().post(typeDefinition).execute();
     if ([200, 201].includes(response.statusCode)) {
-      this.logger.info({
+      this.logger.debug({
         msg: `Type: "${typeDefinition.body.key}" created`,
         type: response.body,
       });
@@ -213,7 +209,7 @@ export class TypesService {
       .execute();
 
     if ([200, 201].includes(response.statusCode)) {
-      this.logger.info({
+      this.logger.debug({
         msg: 'Type: "couponCodes" updated',
         type: response.body,
       });

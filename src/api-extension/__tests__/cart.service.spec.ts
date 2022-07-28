@@ -8,6 +8,7 @@ import {
   TaxMode,
   TypedMoney,
 } from '@commercetools/platform-sdk';
+import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CartService } from '../cart.service';
 import { TaxCategoriesService } from '../../commerceTools/tax-categories/tax-categories.service';
@@ -202,6 +203,11 @@ describe('CartService', () => {
         {
           provide: VoucherifyConnectorService,
           useValue: VoucherifyConnectorService,
+        },
+        {
+          provide: Logger,
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
+          useValue: { debug: () => {}, error: () => {} },
         },
       ],
     }).compile();

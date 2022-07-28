@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Logger } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
@@ -23,6 +23,12 @@ import { ProductImportService } from './import/product-import.service';
 import { ImportController } from './import/import.controller';
 import { OrderImportService } from './import/order-import.service';
 import { CustomerImportService } from './import/customer-import.service';
+import { ApiExtenionRegisterCommand } from './cli/api-extension-register.command';
+import { ApiExtenionUnregisterCommand } from './cli/api-extension-unregister.command';
+import { MigrateCustomersCommand } from './cli/migrate-customers.command';
+import { MigrateOrdersCommand } from './cli/migrate-orders.command';
+import { MigrateProductsCommand } from './cli/migrate-products.command';
+import { ConfigCommand } from './cli/config.command';
 import {
   NoOpRequestJsonLogger,
   REQUEST_JSON_LOGGER,
@@ -58,6 +64,7 @@ import { RequestJsonFileLogger } from './misc/request-json-file-logger';
     ImportController,
   ],
   providers: [
+    Logger,
     AppService,
     CartService,
     RegisterService,
@@ -70,6 +77,12 @@ import { RequestJsonFileLogger } from './misc/request-json-file-logger';
     ProductImportService,
     OrderImportService,
     CustomerImportService,
+    ApiExtenionRegisterCommand,
+    ApiExtenionUnregisterCommand,
+    MigrateCustomersCommand,
+    MigrateOrdersCommand,
+    MigrateProductsCommand,
+    ConfigCommand,
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({
