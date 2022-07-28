@@ -1,12 +1,34 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { JsonLoggerService } from 'json-logger-service';
-import events = require('events');
+import { WinstonModule } from 'nest-winston';
+import * as winston from 'winston';
+import { utilities as nestWinstonModuleUtilities } from 'nest-winston';
 
 async function bootstrap() {
-  events.EventEmitter.defaultMaxListeners = 13;
-  const app = await NestFactory.create(AppModule);
-  app.useLogger(new JsonLoggerService('NestServer'));
+  const logFormat =
+    process.env.NODE_ENV === 'production'
+      ? winston.format.combine(
+          winston.format.json(),
+          winston.format.timestamp(),
+          winston.format.ms(),
+        )
+      : winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.ms(),
+          nestWinstonModuleUtilities.format.nestLike('V%-CT'),
+        );
+
+  const app = await NestFactory.create(AppModule, {
+    logger: WinstonModule.createLogger({
+      level: 'debug',
+      transports: [
+        new winston.transports.Console({
+          format: logFormat,
+        }),
+      ],
+    }),
+  });
+
   await app.listen(process.env.PORT || 3000);
 }
 bootstrap();

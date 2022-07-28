@@ -1,14 +1,26 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { JsonLoggerService } from 'json-logger-service';
 import { RegisterService as RegisterApiEstension } from './api-extension/register.service';
 import * as ngrok from 'ngrok';
 import { join } from 'path';
-import events = require('events');
+import { WinstonModule } from 'nest-winston';
+import * as winston from 'winston';
+import { utilities as nestWinstonModuleUtilities } from 'nest-winston';
 
 async function bootstrap() {
-  events.EventEmitter.defaultMaxListeners = 13;
-  const logger = new JsonLoggerService('NestServer');
+  const logFormat = winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.ms(),
+    nestWinstonModuleUtilities.format.nestLike('V%-CT'),
+  );
+  const logger = WinstonModule.createLogger({
+    level: 'debug',
+    transports: [
+      new winston.transports.Console({
+        format: logFormat,
+      }),
+    ],
+  });
   logger.log('Launching ngrok service');
   const customNgrokBinPath = process.env.CUSTOM_NGROK_BIN_PATH;
   const port = process.env.PORT || 3000;
@@ -17,16 +29,15 @@ async function bootstrap() {
     binPath: customNgrokBinPath ? () => join(customNgrokBinPath) : undefined,
   });
   logger.log(`Application available ${url}`);
-  const app = await NestFactory.create(AppModule);
-  app.useLogger(logger);
+  const app = await NestFactory.create(AppModule, { logger });
   await app.listen(port);
   logger.log(`Application port - ${port}`);
   const registerService = app.get(RegisterApiEstension);
   const isApiExtensionRegistered = await registerService.register(url);
   if (isApiExtensionRegistered) {
-    logger.log({ msg: `Api Extension registerd in Commerce tools` });
+    logger.log('Api Extension registerd in Commerce tools');
   } else {
-    logger.error({ msg: 'Could not register Api Extension in Commerce Tools' });
+    logger.error('Could not register Api Extension in Commerce Tools');
   }
 }
 bootstrap();

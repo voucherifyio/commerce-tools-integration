@@ -1,8 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Order } from '@commercetools/platform-sdk';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
-import { JsonLogger, LoggerFactory } from 'json-logger-service';
-import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { ConfigService } from '@nestjs/config';
 import fetch from 'node-fetch2';
 
@@ -15,13 +13,9 @@ const sleep = (time: number) => {
 export class OrderImportService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
-    private readonly voucherifyClient: VoucherifyConnectorService,
+    private readonly logger: Logger,
     private readonly configService: ConfigService,
   ) {}
-
-  private readonly logger: JsonLogger = LoggerFactory.createLogger(
-    OrderImportService.name,
-  );
 
   private async *getAllOrders(fetchPeriod?: number): AsyncGenerator<Order[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
@@ -52,7 +46,7 @@ export class OrderImportService {
       if (ordersResult.body.total < page * limit) {
         allOrdersCollected = true;
       }
-      this.logger.info({
+      this.logger.debug({
         msg: 'iterating over all orders',
         orders: limit * page,
         total: ordersResult.body.total,
@@ -108,7 +102,7 @@ export class OrderImportService {
       });
     }
 
-    this.logger.info(`Sending ${orders.length} orders to Voucherify`);
+    this.logger.debug(`Sending ${orders.length} orders to Voucherify`);
 
     const url = `${this.configService.get<string>(
       'VOUCHERIFY_API_URL',
@@ -136,7 +130,7 @@ export class OrderImportService {
 
       if (!remaining) {
         const retryAfter = response.headers.get('Retry-After');
-        this.logger.info(
+        this.logger.debug(
           `You are out of api calls. Program will be awaken in ${
             retryAfter * 1000
           } seconds`,
@@ -144,7 +138,7 @@ export class OrderImportService {
         await sleep(retryAfter * 1000);
         continue;
       }
-      this.logger.info(
+      this.logger.debug(
         `The number of api calls is reduced due to Voucherify API request limit of ${limit}/h. Next call in ${
           (60 * 60 * 1000) / limit
         }ms. Number of remaining requests in this hour is: ${remaining}. Number of needed api calls to migrate all orders is: ${

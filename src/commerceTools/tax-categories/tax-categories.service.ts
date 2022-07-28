@@ -1,19 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CommerceToolsConnectorService } from '../commerce-tools-connector.service';
 import { TaxCategory } from '@commercetools/platform-sdk';
 import { ProductsService } from '../products/products.service';
-import { JsonLogger, LoggerFactory } from 'json-logger-service';
 
 @Injectable()
 export class TaxCategoriesService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly productsService: ProductsService,
+    private readonly logger: Logger,
   ) {}
-
-  private readonly logger: JsonLogger = LoggerFactory.createLogger(
-    TaxCategoriesService.name,
-  );
 
   async getCouponTaxCategory(): Promise<TaxCategory> {
     const ctClient = this.commerceToolsConnectorService.getClient();
@@ -24,7 +20,7 @@ export class TaxCategoriesService {
 
     if ([200, 201].includes(statusCode) && body.count === 1) {
       const taxCategory = body.results[0];
-      this.logger.info({
+      this.logger.debug({
         msg: 'Found existing coupon tax category',
         taxCategoryId: taxCategory.id,
       });
@@ -45,7 +41,7 @@ export class TaxCategoriesService {
       return null;
     }
     const taxCategory = response.body;
-    this.logger.info({
+    this.logger.debug({
       msg: 'Created new tax category',
       taxCategoryId: taxCategory.id,
     });
@@ -53,7 +49,11 @@ export class TaxCategoriesService {
     return taxCategory;
   }
 
-  async configureCouponTaxCategory(): Promise<{
+  async configureCouponTaxCategory({
+    onProgress,
+  }: {
+    onProgress?: (progress: number) => void;
+  }): Promise<{
     success: boolean;
     couponTaxCategory: TaxCategory;
   }> {
@@ -62,14 +62,16 @@ export class TaxCategoriesService {
 
     const rates = couponTaxCategory?.rates;
 
-    this.logger.info({
+    this.logger.debug({
       msg: 'Configuring coupon tax categories',
       couponTaxCategoryId: couponTaxCategory.id,
       countryRates: rates.map((rate) => rate.country).join(', '),
     });
 
     const listOfCountriesUsedInAllProducts =
-      await this.productsService.getListOfCountriesUsedInProducts();
+      await this.productsService.getListOfCountriesUsedInProducts({
+        onProgress,
+      });
 
     const desiredRates =
       listOfCountriesUsedInAllProducts?.map((countryCode) => {
@@ -121,7 +123,7 @@ export class TaxCategoriesService {
       });
     }
 
-    this.logger.info({
+    this.logger.debug({
       msg: 'Calculated updates for countiries in coupon tax categories:',
       actions,
     });
@@ -142,7 +144,7 @@ export class TaxCategoriesService {
       .execute();
     const success = [200, 201].includes(response.statusCode);
     if (success) {
-      this.logger.info({ msg: 'Updated countries for coupon tax category' });
+      this.logger.debug({ msg: 'Updated countries for coupon tax category' });
     } else {
       const msg = 'Could not update countires for coupon tax category';
       this.logger.error({
@@ -183,7 +185,7 @@ export class TaxCategoriesService {
       .execute();
     const sucess = [200, 201].includes(response.statusCode);
     if (sucess) {
-      this.logger.info({ msg: 'Added country to coupon tax category' });
+      this.logger.debug({ msg: 'Added country to coupon tax category' });
     } else {
       this.logger.error({
         msg: 'Could not add country to coupon tax category',
