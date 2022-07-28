@@ -25,7 +25,7 @@
     "unregister": "nest start --config nest-commander.json -- unregister",
     "migrate-products": "nest start --config nest-commander.json -- migrate-products",
     "migrate-orders": "nest start --config nest-commander.json -- migrate-orders",
-    "migrate-customers": "nest start --config nest-commander.json -- migrate-command"
+    "migrate-customers": "nest start --config nest-commander.json -- migrate-customers"
   },
   "dependencies": {
     "@commercetools/platform-sdk": "^2.7.0",

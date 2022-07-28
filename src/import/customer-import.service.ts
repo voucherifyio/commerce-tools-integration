@@ -60,9 +60,13 @@ export class CustomerImportService {
   }
 
   private async customerImport(period?: number) {
-    const meatdataSchemas = await this.voucherifyClient.getClient().metadataSchemas.list()
-    const metadataSchema = meatdataSchemas.schemas.find(schema => schema.related_object === 'customer')
-    const metadataSchemaProperties = Object.keys(metadataSchema.properties)
+    const meatdataSchemas = await this.voucherifyClient
+      .getClient()
+      .metadataSchemas.list();
+    const metadataSchema = meatdataSchemas.schemas.find(
+      (schema) => schema.related_object === 'customer',
+    );
+    const metadataSchemaProperties = Object.keys(metadataSchema.properties);
     const customers = [];
 
     for await (const customersBatch of this.getAllCustomers(period)) {
@@ -79,10 +83,11 @@ export class CustomerImportService {
             line_1: customer.addresses[0].streetName,
           },
           phone: customer.addresses.length ?? customer.addresses[0].phone,
-          ...Object.fromEntries(Object.keys(customer.custom.fields)
-              .filter(attr => metadataSchemaProperties.includes(attr))
-              .map(attr => [attr, customer.custom.fields[attr]])
-          )
+          ...Object.fromEntries(
+            Object.keys(customer.custom?.fields ? customer.custom?.fields : {})
+              .filter((attr) => metadataSchemaProperties.includes(attr))
+              .map((attr) => [attr, customer.custom.fields[attr]]),
+          ),
         });
       });
     }
@@ -92,7 +97,9 @@ export class CustomerImportService {
 
   private async customerUpload(importedData) {
     const randomFileName = `${crypto.randomBytes(20).toString('hex')}.csv`;
-    await new ObjectsToCsv(importedData).toDisk(randomFileName);
+    await new ObjectsToCsv(importedData).toDisk(randomFileName, {
+      allColumns: true,
+    });
     const url = `${this.configService.get<string>(
       'VOUCHERIFY_API_URL',
     )}/v1/customers/importCSV`;

@@ -57,9 +57,13 @@ export class OrderImportService {
   }
 
   public async migrateOrders(period?: number) {
-    const meatdataSchemas = await this.voucherifyClient.getClient().metadataSchemas.list()
-    const metadataSchema = meatdataSchemas.schemas.find(schema => schema.related_object === 'order')
-    const metadataSchemaProperties = Object.keys(metadataSchema.properties)
+    const meatdataSchemas = await this.voucherifyClient
+      .getClient()
+      .metadataSchemas.list();
+    const metadataSchema = meatdataSchemas.schemas.find(
+      (schema) => schema.related_object === 'order',
+    );
+    const metadataSchemaProperties = Object.keys(metadataSchema.properties);
     const orders = [];
 
     for await (const ordersBatch of this.getAllOrders(period)) {
@@ -67,14 +71,17 @@ export class OrderImportService {
         if (order.paymentState !== 'Paid') {
           return;
         }
-        const tmp = Object.keys(order.custom?.fields ? order.custom?.fields : {})
-          .filter(customField => metadataSchemaProperties.includes(customField))
-          .map(customField => {
-            return [[customField], order.custom?.fields[customField]]
-          }
+        const tmp = Object.keys(
+          order.custom?.fields ? order.custom?.fields : {},
         )
-        if(Object.keys(tmp).length){
-          console.log('tmp obj',tmp,Object.fromEntries(tmp))
+          .filter((customField) =>
+            metadataSchemaProperties.includes(customField),
+          )
+          .map((customField) => {
+            return [[customField], order.custom?.fields[customField]];
+          });
+        if (Object.keys(tmp).length) {
+          console.log('tmp obj', tmp, Object.fromEntries(tmp));
         }
 
         const orderObj = {
@@ -111,10 +118,14 @@ export class OrderImportService {
                 sku: Object?.values(item.name)?.[0],
               },
             };
-          })
-        }
+          }),
+        };
 
-        orders.push(Object.keys(tmp).length ? {...orderObj, metadata : Object.fromEntries(tmp)} : orderObj);
+        orders.push(
+          Object.keys(tmp).length
+            ? { ...orderObj, metadata: Object.fromEntries(tmp) }
+            : orderObj,
+        );
       });
     }
 

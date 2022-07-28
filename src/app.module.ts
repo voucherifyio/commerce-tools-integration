@@ -52,7 +52,6 @@ import { RequestJsonFileLogger } from './misc/request-json-file-logger';
         COMMERCE_TOOLS_PRODUCTS_COUNTRY: Joi.string().optional(),
         COMMERCE_TOOLS_PRODUCT_CHANNEL: Joi.string().optional(),
         COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP: Joi.string().optional(),
-        COMMERCE_TOOLS_PRODUCT_ATTRIBUTES: Joi.string().optional(),
       }),
     }),
   ],

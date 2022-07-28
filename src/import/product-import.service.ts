@@ -30,8 +30,8 @@ export class ProductImportService {
     fetchPeriod?: number,
   ): AsyncGenerator<Product[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
-    const limit = 10;
-    let page = 265;
+    const limit = 100;
+    let page = 0;
     let allProductsCollected = false;
 
     const currency = this.configService.get<string>(
@@ -78,31 +78,27 @@ export class ProductImportService {
   }
 
   private async productImport(period?: number) {
-    const meatdataSchemas = await this.voucherifyClient.getClient().metadataSchemas.list()
-    const metadataSchema = meatdataSchemas.schemas.find(schema => schema.related_object === 'product')
-    const metadataSchemaProperties = Object.keys(metadataSchema.properties)
+    const meatdataSchemas = await this.voucherifyClient
+      .getClient()
+      .metadataSchemas.list();
+    const metadataSchema = meatdataSchemas.schemas.find(
+      (schema) => schema.related_object === 'product',
+    );
+    const metadataSchemaProperties = Object.keys(metadataSchema.properties);
 
     const products = [];
     const skus = [];
 
-    const allowedAttrs = this.configService.get<string>(
-      'COMMERCE_TOOLS_PRODUCT_ATTRIBUTES',
-    )
-      ? this.configService
-          .get<string>('COMMERCE_TOOLS_PRODUCT_ATTRIBUTES')
-          .split(',')
-      : false;
-
     for await (const productsBatch of this.getAllProducts(period)) {
       productsBatch.forEach((product) => {
-
         products.push({
           name: product.masterData.current.name.en,
           source_id: product.id,
-          ...Object.fromEntries(product.masterData.current.masterVariant.attributes
-            .filter(attr => metadataSchemaProperties.includes(attr.name))
-            .map(attr => [attr.name, attr.value])
-          )
+          ...Object.fromEntries(
+            product.masterData.current.masterVariant.attributes
+              .filter((attr) => metadataSchemaProperties.includes(attr.name))
+              .map((attr) => [attr.name, attr.value]),
+          ),
         });
 
         if (product.masterData.current.variants.length) {
@@ -134,7 +130,9 @@ export class ProductImportService {
 
   private async productUpload(importedData, dataType: 'products' | 'skus') {
     const randomFileName = `${crypto.randomBytes(20).toString('hex')}.csv`;
-    await new ObjectsToCsv(importedData).toDisk(randomFileName);
+    await new ObjectsToCsv(importedData).toDisk(randomFileName, {
+      allColumns: true,
+    });
     const url = `${this.configService.get<string>('VOUCHERIFY_API_URL')}/v1/${
       dataType === 'products' ? 'products' : 'skus'
     }/importCSV`;
