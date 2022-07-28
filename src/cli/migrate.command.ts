@@ -6,7 +6,7 @@ import { OrderImportService } from '../import/order-import.service';
 import { CustomerImportService } from '../import/customer-import.service';
 
 type ResourceTypeArg = {
-  type: 'products' | 'orders' | 'customers';
+  name: 'products' | 'orders' | 'customers';
   callback: (period?: string) => Promise<{ success: true | false }>;
 };
 
@@ -33,28 +33,28 @@ export class MigrateCommand implements CommandRunner {
   ) {}
 
   @Option({
-    flags: '-t, --type [string]',
+    flags: '-t, --type products | orders | customers',
     description: `Required. Type of resource you want to sync. Values: 'products', 'orders', 'customers'`,
   })
   parseType(val: string): ResourceTypeArg {
     switch (val) {
       case 'products':
         return {
-          type: 'products',
+          name: 'products',
           callback: this.productImportService.migrateProducts.bind(
             this.productImportService,
           ),
         };
       case 'orders':
         return {
-          type: 'orders',
+          name: 'orders',
           callback: this.orderImportService.migrateOrders.bind(
             this.orderImportService,
           ),
         };
       case 'customers':
         return {
-          type: 'customers',
+          name: 'customers',
           callback: this.customerImportService.migrateCustomers.bind(
             this.customerImportService,
           ),
@@ -130,25 +130,30 @@ export class MigrateCommand implements CommandRunner {
       return;
     }
 
-    const optionKeyOtherThanType = Object.keys(options).find(
-      (key) => key != 'type',
-    );
-    const fetchTime = options[optionKeyOtherThanType]
+    const optionKeyOtherThanType =
+      options.days ||
+      options.hours ||
+      options.ms ||
+      options.date ||
+      options.longdate ||
+      null;
+
+    const fetchTime = optionKeyOtherThanType
       ? options[optionKeyOtherThanType]
       : null;
 
     const spinnerCouponsTypes = loadingCli(
       fetchTime
-        ? `Attempt to migrate ${options.type.type} from ${fetchTime}`
-        : `Attempt to migrate ${options.type.type}`,
+        ? `Attempt to migrate ${options.type.name} from ${fetchTime}`
+        : `Attempt to migrate ${options.type.name}`,
     ).start();
 
     const result = await options.type.callback(fetchTime);
 
     if (result.success) {
-      spinnerCouponsTypes.succeed(`${options.type.type} successfully migrated`);
+      spinnerCouponsTypes.succeed(`${options.type.name} successfully migrated`);
     } else {
-      spinnerCouponsTypes.fail(`Could not migrate ${options.type.type}`);
+      spinnerCouponsTypes.fail(`Could not migrate ${options.type.name}`);
     }
   }
 }
