@@ -144,15 +144,17 @@ Currently we cover the following scenarios:
     1. custom coupon type - needed to store coupons codes inside the [Cart](https://docs.commercetools.com/api/projects/carts) object
     2. coupon tax category - needed for any coupon or gift card with a fixed amount discount
 - `npm run test` - run Jest tests
-- `npm run migrate-products` - it will sync all of the products from CT to Voucherify.
-- `npm run migrate-customers` - it will sync all of the customers from CT to Voucherify.
-- `npm run migrate-orders` - it will sync all of the (paid) orders from CT to Voucherify. It is important to know that due to some restrictions speed of this operation is decreased.
-    - you can add additional arguments to above migrate commands to sync data from fixed time in the past. Available options are: `days`, `hours`, `ms` (these three will sync data from time period set by subtracting current date and passed argument) `date`, `longdate` (these will sync data from passed date). Examples:
-        - `npm run migrate-orders -- --days=5`
-        - `npm run migrate-customers -- --hours=13`
-        - `npm run migrate-orders -- --date=2022-03-12`
-        - `npm run migrate-products -- --longdate=2022-03-12T06:22:33`
-
+- `npm run migrate` - migrate data from commercetools to Voucherify. Arguments:
+    - `type` - required - type of data which you want to migrate. Values: `products`, `orders`, `customers`
+    - `days` - optional - set number of days to sync from the past. Value: `number`
+    - `hours` - optional - set number of hours to sync from the past. Value: `number`
+    - `ms` - optional - set number of milliseconds to sync from the past. Value: `number`
+    - `date` - optional - set date from which the resources are to be migrated. Format: `YYYY-MM-DD`
+    - `longdate` - optional - set date and time from which the resources are to be migrated. Format: `YYYY-MM-DDTHH:MM:SS` \
+    Examples: 
+    - `npm run migrate -- --type=products`
+    - `npm run migrate -- --type=orders --days=5`
+    - `npm run migrate -- --type=customers --longdate=2022-03-21T21:04:37`
 
 ## REST API Endpoints
 

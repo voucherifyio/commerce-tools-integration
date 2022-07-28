@@ -25,10 +25,8 @@ import { OrderImportService } from './import/order-import.service';
 import { CustomerImportService } from './import/customer-import.service';
 import { ApiExtenionRegisterCommand } from './cli/api-extension-register.command';
 import { ApiExtenionUnregisterCommand } from './cli/api-extension-unregister.command';
-import { MigrateCustomersCommand } from './cli/migrate-customers.command';
-import { MigrateOrdersCommand } from './cli/migrate-orders.command';
-import { MigrateProductsCommand } from './cli/migrate-products.command';
 import { ConfigCommand } from './cli/config.command';
+import { MigrateCommand } from './cli/migrate.command';
 import {
   NoOpRequestJsonLogger,
   REQUEST_JSON_LOGGER,
@@ -78,9 +76,7 @@ import { RequestJsonFileLogger } from './misc/request-json-file-logger';
     CustomerImportService,
     ApiExtenionRegisterCommand,
     ApiExtenionUnregisterCommand,
-    MigrateCustomersCommand,
-    MigrateOrdersCommand,
-    MigrateProductsCommand,
+    MigrateCommand,
     ConfigCommand,
     {
       provide: APP_PIPE,
