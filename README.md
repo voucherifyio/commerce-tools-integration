@@ -8,26 +8,16 @@ Voucherify's [commercetools](https://commercetools.com/) connector extends its d
 
 Demo store https://github.com/voucherifyio/sunrise-for-commerce-tools-integration/
 
-``` mermaid
-graph LR;
-    U((User))
-    SF(Store front)
-    CT(commercetools)
-    V(Voucherify)
-    I(Integration App)
-
-    U-- Browse -->SF
-    SF-- REST API -->CT
-    CT-. API Extension .->I
-    I-. REST API .->CT
-    I-.  REST API .->V
-```
 
 ![https://www.voucherify.io/](./public/voucherify.png)
 
 ---
 
+* [How does the integration between Voucherify and commercetools work?](#how-does-the-integration-between-voucherify-and-commercetools-work)
+* [How to work with commercetools API Extensions?](#how-to-work-with-commercetools-api-extensions)
 * [Prerequisites](#prerequisites)
+* [Cart updates](#cart-updates)
+* [How set up the development environment?](#how-set-up-the-development-environment)
 * [Installation and configuration guide](#installation-and-configuration-guide)
   + [Dependencies](#dependencies)
   + [Configuration](#configuration)
@@ -46,9 +36,71 @@ graph LR;
     - [New repository](#new-repository)
   + [Configure commercetools](#configure-commercetools)
   + [Register API Extension](#register-api-extension)
+* [Typical use case](#typical-use-case)
 * [Contributing](#contributing)
 * [Contact](#contact)
+* [Final words](#final-words)
 * [Licence](#licence)
+
+## How does the integration between Voucherify and commercetools work?
+
+The integration between Voucherify and commercetools allows your customers to use Voucherify-generated promotions in a store built on top of commercetools. We currently  support all types of coupon campaign and we are working to fully support referral programs, gift cards, cart-level promotions, loyalty programs and giveaways.
+
+We support coupons campaigns, including:
+
+- [Validation sessions](https://docs.voucherify.io/docs/locking-validation-session) – temporarily lock the voucher's usage until redemption is successful, which is helpful for coupons with limited use.
+- [Stackable discounts](https://docs.voucherify.io/docs/manage-stackable-discounts) – allow customers to use up to 5 coupons at the same time.
+- [Validation rules](https://docs.voucherify.io/docs/validation-rules) – coupons valid only for select scenarios based on customer, cart or order attributes.
+- [Discount effects](https://docs.voucherify.io/docs/discount-effects) – defining how to apply the discount to the customer's cart.
+- [Unit discount](https://docs.voucherify.io/docs/give-item-for-free-unit-discount) – add free items to orders.
+
+If we want to allow customers to use coupons defined in Voucherify, the integration application needs to:
+
+1. Watch cart updates on the commercetools’ side. If a customer adds a coupon code, use Voucherify API to validate coupons, get discount details and apply discounts back to the commercetools cart.
+2. Record fulfilled orders from commercetools on the Voucherify’s side using Voucherify redeem endpoint.
+
+![commercetools & Voucherify integration flow chart](./public/integration-flow.jpeg)
+
+In addition, we suggest synchronising your customer, product, and order data between commercetools and Voucherify, so you can use that data to build more advanced promotion campaigns. 
+
+
+## How to work with commercetools API Extensions?
+
+Our integration uses [commercetools API Extensions](https://docs.commercetools.com/api/projects/api-extensions) to monitor cart and order updates. But, before commercetools can send us HTTP requests with cart and order update details, we need to register API Extension and let commercetools know under which public URL our integration is available. There are two scenarios. First, if you run the integration on a publicly available server, you can register or unregister commercetools API Extension using `npm run register` and `npm run unregister` commands. Those commands use the APP_URL environment variable as the public server address where commercetools will send cart and order updates. The second scenario is when you develop or test integration locally, and your PC does not have public IP or domain. In that case, you need to use a reverse proxy (e.g., ngrok) solution to expose your local integration application. To simplify this process, we built a script npm run dev:attach that runs an ngrok reverse proxy service, uses a randomly generated ngrok public URL to register API Extension in commercetools and start our application.
+
+``` mermaid
+graph LR;
+    U((User))
+    SF(Store front)
+    CT(commercetools)
+    V(Voucherify)
+    I(Integration App)
+
+    U-- Browse -->SF
+    SF-- GraphQl -->CT
+    CT-. API Extension .->I
+    I-. REST API .->CT
+    I-.  REST API .->V
+```
+
+## Cart updates
+
+Handling API Extensions request from commercetools with information about cart update is the heart of the integration. Upon receiving cart update requests, the integration app will:
+
+- Set custom cart fields definition for newly created carts where we will keep information about applied discounts. 
+- Validate discounts using Voucherify API, sending collected information about cart items and discount codes.
+- Update cart custom fields with the data which coupons were applied or not.
+- Apply the percentage or amount discount to the cart by adding a custom line item.
+- Add required promotional products to the cart (if unit type discount is used).
+
+Please note that by putting information about applied discount codes in the cart custom fields, we bypass the commercetools Discount Codes feature. This approach lets us prevent confusing Voucherify with commercetools discounts but also requires little changes on the store frontend that uses commercetools API. Primarily, you had to change how you add and read discount codes from commercetools API and use the discount_codes cart custom field instead of the commercetools addDiscountCode action. For development purposes, we prepared [Sunrise Storefront for Commercetools adjusted to work with discount coupons managed by Voucherify](https://github.com/voucherifyio/sunrise-for-commerce-tools-integration). The [README.md](https://github.com/voucherifyio/sunrise-for-commerce-tools-integration/blob/main/README.md) file describes all required changes in detail.
+
+## How set up the development environment?
+
+1. Create new Voucherify and commercetools trial accounts.
+2. Load test data  to commercetools using [Sunrise Data](https://github.com/commercetools/commercetools-sunrise-data) project and follow instructions in the README.md file.
+3. Install the integration app locally following the [Installation and configuration guide](#installation-and-configuration-guide).
+4. Install [Sunrise Storefront](https://github.com/voucherifyio/sunrise-for-commerce-tools-integration) adjusted to work with Voucherify discounts, following the instruction from the "Installation" section of the README.md file. 
 
 ## Prerequisites
 
@@ -239,6 +291,17 @@ This command should be run once for every commercetool application.
 
 This command should be run once (or each time after `npm run unregister`).
 
+## Typical use case
+
+1. As a customer who opens a store page in the browser (Sunrise Storefront), I add some products to the cart and on the cart page, I add one of the available coupon codes (you can check the available discounts in the Voucherify admin panel for trial accounts you should have preconfigured, e.g., BLACKFRIDAY code).
+2. As a customer who added an existing coupon code, I should see the granted discount value and be able to finish the order.
+3. As the store operator logged into the commercetools panel, I see new orders, including applied coupon codes on the Custom Fields tab and applied coupon discount value in the Order items list.
+4. As the store operator logged into the commercetools panel when I update Order Payment Status to Paid, customer, order, and redeemed objects are created in Voucherify.
+
+![Order screen in commercetools](./public/ct-order.png)
+![Order custom fields in commercetools](./public/ct-order-custom-fields.png)
+![Redemption screen in Voucherify](./public/voucherify-redemption.png)
+
 ---
 
 ## Contributing
@@ -252,6 +315,11 @@ If you have questions, comments, or need help with the code, we're here to help:
 * by [email](https://www.voucherify.io/contact-support)
 
 For more tutorials and full API reference, visit Voucherify [Developer Hub](https://docs.voucherify.io).
+
+
+## Final words
+
+We believe that the commercetools setup can vary between implementations and integration requirements may differ in each case. Because of that, we distributed integration between Voucherify and commercetools as an open source application so that everyone can download, host, and adjust the solution to their unique business requirements.
 
 ## Licence
 [MIT](./LICENSE.md) Copyright (c) 2022 voucherify.io
