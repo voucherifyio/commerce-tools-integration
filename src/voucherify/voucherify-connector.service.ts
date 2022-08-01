@@ -200,4 +200,12 @@ export class VoucherifyConnectorService {
 
     return response;
   }
+
+  async getMetadataSchemaProperties(resourceName: string): Promise<string[]> {
+    const meatdataSchemas = await this.getClient().metadataSchemas.list();
+    const metadataSchema = meatdataSchemas.schemas.find(
+      (schema) => schema.related_object === resourceName,
+    );
+    return Object.keys(metadataSchema.properties);
+  }
 }

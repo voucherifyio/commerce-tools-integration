@@ -78,13 +78,8 @@ export class ProductImportService {
   }
 
   private async productImport(period?: number) {
-    const meatdataSchemas = await this.voucherifyClient
-      .getClient()
-      .metadataSchemas.list();
-    const metadataSchema = meatdataSchemas.schemas.find(
-      (schema) => schema.related_object === 'product',
-    );
-    const metadataSchemaProperties = Object.keys(metadataSchema.properties);
+    const metadataSchemaProperties =
+      await this.voucherifyClient.getMetadataSchemaProperties('product');
 
     const products = [];
     const skus = [];

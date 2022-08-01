@@ -60,13 +60,8 @@ export class CustomerImportService {
   }
 
   private async customerImport(period?: number) {
-    const meatdataSchemas = await this.voucherifyClient
-      .getClient()
-      .metadataSchemas.list();
-    const metadataSchema = meatdataSchemas.schemas.find(
-      (schema) => schema.related_object === 'customer',
-    );
-    const metadataSchemaProperties = Object.keys(metadataSchema.properties);
+    const metadataSchemaProperties =
+      await this.voucherifyClient.getMetadataSchemaProperties('customer');
     const customers = [];
 
     for await (const customersBatch of this.getAllCustomers(period)) {
