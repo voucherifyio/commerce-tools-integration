@@ -206,6 +206,6 @@ export class VoucherifyConnectorService {
     const metadataSchema = meatdataSchemas.schemas.find(
       (schema) => schema.related_object === resourceName,
     );
-    return Object.keys(metadataSchema.properties);
+    return Object.keys(metadataSchema?.properties ?? {});
   }
 }
