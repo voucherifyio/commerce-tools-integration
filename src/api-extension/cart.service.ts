@@ -109,9 +109,31 @@ export class CartService {
       anonymousId,
     });
 
+    const deletedCoupons = coupons
+      .filter((coupon) => coupon.status === 'DELETED')
+      .map((coupon) =>
+        this.voucherifyConnectorService.releaseValidationSession(
+          coupon.code,
+          sessionKey,
+        ),
+      );
+
+    if (deletedCoupons.length === coupons.length) {
+      return {
+        valid: false,
+        applicableCoupons: [],
+        notApplicableCoupons: [],
+        skippedCoupons: [],
+        productsToAdd: [],
+        totalDiscountAmount: 0,
+      };
+    }
+
     const validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
-        coupons.map((coupon) => coupon.code),
+        coupons
+          .filter((coupon) => coupon.status != 'DELETED')
+          .map((coupon) => coupon.code),
         cart,
         sessionKey,
       );

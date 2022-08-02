@@ -325,6 +325,7 @@ If you found a bug or want to suggest a new feature, please file a Github issue.
     - removed CLI commands: `register` and `unregister`
     - added CLI commands: `api-extension-add`, `api-extension-update`, `api-extension-delete` and `api-extension-list`
     - added new optional configuration (`COMMERCE_TOOLS_API_EXTENSION_KEY` environment variable) to recognize own commercetools API Extenion from 3rd party ones when performing delete or update operations
+    - remove coupon from session when coupon is deleted from a cart, it requires [Sunrise Storefront v2.0.0](https://github.com/voucherifyio/sunrise-for-commerce-tools-integration)
 - 2022-07-28 `v1.0.1` Update README.md file
 - 2022-07-26 `v1.0.0` Initial release
 
