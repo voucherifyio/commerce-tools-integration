@@ -68,10 +68,9 @@ export class TaxCategoriesService {
       countryRates: rates.map((rate) => rate.country).join(', '),
     });
 
-    const listOfCountriesUsedInAllProducts =
-      await this.productsService.getListOfCountriesUsedInProducts({
-        onProgress,
-      });
+    const listOfCountriesUsedInAllProducts = (
+      await this.commerceToolsConnectorService.getClient().get().execute()
+    ).body.countries;
 
     const desiredRates =
       listOfCountriesUsedInAllProducts?.map((countryCode) => {
