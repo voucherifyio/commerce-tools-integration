@@ -5,7 +5,8 @@ import loadingCli from 'loading-cli';
 
 @Command({
   name: 'api-extension-update',
-  description: 'Updated commercetools API Extension to point to your server',
+  description:
+    'Remove old and add new API Extension pointing to your server. Url is taken from APP_URL environment variable. Old API Extension is recognized by API Extension "key" attribute configured by COMMERCE_TOOLS_API_EXTENSION_KEY environment variable',
 })
 export class ApiExtenionUpdateCommand implements CommandRunner {
   constructor(

@@ -10,7 +10,8 @@ type ApiExtenionDeleteCommandOptions = {
 
 @Command({
   name: 'api-extension-delete',
-  description: 'Delete commercetools API Extension',
+  description:
+    'Delete commercetools API Extension by "Key" value configured in COMMERCE_TOOLS_API_EXTENSION_KEY environment variable',
 })
 export class ApiExtenionDeleteCommand implements CommandRunner {
   constructor(

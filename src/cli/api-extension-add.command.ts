@@ -6,7 +6,7 @@ import loadingCli from 'loading-cli';
 @Command({
   name: 'api-extension-add',
   description:
-    'Add commercetools API Extension to point to your development server',
+    'Add commercetools API Extension pointing to your server (server url is taken from APP_URL environment variable)',
 })
 export class ApiExtenionAddCommand implements CommandRunner {
   constructor(
