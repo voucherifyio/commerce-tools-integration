@@ -5,7 +5,7 @@ export type Coupon = {
   value?: number;
 };
 
-export type CouponStatus = 'NEW' | 'APPLIED' | 'NOT_APPLIED';
+export type CouponStatus = 'NEW' | 'APPLIED' | 'NOT_APPLIED' | 'DELETED';
 
 export function desarializeCoupons(serializedDiscountOrCode: string): Coupon {
   if (serializedDiscountOrCode.startsWith('{')) {
