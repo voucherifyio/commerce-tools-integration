@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { RegisterService as RegisterApiEstension } from './api-extension/register.service';
+import { ApiExtensionService } from './api-extension/api-extension.service';
 import * as ngrok from 'ngrok';
 import { join } from 'path';
 import { WinstonModule } from 'nest-winston';
@@ -32,8 +32,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { logger });
   await app.listen(port);
   logger.log(`Application port - ${port}`);
-  const registerService = app.get(RegisterApiEstension);
-  const isApiExtensionRegistered = await registerService.register(url);
+  const registerService = app.get(ApiExtensionService);
+  const isApiExtensionRegistered = await registerService.update(url);
   if (isApiExtensionRegistered) {
     logger.log('Api Extension registerd in Commerce tools');
   } else {

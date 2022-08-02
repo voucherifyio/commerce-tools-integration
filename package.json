@@ -1,10 +1,10 @@
 {
   "name": "commerce-tools-integration",
-  "version": "0.0.1",
+  "version": "2.0.0",
   "description": "",
   "author": "",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
@@ -21,8 +21,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prepare": "husky install",
     "config": "npm run command config",
-    "register": "nest start --config nest-commander.json -- register",
-    "unregister": "nest start --config nest-commander.json -- unregister",
+    "api-extension-list": "nest start --config nest-commander.json -- api-extension-list",
+    "api-extension-add": "nest start --config nest-commander.json -- api-extension-add",
+    "api-extension-update": "nest start --config nest-commander.json -- api-extension-update",
+    "api-extension-delete": "nest start --config nest-commander.json -- api-extension-delete",
     "migrate-products": "nest start --config nest-commander.json -- migrate-products",
     "migrate-orders": "nest start --config nest-commander.json -- migrate-orders",
     "migrate-customers": "nest start --config nest-commander.json -- migrate-command"
@@ -40,6 +42,7 @@
     "async": "^3.2.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
+    "cli-table": "^0.3.11",
     "concurrently": "^7.1.0",
     "form-data": "^4.0.0",
     "install": "^0.13.0",

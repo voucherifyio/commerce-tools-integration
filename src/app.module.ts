@@ -12,7 +12,7 @@ import { VoucherifyConnectorService } from './voucherify/voucherify-connector.se
 import { CommerceToolsConnectorService } from './commerceTools/commerce-tools-connector.service';
 import { ApiExtensionController } from './api-extension/api-extension.controller';
 import { CartService } from './api-extension/cart.service';
-import { RegisterService } from './api-extension/register.service';
+import { ApiExtensionService } from './api-extension/api-extension.service';
 import { TaxCategoriesService } from './commerceTools/tax-categories/tax-categories.service';
 import { TaxCategoriesController } from './commerceTools/tax-categories/tax-categories.controller';
 import { TypesController } from './commerceTools/types/types.controller';
@@ -23,11 +23,13 @@ import { ProductImportService } from './import/product-import.service';
 import { ImportController } from './import/import.controller';
 import { OrderImportService } from './import/order-import.service';
 import { CustomerImportService } from './import/customer-import.service';
-import { ApiExtenionRegisterCommand } from './cli/api-extension-register.command';
-import { ApiExtenionUnregisterCommand } from './cli/api-extension-unregister.command';
+import { ApiExtenionAddCommand } from './cli/api-extension-add.command';
+import { ApiExtenionDeleteCommand } from './cli/api-extension-delete.command';
+import { ApiExtenionUpdateCommand } from './cli/api-extension-update.command';
 import { MigrateCustomersCommand } from './cli/migrate-customers.command';
 import { MigrateOrdersCommand } from './cli/migrate-orders.command';
 import { MigrateProductsCommand } from './cli/migrate-products.command';
+import { ApiExtenionListCommand } from './cli/api-extension-list.command';
 import { ConfigCommand } from './cli/config.command';
 import {
   NoOpRequestJsonLogger,
@@ -52,6 +54,9 @@ import { RequestJsonFileLogger } from './misc/request-json-file-logger';
         COMMERCE_TOOLS_PRODUCTS_COUNTRY: Joi.string().optional(),
         COMMERCE_TOOLS_PRODUCT_CHANNEL: Joi.string().optional(),
         COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP: Joi.string().optional(),
+        COMMERCE_TOOLS_API_EXTENSION_KEY: Joi.string()
+          .optional()
+          .default('VOUCHERIFY_INTEGRATION'),
       }),
     }),
   ],
@@ -66,7 +71,7 @@ import { RequestJsonFileLogger } from './misc/request-json-file-logger';
     Logger,
     AppService,
     CartService,
-    RegisterService,
+    ApiExtensionService,
     VoucherifyConnectorService,
     CommerceToolsConnectorService,
     TaxCategoriesService,
@@ -76,12 +81,14 @@ import { RequestJsonFileLogger } from './misc/request-json-file-logger';
     ProductImportService,
     OrderImportService,
     CustomerImportService,
-    ApiExtenionRegisterCommand,
-    ApiExtenionUnregisterCommand,
+    ApiExtenionAddCommand,
+    ApiExtenionDeleteCommand,
     MigrateCustomersCommand,
     MigrateOrdersCommand,
     MigrateProductsCommand,
     ConfigCommand,
+    ApiExtenionListCommand,
+    ApiExtenionUpdateCommand,
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({
