@@ -200,4 +200,8 @@ export class VoucherifyConnectorService {
 
     return response;
   }
+
+  async releaseValidationSession(code: string, sessionKey: string) {
+    await this.getClient().vouchers.releaseValidationSession(code, sessionKey);
+  }
 }
