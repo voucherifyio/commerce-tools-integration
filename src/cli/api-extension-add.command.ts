@@ -1,23 +1,31 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { ConfigService } from '@nestjs/config';
-import { RegisterService } from '../api-extension/register.service';
+import { ApiExtensionService } from '../api-extension/api-extension.service';
 import loadingCli from 'loading-cli';
 
 @Command({
-  name: 'register',
+  name: 'api-extension-add',
   description:
-    'Configure commercetools API Extension to point to your development server',
+    'Add commercetools API Extension to point to your development server',
 })
-export class ApiExtenionRegisterCommand implements CommandRunner {
+export class ApiExtenionAddCommand implements CommandRunner {
   constructor(
-    private readonly registerService: RegisterService,
+    private readonly registerService: ApiExtensionService,
     private readonly configService: ConfigService,
   ) {}
   async run(): Promise<void> {
     const url = this.configService.get<string>('APP_URL');
+    const apiExtensionKey = this.configService.get<string>(
+      'COMMERCE_TOOLS_API_EXTENSION_KEY',
+    );
+
+    if (!url) {
+      loadingCli(`Missing APP_URL configuration`).fail();
+      return;
+    }
 
     const spinner = loadingCli(`Register API Extension for ${url}`).start();
-    const result = await this.registerService.register(url);
+    const result = await this.registerService.add(url, apiExtensionKey);
     if (result) {
       spinner.succeed(`API Extension registered for ${url}`);
     } else {
