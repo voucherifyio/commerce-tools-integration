@@ -197,8 +197,8 @@ Currently we cover the following scenarios:
 
 - `npm run start` - start the application in production mode
 - `npm run dev` - start the application in development mode
-- `npm run api-extension-add` - add API Extension pointing to your server (server url is taken from APP_URL environment variable)
-- `npm run api-extension-delete` - remove API Extension by Key value configured in COMMERCE_TOOLS_API_EXTENSION_KEY environment variable. Optionaly you can provide specific API Extension Id by `npm run api-extension-delete -- --id=xxx-xxx-xxx`
+- `npm run api-extension-add` - add commercetools API Extension pointing to your server (server url is taken from APP_URL environment variable)
+- `npm run api-extension-delete` - remove commercetools API Extension by Key value configured in COMMERCE_TOOLS_API_EXTENSION_KEY environment variable. Optionaly you can provide specific API Extension Id by `npm run api-extension-delete -- --id=xxx-xxx-xxx`
 - `npm run api-extension-update` - remove old and add new API Extension pointing to your server, url is taken from APP_URL environment variable, old API Extension is recognized by API Extension key configured by COMMERCE_TOOLS_API_EXTENSION_KEY environment variable
 - `npm run api-extension-list` - list all commercetools API Extensions
 - `npm run dev:attach` - start the application in development mode including:
