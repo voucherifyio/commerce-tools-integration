@@ -8,6 +8,7 @@ import { Product } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
 
 import crypto = require('crypto');
+import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -22,6 +23,7 @@ export class ProductImportService {
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly logger: Logger,
     private readonly configService: ConfigService,
+    private readonly voucherifyClient: VoucherifyConnectorService,
   ) {}
 
   private async *getAllProducts(
@@ -71,6 +73,9 @@ export class ProductImportService {
   }
 
   private async productImport(period?: string) {
+    const metadataSchemaProperties =
+      await this.voucherifyClient.getMetadataSchemaProperties('product');
+
     const products = [];
     const skus = [];
 
@@ -79,6 +84,11 @@ export class ProductImportService {
         products.push({
           name: product.masterData.current.name.en,
           source_id: product.id,
+          ...Object.fromEntries(
+            product.masterData.current.masterVariant.attributes
+              .filter((attr) => metadataSchemaProperties.includes(attr.name))
+              .map((attr) => [attr.name, attr.value]),
+          ),
         });
 
         if (product.masterData.current.variants.length) {
@@ -110,7 +120,9 @@ export class ProductImportService {
 
   private async productUpload(importedData, dataType: 'products' | 'skus') {
     const randomFileName = `${crypto.randomBytes(20).toString('hex')}.csv`;
-    await new ObjectsToCsv(importedData).toDisk(randomFileName);
+    await new ObjectsToCsv(importedData).toDisk(randomFileName, {
+      allColumns: true,
+    });
     const url = `${this.configService.get<string>('VOUCHERIFY_API_URL')}/v1/${
       dataType === 'products' ? 'products' : 'skus'
     }/importCSV`;

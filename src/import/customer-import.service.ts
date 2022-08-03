@@ -6,6 +6,7 @@ import fetch from 'node-fetch2';
 import { CommerceToolsConnectorService } from 'src/commerceTools/commerce-tools-connector.service';
 import { Customer } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
+import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import crypto = require('crypto');
 import { OrderImportService } from './order-import.service';
 
@@ -23,6 +24,7 @@ export class CustomerImportService {
     private readonly configService: ConfigService,
     private readonly orderImportService: OrderImportService,
     private readonly logger: Logger,
+    private readonly voucherifyClient: VoucherifyConnectorService,
   ) {}
 
   private async *getAllCustomers(
@@ -55,6 +57,8 @@ export class CustomerImportService {
   }
 
   private async customerImport(period?: string) {
+    const metadataSchemaProperties =
+      await this.voucherifyClient.getMetadataSchemaProperties('customer');
     const customers = [];
 
     for await (const customersBatch of this.getAllCustomers(period)) {
@@ -71,6 +75,11 @@ export class CustomerImportService {
             line_1: customer.addresses[0].streetName,
           },
           phone: customer.addresses.length ?? customer.addresses[0].phone,
+          ...Object.fromEntries(
+            Object.keys(customer.custom?.fields ? customer.custom?.fields : {})
+              .filter((attr) => metadataSchemaProperties.includes(attr))
+              .map((attr) => [attr, customer.custom.fields[attr]]),
+          ),
         });
       });
     }
@@ -104,7 +113,9 @@ export class CustomerImportService {
 
   private async customerUpload(importedData) {
     const randomFileName = `${crypto.randomBytes(20).toString('hex')}.csv`;
-    await new ObjectsToCsv(importedData).toDisk(randomFileName);
+    await new ObjectsToCsv(importedData).toDisk(randomFileName, {
+      allColumns: true,
+    });
     const url = `${this.configService.get<string>(
       'VOUCHERIFY_API_URL',
     )}/v1/customers/importCSV`;

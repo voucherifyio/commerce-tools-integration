@@ -25,10 +25,7 @@
     "api-extension-add": "nest start --config nest-commander.json -- api-extension-add",
     "api-extension-update": "nest start --config nest-commander.json -- api-extension-update",
     "api-extension-delete": "nest start --config nest-commander.json -- api-extension-delete",
-    "migrate-products": "nest start --config nest-commander.json -- migrate-products",
-    "migrate-orders": "nest start --config nest-commander.json -- migrate-orders",
-    "migrate-customers": "nest start --config nest-commander.json -- migrate-command",
-    "migrate": "nest start --config nest-commander.json -- migrate"
+    "migrate": "nest start --config nest-commander.json -- migrate" 
   },
   "dependencies": {
     "@commercetools/platform-sdk": "^2.7.0",
