@@ -204,4 +204,12 @@ export class VoucherifyConnectorService {
   async releaseValidationSession(code: string, sessionKey: string) {
     await this.getClient().vouchers.releaseValidationSession(code, sessionKey);
   }
+
+  async getMetadataSchemaProperties(resourceName: string): Promise<string[]> {
+    const meatdataSchemas = await this.getClient().metadataSchemas.list();
+    const metadataSchema = meatdataSchemas.schemas.find(
+      (schema) => schema.related_object === resourceName,
+    );
+    return Object.keys(metadataSchema?.properties ?? {});
+  }
 }

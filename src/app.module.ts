@@ -26,11 +26,9 @@ import { CustomerImportService } from './import/customer-import.service';
 import { ApiExtensionAddCommand } from './cli/api-extension-add.command';
 import { ApiExtensionDeleteCommand } from './cli/api-extension-delete.command';
 import { ApiExtensionUpdateCommand } from './cli/api-extension-update.command';
-import { MigrateCustomersCommand } from './cli/migrate-customers.command';
-import { MigrateOrdersCommand } from './cli/migrate-orders.command';
-import { MigrateProductsCommand } from './cli/migrate-products.command';
 import { ApiExtensionListCommand } from './cli/api-extension-list.command';
 import { ConfigCommand } from './cli/config.command';
+import { MigrateCommand } from './cli/migrate.command';
 import {
   NoOpRequestJsonLogger,
   REQUEST_JSON_LOGGER,
@@ -83,9 +81,7 @@ import { RequestJsonFileLogger } from './misc/request-json-file-logger';
     CustomerImportService,
     ApiExtensionAddCommand,
     ApiExtensionDeleteCommand,
-    MigrateCustomersCommand,
-    MigrateOrdersCommand,
-    MigrateProductsCommand,
+    MigrateCommand,
     ConfigCommand,
     ApiExtensionListCommand,
     ApiExtensionUpdateCommand,
