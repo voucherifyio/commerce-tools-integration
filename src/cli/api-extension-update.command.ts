@@ -8,7 +8,7 @@ import loadingCli from 'loading-cli';
   description:
     'Remove old and add new API Extension pointing to your server. Url is taken from APP_URL environment variable. Old API Extension is recognized by API Extension "key" attribute configured by COMMERCE_TOOLS_API_EXTENSION_KEY environment variable',
 })
-export class ApiExtenionUpdateCommand implements CommandRunner {
+export class ApiExtensionUpdateCommand implements CommandRunner {
   constructor(
     private readonly apiExtensionService: ApiExtensionService,
     private readonly configService: ConfigService,

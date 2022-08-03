@@ -23,10 +23,10 @@ import { ProductImportService } from './import/product-import.service';
 import { ImportController } from './import/import.controller';
 import { OrderImportService } from './import/order-import.service';
 import { CustomerImportService } from './import/customer-import.service';
-import { ApiExtenionAddCommand } from './cli/api-extension-add.command';
-import { ApiExtenionDeleteCommand } from './cli/api-extension-delete.command';
-import { ApiExtenionUpdateCommand } from './cli/api-extension-update.command';
-import { ApiExtenionListCommand } from './cli/api-extension-list.command';
+import { ApiExtensionAddCommand } from './cli/api-extension-add.command';
+import { ApiExtensionDeleteCommand } from './cli/api-extension-delete.command';
+import { ApiExtensionUpdateCommand } from './cli/api-extension-update.command';
+import { ApiExtensionListCommand } from './cli/api-extension-list.command';
 import { ConfigCommand } from './cli/config.command';
 import { MigrateCommand } from './cli/migrate.command';
 import {
@@ -79,12 +79,12 @@ import { RequestJsonFileLogger } from './misc/request-json-file-logger';
     ProductImportService,
     OrderImportService,
     CustomerImportService,
-    ApiExtenionAddCommand,
-    ApiExtenionDeleteCommand,
+    ApiExtensionAddCommand,
+    ApiExtensionDeleteCommand,
     MigrateCommand,
     ConfigCommand,
-    ApiExtenionListCommand,
-    ApiExtenionUpdateCommand,
+    ApiExtensionListCommand,
+    ApiExtensionUpdateCommand,
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({
