@@ -21,7 +21,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prepare": "husky install",
-    "config": "npm run command config",
+    "config": "nest start --config nest-commander.json -- config",
     "api-extension-list": "nest start --config nest-commander.json -- api-extension-list",
     "api-extension-add": "nest start --config nest-commander.json -- api-extension-add",
     "api-extension-update": "nest start --config nest-commander.json -- api-extension-update",
