@@ -327,6 +327,12 @@ If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Changelog
 
+- 2022-08-03 `v2.0.1`
+    - added sync of customers who made an order without account
+    - enhanced CLI: removing three `migrate-...` commands and replace them with one `migrate` with several options
+    - added migration of metadata: as metadata from commercetools side are considered `custom fields` in case of `orders` and `customers` and `attributes` in case of `products`
+    - readme update
+
 - 2022-08-02 `v2.0.0`
     - version v2.x is not fully backward compatible with version v1.x, please refer to [Migration from v1.x.x to v2.x.x](#migration-from-v1xx-to-v2xx) section
     - fixing the issue with removing the commercetools API Extension pointing to other integrations
