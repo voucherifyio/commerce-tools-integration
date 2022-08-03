@@ -208,12 +208,17 @@ Currently we cover the following scenarios:
     1. custom coupon type - needed to store coupons codes inside the [Cart](https://docs.commercetools.com/api/projects/carts) object
     2. coupon tax category - needed for any coupon or gift card with a fixed amount discount
 - `npm run test` - run Jest tests
-- `npm run migrate-products` - sync all products from commercetools to Voucherify.
-    - add `period` argument to sync products from last X days (e.g. `npm run migrate-products -- --period=5`)
-- `npm run migrate-customers` - sync all customers from commercetools to Voucherify.
-    - add `period` argument to sync customers from last X days (e.g. `npm run migrate-customers -- --period=5`)
-- `npm run migrate-orders` - sync all of the `PAID` orders from commercetools to Voucherify. (might be throttled by Voucherify)
-    - add `period` argument to sync orders from last X days (e.g. `npm run migrate-orders -- --period=5`)
+- `npm run migrate` - migrate data from commercetools to Voucherify. Arguments:
+    - `type` - required - type of data which you want to migrate. Values: `products`, `orders`, `customers`
+    - `days` - optional - set number of days to sync from the past. Value: `number`
+    - `hours` - optional - set number of hours to sync from the past. Value: `number`
+    - `ms` - optional - set number of milliseconds to sync from the past. Value: `number`
+    - `date` - optional - set date from which the resources are to be migrated. Format: `YYYY-MM-DD`
+    - `longdate` - optional - set date and time from which the resources are to be migrated. Format: `YYYY-MM-DDTHH:MM:SS` \
+    Examples: 
+    - `npm run migrate -- --type=products`
+    - `npm run migrate -- --type=orders --days=5`
+    - `npm run migrate -- --type=customers --longdate=2022-03-21T21:04:37`
 
 ## REST API Endpoints
 
