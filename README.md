@@ -307,6 +307,7 @@ This command should be run once (or each time after `npm run api-extension-delet
 
 ### Sync
 Data migration allows us to handle more advanced features of Voucherify, so it is important to keep data updated (however it is still optional if you use only basic functionalities). Migration is done via `npm run migrate` commands. When you are launching the integration app the first time you should fetch all data (`products`, `orders`, `customers`). After that to keep Voucherify updated it will be convenient to sync data once in a while. To not process all of the data each time you can pass additional arguments (e.g. `days`, `date`) to shorten the sync period and as a result decrease time of these operations. You can do it manually, but we highly recommend automating this process with some tool like `Cron`. The period between syncs should depend on traffic on your platform or the time when new vouchers, campaigns, etc. are created to make them as close to the newest data as possible.
+Additionally each time migration happen metadata will be tried to sync. Metadata is [a feature of Voucherify](https://docs.voucherify.io/docs/metadata-custom-fields) which allows you to create more specific vouchers and campaigns. These properties are mapped from names of custom fields from commercetools for order and customer and from attributes for products. You can set which metadatas you want to have by setting it in `Voucherify -> <your profile> -> Project Settings -> Metadata Schema`. IMPORTANT! If you set some metadata in Voucherify to required, and this attribute would not be on your resource in commercetools, then whole operation will fail!
 
 ## Typical use case
 
@@ -328,11 +329,11 @@ If you found a bug or want to suggest a new feature, please file a Github issue.
 ## Changelog
 
 - 2022-08-03 `v3.0.0`
+    - many thanks to [@Irene350](https://github.com/Irene350) for your contribution!
     - this version is not fully backward compatible because of differences in migration commands
     - added sync of customers who made an order without account
     - enhanced CLI: removing three `migrate-...` commands and replace them with one `migrate` with several options
     - added migration of metadata: as metadata from commercetools side are considered `custom fields` in case of `orders` and `customers` and `attributes` in case of `products`
-    - fixed problem with deleting other api extensions while api extension registration
     - readme update
 
 - 2022-08-02 `v2.0.0`
@@ -348,6 +349,7 @@ If you found a bug or want to suggest a new feature, please file a Github issue.
 ## Migrations
 
 ### Migration from v2.x.x to v3.x.x
+- run `npm i`, because of using new version of Voucherify SDK, which can handle metadata schemas
 - replace all migrations commands `npm run migrate-products`, `npm run migrate-orders`, `npm run migrate-customers` with `npm run migrate -- --type=products`, `npm run migrate -- --type=orders`, `npm run migrate -- --type=customers`
 
 ### Migration from v1.x.x to v2.x.x
@@ -357,8 +359,8 @@ If you found a bug or want to suggest a new feature, please file a Github issue.
     - if there are existing commercetools API Extensions pointing to your integration app with empty value in `Key` columns, remove this API Extension by `id` value using `npm run api-extension-delete -- --id=xxx-xxx-xx` command
     - ensure that you have configured `APP_URL` environment variable
     - add new API Extension using `npm run api-extension-add` command
-- use `npm run api-Extension-update` instead of `npm run register` command
-- use `npm run api-Extension-delete` instead of `npm run unregister` command
+- use `npm run api-extension-update` instead of `npm run register` command
+- use `npm run api-extension-delete` instead of `npm run unregister` command
 
 
 ## Contact
