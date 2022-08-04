@@ -33,7 +33,7 @@ export class MigrateCommand implements CommandRunner {
   ) {}
 
   @Option({
-    flags: '-t, --type products | orders | customers',
+    flags: '--type [string]',
     description: `Required. Type of resource you want to sync. Values: 'products', 'orders', 'customers'`,
   })
   parseType(val: string): ResourceTypeArg {

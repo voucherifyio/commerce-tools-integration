@@ -26,7 +26,7 @@
     "api-extension-add": "nest start --config nest-commander.json -- api-extension-add",
     "api-extension-update": "nest start --config nest-commander.json -- api-extension-update",
     "api-extension-delete": "nest start --config nest-commander.json -- api-extension-delete",
-    "migrate": "nest start --config nest-commander.json -- migrate" 
+    "migrate": "nest start --config nest-commander.json -- migrate"
   },
   "dependencies": {
     "@commercetools/platform-sdk": "^2.7.0",
@@ -37,7 +37,7 @@
     "@nestjs/config": "^2.0.0",
     "@nestjs/core": "^8.0.0",
     "@nestjs/platform-express": "^8.0.0",
-    "@voucherify/sdk": "^2.0.4",
+    "@voucherify/sdk": "^2.0.9",
     "async": "^3.2.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
