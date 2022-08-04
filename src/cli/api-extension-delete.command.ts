@@ -4,7 +4,7 @@ import loadingCli from 'loading-cli';
 import { ConfigService } from '@nestjs/config';
 import { Extension } from '@commercetools/platform-sdk';
 
-type ApiExtenionDeleteCommandOptions = {
+type ApiExtensionDeleteCommandOptions = {
   id?: string;
 };
 
@@ -13,14 +13,14 @@ type ApiExtenionDeleteCommandOptions = {
   description:
     'Delete commercetools API Extension by "Key" value configured in COMMERCE_TOOLS_API_EXTENSION_KEY environment variable',
 })
-export class ApiExtenionDeleteCommand implements CommandRunner {
+export class ApiExtensionDeleteCommand implements CommandRunner {
   constructor(
     private readonly registerService: ApiExtensionService,
     private readonly configService: ConfigService,
   ) {}
   async run(
     passedParam: string[],
-    options?: ApiExtenionDeleteCommandOptions,
+    options?: ApiExtensionDeleteCommandOptions,
   ): Promise<void> {
     const apiExtensionKey = this.configService.get<string>(
       'COMMERCE_TOOLS_API_EXTENSION_KEY',
@@ -55,7 +55,7 @@ export class ApiExtenionDeleteCommand implements CommandRunner {
 
       if (removedExtensions.length) {
         spinner.succeed(
-          `Removed API Extenions, ids: ${removedExtensions
+          `Removed API Extensions, ids: ${removedExtensions
             .map((extension) => extension.id)
             .join(', ')}`,
         );

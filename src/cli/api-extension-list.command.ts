@@ -7,7 +7,7 @@ import Table from 'cli-table';
   name: 'api-extension-list',
   description: 'List registered commercetools API Extension',
 })
-export class ApiExtenionListCommand implements CommandRunner {
+export class ApiExtensionListCommand implements CommandRunner {
   constructor(private readonly registerService: ApiExtensionService) {}
   async run(): Promise<void> {
     const spinner = loadingCli('List registered API Extensions').start();
@@ -37,7 +37,7 @@ export class ApiExtenionListCommand implements CommandRunner {
 
       console.log(table.toString());
     } else {
-      spinner.fail(`No API Extenions`);
+      spinner.fail(`No API Extensions`);
     }
   }
 }

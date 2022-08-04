@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Order } from '@commercetools/platform-sdk';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
+import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { ConfigService } from '@nestjs/config';
 import fetch from 'node-fetch2';
 
@@ -15,18 +16,14 @@ export class OrderImportService {
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly logger: Logger,
     private readonly configService: ConfigService,
+    private readonly voucherifyClient: VoucherifyConnectorService,
   ) {}
 
-  private async *getAllOrders(fetchPeriod?: number): AsyncGenerator<Order[]> {
+  public async *getAllOrders(minDateTime?: string): AsyncGenerator<Order[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
     let page = 0;
     let allOrdersCollected = false;
-
-    const date = new Date();
-    if (fetchPeriod) {
-      date.setDate(date.getDate() - fetchPeriod);
-    }
 
     do {
       const ordersResult = await ctClient
@@ -35,8 +32,8 @@ export class OrderImportService {
           queryArgs: {
             limit: limit,
             offset: page * limit,
-            ...(fetchPeriod && {
-              where: `lastModifiedAt>="${date.toJSON()}" or createdAt>="${date.toJSON()}"`,
+            ...(minDateTime && {
+              where: `lastModifiedAt>="${minDateTime}" or createdAt>="${minDateTime}"`,
             }),
           },
         })
@@ -54,7 +51,9 @@ export class OrderImportService {
     } while (!allOrdersCollected);
   }
 
-  public async migrateOrders(period?: number) {
+  public async migrateOrders(period?: string) {
+    const metadataSchemaProperties =
+      await this.voucherifyClient.getMetadataSchemaProperties('order');
     const orders = [];
 
     for await (const ordersBatch of this.getAllOrders(period)) {
@@ -62,8 +61,20 @@ export class OrderImportService {
         if (order.paymentState !== 'Paid') {
           return;
         }
+        const tmp = Object.keys(
+          order.custom?.fields ? order.custom?.fields : {},
+        )
+          .filter((customField) =>
+            metadataSchemaProperties.includes(customField),
+          )
+          .map((customField) => {
+            return [[customField], order.custom?.fields[customField]];
+          });
+        if (Object.keys(tmp).length) {
+          console.log('tmp obj', tmp, Object.fromEntries(tmp));
+        }
 
-        orders.push({
+        const orderObj = {
           object: 'order',
           source_id: order.id,
           created_at: order.createdAt,
@@ -98,7 +109,13 @@ export class OrderImportService {
               },
             };
           }),
-        });
+        };
+
+        orders.push(
+          Object.keys(tmp).length
+            ? { ...orderObj, metadata: Object.fromEntries(tmp) }
+            : orderObj,
+        );
       });
     }
 

@@ -8,6 +8,7 @@ import { Product } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
 
 import crypto = require('crypto');
+import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -22,10 +23,11 @@ export class ProductImportService {
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly logger: Logger,
     private readonly configService: ConfigService,
+    private readonly voucherifyClient: VoucherifyConnectorService,
   ) {}
 
   private async *getAllProducts(
-    fetchPeriod?: number,
+    minDateTime?: string,
   ): AsyncGenerator<Product[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
@@ -45,11 +47,6 @@ export class ProductImportService {
       'COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP',
     );
 
-    const date = new Date();
-    if (fetchPeriod) {
-      date.setDate(date.getDate() - fetchPeriod);
-    }
-
     do {
       const productResult = await ctClient
         .products()
@@ -61,8 +58,8 @@ export class ProductImportService {
             priceCountry: country,
             priceCustomerGroup: customerGroup,
             priceChannel: channel,
-            ...(fetchPeriod && {
-              where: `lastModifiedAt>="${date.toJSON()}" or createdAt>="${date.toJSON()}"`,
+            ...(minDateTime && {
+              where: `lastModifiedAt>="${minDateTime}" or createdAt>="${minDateTime}"`,
             }),
           },
         })
@@ -75,7 +72,10 @@ export class ProductImportService {
     } while (!allProductsCollected);
   }
 
-  private async productImport(period?: number) {
+  private async productImport(period?: string) {
+    const metadataSchemaProperties =
+      await this.voucherifyClient.getMetadataSchemaProperties('product');
+
     const products = [];
     const skus = [];
 
@@ -84,6 +84,11 @@ export class ProductImportService {
         products.push({
           name: product.masterData.current.name.en,
           source_id: product.id,
+          ...Object.fromEntries(
+            product.masterData.current.masterVariant.attributes
+              .filter((attr) => metadataSchemaProperties.includes(attr.name))
+              .map((attr) => [attr.name, attr.value]),
+          ),
         });
 
         if (product.masterData.current.variants.length) {
@@ -115,7 +120,9 @@ export class ProductImportService {
 
   private async productUpload(importedData, dataType: 'products' | 'skus') {
     const randomFileName = `${crypto.randomBytes(20).toString('hex')}.csv`;
-    await new ObjectsToCsv(importedData).toDisk(randomFileName);
+    await new ObjectsToCsv(importedData).toDisk(randomFileName, {
+      allColumns: true,
+    });
     const url = `${this.configService.get<string>('VOUCHERIFY_API_URL')}/v1/${
       dataType === 'products' ? 'products' : 'skus'
     }/importCSV`;
@@ -174,7 +181,7 @@ export class ProductImportService {
     return result;
   }
 
-  public async migrateProducts(period?: number) {
+  public async migrateProducts(period?: string) {
     const { products, skus } = await this.productImport(period);
 
     const productResult = await this.productUpload(products, 'products');
