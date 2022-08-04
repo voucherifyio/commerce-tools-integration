@@ -220,7 +220,7 @@ Currently we cover the following scenarios:
 - `GET /` - welcome application message
 - `POST /api-extension` - handle API extension requests (cart) from commercetools
 - `POST /types/configure` - trigger coupon types configuration
-- `POST /tax-categories/configure` - trigger coupon tax configuration
+- `POST /tax-categories/configure` - trigger coupon tax configuration (equal to `npm run config`)
 
 ---
 
@@ -291,7 +291,7 @@ git push heroku <branch_name>:main # For other branch
 1. Go to your <application_name> -> More -> Run console
 2. Run `npm run config` 
 
-This command should be run once for every commercetool application.
+This command should be run once shortly after you deploy your application, and **each time when your commercetools project change the list of countries in which it operates**.
 
 ### Register API Extension
 
