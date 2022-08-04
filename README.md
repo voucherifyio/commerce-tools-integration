@@ -327,10 +327,12 @@ If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Changelog
 
-- 2022-08-03 `v2.0.1`
+- 2022-08-03 `v3.0.0`
+    - this version is not fully backward compatible because of differences in migration commands
     - added sync of customers who made an order without account
     - enhanced CLI: removing three `migrate-...` commands and replace them with one `migrate` with several options
     - added migration of metadata: as metadata from commercetools side are considered `custom fields` in case of `orders` and `customers` and `attributes` in case of `products`
+    - fixed problem with deleting other api extensions while api extension registration
     - readme update
 
 - 2022-08-02 `v2.0.0`
@@ -344,6 +346,9 @@ If you found a bug or want to suggest a new feature, please file a Github issue.
 - 2022-07-26 `v1.0.0` Initial release
 
 ## Migrations
+
+### Migration from v2.x.x to v3.x.x
+- replace all migrations commands `npm run migrate-products`, `npm run migrate-orders`, `npm run migrate-customers` with `npm run migrate -- --type=products`, `npm run migrate -- --type=orders`, `npm run migrate -- --type=customers`
 
 ### Migration from v1.x.x to v2.x.x
 
