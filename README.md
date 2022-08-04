@@ -296,7 +296,7 @@ git push heroku <branch_name>:main # For other branch
 1. Go to your <application_name> -> More -> Run console
 2. Run `npm run config` 
 
-This command should be run once for every commercetools application.
+This command should be run once shortly after you deploy your application, and **each time when your commercetools project change the list of countries in which it operates**.
 
 ### Register API Extension
 
