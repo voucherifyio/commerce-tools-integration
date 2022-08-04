@@ -1,13 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommerceToolsConnectorService } from '../commerce-tools-connector.service';
 import { TaxCategory } from '@commercetools/platform-sdk';
-import { ProductsService } from '../products/products.service';
 
 @Injectable()
 export class TaxCategoriesService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
-    private readonly productsService: ProductsService,
     private readonly logger: Logger,
   ) {}
 
@@ -68,11 +66,11 @@ export class TaxCategoriesService {
       countryRates: rates.map((rate) => rate.country).join(', '),
     });
 
-    const listOfCountriesUsedInAllProducts = (await ctClient.get().execute())
+    const listOfCountriesUsedInTheProject = (await ctClient.get().execute())
       .body.countries;
 
     const desiredRates =
-      listOfCountriesUsedInAllProducts?.map((countryCode) => {
+      listOfCountriesUsedInTheProject?.map((countryCode) => {
         return {
           name: 'coupon',
           amount: 0,
@@ -181,14 +179,14 @@ export class TaxCategoriesService {
         },
       })
       .execute();
-    const sucess = [200, 201].includes(response.statusCode);
-    if (sucess) {
+    const success = [200, 201].includes(response.statusCode);
+    if (success) {
       this.logger.debug({ msg: 'Added country to coupon tax category' });
     } else {
       this.logger.error({
         msg: 'Could not add country to coupon tax category',
       });
     }
-    return sucess;
+    return success;
   }
 }

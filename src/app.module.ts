@@ -17,7 +17,6 @@ import { TaxCategoriesService } from './commerceTools/tax-categories/tax-categor
 import { TaxCategoriesController } from './commerceTools/tax-categories/tax-categories.controller';
 import { TypesController } from './commerceTools/types/types.controller';
 import { TypesService } from './commerceTools/types/types.service';
-import { ProductsService } from './commerceTools/products/products.service';
 import { OrderService } from './api-extension/order.service';
 import { ProductImportService } from './import/product-import.service';
 import { ImportController } from './import/import.controller';
@@ -76,7 +75,6 @@ import { RequestJsonFileLogger } from './misc/request-json-file-logger';
     CommerceToolsConnectorService,
     TaxCategoriesService,
     TypesService,
-    ProductsService,
     OrderService,
     ProductImportService,
     OrderImportService,
