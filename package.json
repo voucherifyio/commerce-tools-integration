@@ -1,6 +1,6 @@
 {
   "name": "commerce-tools-integration",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "",
   "author": "",
   "private": true,
@@ -8,6 +8,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
+    "command": "nest start --config nest-commander.json --",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "dev": "nest start --watch",
     "dev:attach": "nest start --watch --config nest-dev-attached.json",
@@ -20,14 +21,12 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prepare": "husky install",
-    "config": "npm run command config",
+    "config": "nest start --config nest-commander.json -- config",
     "api-extension-list": "nest start --config nest-commander.json -- api-extension-list",
     "api-extension-add": "nest start --config nest-commander.json -- api-extension-add",
     "api-extension-update": "nest start --config nest-commander.json -- api-extension-update",
     "api-extension-delete": "nest start --config nest-commander.json -- api-extension-delete",
-    "migrate-products": "nest start --config nest-commander.json -- migrate-products",
-    "migrate-orders": "nest start --config nest-commander.json -- migrate-orders",
-    "migrate-customers": "nest start --config nest-commander.json -- migrate-command"
+    "migrate": "nest start --config nest-commander.json -- migrate"
   },
   "dependencies": {
     "@commercetools/platform-sdk": "^2.7.0",
@@ -38,7 +37,7 @@
     "@nestjs/config": "^2.0.0",
     "@nestjs/core": "^8.0.0",
     "@nestjs/platform-express": "^8.0.0",
-    "@voucherify/sdk": "^2.0.4",
+    "@voucherify/sdk": "^2.0.9",
     "async": "^3.2.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",

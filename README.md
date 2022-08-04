@@ -45,7 +45,7 @@ Demo store https://github.com/voucherifyio/sunrise-for-commerce-tools-integratio
 
 ## How does the integration between Voucherify and commercetools work?
 
-The integration between Voucherify and commercetools allows your customers to use Voucherify-generated promotions in a store built on top of commercetools. We currently  support all types of coupon campaign and we are working to fully support referral programs, gift cards, cart-level promotions, loyalty programs and giveaways.
+The integration between Voucherify and commercetools allows your customers to use Voucherify-generated promotions in a store built on top of commercetools. We currently support all types of coupon campaign and we are working to fully support referral programs, gift cards, cart-level promotions, loyalty programs and giveaways.
 
 We support coupons campaigns, including:
 
@@ -62,12 +62,12 @@ If we want to allow customers to use coupons defined in Voucherify, the integrat
 
 ![commercetools & Voucherify integration flow chart](./public/integration-flow.jpeg)
 
-In addition, we suggest synchronising your customer, product, and order data between commercetools and Voucherify, so you can use that data to build more advanced promotion campaigns. 
+In addition, we suggest synchronizing your customer, product, and order data between commercetools and Voucherify, so you can use that data to build more advanced promotion campaigns. 
 
 
 ## How to work with commercetools API Extensions?
 
-Our integration uses [commercetools API Extensions](https://docs.commercetools.com/api/projects/api-extensions) to monitor cart and order updates. But, before commercetools can send us HTTP requests with cart and order update details, we need to register API Extension and let commercetools know under which public URL our integration is available. There are two scenarios. First, if you run the integration on a publicly available server, you can register or unregister commercetools API Extension using `npm run api-extension-add`, `npm run api-extension-detele` or `npm run api-extension-update` commands. Those commands use the APP_URL environment variable as the public server address where commercetools will send cart and order updates. The second scenario is when you develop or test integration locally, and your PC does not have public IP or domain. In that case, you need to use a reverse proxy (e.g., ngrok) solution to expose your local integration application. To simplify this process, we built a script npm run dev:attach that runs an ngrok reverse proxy service, uses a randomly generated ngrok public URL to register API Extension in commercetools and start our application.
+Our integration uses [commercetools API Extensions](https://docs.commercetools.com/api/projects/api-extensions) to monitor cart and order updates. But, before commercetools can send us HTTP requests with cart and order update details, we need to register API Extension and let commercetools know under which public URL our integration is available. There are two scenarios. First, if you run the integration on a publicly available server, you can register or unregister commercetools API Extension using `npm run api-extension-add`, `npm run api-extension-delete` or `npm run api-extension-update` commands. Those commands use the APP_URL environment variable as the public server address where commercetools will send cart and order updates. The second scenario is when you develop or test integration locally, and your PC does not have public IP or domain. In that case, you need to use a reverse proxy (e.g., ngrok) solution to expose your local integration application. To simplify this process, we built a script npm run dev:attach that runs an ngrok reverse proxy service, uses a randomly generated ngrok public URL to register API Extension in commercetools and start our application.
 
 ``` mermaid
 graph LR;
@@ -87,7 +87,7 @@ graph LR;
 Please note:
 
 1. commercetools API Extensions pointing to the server that does not respond or does not exist will block your commercetools API. Therefore, you must ensure that you have registered in commercetools only required API Extensions pointing to working servers. You can list currently registered API Extensions using `npm run api-extension-list` command.
-2. `npm run api-extension-detele` and `npm run api-extension-update` commands recognize their own API Extension records by the `key` value configured in COMMERCE_TOOLS_API_EXTENSION_KEY environment variable (default value is `VOUCHERIFY_INTEGRATION`
+2. `npm run api-extension-delete` and `npm run api-extension-update` commands recognize their own API Extension records by the `key` value configured in COMMERCE_TOOLS_API_EXTENSION_KEY environment variable (default value is `VOUCHERIFY_INTEGRATION`
 
 ## Cart updates
 
@@ -104,7 +104,7 @@ Please note that by putting information about applied discount codes in the cart
 ## How set up the development environment?
 
 1. Create new Voucherify and commercetools trial accounts.
-2. Load test data  to commercetools using [Sunrise Data](https://github.com/commercetools/commercetools-sunrise-data) project and follow instructions in the README.md file.
+2. Load test data to commercetools using [Sunrise Data](https://github.com/commercetools/commercetools-sunrise-data) project and follow instructions in the README.md file.
 3. Install the integration app locally following the [Installation and configuration guide](#installation-and-configuration-guide).
 4. Install [Sunrise Storefront](https://github.com/voucherifyio/sunrise-for-commerce-tools-integration) adjusted to work with Voucherify discounts, following the instruction from the "Installation" section of the README.md file. 
 
@@ -135,7 +135,7 @@ Set environment variables with credentials to Voucherify and commercetools APIs.
     - `COMMERCE_TOOLS_SECRET`
 - Additional configuration variables
     - `COMMERCE_TOOLS_PRODUCTS_CURRENCY` - (e.g. EUR) [*]
-    - (optional) `COMMERCE_TOOLS_API_EXTENSION_KEY` - value used in API Extension `key` attribute used to recognize it's own API Extension records, default value is: `VOUCHERIFY_INTEGRATION`
+    - (optional) `COMMERCE_TOOLS_API_EXTENSION_KEY` - value used in API Extension `key` attribute used to recognize its own API Extension records, default value is: `VOUCHERIFY_INTEGRATION`
     - (optional) `COMMERCE_TOOLS_PRODUCTS_COUNTRY` - (e.g. DE) [*]
     - (optional) `COMMERCE_TOOLS_PRODUCT_CHANNEL` - (e.g. Store London) [*]
     - (optional) `COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP` - (e.g. b2b) [*]
@@ -208,12 +208,17 @@ Currently we cover the following scenarios:
     1. custom coupon type - needed to store coupons codes inside the [Cart](https://docs.commercetools.com/api/projects/carts) object
     2. coupon tax category - needed for any coupon or gift card with a fixed amount discount
 - `npm run test` - run Jest tests
-- `npm run migrate-products` - sync all products from commercetools to Voucherify.
-    - add `period` argument to sync products from last X days (e.g. `npm run migrate-products -- --period=5`)
-- `npm run migrate-customers` - sync all customers from commercetools to Voucherify.
-    - add `period` argument to sync customers from last X days (e.g. `npm run migrate-customers -- --period=5`)
-- `npm run migrate-orders` - sync all of the `PAID` orders from commercetools to Voucherify. (might be throttled by Voucherify)
-    - add `period` argument to sync orders from last X days (e.g. `npm run migrate-orders -- --period=5`)
+- `npm run migrate` - migrate data from commercetools to Voucherify. Arguments:
+    - `type` - required - type of data which you want to migrate. Values: `products`, `orders`, `customers`
+    - `days` - optional - set number of days to sync from the past. Value: `number`
+    - `hours` - optional - set number of hours to sync from the past. Value: `number`
+    - `ms` - optional - set number of milliseconds to sync from the past. Value: `number`
+    - `date` - optional - set date from which the resources are to be migrated. Format: `YYYY-MM-DD`
+    - `longdate` - optional - set date and time from which the resources are to be migrated. Format: `YYYY-MM-DDTHH:MM:SS` \
+    Examples: 
+    - `npm run migrate -- --type=products`
+    - `npm run migrate -- --type=orders --days=5`
+    - `npm run migrate -- --type=customers --longdate=2022-03-21T21:04:37`
 
 ## REST API Endpoints
 
@@ -291,7 +296,7 @@ git push heroku <branch_name>:main # For other branch
 1. Go to your <application_name> -> More -> Run console
 2. Run `npm run config` 
 
-This command should be run once shortly after you deploy your application, and **each time when your commercetools project change the list of countries in which it operates**.
+This command should be run once for every commercetools application.
 
 ### Register API Extension
 
@@ -299,6 +304,10 @@ This command should be run once shortly after you deploy your application, and *
 2. Run `npm run api-extension-add` 
 
 This command should be run once (or each time after `npm run api-extension-delete`).
+
+### Sync
+Data migration allows us to handle more advanced features of Voucherify, so it is important to keep data updated (however it is still optional if you use only basic functionalities). Migration is done via `npm run migrate` commands. When you are launching the integration app the first time you should fetch all data (`products`, `orders`, `customers`). After that to keep Voucherify updated it will be convenient to sync data once in a while. To not process all of the data each time you can pass additional arguments (e.g. `days`, `date`) to shorten the sync period and as a result decrease time of these operations. You can do it manually, but we highly recommend automating this process with some tool like `Cron`. The period between syncs should depend on traffic on your platform or the time when new vouchers, campaigns, etc. are created to make them as close to the newest data as possible.
+Additionally each time migration happen metadata will be tried to sync. Metadata is [a feature of Voucherify](https://docs.voucherify.io/docs/metadata-custom-fields) which allows you to create more specific vouchers and campaigns. These properties are mapped from names of custom fields from commercetools for order and customer and from attributes for products. You can set which metadatas you want to have by setting it in `Voucherify -> <your profile> -> Project Settings -> Metadata Schema`. IMPORTANT! If you set some metadata in Voucherify to required, and this attribute would not be on your resource in commercetools, then whole operation will fail!
 
 ## Typical use case
 
@@ -319,27 +328,39 @@ If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Changelog
 
+- 2022-08-03 `v3.0.0`
+    - many thanks to [@Irene350](https://github.com/Irene350) for your contribution!
+    - this version is not fully backward compatible because of differences in migration commands
+    - added sync of customers who made an order without account
+    - enhanced CLI: removing three `migrate-...` commands and replace them with one `migrate` with several options
+    - added migration of metadata: as metadata from commercetools side are considered `custom fields` in case of `orders` and `customers` and `attributes` in case of `products`
+    - readme update
+
 - 2022-08-02 `v2.0.0`
     - version v2.x is not fully backward compatible with version v1.x, please refer to [Migration from v1.x.x to v2.x.x](#migration-from-v1xx-to-v2xx) section
     - fixing the issue with removing the commercetools API Extension pointing to other integrations
     - removed CLI commands: `register` and `unregister`
     - added CLI commands: `api-extension-add`, `api-extension-update`, `api-extension-delete` and `api-extension-list`
-    - added new optional configuration (`COMMERCE_TOOLS_API_EXTENSION_KEY` environment variable) to recognize own commercetools API Extenion from 3rd party ones when performing delete or update operations
+    - added new optional configuration (`COMMERCE_TOOLS_API_EXTENSION_KEY` environment variable) to recognize own commercetools API Extension from 3rd party ones when performing delete or update operations
     - remove coupon from session when coupon is deleted from a cart, it requires [Sunrise Storefront v2.0.0](https://github.com/voucherifyio/sunrise-for-commerce-tools-integration)
 - 2022-07-28 `v1.0.1` Update README.md file
 - 2022-07-26 `v1.0.0` Initial release
 
 ## Migrations
 
+### Migration from v2.x.x to v3.x.x
+- run `npm i`, because of using new version of Voucherify SDK, which can handle metadata schemas
+- replace all migrations commands `npm run migrate-products`, `npm run migrate-orders`, `npm run migrate-customers` with `npm run migrate -- --type=products`, `npm run migrate -- --type=orders`, `npm run migrate -- --type=customers`
+
 ### Migration from v1.x.x to v2.x.x
 
 - replace old commercetools API Extensions pointing to your integration application:
     - list all existing commercetoools API Extension by `npm run api-extension-list` command 
-    - if there are exisitng comemrcetools API Extenions pointing to your integration app with empty value in `Key` columns, remove this API Extenion by `id` value using `npm run api-extension-delete -- --id=xxx-xxx-xx` command
+    - if there are existing commercetools API Extensions pointing to your integration app with empty value in `Key` columns, remove this API Extension by `id` value using `npm run api-extension-delete -- --id=xxx-xxx-xx` command
     - ensure that you have configured `APP_URL` environment variable
     - add new API Extension using `npm run api-extension-add` command
-- use `npm run api-extenion-update` instead of `npm run register` command
-- use `npm run api-extenion-delete` instead of `npm run unregister` command
+- use `npm run api-extension-update` instead of `npm run register` command
+- use `npm run api-extension-delete` instead of `npm run unregister` command
 
 
 ## Contact
