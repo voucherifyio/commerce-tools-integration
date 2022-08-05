@@ -327,6 +327,11 @@ Additionally each time migration happen metadata will be tried to sync. Metadata
 If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Changelog
+- 2022-08-05 `v3.0.2`
+    - many thanks again to [@Irene350](https://github.com/Irene350) for your contribution!
+    - optimising the code to retrieve all the project countries for coupon tax category (`npm run config`)
+    - refactoring
+    - minor changes in readme (`npm run config`)
 - 2022-08-05 `v3.0.1`
     - fix period argument of migrate command
 - 2022-08-03 `v3.0.0`
