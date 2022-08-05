@@ -129,7 +129,7 @@ export class MigrateCommand implements CommandRunner {
       );
       return;
     }
-    
+
     const fetchTime =
       options.days ||
       options.hours ||

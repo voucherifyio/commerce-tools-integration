@@ -327,7 +327,8 @@ Additionally each time migration happen metadata will be tried to sync. Metadata
 If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Changelog
-
+- 2022-08-05 `v3.0.1`
+    - fix period argument of migrate command
 - 2022-08-03 `v3.0.0`
     - many thanks to [@Irene350](https://github.com/Irene350) for your contribution!
     - this version is not fully backward compatible because of differences in migration commands
