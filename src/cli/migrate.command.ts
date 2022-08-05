@@ -129,18 +129,14 @@ export class MigrateCommand implements CommandRunner {
       );
       return;
     }
-
-    const optionKeyOtherThanType =
+    
+    const fetchTime =
       options.days ||
       options.hours ||
       options.ms ||
       options.date ||
       options.longdate ||
       null;
-
-    const fetchTime = optionKeyOtherThanType
-      ? options[optionKeyOtherThanType]
-      : null;
 
     const spinnerCouponsTypes = loadingCli(
       fetchTime
