@@ -2,8 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Order } from '@commercetools/platform-sdk';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
-import { ConfigService } from '@nestjs/config';
-// import fetch from 'node-fetch2';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -15,7 +13,6 @@ export class OrderImportService {
   constructor(
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly logger: Logger,
-    private readonly configService: ConfigService,
     private readonly voucherifyClient: VoucherifyConnectorService,
   ) {}
 
@@ -118,46 +115,23 @@ export class OrderImportService {
 
     this.logger.debug(`Sending ${orders.length} orders to Voucherify`);
 
-    // const url = `${this.configService.get<string>(
-    //   'VOUCHERIFY_API_URL',
-    // )}/v1/orders`;
-    // const headers = {
-    //   Accept: '*/*',
-    //   'X-App-Id': this.configService.get<string>('VOUCHERIFY_APP_ID'),
-    //   'X-App-Token': this.configService.get<string>('VOUCHERIFY_SECRET_KEY'),
-    //   'content-type': 'application/json',
-    // };
     const client = this.voucherifyClient.getClient();
     do {
       const response = client.orders.create(orders.pop());
-      // const response = await fetch(url, {
-      //   method: 'POST',
-      //   headers: headers,
-      //   body: JSON.stringify(orders.pop()),
-      // });
-
-      // if ((await response.json()).code === 400) {
-      //   return { success: false };
-      // }
 
       const apiLimitHandler = client.apiLimitsHandler.areLimitsAvailable();
 
-      // if(apiLimitHandler) {
       const limit = apiLimitHandler
         ? client.apiLimitsHandler.getRateLimit()
         : 0;
       const remaining = apiLimitHandler
         ? client.apiLimitsHandler.getRateLimitRemaining()
         : 0;
-      // }
-      // const limit = response.headers.get('x-rate-limit-limit');
-      // const remaining = response.headers.get('x-rate-limit-remaining');
 
       if (!remaining) {
         const retryAfter = apiLimitHandler
           ? client.apiLimitsHandler.getRetryAfter()
           : 0;
-        // response.headers.get('Retry-After');
         this.logger.debug(
           `You are out of api calls. Program will be awaken in ${
             retryAfter * 1000
