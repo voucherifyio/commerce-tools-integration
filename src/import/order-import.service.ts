@@ -14,10 +14,9 @@ export class OrderImportService {
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly logger: Logger,
     private readonly voucherifyClient: VoucherifyConnectorService,
-  ) {
-  }
+  ) {}
 
-  public async* getAllOrders(minDateTime?: string): AsyncGenerator<Order[]> {
+  public async *getAllOrders(minDateTime?: string): AsyncGenerator<Order[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
     let page = 0;
