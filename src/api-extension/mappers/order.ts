@@ -11,6 +11,7 @@ export class OrderMapper {
 
   public getOrderObject(order: Order) {
     return {
+      id: order.id,
       object: 'order',
       source_id: order.id,
       created_at: order.createdAt,
@@ -18,6 +19,7 @@ export class OrderMapper {
       status: 'PAID',
       customer: {
         object: 'customer',
+        id: order.customerId || order.anonymousId,
         source_id: order.customerId || order.anonymousId,
         name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
         email: order.shippingAddress?.email,
