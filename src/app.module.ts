@@ -34,6 +34,11 @@ import {
   REQUEST_JSON_LOGGER,
 } from './misc/request-json-logger';
 import { RequestJsonFileLogger } from './misc/request-json-file-logger';
+import {
+  AcceptLanguageResolver,
+  I18nModule,
+  I18nJsonLoader,
+} from 'nestjs-i18n';
 
 @Module({
   imports: [
@@ -56,6 +61,15 @@ import { RequestJsonFileLogger } from './misc/request-json-file-logger';
           .optional()
           .default('VOUCHERIFY_INTEGRATION'),
       }),
+    }),
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loader: I18nJsonLoader,
+      loaderOptions: {
+        path: path.join(__dirname, '/i18n/'),
+        watch: true,
+      },
+      resolvers: [AcceptLanguageResolver],
     }),
   ],
   controllers: [

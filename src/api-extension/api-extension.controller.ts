@@ -13,6 +13,7 @@ import { TimeLoggingInterceptor } from 'src/misc/time-logging.interceptor';
 import { CartOrderDto } from 'src/api-extension/CartOrder.dto';
 import { ApiExtensionGuard } from './api-extension.guard';
 import { Cart, Order } from '@commercetools/platform-sdk';
+import { I18n, I18nContext } from 'nestjs-i18n';
 
 @UseInterceptors(TimeLoggingInterceptor)
 @Controller('api-extension')
@@ -25,7 +26,12 @@ export class ApiExtensionController {
   ) {}
 
   @Post()
-  async handleApiExtensionRequest(@Body() body: CartOrderDto): Promise<any> {
+  async handleApiExtensionRequest(
+    @Body() body: CartOrderDto,
+    @I18n() i18n: I18nContext,
+  ): Promise<any> {
+    // console.log('aaaaaaaaaaaaaaaa', await i18n.t('test.coupon'))
+    console.log(body.resource.obj.totalPrice);
     const type = body.resource?.typeId;
     const action = body.action;
     const id = body.resource?.obj?.id;
