@@ -225,7 +225,7 @@ Currently we cover the following scenarios:
 - `GET /` - welcome application message
 - `POST /api-extension` - handle API extension requests (cart) from commercetools
 - `POST /types/configure` - trigger coupon types configuration
-- `POST /tax-categories/configure` - trigger coupon tax configuration
+- `POST /tax-categories/configure` - trigger coupon tax configuration (equal to `npm run config`)
 
 ---
 
@@ -296,7 +296,7 @@ git push heroku <branch_name>:main # For other branch
 1. Go to your <application_name> -> More -> Run console
 2. Run `npm run config` 
 
-This command should be run once for every commercetools application.
+This command should be run once shortly after you deploy your application, and **each time when your commercetools project change the list of countries in which it operates**.
 
 ### Register API Extension
 
@@ -327,7 +327,13 @@ Additionally each time migration happen metadata will be tried to sync. Metadata
 If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Changelog
-
+- 2022-08-05 `v3.0.2`
+    - many thanks again to [@Irene350](https://github.com/Irene350) for your contribution!
+    - optimising the code to retrieve all the project countries for coupon tax category (`npm run config`)
+    - refactoring
+    - minor changes in readme (`npm run config`)
+- 2022-08-05 `v3.0.1`
+    - fix period argument of migrate command
 - 2022-08-03 `v3.0.0`
     - many thanks to [@Irene350](https://github.com/Irene350) for your contribution!
     - this version is not fully backward compatible because of differences in migration commands
