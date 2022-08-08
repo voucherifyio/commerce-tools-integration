@@ -14,9 +14,10 @@ export class OrderImportService {
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly logger: Logger,
     private readonly voucherifyClient: VoucherifyConnectorService,
-  ) {}
+  ) {
+  }
 
-  public async *getAllOrders(minDateTime?: string): AsyncGenerator<Order[]> {
+  public async* getAllOrders(minDateTime?: string): AsyncGenerator<Order[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
     let page = 0;
@@ -48,66 +49,78 @@ export class OrderImportService {
     } while (!allOrdersCollected);
   }
 
+  public getMetadata(order: Order, metadataSchemaProperties: string[]) {
+    const metadata = Object.keys(
+      order.custom?.fields ? order.custom?.fields : {},
+    )
+      .filter((customField) => metadataSchemaProperties.includes(customField))
+      .map((customField) => {
+        return [[customField], order.custom?.fields[customField]];
+      });
+
+    if (Object.keys(metadata).length) {
+      console.log('metadata obj', metadata, Object.fromEntries(metadata));
+    }
+
+    return metadata;
+  }
+
+  public getOrderObject(order: Order) {
+    return {
+      object: 'order',
+      source_id: order.id,
+      created_at: order.createdAt,
+      updated_at: order.lastModifiedAt,
+      status: 'PAID',
+      customer: {
+        object: 'customer',
+        source_id: order.customerId || order.anonymousId,
+        name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
+        email: order.shippingAddress?.email,
+        address: {
+          city: order.shippingAddress?.city,
+          country: order.shippingAddress?.country,
+          postal_code: order.shippingAddress?.postalCode,
+          line_1: order.shippingAddress?.streetName,
+        },
+        phone: order.shippingAddress?.phone,
+      },
+      amount: order.totalPrice.centAmount,
+      items: order.lineItems.map((item) => {
+        return {
+          source_id: item.variant.sku,
+          related_object: 'sku',
+          quantity: item.quantity,
+          price: item.price.value.centAmount,
+          amount: item.quantity * item.price.value.centAmount,
+          product: {
+            name: Object?.values(item.name)?.[0],
+          },
+          sku: {
+            sku: Object?.values(item.name)?.[0],
+          },
+        };
+      }),
+    };
+  }
+
   public async migrateOrders(period?: string) {
+    const orders = [];
     const metadataSchemaProperties =
       await this.voucherifyClient.getMetadataSchemaProperties('order');
-    const orders = [];
 
     for await (const ordersBatch of this.getAllOrders(period)) {
       ordersBatch.forEach((order) => {
         if (order.paymentState !== 'Paid') {
           return;
         }
-        const tmp = Object.keys(
-          order.custom?.fields ? order.custom?.fields : {},
-        )
-          .filter((customField) =>
-            metadataSchemaProperties.includes(customField),
-          )
-          .map((customField) => {
-            return [[customField], order.custom?.fields[customField]];
-          });
 
-        const orderObj = {
-          object: 'order',
-          source_id: order.id,
-          created_at: order.createdAt,
-          updated_at: order.lastModifiedAt,
-          status: 'PAID',
-          customer: {
-            object: 'customer',
-            source_id: order.customerId || order.anonymousId,
-            name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
-            email: order.shippingAddress?.email,
-            address: {
-              city: order.shippingAddress?.city,
-              country: order.shippingAddress?.country,
-              postal_code: order.shippingAddress?.postalCode,
-              line_1: order.shippingAddress?.streetName,
-            },
-            phone: order.shippingAddress?.phone,
-          },
-          amount: order.totalPrice.centAmount,
-          items: order.lineItems.map((item) => {
-            return {
-              source_id: item.variant.sku,
-              related_object: 'sku',
-              quantity: item.quantity,
-              price: item.price.value.centAmount,
-              amount: item.quantity * item.price.value.centAmount,
-              product: {
-                name: Object?.values(item.name)?.[0],
-              },
-              sku: {
-                sku: Object?.values(item.name)?.[0],
-              },
-            };
-          }),
-        };
+        const metadata = this.getMetadata(order, metadataSchemaProperties);
+        const orderObj = this.getOrderObject(order);
 
         orders.push(
-          Object.keys(tmp).length
-            ? { ...orderObj, metadata: Object.fromEntries(tmp) }
+          Object.keys(metadata).length
+            ? { ...orderObj, metadata: Object.fromEntries(metadata) }
             : orderObj,
         );
       });
