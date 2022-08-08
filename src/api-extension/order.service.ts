@@ -4,6 +4,7 @@ import { Order } from '@commercetools/platform-sdk';
 import { desarializeCoupons, Coupon } from './coupon';
 import { OrderMapper } from './mappers/order';
 import { OrdersUpdate } from '@voucherify/sdk';
+import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 
 type SendedCoupons = {
   result: string;
@@ -126,7 +127,15 @@ export class OrderService {
         'order',
       );
 
-    const orderObj = this.orderMapper.getOrderObject(order) as OrdersUpdate;
+    const ordersCreate = this.orderMapper.getOrderObject(order) as OrdersCreate;
+    const ordersUpdate = {
+      id: ordersCreate.source_id,
+      customer: {
+        id: ordersCreate.customer.source_id,
+      },
+      ...ordersCreate,
+    } as OrdersUpdate;
+
     const metadata = this.orderMapper.getMetadata(
       order,
       metadataSchemaProperties,
@@ -136,8 +145,8 @@ export class OrderService {
       .getClient()
       .orders.update(
         Object.keys(metadata).length
-          ? { ...orderObj, metadata: Object.fromEntries(metadata) }
-          : orderObj,
+          ? { ...ordersUpdate, metadata: Object.fromEntries(metadata) }
+          : (ordersUpdate as OrdersUpdate),
       );
   }
 }
