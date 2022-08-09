@@ -25,6 +25,7 @@ import {
 import { MockedVoucherifyConnectorService } from '../../voucherify/__mocks__/voucherify-connector.service';
 import { Coupon } from '../coupon';
 import { CartAction } from '../cartActions/CartAction';
+import { ProductMapper } from '../mappers/product';
 
 jest.mock('../../commerceTools/tax-categories/tax-categories.service');
 jest.mock('../../commerceTools/types/types.service');
@@ -184,6 +185,7 @@ const byCustomField = (fieldName: string) => (action: CartAction) =>
 
 describe('CartService', () => {
   let cartService: CartService;
+  let productMapper: ProductMapper;
   let taxCategoriesService: MockedTaxCategoriesService;
   let typesService: MockedTypesService;
   let voucherifyConnectorService: MockedVoucherifyConnectorService;
@@ -192,6 +194,7 @@ describe('CartService', () => {
     const app: TestingModule = await Test.createTestingModule({
       providers: [
         CartService,
+        ProductMapper,
         {
           provide: TaxCategoriesService,
           useValue: TaxCategoriesService,
@@ -213,6 +216,7 @@ describe('CartService', () => {
     }).compile();
 
     cartService = app.get<CartService>(CartService);
+    productMapper = app.get<ProductMapper>(ProductMapper);
     taxCategoriesService = app.get<TaxCategoriesService>(
       TaxCategoriesService,
     ) as MockedTaxCategoriesService;
@@ -406,7 +410,12 @@ describe('CartService', () => {
         ).toBeCalledTimes(1);
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
-        ).toBeCalledWith([COUPON_CODE], cart, null);
+        ).toBeCalledWith(
+          [COUPON_CODE],
+          cart,
+          productMapper.mapLineItems(cart.lineItems),
+          null,
+        );
       });
 
       it('should assign new session with voucherify and store in cart', async () => {
@@ -494,7 +503,12 @@ describe('CartService', () => {
         ).toBeCalledTimes(1);
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
-        ).toBeCalledWith([COUPON_CODE], cart, NEW_SESSION_ID);
+        ).toBeCalledWith(
+          [COUPON_CODE],
+          cart,
+          productMapper.mapLineItems(cart.lineItems),
+          NEW_SESSION_ID,
+        );
       });
 
       it('should return only one `setCustomField` action with information about failure', async () => {
@@ -544,7 +558,12 @@ describe('CartService', () => {
         ).toBeCalledTimes(1);
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
-        ).toBeCalledWith([COUPON_CODE], cart, null);
+        ).toBeCalledWith(
+          [COUPON_CODE],
+          cart,
+          productMapper.mapLineItems(cart.lineItems),
+          null,
+        );
       });
 
       it('should return only one `setCustomField` action with information about failure', async () => {
@@ -611,6 +630,7 @@ describe('CartService', () => {
         ).toBeCalledWith(
           [FIRST_COUPON_CODE, SECOND_COUPON_CODE],
           cart,
+          productMapper.mapLineItems(cart.lineItems),
           SESSION_KEY,
         );
       });
@@ -710,6 +730,7 @@ describe('CartService', () => {
         ).toBeCalledWith(
           [FIRST_COUPON_CODE, SECOND_COUPON_CODE],
           cart,
+          productMapper.mapLineItems(cart.lineItems),
           SESSION_KEY,
         );
       });
@@ -808,7 +829,12 @@ describe('CartService', () => {
         ).toBeCalledTimes(1);
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
-        ).toBeCalledWith([COUPON_CODE], cart, SESSION_KEY);
+        ).toBeCalledWith(
+          [COUPON_CODE],
+          cart,
+          productMapper.mapLineItems(cart.lineItems),
+          SESSION_KEY,
+        );
       });
 
       it('should create `addCustomLineItem` action with total coupons value applied', async () => {
@@ -894,7 +920,12 @@ describe('CartService', () => {
         ).toBeCalledTimes(1);
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
-        ).toBeCalledWith([COUPON_CODE], cart, SESSION_KEY);
+        ).toBeCalledWith(
+          [COUPON_CODE],
+          cart,
+          productMapper.mapLineItems(cart.lineItems),
+          SESSION_KEY,
+        );
       });
 
       it('should create `addLineItem` action with gift product', async () => {
@@ -1028,7 +1059,12 @@ describe('CartService', () => {
         ).toBeCalledTimes(1);
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
-        ).toBeCalledWith([COUPON_CODE], cart, SESSION_KEY);
+        ).toBeCalledWith(
+          [COUPON_CODE],
+          cart,
+          productMapper.mapLineItems(cart.lineItems),
+          SESSION_KEY,
+        );
       });
 
       it('should create one `addCustomLineItem` action with summary of applied coupon', async () => {
@@ -1128,7 +1164,12 @@ describe('CartService', () => {
         ).toBeCalledTimes(1);
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
-        ).toBeCalledWith([COUPON_CODE], cart, SESSION_KEY);
+        ).toBeCalledWith(
+          [COUPON_CODE],
+          cart,
+          productMapper.mapLineItems(cart.lineItems),
+          SESSION_KEY,
+        );
       });
 
       it('should create one `addCustomLineItem` with applied coupon summary', async () => {

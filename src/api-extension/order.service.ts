@@ -5,6 +5,7 @@ import { desarializeCoupons, Coupon } from './coupon';
 import { OrderMapper } from './mappers/order';
 import { OrdersUpdate } from '@voucherify/sdk';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
+import { ProductMapper } from './mappers/product';
 
 type SendedCoupons = {
   result: string;
@@ -17,6 +18,7 @@ export class OrderService {
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
     private readonly logger: Logger,
     private readonly orderMapper: OrderMapper,
+    private readonly productMapper: ProductMapper,
   ) {}
 
   public async redeemVoucherifyCoupons(
@@ -45,6 +47,15 @@ export class OrderService {
     const sendedCoupons: SendedCoupons[] = [];
     const usedCoupons: string[] = [];
     const notUsedCoupons: string[] = [];
+    const orderMetadataSchemaProperties =
+      await this.voucherifyConnectorService.getMetadataSchemaProperties(
+        'order',
+      );
+
+    const productMetadataSchemaProperties =
+      await this.voucherifyConnectorService.getMetadataSchemaProperties(
+        'product',
+      );
 
     const sessionKey = order.custom?.fields.session;
 
@@ -53,6 +64,11 @@ export class OrderService {
         coupons.map((coupon) => coupon.code),
         sessionKey,
         order,
+        this.productMapper.mapLineItems(
+          order.lineItems,
+          productMetadataSchemaProperties,
+        ),
+        this.orderMapper.getMetadata(order, orderMetadataSchemaProperties),
       );
 
     sendedCoupons.push(
@@ -85,7 +101,7 @@ export class OrderService {
       notUsedCoupons,
     );
 
-    await this.updateOrderMetadata(order);
+    // await this.updateOrderMetadata(order, metadataSchemaProperties);
 
     this.logger.debug({
       msg: 'Realized coupons',
@@ -121,20 +137,15 @@ export class OrderService {
     return order;
   }
 
-  public async updateOrderMetadata(order: Order) {
-    const metadataSchemaProperties =
-      await this.voucherifyConnectorService.getMetadataSchemaProperties(
-        'order',
-      );
-
+  public async updateOrderMetadata(order: Order, metadataSchemaProperties) {
     const ordersCreate = this.orderMapper.getOrderObject(order) as OrdersCreate;
-    const ordersUpdate = {
-      id: ordersCreate.source_id,
-      customer: {
-        id: ordersCreate.customer.source_id,
-      },
-      ...ordersCreate,
-    } as OrdersUpdate;
+    // const ordersUpdate = {
+    //   id: ordersCreate.source_id,
+    //   customer: {
+    //     id: ordersCreate.customer.source_id,
+    //   },
+    //   ...ordersCreate,
+    // } as OrdersUpdate;
 
     const metadata = this.orderMapper.getMetadata(
       order,
@@ -143,10 +154,10 @@ export class OrderService {
 
     await this.voucherifyConnectorService
       .getClient()
-      .orders.update(
+      .orders.create(
         Object.keys(metadata).length
-          ? { ...ordersUpdate, metadata: Object.fromEntries(metadata) }
-          : (ordersUpdate as OrdersUpdate),
+          ? { ...ordersCreate, metadata: Object.fromEntries(metadata) }
+          : ordersCreate,
       );
   }
 }
