@@ -22,12 +22,6 @@ export class ProductMapper {
           product: {
             override: true,
             name: Object?.values(item.name)?.[0],
-            metadata: metadataSchemaProperties
-              ? this.getMetadata(
-                  item?.variant.attributes,
-                  metadataSchemaProperties,
-                )
-              : {},
           },
           sku: {
             override: true,
@@ -39,12 +33,6 @@ export class ProductMapper {
                 )
               : {},
           },
-          metadata: metadataSchemaProperties
-            ? this.getMetadata(
-                item?.variant.attributes,
-                metadataSchemaProperties,
-              )
-            : {},
         };
       });
   }

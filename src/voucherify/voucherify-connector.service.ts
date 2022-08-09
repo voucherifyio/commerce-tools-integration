@@ -12,19 +12,6 @@ import {
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
 
-const getQuantity = (item) => {
-  const custom = item.custom?.fields?.applied_codes;
-  let itemQuantity = item?.quantity;
-
-  if (custom) {
-    custom
-      .map((code) => JSON.parse(code))
-      .filter((code) => code.type === 'UNIT')
-      .forEach((code) => (itemQuantity = itemQuantity - code.quantity));
-  }
-  return itemQuantity;
-};
-
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;
 }
@@ -107,15 +94,14 @@ export class VoucherifyConnectorService {
     return response;
   }
 
-  async reedemStackableVouchers(
+  async redeemStackableVouchers(
     coupons: string[],
     sessionKey: string,
     order: Order,
     items,
     orderMetadata,
   ) {
-    console.log(items);
-    console.log(666, items[0].product.metadata);
+    console.log(order);
     const request = {
       session: {
         type: 'LOCK',
@@ -149,6 +135,7 @@ export class VoucherifyConnectorService {
     } as RedemptionsRedeemStackableParams;
 
     const start = performance.now();
+
     const response = await this.getClient().redemptions.redeemStackable(
       request,
     );

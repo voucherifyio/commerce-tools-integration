@@ -44,7 +44,7 @@ export class OrderService {
       id,
       customerId,
     });
-    const sendedCoupons: SendedCoupons[] = [];
+    const sentCoupons: SendedCoupons[] = [];
     const usedCoupons: string[] = [];
     const notUsedCoupons: string[] = [];
     const orderMetadataSchemaProperties =
@@ -60,7 +60,7 @@ export class OrderService {
     const sessionKey = order.custom?.fields.session;
 
     const response =
-      await this.voucherifyConnectorService.reedemStackableVouchers(
+      await this.voucherifyConnectorService.redeemStackableVouchers(
         coupons.map((coupon) => coupon.code),
         sessionKey,
         order,
@@ -71,7 +71,7 @@ export class OrderService {
         this.orderMapper.getMetadata(order, orderMetadataSchemaProperties),
       );
 
-    sendedCoupons.push(
+    sentCoupons.push(
       ...response.redemptions.map((redem) => {
         return {
           result: redem.result,
@@ -87,7 +87,7 @@ export class OrderService {
       redemptions: response?.redemptions,
     });
 
-    sendedCoupons.forEach((sendedCoupon) => {
+    sentCoupons.forEach((sendedCoupon) => {
       if (sendedCoupon.result === 'SUCCESS') {
         usedCoupons.push(sendedCoupon.coupon);
       } else {
@@ -101,7 +101,7 @@ export class OrderService {
       notUsedCoupons,
     );
 
-    // await this.updateOrderMetadata(order, metadataSchemaProperties);
+    await this.updateOrderMetadata(order, orderMetadataSchemaProperties);
 
     this.logger.debug({
       msg: 'Realized coupons',
