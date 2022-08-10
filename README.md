@@ -327,8 +327,10 @@ Additionally each time migration happen metadata will be tried to sync. Metadata
 If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Changelog
+- 2022-08-09 `v3.0.4`
+    - updating metadata in order and order product skus during redemption action. 
 - 2022-08-08 `v3.0.3`
-    - update rate limiter in orders sync - now there are used methods, from new voucherify sdk, to get limit informations, instead of using fetch library for that
+    - update rate limiter in orders sync - now there are used methods, from new voucherify sdk, to get limit information, instead of using fetch library for that
 - 2022-08-05 `v3.0.2`
     - many thanks again to [@Irene350](https://github.com/Irene350) for your contribution!
     - optimising the code to retrieve all the project countries for coupon tax category (`npm run config`)
