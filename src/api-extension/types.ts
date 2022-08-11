@@ -7,12 +7,20 @@ import { CartAction } from './cartActions/CartAction';
 
 export type CartResponse = { status: boolean; actions: CartAction[] };
 
+export type PriceSelector = {
+  country: string;
+  currencyCode: string;
+  customerGroup: string;
+  channelId: number;
+};
+
 export type ProductToAdd = {
   code: string; // coupon code
   effect: DiscountVouchersEffectTypes;
   quantity?: number;
   discount_quantity?: number;
   initial_quantity: number;
+  discount_difference: number;
   applied_discount_amount?: number;
   product: string; // sku source_id
 };

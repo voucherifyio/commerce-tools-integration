@@ -1,8 +1,9 @@
-import { Cart } from '@commercetools/platform-sdk';
+import { Cart, Order } from '@commercetools/platform-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import {
   StackableRedeemableResponse,
   StackableRedeemableResponseStatus,
+  ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
@@ -11,7 +12,14 @@ import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.s
 import getCartActionBuilders from './cartActions/getCartActionBuilders';
 import convertUnitTypeCouponsToFreeProducts from './convertUnitTypeCouponsToFreeProducts';
 import { desarializeCoupons, Coupon, CouponStatus } from './coupon';
-import { CartResponse, ValidateCouponsResult } from './types';
+import {
+  CartResponse,
+  PriceSelector,
+  ProductToAdd,
+  ValidateCouponsResult,
+} from './types';
+import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
+import { OrdersCreateResponse } from '@voucherify/sdk/dist/types/Orders';
 import { ProductMapper } from './mappers/product';
 
 function getSession(cart: Cart): string | null {
@@ -78,6 +86,7 @@ export class CartService {
     private readonly typesService: TypesService,
     private readonly logger: Logger,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
+    private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly productMapper: ProductMapper,
   ) {}
 
@@ -149,13 +158,22 @@ export class CartService {
     const skippedCoupons = getCouponsByStatus('SKIPPED');
     const applicableCoupons = getCouponsByStatus('APPLICABLE');
 
+    const productsToAdd = await convertUnitTypeCouponsToFreeProducts(
+      validatedCoupons,
+      this.commerceToolsConnectorService.getClient(),
+      this.getPriceSelectorFromCart(cart),
+    );
+
+    this.handleCartDiscountDifferences(
+      productsToAdd,
+      validatedCoupons,
+      applicableCoupons,
+    );
+
     const sessionKeyResponse = validatedCoupons.session?.key;
     const { valid } = validatedCoupons;
     const totalDiscountAmount =
       validatedCoupons.order?.total_discount_amount ?? 0;
-
-    const productsToAdd =
-      convertUnitTypeCouponsToFreeProducts(validatedCoupons);
 
     const onlyNewCouponsFailed = checkIfOnlyNewCouponsFailed(
       coupons,
@@ -255,5 +273,48 @@ export class CartService {
       status: true,
       actions,
     };
+  }
+
+  private getPriceSelectorFromCart(cart: Cart): PriceSelector {
+    return {
+      country: cart.country,
+      currencyCode: cart.totalPrice.currencyCode,
+      customerGroup: null,
+      channelId: null,
+    };
+  }
+
+  private countOrderDiscountDifference(
+    order: OrdersCreateResponse,
+    discountDifference: number,
+  ) {
+    order.items_discount_amount -= discountDifference;
+    order.total_discount_amount -= discountDifference;
+    order.total_applied_discount_amount -= discountDifference;
+    order.items_applied_discount_amount -= discountDifference;
+  }
+
+  private handleCartDiscountDifferences(
+    productsToAdd: ProductToAdd[],
+    validatedCoupons: ValidationValidateStackableResponse,
+    applicableCoupons: StackableRedeemableResponse[],
+  ) {
+    productsToAdd.map((productToAdd) => {
+      this.countOrderDiscountDifference(
+        validatedCoupons.order,
+        productToAdd.discount_difference,
+      );
+    });
+
+    productsToAdd.map((productToAdd) => {
+      applicableCoupons
+        .filter((redeem) => redeem.id === productToAdd.code)
+        .map((redeem) => {
+          this.countOrderDiscountDifference(
+            redeem.order,
+            productToAdd.discount_difference,
+          );
+        });
+    });
   }
 }
