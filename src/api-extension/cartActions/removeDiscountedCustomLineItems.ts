@@ -1,7 +1,7 @@
 import { Cart } from '@commercetools/platform-sdk';
 import {
   CartActionRemoveCustomLineItem,
-  COUPON_CUSTOM_LINE_NAME_PREFIX,
+  COUPON_CUSTOM_LINE_SLUG_PREFIX,
 } from './CartAction';
 
 export default function removeDiscountedCustomLineItems(
@@ -9,7 +9,9 @@ export default function removeDiscountedCustomLineItems(
 ): CartActionRemoveCustomLineItem[] {
   return (cart.customLineItems || [])
     .filter((lineItem) =>
-      lineItem.name.en.startsWith(COUPON_CUSTOM_LINE_NAME_PREFIX),
+      Object.keys(lineItem.name).find((key) =>
+        lineItem.name[key].startsWith(COUPON_CUSTOM_LINE_SLUG_PREFIX),
+      ),
     )
     .map(
       (lineItem) =>

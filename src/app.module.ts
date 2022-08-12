@@ -34,11 +34,8 @@ import {
   REQUEST_JSON_LOGGER,
 } from './misc/request-json-logger';
 import { RequestJsonFileLogger } from './misc/request-json-file-logger';
-import {
-  AcceptLanguageResolver,
-  I18nModule,
-  I18nJsonLoader,
-} from 'nestjs-i18n';
+import { I18nModule, I18nJsonLoader } from 'nestjs-i18n';
+import { CustomLineItemTextResolver } from './misc/custom-line-item-text.resolver';
 
 @Module({
   imports: [
@@ -69,7 +66,7 @@ import {
         path: path.join(__dirname, '/i18n/'),
         watch: true,
       },
-      resolvers: [AcceptLanguageResolver],
+      resolvers: [CustomLineItemTextResolver],
     }),
   ],
   controllers: [

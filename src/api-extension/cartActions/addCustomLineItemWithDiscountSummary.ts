@@ -2,13 +2,15 @@ import { Cart } from '@commercetools/platform-sdk';
 import { ValidateCouponsResult } from '../types';
 import {
   CartActionAddCustomLineItem,
-  COUPON_CUSTOM_LINE_NAME_PREFIX,
+  COUPON_CUSTOM_LINE_SLUG_PREFIX,
+  CouponTextType,
 } from './CartAction';
 
 export default // TODO don't create addCustomLineItem action if the summary doesn't actually change
 function addCustomLineItemWithDiscountSummary(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
+  couponText: CouponTextType,
 ): CartActionAddCustomLineItem[] {
   const { totalDiscountAmount, applicableCoupons, taxCategory } =
     validateCouponsResult;
@@ -21,9 +23,7 @@ function addCustomLineItemWithDiscountSummary(
     {
       action: 'addCustomLineItem',
       name: {
-        en: `${COUPON_CUSTOM_LINE_NAME_PREFIX}coupon value => ${(
-          totalDiscountAmount / 100
-        ).toFixed(2)}`,
+        [couponText.language]: COUPON_CUSTOM_LINE_SLUG_PREFIX + couponText.text,
       },
       quantity: 1,
       money: {

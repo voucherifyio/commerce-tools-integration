@@ -30,11 +30,13 @@ export class ApiExtensionController {
     @Body() body: CartOrderDto,
     @I18n() i18n: I18nContext,
   ): Promise<any> {
-    // console.log('aaaaaaaaaaaaaaaa', await i18n.t('test.coupon'))
-    console.log(body.resource.obj.totalPrice);
     const type = body.resource?.typeId;
     const action = body.action;
     const id = body.resource?.obj?.id;
+    const couponText = {
+      language: await i18n.lang,
+      text: await i18n.t('test.coupon'),
+    };
 
     this.logger.debug({
       msg: 'Handle Commerce Tools API Extension',
@@ -46,6 +48,7 @@ export class ApiExtensionController {
     if (type === 'cart') {
       const response = await this.apiExtensionService.checkCartAndMutate(
         body.resource.obj as Cart,
+        couponText,
       );
       if (!response.status) {
         throw new HttpException('', 400);

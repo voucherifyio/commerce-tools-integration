@@ -98,6 +98,12 @@ export type CartAction =
 export type CartActionsBuilder = (
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
+  couponText?: CouponTextType,
 ) => CartAction[];
 
-export const COUPON_CUSTOM_LINE_NAME_PREFIX = 'Voucher, ';
+export const COUPON_CUSTOM_LINE_SLUG_PREFIX = 'Voucher, ';
+
+export type CouponTextType = {
+  language: string;
+  text: string;
+};

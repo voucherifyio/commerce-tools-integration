@@ -235,7 +235,7 @@ export class CartService {
     };
   }
 
-  async checkCartAndMutate(cart: Cart): Promise<CartResponse> {
+  async checkCartAndMutate(cart: Cart, couponText?): Promise<CartResponse> {
     if (cart.version === 1) {
       return this.setCustomTypeForInitializedCart();
     }
@@ -244,7 +244,7 @@ export class CartService {
     const validateCouponsResult = await this.validateCoupons(cart, sessionKey);
 
     const actions = getCartActionBuilders(validateCouponsResult).flatMap(
-      (builder) => builder(cart, validateCouponsResult),
+      (builder) => builder(cart, validateCouponsResult, couponText),
     );
 
     this.logger.debug(actions);
