@@ -4,13 +4,16 @@ import {
   StackableRedeemableResponse,
 } from '@voucherify/sdk';
 import { CartAction } from './cartActions/CartAction';
+import {
+  CustomerGroupReference
+} from '@commercetools/platform-sdk/dist/declarations/src/generated/models/customer-group';
 
 export type CartResponse = { status: boolean; actions: CartAction[] };
 
 export type PriceSelector = {
   country: string;
   currencyCode: string;
-  customerGroup: string;
+  customerGroup: CustomerGroupReference;
   channelId: number;
 };
 

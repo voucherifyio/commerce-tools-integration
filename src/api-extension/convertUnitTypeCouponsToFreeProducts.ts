@@ -47,13 +47,35 @@ async function getCtVariantPrice(
     (variant) => variant.sku === productSkuSourceId,
   );
   const prices = [];
+  // price.country and price.customerGroup could be set to 'any' we don't to
+  // remove these elements from prices
+  // The priority order for the selection of the price is customer group > channel > country
+  // https://docs.commercetools.com/api/projects/carts#lineitem-price-selection
   ctVariants.map((variant) => {
-    prices.push(
-      ...variant.prices.filter(
+    let filteredPrices = variant.prices;
+
+    if (priceSelector.customerGroup) {
+      const customerGroupPrices = filteredPrices.filter(
         (price) =>
-          price.country === priceSelector.country &&
-          price.value.currencyCode === priceSelector.currencyCode,
-      ),
+          price.customerGroup &&
+          price.customerGroup.typeId === priceSelector.customerGroup.typeId &&
+          price.customerGroup.id === priceSelector.customerGroup.id,
+      );
+
+      if (customerGroupPrices.length) {
+        filteredPrices = customerGroupPrices;
+      }
+    }
+
+    filteredPrices = filteredPrices.filter(
+      (price) =>
+        price.value.currencyCode === priceSelector.currencyCode &&
+        (!price.country || price.country === priceSelector.country),
+    );
+
+    prices.push(
+      ...filteredPrices.filter((price) => price.country),
+      ...filteredPrices.filter((price) => !price.country),
     );
   });
 

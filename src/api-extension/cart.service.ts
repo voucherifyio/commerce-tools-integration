@@ -260,7 +260,6 @@ export class CartService {
     if (cart.version === 1) {
       return this.setCustomTypeForInitializedCart();
     }
-
     const sessionKey = getSession(cart);
     const validateCouponsResult = await this.validateCoupons(cart, sessionKey);
 
@@ -279,7 +278,7 @@ export class CartService {
     return {
       country: cart.country,
       currencyCode: cart.totalPrice.currencyCode,
-      customerGroup: null,
+      customerGroup: cart.customerGroup,
       channelId: null,
     };
   }
