@@ -4,9 +4,7 @@ import {
   StackableRedeemableResponse,
 } from '@voucherify/sdk';
 import { CartAction } from './cartActions/CartAction';
-import {
-  CustomerGroupReference
-} from '@commercetools/platform-sdk/dist/declarations/src/generated/models/customer-group';
+import { CustomerGroupReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/customer-group';
 
 export type CartResponse = { status: boolean; actions: CartAction[] };
 
