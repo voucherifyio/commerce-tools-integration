@@ -5,6 +5,7 @@ import {
 } from '@voucherify/sdk';
 import { CartAction } from './cartActions/CartAction';
 import { CustomerGroupReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/customer-group';
+import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 
 export type CartResponse = { status: boolean; actions: CartAction[] };
 
@@ -12,7 +13,7 @@ export type PriceSelector = {
   country: string;
   currencyCode: string;
   customerGroup: CustomerGroupReference;
-  channelId: number;
+  distributionChannels: ChannelReference[];
 };
 
 export type ProductToAdd = {

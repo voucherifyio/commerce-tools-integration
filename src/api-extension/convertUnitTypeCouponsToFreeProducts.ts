@@ -67,6 +67,20 @@ async function getCtVariantPrice(
       }
     }
 
+    if (priceSelector.distributionChannels.length) {
+      const channel = priceSelector.distributionChannels[0];
+      const channelsPrices = filteredPrices.filter(
+        (price) =>
+          price.channel &&
+          price.channel.typeId === channel.typeId &&
+          price.channel.id === channel.id,
+      );
+
+      if (channelsPrices.length) {
+        filteredPrices = channelsPrices;
+      }
+    }
+
     filteredPrices = filteredPrices.filter(
       (price) =>
         price.value.currencyCode === priceSelector.currencyCode &&

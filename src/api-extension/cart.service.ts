@@ -279,7 +279,9 @@ export class CartService {
       country: cart.country,
       currencyCode: cart.totalPrice.currencyCode,
       customerGroup: cart.customerGroup,
-      channelId: null,
+      distributionChannels: [
+        ...new Set(cart.lineItems.map((item) => item.distributionChannel)),
+      ],
     };
   }
 
