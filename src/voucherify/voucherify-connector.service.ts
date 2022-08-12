@@ -101,7 +101,6 @@ export class VoucherifyConnectorService {
     items,
     orderMetadata,
   ) {
-    console.log(order);
     const request = {
       session: {
         type: 'LOCK',

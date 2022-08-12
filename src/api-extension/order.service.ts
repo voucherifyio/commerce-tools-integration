@@ -3,7 +3,6 @@ import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.s
 import { Order } from '@commercetools/platform-sdk';
 import { desarializeCoupons, Coupon } from './coupon';
 import { OrderMapper } from './mappers/order';
-import { OrdersUpdate } from '@voucherify/sdk';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { ProductMapper } from './mappers/product';
 
@@ -139,13 +138,6 @@ export class OrderService {
 
   public async updateOrderMetadata(order: Order, metadataSchemaProperties) {
     const ordersCreate = this.orderMapper.getOrderObject(order) as OrdersCreate;
-    // const ordersUpdate = {
-    //   id: ordersCreate.source_id,
-    //   customer: {
-    //     id: ordersCreate.customer.source_id,
-    //   },
-    //   ...ordersCreate,
-    // } as OrdersUpdate;
 
     const metadata = this.orderMapper.getMetadata(
       order,
