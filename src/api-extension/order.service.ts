@@ -6,7 +6,7 @@ import { OrderMapper } from './mappers/order';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { ProductMapper } from './mappers/product';
 
-type SendedCoupons = {
+type SentCoupons = {
   result: string;
   coupon: string;
 };
@@ -43,7 +43,7 @@ export class OrderService {
       id,
       customerId,
     });
-    const sentCoupons: SendedCoupons[] = [];
+    const sentCoupons: SentCoupons[] = [];
     const usedCoupons: string[] = [];
     const notUsedCoupons: string[] = [];
     const orderMetadataSchemaProperties =
