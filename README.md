@@ -337,6 +337,8 @@ Additionally, each time migration happen metadata will be tried to sync. Metadat
 If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Changelog
+- 2022-08-10 `v3.0.5`
+    - update readme about how handle metadata
 - 2022-08-09 `v3.0.4`
     - updating metadata in order and order product skus during redemption action. 
 - 2022-08-08 `v3.0.3`
