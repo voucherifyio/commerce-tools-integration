@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Order } from '@commercetools/platform-sdk';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
+import { OrderMapper } from '../api-extension/mappers/order';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -14,6 +15,7 @@ export class OrderImportService {
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly logger: Logger,
     private readonly voucherifyClient: VoucherifyConnectorService,
+    private readonly orderMapper: OrderMapper,
   ) {}
 
   public async *getAllOrders(minDateTime?: string): AsyncGenerator<Order[]> {
@@ -49,65 +51,25 @@ export class OrderImportService {
   }
 
   public async migrateOrders(period?: string) {
+    const orders = [];
     const metadataSchemaProperties =
       await this.voucherifyClient.getMetadataSchemaProperties('order');
-    const orders = [];
 
     for await (const ordersBatch of this.getAllOrders(period)) {
       ordersBatch.forEach((order) => {
         if (order.paymentState !== 'Paid') {
           return;
         }
-        const tmp = Object.keys(
-          order.custom?.fields ? order.custom?.fields : {},
-        )
-          .filter((customField) =>
-            metadataSchemaProperties.includes(customField),
-          )
-          .map((customField) => {
-            return [[customField], order.custom?.fields[customField]];
-          });
 
-        const orderObj = {
-          object: 'order',
-          source_id: order.id,
-          created_at: order.createdAt,
-          updated_at: order.lastModifiedAt,
-          status: 'PAID',
-          customer: {
-            object: 'customer',
-            source_id: order.customerId || order.anonymousId,
-            name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
-            email: order.shippingAddress?.email,
-            address: {
-              city: order.shippingAddress?.city,
-              country: order.shippingAddress?.country,
-              postal_code: order.shippingAddress?.postalCode,
-              line_1: order.shippingAddress?.streetName,
-            },
-            phone: order.shippingAddress?.phone,
-          },
-          amount: order.totalPrice.centAmount,
-          items: order.lineItems.map((item) => {
-            return {
-              source_id: item.variant.sku,
-              related_object: 'sku',
-              quantity: item.quantity,
-              price: item.price.value.centAmount,
-              amount: item.quantity * item.price.value.centAmount,
-              product: {
-                name: Object?.values(item.name)?.[0],
-              },
-              sku: {
-                sku: Object?.values(item.name)?.[0],
-              },
-            };
-          }),
-        };
+        const metadata = this.orderMapper.getMetadata(
+          order,
+          metadataSchemaProperties,
+        );
+        const orderObj = this.orderMapper.getOrderObject(order);
 
         orders.push(
-          Object.keys(tmp).length
-            ? { ...orderObj, metadata: Object.fromEntries(tmp) }
+          Object.keys(metadata).length
+            ? { ...orderObj, metadata: Object.fromEntries(metadata) }
             : orderObj,
         );
       });

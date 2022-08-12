@@ -12,19 +12,6 @@ import {
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
 
-const getQuantity = (item) => {
-  const custom = item.custom?.fields?.applied_codes;
-  let itemQuantity = item?.quantity;
-
-  if (custom) {
-    custom
-      .map((code) => JSON.parse(code))
-      .filter((code) => code.type === 'UNIT')
-      .forEach((code) => (itemQuantity = itemQuantity - code.quantity));
-  }
-  return itemQuantity;
-};
-
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;
 }
@@ -59,28 +46,9 @@ export class VoucherifyConnectorService {
   async validateStackableVouchersWithCTCart(
     coupons: string[],
     cart: Cart,
+    items,
     sessionKey?: string | null,
   ) {
-    const items = cart.lineItems
-      .filter((item) => getQuantity(item))
-      .map((item) => {
-        return {
-          source_id: item?.variant?.sku,
-          related_object: 'sku' as 'sku' | 'product',
-          quantity: getQuantity(item),
-          price: item.price.value.centAmount,
-          amount: item.price.value.centAmount * getQuantity(item),
-          product: {
-            override: true,
-            name: Object?.values(item.name)?.[0],
-          },
-          sku: {
-            override: true,
-            sku: Object?.values(item.name)?.[0],
-          },
-        };
-      });
-
     const request = {
       // options?: StackableOptions;
       redeemables: coupons.map((coupon) => {
@@ -126,31 +94,13 @@ export class VoucherifyConnectorService {
     return response;
   }
 
-  async reedemStackableVouchers(
+  async redeemStackableVouchers(
     coupons: string[],
     sessionKey: string,
     order: Order,
+    items,
+    orderMetadata,
   ) {
-    const items = order.lineItems
-      .filter((item) => getQuantity(item))
-      .map((item) => {
-        return {
-          source_id: item?.variant?.sku,
-          related_object: 'sku' as 'sku' | 'product',
-          quantity: getQuantity(item),
-          price: item.price.value.centAmount,
-          amount: item.price.value.centAmount * getQuantity(item),
-          product: {
-            override: true,
-            name: Object?.values(item.name)?.[0],
-          },
-          sku: {
-            override: true,
-            sku: Object?.values(item.name)?.[0],
-          },
-        };
-      });
-
     const request = {
       session: {
         type: 'LOCK',
@@ -167,6 +117,7 @@ export class VoucherifyConnectorService {
         amount: items.reduce((acc, item) => acc + item.amount, 0),
         discount_amount: 0,
         items,
+        metadata: Object.fromEntries(orderMetadata),
       },
       customer: {
         source_id: order.customerId || order.anonymousId,
@@ -183,6 +134,7 @@ export class VoucherifyConnectorService {
     } as RedemptionsRedeemStackableParams;
 
     const start = performance.now();
+
     const response = await this.getClient().redemptions.redeemStackable(
       request,
     );
@@ -206,8 +158,8 @@ export class VoucherifyConnectorService {
   }
 
   async getMetadataSchemaProperties(resourceName: string): Promise<string[]> {
-    const meatdataSchemas = await this.getClient().metadataSchemas.list();
-    const metadataSchema = meatdataSchemas.schemas.find(
+    const metadataSchemas = await this.getClient().metadataSchemas.list();
+    const metadataSchema = metadataSchemas.schemas.find(
       (schema) => schema.related_object === resourceName,
     );
     return Object.keys(metadataSchema?.properties ?? {});

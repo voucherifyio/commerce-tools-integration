@@ -12,6 +12,7 @@ import getCartActionBuilders from './cartActions/getCartActionBuilders';
 import convertUnitTypeCouponsToFreeProducts from './convertUnitTypeCouponsToFreeProducts';
 import { desarializeCoupons, Coupon, CouponStatus } from './coupon';
 import { CartResponse, ValidateCouponsResult } from './types';
+import { ProductMapper } from './mappers/product';
 
 function getSession(cart: Cart): string | null {
   return cart.custom?.fields?.session ?? null;
@@ -77,6 +78,7 @@ export class CartService {
     private readonly typesService: TypesService,
     private readonly logger: Logger,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
+    private readonly productMapper: ProductMapper,
   ) {}
 
   private async validateCoupons(
@@ -135,6 +137,7 @@ export class CartService {
           .filter((coupon) => coupon.status != 'DELETED')
           .map((coupon) => coupon.code),
         cart,
+        this.productMapper.mapLineItems(cart.lineItems),
         sessionKey,
       );
 

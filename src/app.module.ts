@@ -33,6 +33,8 @@ import {
   REQUEST_JSON_LOGGER,
 } from './misc/request-json-logger';
 import { RequestJsonFileLogger } from './misc/request-json-file-logger';
+import { OrderMapper } from './api-extension/mappers/order';
+import { ProductMapper } from './api-extension/mappers/product';
 
 @Module({
   imports: [
@@ -83,6 +85,8 @@ import { RequestJsonFileLogger } from './misc/request-json-file-logger';
     ConfigCommand,
     ApiExtensionListCommand,
     ApiExtensionUpdateCommand,
+    OrderMapper,
+    ProductMapper,
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({
