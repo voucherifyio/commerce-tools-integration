@@ -2,8 +2,9 @@ import { Cart } from '@commercetools/platform-sdk';
 import { ValidateCouponsResult } from '../types';
 import {
   CartActionAddCustomLineItem,
-  COUPON_CUSTOM_LINE_NAME_PREFIX,
+  COUPON_CUSTOM_LINE_SLUG,
 } from './CartAction';
+import couponText from './../../misc/coupon-text';
 
 export default // TODO don't create addCustomLineItem action if the summary doesn't actually change
 function addCustomLineItemWithDiscountSummary(
@@ -15,23 +16,18 @@ function addCustomLineItemWithDiscountSummary(
 
   if (applicableCoupons.length === 0) return [];
   const { currencyCode } = cart.totalPrice;
-  const couponCodes = applicableCoupons.map((coupon) => coupon.id).join(', ');
 
   return [
     {
       action: 'addCustomLineItem',
-      name: {
-        en: `${COUPON_CUSTOM_LINE_NAME_PREFIX}coupon value => ${(
-          totalDiscountAmount / 100
-        ).toFixed(2)}`,
-      },
+      name: couponText,
       quantity: 1,
       money: {
         centAmount: totalDiscountAmount ? -totalDiscountAmount : 0,
         type: 'centPrecision',
         currencyCode,
       },
-      slug: couponCodes,
+      slug: COUPON_CUSTOM_LINE_SLUG,
       taxCategory: {
         id: taxCategory.id,
       },

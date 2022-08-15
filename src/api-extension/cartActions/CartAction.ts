@@ -28,9 +28,12 @@ export type CartActionRemoveCustomLineItem = {
 
 export type CartActionAddCustomLineItem = {
   action: 'addCustomLineItem';
-  name: {
-    en: string;
-  };
+  name: unknown;
+  // {
+  //   // en: string;
+  //   // de: string;
+  //   [prop: string]:  string;
+  // };
   quantity: number;
   money: TypedMoney;
   slug: string;
@@ -100,4 +103,4 @@ export type CartActionsBuilder = (
   validateCouponsResult: ValidateCouponsResult,
 ) => CartAction[];
 
-export const COUPON_CUSTOM_LINE_NAME_PREFIX = 'Voucher, ';
+export const COUPON_CUSTOM_LINE_SLUG = 'Voucher, ';
