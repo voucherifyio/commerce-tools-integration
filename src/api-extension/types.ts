@@ -25,6 +25,7 @@ export type ProductToAdd = {
   discount_difference: number;
   applied_discount_amount?: number;
   product: string; // sku source_id
+  distributionChannel: ChannelReference;
 };
 
 export type ValidateCouponsResult = {

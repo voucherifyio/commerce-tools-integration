@@ -6,6 +6,7 @@ import {
   CartActionChangeLineItemQuantity,
   CartActionSetLineItemCustomType,
 } from './CartAction';
+import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 
 function toAppliedCode(
   product: ProductToAdd,
@@ -65,6 +66,7 @@ function addLineItem(
     action: 'addLineItem',
     sku: product.product,
     quantity,
+    distributionChannel: product.distributionChannel,
     custom: {
       typeKey: 'lineItemCodesType',
       fields: {
