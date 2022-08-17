@@ -280,7 +280,11 @@ export class CartService {
       currencyCode: cart.totalPrice.currencyCode,
       customerGroup: cart.customerGroup,
       distributionChannels: [
-        ...new Set(cart.lineItems.map((item) => item.distributionChannel)),
+        ...new Set(
+          cart.lineItems
+            .map((item) => item.distributionChannel)
+            .filter((item) => item != undefined),
+        ),
       ],
     };
   }
