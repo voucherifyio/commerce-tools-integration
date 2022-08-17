@@ -89,7 +89,13 @@ export class CartService {
     const coupons: Coupon[] = getCouponsFromCart(cart);
     const taxCategory = await this.checkCouponTaxCategoryWithCountries(cart);
 
-    if (!coupons.length) {
+    const promotion =
+      await this.voucherifyConnectorService.getAvailablePromotions(
+        cart,
+        this.productMapper.mapLineItems(cart.lineItems),
+      );
+
+    if (!coupons.length && !promotion) {
       this.logger.debug({
         msg: 'No coupons applied, skipping voucherify call',
       });
@@ -120,7 +126,7 @@ export class CartService {
         ),
       );
 
-    if (deletedCoupons.length === coupons.length) {
+    if (deletedCoupons.length === coupons.length && !promotion) {
       return {
         valid: false,
         applicableCoupons: [],
@@ -133,13 +139,19 @@ export class CartService {
 
     const validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
-        coupons
-          .filter((coupon) => coupon.status != 'DELETED')
-          .map((coupon) => coupon.code),
         cart,
         this.productMapper.mapLineItems(cart.lineItems),
         sessionKey,
+        coupons
+          .filter(
+            (coupon) =>
+              coupon.status != 'DELETED' && !coupon.code.includes('promo'),
+          )
+          .map((coupon) => coupon.code),
+        promotion.id,
       );
+    console.log(cart);
+    console.log(validatedCoupons);
 
     const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
       validatedCoupons.redeemables.filter(

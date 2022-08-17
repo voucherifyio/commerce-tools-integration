@@ -44,19 +44,35 @@ export class VoucherifyConnectorService {
   }
 
   async validateStackableVouchersWithCTCart(
-    coupons: string[],
     cart: Cart,
     items,
     sessionKey?: string | null,
+    coupons?: string[],
+    promotion?: string,
   ) {
+    const reedemables = [];
+
+    if (coupons.length) {
+      reedemables.push(
+        ...coupons.map((coupon) => {
+          return {
+            object: 'voucher',
+            id: coupon,
+          };
+        }),
+      );
+    }
+
+    if (promotion) {
+      reedemables.push({
+        object: 'promotion_tier',
+        id: promotion,
+      });
+    }
+
     const request = {
       // options?: StackableOptions;
-      redeemables: coupons.map((coupon) => {
-        return {
-          object: 'voucher',
-          id: coupon,
-        };
-      }),
+      redeemables: reedemables,
       session: {
         type: 'LOCK',
         ...(sessionKey && { key: sessionKey }),
@@ -163,5 +179,22 @@ export class VoucherifyConnectorService {
       (schema) => schema.related_object === resourceName,
     );
     return Object.keys(metadataSchema?.properties ?? {});
+  }
+
+  async getAvailablePromotions(cart, items) {
+    const promotions = await this.getClient().promotions.validate({
+      order: {
+        source_id: cart.id,
+        items: items,
+        amount: items.reduce((acc, item) => acc + item.amount, 0),
+      },
+    });
+
+    // console.log(promotions)
+
+    if (promotions.valid) {
+      return promotions.promotions[0];
+    }
+    // return false
   }
 }
