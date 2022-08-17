@@ -29,11 +29,6 @@ export type CartActionRemoveCustomLineItem = {
 export type CartActionAddCustomLineItem = {
   action: 'addCustomLineItem';
   name: unknown;
-  // {
-  //   // en: string;
-  //   // de: string;
-  //   [prop: string]:  string;
-  // };
   quantity: number;
   money: TypedMoney;
   slug: string;
