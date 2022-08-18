@@ -23,6 +23,7 @@ export default function updateDiscountsCodes(
         ({
           code: coupon.id,
           status: 'APPLIED',
+          type: coupon.object,
           value:
             coupon.order?.applied_discount_amount ||
             coupon.order?.items_applied_discount_amount ||

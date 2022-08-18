@@ -124,7 +124,7 @@ export class VoucherifyConnectorService {
       },
       redeemables: coupons.map((coupon) => {
         return {
-          object: 'voucher',
+          object: coupon,
           id: coupon,
         };
       }),

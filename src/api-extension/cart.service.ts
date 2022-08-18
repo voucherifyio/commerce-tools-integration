@@ -145,13 +145,13 @@ export class CartService {
         coupons
           .filter(
             (coupon) =>
-              coupon.status != 'DELETED' && !coupon.code.includes('promo'),
+              coupon.status != 'DELETED' && !(coupon.type === 'promotion_tier'),
           )
           .map((coupon) => coupon.code),
         promotion.id,
       );
-    console.log(cart);
-    console.log(validatedCoupons);
+    // console.log(cart);
+    // console.log(validatedCoupons);
 
     const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
       validatedCoupons.redeemables.filter(
@@ -160,6 +160,8 @@ export class CartService {
     const notApplicableCoupons = getCouponsByStatus('INAPPLICABLE');
     const skippedCoupons = getCouponsByStatus('SKIPPED');
     const applicableCoupons = getCouponsByStatus('APPLICABLE');
+
+    console.log(applicableCoupons);
 
     const sessionKeyResponse = validatedCoupons.session?.key;
     const { valid } = validatedCoupons;
