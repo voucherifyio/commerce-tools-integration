@@ -319,6 +319,9 @@ Additionally, each time migration happen metadata will be tried to sync. Metadat
 2. Make sure that Voucherify metadata it's defined properly. If set types are not compatible with data provided by CT update may fail.
 3. Syncing `cusomers` and `orders` uses CT `Custom Fields`. Syncing `products` uses `Attributes`. In this case be sure you provide CT `Attribute identifier` instead on `Attribute label`. You can check this under `Settings -> Product types and attributes` tab.
 
+## Coupon text
+All discounts are added as one `CustomLineItem` with a negative price. This item should be visible to the customer on the invoice to know how the price is affected. To make this readable for each customer we provide the possibility to change the name of this item depending on the language which customer uses. To make it work correctly, a developer should modify the file `src/misc/coupon-text.ts` and include all possible languages used in the store. Later on, the text will be automatically chosen by the commercetools mechanism to match the language proper for a customer.
+
 ## Typical use case
 
 1. As a customer who opens a store page in the browser (Sunrise Storefront), I add some products to the cart and on the cart page, I add one of the available coupon codes (you can check the available discounts in the Voucherify admin panel for trial accounts you should have preconfigured, e.g., BLACKFRIDAY code).
