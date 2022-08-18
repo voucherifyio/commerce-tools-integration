@@ -340,6 +340,8 @@ All discounts are added as one `CustomLineItem` with a negative price. This item
 If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Changelog
+- 2022-08-16 `v3.0.6`
+    - added handling proper price from commerce tools including the price selector when unit type discount is applied.
 - 2022-08-10 `v3.0.5`
     - update readme about how handle metadata
 - 2022-08-09 `v3.0.4`
