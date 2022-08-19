@@ -1,6 +1,7 @@
 export type Coupon = {
   code: string;
   status: CouponStatus;
+  type?: string;
   errMsg?: string;
   value?: number;
 };
