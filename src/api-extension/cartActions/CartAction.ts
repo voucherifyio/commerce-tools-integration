@@ -1,5 +1,6 @@
 import { Cart, TaxCategory, TypedMoney } from '@commercetools/platform-sdk';
 import { ValidateCouponsResult } from '../types';
+import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 
 export type CartActionSetCustomType = {
   action: 'setCustomType';
@@ -28,9 +29,7 @@ export type CartActionRemoveCustomLineItem = {
 
 export type CartActionAddCustomLineItem = {
   action: 'addCustomLineItem';
-  name: {
-    en: string;
-  };
+  name: unknown;
   quantity: number;
   money: TypedMoney;
   slug: string;
@@ -41,6 +40,7 @@ export type CartActionAddLineItem = {
   action: 'addLineItem';
   sku: string;
   quantity: number;
+  distributionChannel: ChannelReference;
   externalTotalPrice?: {
     price: TypedMoney;
     totalPrice: TypedMoney;
@@ -100,4 +100,4 @@ export type CartActionsBuilder = (
   validateCouponsResult: ValidateCouponsResult,
 ) => CartAction[];
 
-export const COUPON_CUSTOM_LINE_NAME_PREFIX = 'Voucher, ';
+export const COUPON_CUSTOM_LINE_SLUG = 'Voucher, ';

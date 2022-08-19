@@ -26,6 +26,7 @@ import {
   TypeReference,
 } from '@commercetools/platform-sdk';
 import { Type } from 'class-transformer';
+import { CustomerGroupReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/customer-group';
 
 export class FC implements FieldContainer {
   @IsArray()
@@ -55,6 +56,7 @@ export class CartObj implements Cart {
   public lineItems: LineItem[];
   public customLineItems: CustomLineItem[];
   public totalPrice: TypedMoney;
+  public customerGroup: CustomerGroupReference;
 }
 
 export class OrderObj implements Order {

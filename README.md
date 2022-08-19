@@ -319,6 +319,9 @@ Additionally, each time migration happen metadata will be tried to sync. Metadat
 2. Make sure that Voucherify metadata it's defined properly. If set types are not compatible with data provided by CT update may fail.
 3. Syncing `cusomers` and `orders` uses CT `Custom Fields`. Syncing `products` uses `Attributes`. In this case be sure you provide CT `Attribute identifier` instead on `Attribute label`. You can check this under `Settings -> Product types and attributes` tab.
 
+## Coupon text
+All discounts are added as one `CustomLineItem` with a negative price. This item should be visible to the customer on the invoice to know how the price is affected. To make this readable for each customer we provide the possibility to change the name of this item depending on the language which customer uses. To make it work correctly, a developer should modify the file `src/misc/coupon-text.ts` and include all possible languages used in the store. Later on, the text will be automatically chosen by the commercetools mechanism to match the language proper for a customer.
+
 ## Typical use case
 
 1. As a customer who opens a store page in the browser (Sunrise Storefront), I add some products to the cart and on the cart page, I add one of the available coupon codes (you can check the available discounts in the Voucherify admin panel for trial accounts you should have preconfigured, e.g., BLACKFRIDAY code).
@@ -337,6 +340,10 @@ Additionally, each time migration happen metadata will be tried to sync. Metadat
 If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Changelog
+- 2022-08-19 `v4.0.0`
+    - verion not compatible due to changes in a way how `Custom Line Item` with discount is handled
+    - added possibility to set coupon text in in order summary depending on the language which customer use
+    - added handling proper price from commercetools including the price selector when unit type discount is applied.
 - 2022-08-10 `v3.0.5`
     - update readme about how handle metadata
 - 2022-08-09 `v3.0.4`
@@ -369,6 +376,10 @@ If you found a bug or want to suggest a new feature, please file a Github issue.
 - 2022-07-26 `v1.0.0` Initial release
 
 ## Migrations
+
+### Migration from v3.x.x to v4.x.x
+- if you are using sunrise, update it to version `v.3.0.0` or higher
+- if there exists carts with added coupons, now it will be impossible to remove them properly from cart
 
 ### Migration from v2.x.x to v3.x.x
 - run `npm i`, because of using new version of Voucherify SDK, which can handle metadata schemas
