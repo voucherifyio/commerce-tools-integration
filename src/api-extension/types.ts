@@ -28,7 +28,15 @@ export type ProductToAdd = {
   distributionChannel: ChannelReference;
 };
 
+export type availablePromotion = {
+  status: string;
+  value: number;
+  banner: string;
+  code: string;
+};
+
 export type ValidateCouponsResult = {
+  availablePromotions: availablePromotion[];
   applicableCoupons: StackableRedeemableResponse[];
   notApplicableCoupons: StackableRedeemableResponse[];
   skippedCoupons: StackableRedeemableResponse[];

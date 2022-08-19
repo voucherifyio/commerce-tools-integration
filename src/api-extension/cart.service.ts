@@ -29,7 +29,10 @@ function getSession(cart: Cart): string | null {
 function getCouponsFromCart(cart: Cart): Coupon[] {
   return (cart.custom?.fields?.discount_codes ?? [])
     .map(desarializeCoupons)
-    .filter((coupon) => coupon.status !== 'NOT_APPLIED'); // we already declined them, will be removed by frontend
+    .filter(
+      (coupon) =>
+        coupon.status !== 'NOT_APPLIED' && coupon.status !== 'AVAILABLE',
+    ); // we already declined them, will be removed by frontend
 }
 
 function checkCouponsValidatedAsState(
@@ -98,6 +101,22 @@ export class CartService {
     const coupons: Coupon[] = getCouponsFromCart(cart);
     const taxCategory = await this.checkCouponTaxCategoryWithCountries(cart);
 
+    const promotions =
+      await this.voucherifyConnectorService.getAvailablePromotions(
+        cart,
+        this.productMapper.mapLineItems(cart.lineItems),
+      );
+
+    const availablePromotions = promotions.map((promo) => {
+      return {
+        status: 'AVAILABLE',
+        value: promo.discount_amount,
+        banner: promo.banner,
+        code: promo.id,
+        type: promo.object,
+      };
+    });
+
     if (!coupons.length) {
       this.logger.debug({
         msg: 'No coupons applied, skipping voucherify call',
@@ -105,6 +124,7 @@ export class CartService {
 
       return {
         valid: false,
+        availablePromotions: availablePromotions,
         applicableCoupons: [],
         notApplicableCoupons: [],
         skippedCoupons: [],
@@ -132,6 +152,7 @@ export class CartService {
     if (deletedCoupons.length === coupons.length) {
       return {
         valid: false,
+        availablePromotions: [],
         applicableCoupons: [],
         notApplicableCoupons: [],
         skippedCoupons: [],
@@ -142,9 +163,8 @@ export class CartService {
 
     const validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
-        coupons
-          .filter((coupon) => coupon.status != 'DELETED')
-          .map((coupon) => coupon.code),
+        coupons.filter((coupon) => coupon.status != 'DELETED'),
+        // .map((coupon) => coupon.code),
         cart,
         this.productMapper.mapLineItems(cart.lineItems),
         sessionKey,
@@ -184,6 +204,7 @@ export class CartService {
 
     this.logger.debug({
       msg: 'Validated coupons',
+      availablePromotions,
       applicableCoupons,
       notApplicableCoupons,
       skippedCoupons,
@@ -199,7 +220,10 @@ export class CartService {
     });
     const newSessionKey = !sessionKey || valid ? sessionKeyResponse : null;
 
+    console.log('caaaaart', availablePromotions);
+
     return {
+      availablePromotions,
       applicableCoupons,
       notApplicableCoupons,
       skippedCoupons,
