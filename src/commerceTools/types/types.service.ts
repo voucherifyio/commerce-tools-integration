@@ -74,13 +74,14 @@ export class TypesService {
           inputHint: 'SingleLine',
         },
         {
-          name: 'freeShipping',
+          name: 'shippingProductSourceIds',
           label: {
-            en: 'freeShipping',
+            en: 'shippingProductSourceIds',
           },
           required: false,
           type: {
-            name: 'Boolean',
+            name: 'Set',
+            elementType: { name: 'String' },
           },
           inputHint: 'SingleLine',
         },
@@ -137,6 +138,7 @@ export class TypesService {
           (field) => field.name === fieldDefinition.name,
         ),
     );
+    console.log(missingFields);
 
     if (missingFields.length) {
       this.logger.debug({
