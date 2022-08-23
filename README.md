@@ -38,6 +38,8 @@ Demo store https://github.com/voucherifyio/sunrise-for-commerce-tools-integratio
   + [Register API Extension](#register-api-extension)
 * [Sync](#sync)
   * [Metadata](#metadata)
+* [Coupon text](#coupon-text)
+* [Free shipping](#free-shipping)
 * [Typical use case](#typical-use-case)
 * [Contributing](#contributing)
 * [Changelog](#changelog)
@@ -321,6 +323,19 @@ Additionally, each time migration happen metadata will be tried to sync. Metadat
 
 ## Coupon text
 All discounts are added as one `CustomLineItem` with a negative price. This item should be visible to the customer on the invoice to know how the price is affected. To make this readable for each customer we provide the possibility to change the name of this item depending on the language which customer uses. To make it work correctly, a developer should modify the file `src/misc/coupon-text.ts` and include all possible languages used in the store. Later on, the text will be automatically chosen by the commercetools mechanism to match the language proper for a customer.
+
+## Free shipping
+
+Free shipping is one of our discount codes type. You can define it on two ways. Firstly you can create predefined coupon with `Free shipping` type. This coupon is connected to pre created product with `source id = 5h1pp1ng`. 
+The second way is to create new or use existing product which will represent Your shipping method.
+If you have chosen your product now You can create new discount with unit type of this product. When you apply whichever of this discount information about it will be set to commerce tools custom field named shippingProductSourceIds. There will be storage source ids of connected to code products.
+Next step is to properly define shipping method in Your commerce tools panel and configure [Predicates](https://docs.commercetools.com/tutorials/shipping-method-with-predicate). Go to `Settings -> Project settings -> Shipping methods`. Use existed or create new shipping method which will be applied if one of codes will be used.
+In `Shipping method -> Predicate` field You can define condition when a given shipping method will be available. To allow uses to use Your new free shipping method you need to define formula.
+
+`custom.shippingProductSourceIds contains any ("5h1pp21ng")` - this formula is used for default free shipping code
+`custom.shippingProductSourceIds contains any ("<your_source_id>")` - this formula should be used when you want to apply this shipping method with custom vourcherify shipping method. 
+
+To learn more about predicates You can see [here](https://docs.commercetools.com/api/predicates/query).
 
 ## Typical use case
 
