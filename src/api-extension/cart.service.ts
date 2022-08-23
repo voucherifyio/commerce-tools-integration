@@ -302,7 +302,7 @@ export class CartService {
     const actions = getCartActionBuilders(validateCouponsResult).flatMap(
       (builder) => builder(cart, validateCouponsResult),
     );
-    console.log('test');
+
     this.logger.debug(actions);
     return {
       status: true,
