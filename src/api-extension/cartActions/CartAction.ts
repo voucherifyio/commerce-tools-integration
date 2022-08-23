@@ -18,8 +18,8 @@ export type CartActionSetCustomFieldWithCoupons = {
 
 export type CartActionSetCustomFieldFreeShipping = {
   action: 'setCustomField';
-  name: 'freeShipping';
-  value: boolean;
+  name: 'shippingProductSourceIds';
+  value: string[];
 };
 
 export type CartActionSetCustomFieldWithSession = {

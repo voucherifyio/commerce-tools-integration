@@ -68,7 +68,8 @@ const defaultGetTypeResponse = {
       },
       required: false,
       type: {
-        name: 'Boolean',
+        name: 'Set',
+        elementType: { name: 'String' },
       },
       inputHint: 'SingleLine',
     },
