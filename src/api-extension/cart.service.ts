@@ -191,7 +191,7 @@ export class CartService {
     const notApplicableCoupons = getCouponsByStatus('INAPPLICABLE');
     const skippedCoupons = getCouponsByStatus('SKIPPED');
     const applicableCoupons = getCouponsByStatus('APPLICABLE');
-    console.log(applicableCoupons);
+
     const productsToAdd = await convertUnitTypeCouponsToFreeProducts(
       validatedCoupons,
       this.commerceToolsConnectorService.getClient(),
