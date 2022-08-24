@@ -17,7 +17,6 @@ export default function updateDiscountsCodes(
   const oldCouponsCodes: Coupon[] = (
     cart.custom?.fields?.discount_codes ?? []
   ).map(desarializeCoupons);
-  console.log(availablePromotions);
   const coupons = [
     ...availablePromotions,
     ...applicableCoupons.map(
