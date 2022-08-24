@@ -138,7 +138,6 @@ export class TypesService {
           (field) => field.name === fieldDefinition.name,
         ),
     );
-    console.log(missingFields);
 
     if (missingFields.length) {
       this.logger.debug({
