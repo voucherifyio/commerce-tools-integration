@@ -177,13 +177,10 @@ export class VoucherifyConnectorService {
       },
     });
 
-    // console.log(promotions)
-
     if (promotions.valid) {
       return promotions.promotions;
     }
 
     return [];
-    // return false
   }
 }

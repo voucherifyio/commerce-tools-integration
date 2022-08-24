@@ -1,4 +1,4 @@
-import { Cart, Order } from '@commercetools/platform-sdk';
+import { Cart } from '@commercetools/platform-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import {
   StackableRedeemableResponse,
@@ -107,15 +107,26 @@ export class CartService {
         this.productMapper.mapLineItems(cart.lineItems),
       );
 
-    const availablePromotions = promotions.map((promo) => {
-      return {
-        status: 'AVAILABLE',
-        value: promo.discount_amount,
-        banner: promo.banner,
-        code: promo.id,
-        type: promo.object,
-      };
-    });
+    const availablePromotions = promotions
+      .filter((promo) => {
+        if (!coupons.length) {
+          return true;
+        }
+
+        const codes = coupons
+          .filter((coupon) => coupon.status !== 'DELETED')
+          .map((coupon) => coupon.code);
+        return !codes.includes(promo.id);
+      })
+      .map((promo) => {
+        return {
+          status: 'AVAILABLE',
+          value: promo.discount_amount,
+          banner: promo.banner,
+          code: promo.id,
+          type: promo.object,
+        };
+      });
 
     if (!coupons.length) {
       this.logger.debug({
@@ -140,8 +151,12 @@ export class CartService {
       anonymousId,
     });
 
-    const deletedCoupons = coupons
-      .filter((coupon) => coupon.status === 'DELETED')
+    const deletedCoupons = coupons.filter(
+      (coupon) => coupon.status === 'DELETED',
+    );
+
+    deletedCoupons
+      .filter((coupon) => coupon.type !== 'promotion_tier')
       .map((coupon) =>
         this.voucherifyConnectorService.releaseValidationSession(
           coupon.code,
@@ -152,7 +167,7 @@ export class CartService {
     if (deletedCoupons.length === coupons.length) {
       return {
         valid: false,
-        availablePromotions: [],
+        availablePromotions: availablePromotions,
         applicableCoupons: [],
         notApplicableCoupons: [],
         skippedCoupons: [],
@@ -219,8 +234,6 @@ export class CartService {
       taxCategory,
     });
     const newSessionKey = !sessionKey || valid ? sessionKeyResponse : null;
-
-    console.log('caaaaart', availablePromotions);
 
     return {
       availablePromotions,
