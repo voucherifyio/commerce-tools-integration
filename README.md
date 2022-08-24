@@ -328,7 +328,7 @@ All discounts are added as one `CustomLineItem` with a negative price. This item
 
 Free shipping is one of our discount codes type. You can define it on two ways. Firstly you can create predefined coupon with `Free shipping` type. This coupon is connected to pre created product with `source id = 5h1pp1ng`. 
 The second way is to create new or use existing product which will represent Your shipping method.
-If you have chosen your product now You can create new discount with unit type of this product. When you apply whichever of this discount information about it will be set to commerce tools custom field named shippingProductSourceIds. There will be storage source ids of connected to code products.
+If you have chosen your product now You can create new discount with unit type of this product. When you apply whichever of this discount information about it will be set to commerce tools custom field named shippingProductSourceIds.
 Next step is to properly define shipping method in Your commerce tools panel and configure [Predicates](https://docs.commercetools.com/tutorials/shipping-method-with-predicate). Go to `Settings -> Project settings -> Shipping methods`. Use existed or create new shipping method which will be applied if one of codes will be used.
 In `Shipping method -> Predicate` field You can define condition when a given shipping method will be available. To allow uses to use Your new free shipping method you need to define formula.
 
@@ -336,6 +336,10 @@ In `Shipping method -> Predicate` field You can define condition when a given sh
 `custom.shippingProductSourceIds contains any ("<your_source_id>")` - this formula should be used when you want to apply this shipping method with custom vourcherify shipping method. 
 
 To learn more about predicates You can see [here](https://docs.commercetools.com/api/predicates/query).
+
+#### Important
+1. Make sure that you `customField` definition is properly set. You can run `npm run config` to make this configuration.
+2. If you choose free shipping code with custom product make sure that this product is properly defined in commerce tools and can be applied to cart.
 
 ## Typical use case
 
@@ -355,6 +359,10 @@ To learn more about predicates You can see [here](https://docs.commercetools.com
 If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Changelog
+- 2022-08-24 `v4.1.0`
+    - added handling free shipping codes
+    - new `customField` definition added  
+    - compatible with previews version but required to run `npm run config` command to proper set new `customField`
 - 2022-08-19 `v4.0.0`
     - verion not compatible due to changes in a way how `Custom Line Item` with discount is handled
     - added possibility to set coupon text in in order summary depending on the language which customer use
