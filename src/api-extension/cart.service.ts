@@ -184,6 +184,8 @@ export class CartService {
         sessionKey,
       );
 
+    console.log(111, cart);
+
     const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
       validatedCoupons.redeemables.filter(
         (redeemable) => redeemable.status === status,

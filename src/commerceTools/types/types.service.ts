@@ -112,6 +112,17 @@ export class TypesService {
           },
           inputHint: 'SingleLine',
         },
+        {
+          name: 'coupon_fixed_price',
+          label: {
+            en: 'coupon_fixed_price',
+          },
+          required: false,
+          type: {
+            name: 'Number',
+          },
+          inputHint: 'SingleLine',
+        },
       ],
     },
   };
