@@ -176,6 +176,8 @@ export class CartService {
       };
     }
 
+    console.log(cart.lineItems[0].custom);
+
     const validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
         coupons.filter((coupon) => coupon.status != 'DELETED'),
