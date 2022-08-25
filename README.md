@@ -340,6 +340,8 @@ All discounts are added as one `CustomLineItem` with a negative price. This item
 If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Changelog
+- 2022-08-25 `v4.0.1`
+    - added promotion tier handling
 - 2022-08-19 `v4.0.0`
     - verion not compatible due to changes in a way how `Custom Line Item` with discount is handled
     - added possibility to set coupon text in in order summary depending on the language which customer use

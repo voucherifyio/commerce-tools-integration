@@ -8,6 +8,7 @@ export default function updateDiscountsCodes(
   validateCouponsResult: ValidateCouponsResult,
 ): CartActionSetCustomFieldWithCoupons[] {
   const {
+    availablePromotions,
     applicableCoupons,
     notApplicableCoupons,
     skippedCoupons,
@@ -16,13 +17,14 @@ export default function updateDiscountsCodes(
   const oldCouponsCodes: Coupon[] = (
     cart.custom?.fields?.discount_codes ?? []
   ).map(desarializeCoupons);
-
   const coupons = [
+    ...availablePromotions,
     ...applicableCoupons.map(
       (coupon) =>
         ({
           code: coupon.id,
           status: 'APPLIED',
+          type: coupon.object,
           value:
             coupon.order?.applied_discount_amount ||
             coupon.order?.items_applied_discount_amount ||
