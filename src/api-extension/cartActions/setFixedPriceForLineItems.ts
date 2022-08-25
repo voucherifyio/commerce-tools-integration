@@ -1,6 +1,6 @@
 import { Cart } from '@commercetools/platform-sdk';
 import { ValidateCouponsResult } from '../types';
-import { CartActionSetLineItemCustomField } from './CartAction';
+import { CartActionSetLineItemCustomType } from './CartAction';
 
 type FixedCouponApplicableTo = {
   id: string;
@@ -65,8 +65,8 @@ function getLineItemsWithFixedAmount(
 function getLineItemCustomFieldActions(
   cart: Cart,
   lineProductsWithFixedAmount,
-): CartActionSetLineItemCustomField[] {
-  return lineProductsWithFixedAmount.map((lineProductsWithFixedAmount) => {
+): CartActionSetLineItemCustomType[] {
+  return lineProductsWithFixedAmount.flatMap((lineProductsWithFixedAmount) => {
     return cart.lineItems
       .filter(
         (lineItem) =>
@@ -74,11 +74,15 @@ function getLineItemCustomFieldActions(
       )
       .map((lineItem) => {
         return {
-          action: 'setLineItemCustomField',
+          action: 'setLineItemCustomType',
           lineItemId: lineItem.id,
-          name: 'coupon_fixed_price',
-          value: lineProductsWithFixedAmount.couponFixedPrice,
-        } as CartActionSetLineItemCustomField;
+          type: {
+            key: 'lineItemCodesType',
+          },
+          fields: {
+            coupon_fixed_price: lineProductsWithFixedAmount.couponFixedPrice,
+          },
+        } as CartActionSetLineItemCustomType;
       });
   });
 }
@@ -86,7 +90,7 @@ function getLineItemCustomFieldActions(
 export default function setFixedPriceForLineItems(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
-): CartActionSetLineItemCustomField[] {
+): CartActionSetLineItemCustomType[] {
   const fixedTypeCoupons = validateCouponsResult.applicableCoupons.filter(
     (coupon) => coupon.result.discount.type === 'FIXED',
   );
@@ -99,11 +103,5 @@ export default function setFixedPriceForLineItems(
     couponLineItems,
   );
 
-  const acionts = getLineItemCustomFieldActions(
-    cart,
-    lineProductsWithFixedAmount,
-  );
-  console.log(acionts);
-
-  return acionts;
+  return getLineItemCustomFieldActions(cart, lineProductsWithFixedAmount);
 }
