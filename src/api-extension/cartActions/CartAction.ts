@@ -79,7 +79,8 @@ export type CartActionSetLineItemCustomType = {
     key: 'lineItemCodesType';
   };
   fields: {
-    applied_codes: string[];
+    applied_codes?: string[];
+    coupon_fixed_price?: number;
   };
 };
 
