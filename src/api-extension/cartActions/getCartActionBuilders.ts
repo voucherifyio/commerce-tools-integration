@@ -27,6 +27,7 @@ export default function getCartActionBuilders(
       ],
     );
   }
+  // NORMALIZE CART ACTIONS WHEN ARE THE SAME METHODS ON THE SAME ELEMENTS
   cartActionBuilders.push(updateDiscountsCodes);
 
   return cartActionBuilders;

@@ -6,7 +6,6 @@ import {
   CartActionChangeLineItemQuantity,
   CartActionSetLineItemCustomType,
 } from './CartAction';
-import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 
 function toAppliedCode(
   product: ProductToAdd,
