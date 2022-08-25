@@ -2,6 +2,10 @@ import { Cart } from '@commercetools/platform-sdk';
 import { Coupon, desarializeCoupons } from '../coupon';
 import { ValidateCouponsResult } from '../types';
 import { CartActionSetCustomFieldWithCoupons } from './CartAction';
+import {
+  FREE_SHIPPING,
+  FREE_SHIPPING_UNIT_TYPE,
+} from '../../consts/voucherify';
 
 export default function updateDiscountsCodes(
   cart: Cart,
@@ -26,12 +30,15 @@ export default function updateDiscountsCodes(
           status: 'APPLIED',
           type: coupon.object,
           value:
-            coupon.order?.applied_discount_amount ||
-            coupon.order?.items_applied_discount_amount ||
-            coupon.result?.discount?.amount_off ||
-            oldCouponsCodes.find((oldCoupon) => coupon.id === oldCoupon.code)
-              ?.value ||
-            0,
+            coupon.result.discount.unit_type === FREE_SHIPPING_UNIT_TYPE
+              ? FREE_SHIPPING
+              : coupon.order?.applied_discount_amount ||
+                coupon.order?.items_applied_discount_amount ||
+                coupon.result?.discount?.amount_off ||
+                oldCouponsCodes.find(
+                  (oldCoupon) => coupon.id === oldCoupon.code,
+                )?.value ||
+                0,
         } as Coupon),
     ),
     ...notApplicableCoupons.map(

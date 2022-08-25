@@ -73,6 +73,18 @@ export class TypesService {
           },
           inputHint: 'SingleLine',
         },
+        {
+          name: 'shippingProductSourceIds',
+          label: {
+            en: 'shippingProductSourceIds',
+          },
+          required: false,
+          type: {
+            name: 'Set',
+            elementType: { name: 'String' },
+          },
+          inputHint: 'SingleLine',
+        },
       ],
     },
   };

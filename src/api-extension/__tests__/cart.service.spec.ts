@@ -8,7 +8,7 @@ import {
   TaxMode,
   TypedMoney,
 } from '@commercetools/platform-sdk';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CartService } from '../cart.service';
 import { TaxCategoriesService } from '../../commerceTools/tax-categories/tax-categories.service';
@@ -26,6 +26,15 @@ import { MockedVoucherifyConnectorService } from '../../voucherify/__mocks__/vou
 import { Coupon } from '../coupon';
 import { CartAction } from '../cartActions/CartAction';
 import { ProductMapper } from '../mappers/product';
+import { CommerceToolsConnectorService } from '../../commerceTools/commerce-tools-connector.service';
+import { ConfigService } from '@nestjs/config';
+import {
+  NoOpRequestJsonLogger,
+  REQUEST_JSON_LOGGER,
+} from '../../misc/request-json-logger';
+import path from 'path';
+import mkdirp from 'mkdirp';
+import { RequestJsonFileLogger } from '../../misc/request-json-file-logger';
 
 jest.mock('../../commerceTools/tax-categories/tax-categories.service');
 jest.mock('../../commerceTools/types/types.service');
@@ -189,12 +198,33 @@ describe('CartService', () => {
   let taxCategoriesService: MockedTaxCategoriesService;
   let typesService: MockedTypesService;
   let voucherifyConnectorService: MockedVoucherifyConnectorService;
+  let commerceToolsConnectorService: CommerceToolsConnectorService;
 
   beforeAll(async () => {
     const app: TestingModule = await Test.createTestingModule({
       providers: [
         CartService,
         ProductMapper,
+        CommerceToolsConnectorService,
+        ConfigService,
+        Logger,
+        {
+          provide: REQUEST_JSON_LOGGER,
+          useFactory: async () => {
+            if (process.env.DEBUG_STORE_REQUESTS_IN_JSON !== 'true') {
+              return new NoOpRequestJsonLogger();
+            }
+
+            const requestsDir = process.env.DEBUG_STORE_REQUESTS_DIR;
+            if (!requestsDir) {
+              throw new Error(
+                'Please provide value of DEBUG_STORE_REQUESTS_DIR env variable!',
+              );
+            }
+            await mkdirp(path.join(process.cwd(), requestsDir));
+            return new RequestJsonFileLogger(requestsDir);
+          },
+        },
         {
           provide: TaxCategoriesService,
           useValue: TaxCategoriesService,
@@ -217,6 +247,9 @@ describe('CartService', () => {
 
     cartService = app.get<CartService>(CartService);
     productMapper = app.get<ProductMapper>(ProductMapper);
+    commerceToolsConnectorService = app.get<CommerceToolsConnectorService>(
+      CommerceToolsConnectorService,
+    );
     taxCategoriesService = app.get<TaxCategoriesService>(
       TaxCategoriesService,
     ) as MockedTaxCategoriesService;
