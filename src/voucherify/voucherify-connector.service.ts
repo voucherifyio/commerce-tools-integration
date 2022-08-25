@@ -11,6 +11,7 @@ import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
+import { Coupon } from 'src/api-extension/coupon';
 
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;
@@ -44,7 +45,7 @@ export class VoucherifyConnectorService {
   }
 
   async validateStackableVouchersWithCTCart(
-    coupons: any,
+    coupons: Coupon[],
     cart: Cart,
     items,
     sessionKey?: string | null,
@@ -96,7 +97,7 @@ export class VoucherifyConnectorService {
   }
 
   async redeemStackableVouchers(
-    coupons: any,
+    coupons: Coupon[],
     sessionKey: string,
     order: Order,
     items,
