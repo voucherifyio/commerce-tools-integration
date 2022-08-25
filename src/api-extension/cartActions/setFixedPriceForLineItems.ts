@@ -66,25 +66,49 @@ function getLineItemCustomFieldActions(
   cart: Cart,
   lineProductsWithFixedAmount,
 ): CartActionSetLineItemCustomType[] {
-  return lineProductsWithFixedAmount.flatMap((lineProductsWithFixedAmount) => {
-    return cart.lineItems
-      .filter(
-        (lineItem) =>
-          lineItem.productId === lineProductsWithFixedAmount.product.source_id,
-      )
-      .map((lineItem) => {
+  const addCustomTypeActions = lineProductsWithFixedAmount.flatMap(
+    (lineProductsWithFixedAmount) => {
+      return cart.lineItems
+        .filter(
+          (lineItem) =>
+            lineItem.productId ===
+            lineProductsWithFixedAmount.product.source_id,
+        )
+        .map((lineItem) => {
+          return {
+            action: 'setLineItemCustomType',
+            lineItemId: lineItem.id,
+            type: {
+              key: 'lineItemCodesType',
+            },
+            fields: {
+              coupon_fixed_price: lineProductsWithFixedAmount.couponFixedPrice,
+            },
+          } as CartActionSetLineItemCustomType;
+        });
+    },
+  );
+
+  const lineItemsIdsWithFixedAmount = addCustomTypeActions.map(
+    (addCustomTypeActions) => addCustomTypeActions.lineItemId,
+  );
+
+  const removeCustomTypeAction = cart.lineItems
+    .map((lineItem) => {
+      if (!lineItemsIdsWithFixedAmount.includes(lineItem.id)) {
         return {
           action: 'setLineItemCustomType',
           lineItemId: lineItem.id,
           type: {
             key: 'lineItemCodesType',
           },
-          fields: {
-            coupon_fixed_price: lineProductsWithFixedAmount.couponFixedPrice,
-          },
+          fields: {},
         } as CartActionSetLineItemCustomType;
-      });
-  });
+      }
+    })
+    .filter((lineItem) => lineItem !== undefined);
+
+  return [...addCustomTypeActions, ...removeCustomTypeAction];
 }
 
 export default function setFixedPriceForLineItems(
@@ -102,6 +126,6 @@ export default function setFixedPriceForLineItems(
     fixedCouponApplicableTo,
     couponLineItems,
   );
-
+  console.log(getLineItemCustomFieldActions(cart, lineProductsWithFixedAmount));
   return getLineItemCustomFieldActions(cart, lineProductsWithFixedAmount);
 }
