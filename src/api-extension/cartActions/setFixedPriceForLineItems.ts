@@ -94,8 +94,6 @@ function getLineItemCustomFieldActions(
     return action;
   });
 
-  console.log(actions);
-
   return actions;
 }
 
