@@ -24,11 +24,10 @@ export default function getCartActionBuilders(
         removeFreeLineItemsForNonApplicableCoupon,
         addShippingProductSourceIds,
         setFixedPriceForLineItems,
+        updateDiscountsCodes,
       ],
     );
   }
-  // NORMALIZE CART ACTIONS WHEN ARE THE SAME METHODS ON THE SAME ELEMENTS
-  cartActionBuilders.push(updateDiscountsCodes);
 
   return cartActionBuilders;
 }

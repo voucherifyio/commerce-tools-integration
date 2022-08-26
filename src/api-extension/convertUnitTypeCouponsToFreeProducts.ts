@@ -47,7 +47,7 @@ async function getCtVariantPrice(
     ctProduct.masterData.current.variants.length > 0
       ? ctProduct.masterData.current.variants
       : [ctProduct.masterData.current.masterVariant];
-  console.log(ctVariants);
+
   ctVariants = ctVariants.filter(
     (variant) => variant.sku === productSkuSourceId,
   );
