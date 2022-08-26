@@ -66,7 +66,7 @@ function getLineItemCustomFieldActions(
   cart: Cart,
   lineItemsWithFixedAmount,
 ): CartActionSetLineItemCustomType[] {
-  const actions = cart.lineItems.map((lineItem) => {
+  return cart.lineItems.map((lineItem) => {
     const action = {
       action: 'setLineItemCustomType',
       lineItemId: lineItem.id,
@@ -93,8 +93,6 @@ function getLineItemCustomFieldActions(
 
     return action;
   });
-
-  return actions;
 }
 
 export default function setFixedPriceForLineItems(
