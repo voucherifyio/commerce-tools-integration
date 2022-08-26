@@ -86,6 +86,7 @@ function getLineItemCustomFieldActions(
         lineItemWithFixedAmount[0].couponFixedPrice;
     }
 
+    // Make sure you add case here if more lineItem custom fields will be added
     if (lineItem.custom?.fields?.applied_codes) {
       action.fields.applied_codes = lineItem.custom.fields.applied_codes;
     }
