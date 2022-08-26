@@ -18,11 +18,13 @@ import {
   MockedTypesService,
 } from '../../commerceTools/types/__mocks__/types.service';
 import { VoucherifyConnectorService } from '../../voucherify/voucherify-connector.service';
+import { CommerceToolsConnectorService } from '../../commerceTools/commerce-tools-connector.service';
 import {
   defaultGetCouponTaxCategoryResponse,
   MockedTaxCategoriesService,
 } from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
 import { MockedVoucherifyConnectorService } from '../../voucherify/__mocks__/voucherify-connector.service';
+import { MockedCommerceToolsConectorService } from 'src/commerceTools/__mocks__/commerce-tools-connector.service';
 import { Coupon } from '../coupon';
 import { CartAction } from '../cartActions/CartAction';
 import { ProductMapper } from '../mappers/product';
@@ -30,6 +32,7 @@ import { ProductMapper } from '../mappers/product';
 jest.mock('../../commerceTools/tax-categories/tax-categories.service');
 jest.mock('../../commerceTools/types/types.service');
 jest.mock('../../voucherify/voucherify-connector.service');
+jest.mock('../../commerceTools/commerce-tools-connector.service');
 
 const DEFAULT_ITEM_PRICE = 26500;
 
@@ -189,6 +192,7 @@ describe('CartService', () => {
   let taxCategoriesService: MockedTaxCategoriesService;
   let typesService: MockedTypesService;
   let voucherifyConnectorService: MockedVoucherifyConnectorService;
+  let commerceToolsConnectoService: MockedCommerceToolsConectorService;
 
   beforeAll(async () => {
     const app: TestingModule = await Test.createTestingModule({
@@ -208,6 +212,10 @@ describe('CartService', () => {
           useValue: VoucherifyConnectorService,
         },
         {
+          provide: CommerceToolsConnectorService,
+          useValue: CommerceToolsConnectorService,
+        },
+        {
           provide: Logger,
           // eslint-disable-next-line @typescript-eslint/no-empty-function
           useValue: { debug: () => {}, error: () => {} },
@@ -224,6 +232,9 @@ describe('CartService', () => {
     voucherifyConnectorService = app.get<VoucherifyConnectorService>(
       VoucherifyConnectorService,
     ) as MockedVoucherifyConnectorService;
+    commerceToolsConnectoService = app.get<CommerceToolsConnectorService>(
+      CommerceToolsConnectorService,
+    ) as MockedCommerceToolsConectorService;
   });
 
   beforeEach(() => {
