@@ -358,18 +358,22 @@ To learn more about predicates You can see [here](https://docs.commercetools.com
 
 ## Contributing
 
-If you found a bug or want to suggest a new feature, please file a Github issue.
+If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2022-08-26 `v4.2.0`
+    - added support for fixed price promotions
+    - bugfixes handling proper price from commercetools when product have only main variant
+    - compatible with previews version but required to run `npm run config` command to proper set new `lineItemCustomField`
 - 2022-08-25 `v4.1.1`
-  - added promotion tier handling
+    - added promotion tier handling
 - 2022-08-24 `v4.1.0`
-  - added handling free shipping codes
-  - new `customField` definition added
-  - compatible with previews version but required to run `npm run config` command to proper set new `customField`
+    - added handling free shipping codes
+    - new `customField` definition added
+    - compatible with previews version but required to run `npm run config` command to proper set new `customField`
 - 2022-08-19 `v4.0.0`
-    - verion not compatible due to changes in a way how `Custom Line Item` with discount is handled
-    - added possibility to set coupon text in in order summary depending on the language which customer use
+    - version not compatible due to changes in a way how `Custom Line Item` with discount is handled
+    - added possibility to set coupon text in order summary depending on the language which customer use
     - added handling proper price from commercetools including the price selector when unit type discount is applied.
 - 2022-08-10 `v3.0.5`
     - update readme about how handle metadata
@@ -391,7 +395,6 @@ If you found a bug or want to suggest a new feature, please file a Github issue.
     - enhanced CLI: removing three `migrate-...` commands and replace them with one `migrate` with several options
     - added migration of metadata: as metadata from commercetools side are considered `custom fields` in case of `orders` and `customers` and `attributes` in case of `products`
     - readme update
-
 - 2022-08-02 `v2.0.0`
     - version v2.x is not fully backward compatible with version v1.x, please refer to [Migration from v1.x.x to v2.x.x](#migration-from-v1xx-to-v2xx) section
     - fixing the issue with removing the commercetools API Extension pointing to other integrations
