@@ -143,6 +143,9 @@ voucherifyConnectorService.__simulateDefaultValidateStackable = () => {
   voucherifyConnectorService.__currentValidateVouchersResponse =
     defaultValidateVouchersResponse();
 
+  voucherifyConnectorService.getAvailablePromotions = jest.fn(() =>
+    Promise.resolve([]),
+  );
   voucherifyConnectorService.validateStackableVouchersWithCTCart = jest.fn(() =>
     Promise.resolve(
       voucherifyConnectorService.__currentValidateVouchersResponse,

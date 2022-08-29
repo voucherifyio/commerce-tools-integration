@@ -200,15 +200,15 @@ describe('CartService', () => {
   let taxCategoriesService: MockedTaxCategoriesService;
   let typesService: MockedTypesService;
   let voucherifyConnectorService: MockedVoucherifyConnectorService;
-  let commerceToolsConnectorService: CommerceToolsConnectorService;
-  // let commerceToolsConnectorService: MockedCommerceToolsConectorService;
+  // let commerceToolsConnectorService: CommerceToolsConnectorService;
+  let commerceToolsConnectorService: MockedCommerceToolsConectorService;
 
   beforeAll(async () => {
     const app: TestingModule = await Test.createTestingModule({
       providers: [
         CartService,
         ProductMapper,
-        CommerceToolsConnectorService,
+        // CommerceToolsConnectorService,
         ConfigService,
         Logger,
         {
@@ -254,9 +254,9 @@ describe('CartService', () => {
 
     cartService = app.get<CartService>(CartService);
     productMapper = app.get<ProductMapper>(ProductMapper);
-    commerceToolsConnectorService = app.get<CommerceToolsConnectorService>(
-      CommerceToolsConnectorService,
-    );
+    // commerceToolsConnectorService = app.get<CommerceToolsConnectorService>(
+    //   CommerceToolsConnectorService,
+    // );
     taxCategoriesService = app.get<TaxCategoriesService>(
       TaxCategoriesService,
     ) as MockedTaxCategoriesService;
