@@ -363,6 +363,8 @@ To learn more about predicates You can see [here](https://docs.commercetools.com
 If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Changelog
+- 2022-08-25 `v4.1.2`
+  - bugfixes empty values when applying prepaid gift cards
 - 2022-08-25 `v4.1.1`
   - added promotion tier handling
 - 2022-08-24 `v4.1.0`
