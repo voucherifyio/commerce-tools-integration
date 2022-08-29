@@ -61,6 +61,18 @@ const defaultGetTypeResponse = {
       },
       inputHint: 'SingleLine',
     },
+    {
+      name: 'freeShipping',
+      label: {
+        en: 'freeShipping',
+      },
+      required: false,
+      type: {
+        name: 'Set',
+        elementType: { name: 'String' },
+      },
+      inputHint: 'SingleLine',
+    },
   ],
 } as Type;
 

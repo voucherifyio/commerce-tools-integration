@@ -11,6 +11,7 @@ import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
+import { Coupon } from 'src/api-extension/coupon';
 
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;
@@ -44,19 +45,20 @@ export class VoucherifyConnectorService {
   }
 
   async validateStackableVouchersWithCTCart(
-    coupons: string[],
+    coupons: Coupon[],
     cart: Cart,
     items,
     sessionKey?: string | null,
   ) {
+    const redeemables = coupons.map((code) => {
+      return {
+        object: code.type ? code.type : 'voucher',
+        id: code.code,
+      };
+    });
     const request = {
       // options?: StackableOptions;
-      redeemables: coupons.map((coupon) => {
-        return {
-          object: 'voucher',
-          id: coupon,
-        };
-      }),
+      redeemables: redeemables,
       session: {
         type: 'LOCK',
         ...(sessionKey && { key: sessionKey }),
@@ -95,23 +97,25 @@ export class VoucherifyConnectorService {
   }
 
   async redeemStackableVouchers(
-    coupons: string[],
+    coupons: Coupon[],
     sessionKey: string,
     order: Order,
     items,
     orderMetadata,
   ) {
+    const redeemables = coupons.map((code) => {
+      return {
+        object: code.type ? code.type : 'voucher',
+        id: code.code,
+      };
+    });
+
     const request = {
       session: {
         type: 'LOCK',
         key: sessionKey,
       },
-      redeemables: coupons.map((coupon) => {
-        return {
-          object: 'voucher',
-          id: coupon,
-        };
-      }),
+      redeemables: redeemables,
       order: {
         source_id: order.id,
         amount: items.reduce((acc, item) => acc + item.amount, 0),
@@ -163,5 +167,21 @@ export class VoucherifyConnectorService {
       (schema) => schema.related_object === resourceName,
     );
     return Object.keys(metadataSchema?.properties ?? {});
+  }
+
+  async getAvailablePromotions(cart, items) {
+    const promotions = await this.getClient().promotions.validate({
+      order: {
+        source_id: cart.id,
+        items: items,
+        amount: items.reduce((acc, item) => acc + item.amount, 0),
+      },
+    });
+
+    if (promotions.valid) {
+      return promotions.promotions;
+    }
+
+    return [];
   }
 }

@@ -6,6 +6,7 @@ import removeDiscountedCustomLineItems from './removeDiscountedCustomLineItems';
 import removeFreeLineItemsForNonApplicableCoupon from './removeFreeLineItemsForNonApplicableCoupon';
 import setSessionAsCustomField from './setSessionAsCustomField';
 import updateDiscountsCodes from './updateDiscountCodes';
+import addShippingProductSourceIds from './addShippingProductSourceIds';
 
 export default function getCartActionBuilders(
   validateCouponsResult: ValidateCouponsResult,
@@ -20,6 +21,7 @@ export default function getCartActionBuilders(
         addCustomLineItemWithDiscountSummary,
         addFreeLineItems,
         removeFreeLineItemsForNonApplicableCoupon,
+        addShippingProductSourceIds,
       ],
     );
   }

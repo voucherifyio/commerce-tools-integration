@@ -23,9 +23,13 @@ export class OrderService {
   public async redeemVoucherifyCoupons(
     order: Order,
   ): Promise<{ status: boolean; actions: object[] }> {
-    const coupons: Coupon[] = (order.custom?.fields?.discount_codes ?? []).map(
-      desarializeCoupons,
-    );
+    const coupons: Coupon[] = (order.custom?.fields?.discount_codes ?? [])
+      .map(desarializeCoupons)
+      .filter(
+        (coupon) =>
+          coupon.status !== 'NOT_APPLIED' && coupon.status !== 'AVAILABLE',
+      );
+
     const { id, customerId } = order;
 
     if (!coupons.length || order.paymentState !== 'Paid') {
@@ -60,7 +64,7 @@ export class OrderService {
 
     const response =
       await this.voucherifyConnectorService.redeemStackableVouchers(
-        coupons.map((coupon) => coupon.code),
+        coupons,
         sessionKey,
         order,
         this.productMapper.mapLineItems(
@@ -74,7 +78,9 @@ export class OrderService {
       ...response.redemptions.map((redem) => {
         return {
           result: redem.result,
-          coupon: redem.voucher.code,
+          coupon: redem.voucher?.code
+            ? redem.voucher.code
+            : redem['promotion_tier']['id'],
         };
       }),
     );

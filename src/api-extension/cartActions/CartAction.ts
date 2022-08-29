@@ -16,6 +16,12 @@ export type CartActionSetCustomFieldWithCoupons = {
   value: string[];
 };
 
+export type CartActionSetCustomFieldFreeShipping = {
+  action: 'setCustomField';
+  name: 'shippingProductSourceIds';
+  value: string[];
+};
+
 export type CartActionSetCustomFieldWithSession = {
   action: 'setCustomField';
   name: 'session';
@@ -93,7 +99,8 @@ export type CartAction =
   | CartActionRemoveLineItem
   | CartActionSetLineItemCustomField
   | CartActionChangeLineItemQuantity
-  | CartActionSetLineItemCustomType;
+  | CartActionSetLineItemCustomType
+  | CartActionSetCustomFieldFreeShipping;
 
 export type CartActionsBuilder = (
   cart: Cart,
