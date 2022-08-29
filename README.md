@@ -59,6 +59,8 @@ We support coupons campaigns, including:
 - [Validation rules](https://docs.voucherify.io/docs/validation-rules) – coupons valid only for select scenarios based on customer, cart or order attributes.
 - [Discount effects](https://docs.voucherify.io/docs/discount-effects) – defining how to apply the discount to the customer's cart.
 - [Unit discount](https://docs.voucherify.io/docs/give-item-for-free-unit-discount) – add free items to orders.
+- [Fixed amount](https://support.voucherify.io/article/512-complete-user-guide-on-discounts#fixed-order-amount) - coupons that set fixed prices of Your cart products or whole cart.
+
 
 If we want to allow customers to use coupons defined in Voucherify, the integration application needs to:
 
