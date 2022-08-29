@@ -30,7 +30,7 @@ export default function updateDiscountsCodes(
           status: 'APPLIED',
           type: coupon.object,
           value:
-            coupon.result.discount.unit_type === FREE_SHIPPING_UNIT_TYPE
+            coupon.result.discount?.unit_type === FREE_SHIPPING_UNIT_TYPE
               ? FREE_SHIPPING
               : coupon.order?.applied_discount_amount ||
                 coupon.order?.items_applied_discount_amount ||
