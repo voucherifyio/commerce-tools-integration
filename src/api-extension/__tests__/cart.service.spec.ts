@@ -8,7 +8,7 @@ import {
   TaxMode,
   TypedMoney,
 } from '@commercetools/platform-sdk';
-import { Inject, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CartService } from '../cart.service';
 import { TaxCategoriesService } from '../../commerceTools/tax-categories/tax-categories.service';
@@ -362,6 +362,11 @@ describe('CartService', () => {
         expect(result.actions).toEqual([
           {
             action: 'setCustomField',
+            name: 'shippingProductSourceIds',
+            value: [],
+          },
+          {
+            action: 'setCustomField',
             name: 'discount_codes',
             value: [],
           },
@@ -381,11 +386,12 @@ describe('CartService', () => {
           {
             id: 'custom-line-item-1',
             name: {
-              en: 'Voucher, coupon value => 20.00',
+              de: 'Gutscheincodes rabatt',
+              en: 'Coupon codes discount',
             },
             quantity: 1,
             money: buildPriceValue(2000, 'EUR'),
-            slug: 'voucher-20',
+            slug: 'Voucher, ',
             taxCategory: {
               id: defaultGetCouponTaxCategoryResponse.id,
             },
@@ -455,7 +461,12 @@ describe('CartService', () => {
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
         ).toBeCalledWith(
-          [COUPON_CODE],
+          [
+            {
+              code: 'AMOUNT20',
+              status: 'NEW',
+            },
+          ],
           cart,
           productMapper.mapLineItems(cart.lineItems),
           null,
@@ -485,7 +496,8 @@ describe('CartService', () => {
         expect(addCustomLineItemActions[0]).toEqual({
           action: 'addCustomLineItem',
           name: {
-            en: 'Voucher, coupon value => 20.00',
+            de: 'Gutscheincodes rabatt',
+            en: 'Coupon codes discount',
           },
           quantity: 1,
           money: {
@@ -493,7 +505,7 @@ describe('CartService', () => {
             type: 'centPrecision',
             currencyCode: 'EUR',
           },
-          slug: COUPON_CODE,
+          slug: 'Voucher, ',
           taxCategory: {
             id: defaultGetCouponTaxCategoryResponse.id,
           },
@@ -513,6 +525,7 @@ describe('CartService', () => {
             JSON.stringify({
               code: COUPON_CODE,
               status: 'APPLIED',
+              type: 'voucher',
               value: 2000,
             }),
           ],
@@ -548,7 +561,12 @@ describe('CartService', () => {
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
         ).toBeCalledWith(
-          [COUPON_CODE],
+          [
+            {
+              code: COUPON_CODE,
+              status: 'NEW',
+            },
+          ],
           cart,
           productMapper.mapLineItems(cart.lineItems),
           NEW_SESSION_ID,
@@ -603,7 +621,12 @@ describe('CartService', () => {
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
         ).toBeCalledWith(
-          [COUPON_CODE],
+          [
+            {
+              code: 'NOT EXIST',
+              status: 'NEW',
+            },
+          ],
           cart,
           productMapper.mapLineItems(cart.lineItems),
           null,
@@ -672,7 +695,17 @@ describe('CartService', () => {
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
         ).toBeCalledWith(
-          [FIRST_COUPON_CODE, SECOND_COUPON_CODE],
+          [
+            {
+              code: 'PERC10',
+              status: 'APPLIED',
+              value: 2650,
+            },
+            {
+              code: 'AMOUNT20',
+              status: 'NEW',
+            },
+          ],
           cart,
           productMapper.mapLineItems(cart.lineItems),
           SESSION_KEY,
@@ -689,7 +722,8 @@ describe('CartService', () => {
         expect(addCustomLineItemActions[0]).toEqual({
           action: 'addCustomLineItem',
           name: {
-            en: 'Voucher, coupon value => 46.50',
+            de: 'Gutscheincodes rabatt',
+            en: 'Coupon codes discount',
           },
           quantity: 1,
           money: {
@@ -697,7 +731,7 @@ describe('CartService', () => {
             type: 'centPrecision',
             currencyCode: 'EUR',
           },
-          slug: `${FIRST_COUPON_CODE}, ${SECOND_COUPON_CODE}`,
+          slug: `Voucher, `,
           taxCategory: {
             id: defaultGetCouponTaxCategoryResponse.id,
           },
@@ -710,19 +744,21 @@ describe('CartService', () => {
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(1);
-        expect(setCustomFieldActions[0]).toEqual({
+        expect(setCustomFieldActions.length).toBe(2);
+        expect(setCustomFieldActions[1]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
             JSON.stringify({
               code: FIRST_COUPON_CODE,
               status: 'APPLIED',
+              type: 'voucher',
               value: 2650,
             }),
             JSON.stringify({
               code: SECOND_COUPON_CODE,
               status: 'APPLIED',
+              type: 'voucher',
               value: 2000,
             }),
           ],
@@ -772,7 +808,18 @@ describe('CartService', () => {
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
         ).toBeCalledWith(
-          [FIRST_COUPON_CODE, SECOND_COUPON_CODE],
+          [
+            {
+              code: 'PERC10',
+              status: 'APPLIED',
+              value: 2650,
+            },
+            {
+              code: 'AMOUNT20',
+              status: 'APPLIED',
+              value: 2000,
+            },
+          ],
           cart,
           productMapper.mapLineItems(cart.lineItems),
           SESSION_KEY,
@@ -789,7 +836,8 @@ describe('CartService', () => {
         expect(addCustomLineItemActions[0]).toEqual({
           action: 'addCustomLineItem',
           name: {
-            en: 'Voucher, coupon value => 73.00',
+            de: 'Gutscheincodes rabatt',
+            en: 'Coupon codes discount',
           },
           quantity: 1,
           money: {
@@ -797,7 +845,7 @@ describe('CartService', () => {
             type: 'centPrecision',
             currencyCode: 'EUR',
           },
-          slug: `${FIRST_COUPON_CODE}, ${SECOND_COUPON_CODE}`,
+          slug: `Voucher, `,
           taxCategory: {
             id: defaultGetCouponTaxCategoryResponse.id,
           },
@@ -810,19 +858,21 @@ describe('CartService', () => {
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(1);
-        expect(setCustomFieldActions[0]).toEqual({
+        expect(setCustomFieldActions.length).toBe(2);
+        expect(setCustomFieldActions[1]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
             JSON.stringify({
               code: FIRST_COUPON_CODE,
               status: 'APPLIED',
+              type: 'voucher',
               value: 5300,
             }),
             JSON.stringify({
               code: SECOND_COUPON_CODE,
               status: 'APPLIED',
+              type: 'voucher',
               value: 2000,
             }),
           ],
@@ -874,7 +924,12 @@ describe('CartService', () => {
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
         ).toBeCalledWith(
-          [COUPON_CODE],
+          [
+            {
+              code: 'SNEAKERS30',
+              status: 'NEW',
+            },
+          ],
           cart,
           productMapper.mapLineItems(cart.lineItems),
           SESSION_KEY,
@@ -891,7 +946,8 @@ describe('CartService', () => {
         expect(addCustomLineItemActions[0]).toEqual({
           action: 'addCustomLineItem',
           name: {
-            en: 'Voucher, coupon value => 30.00',
+            de: 'Gutscheincodes rabatt',
+            en: 'Coupon codes discount',
           },
           quantity: 1,
           money: {
@@ -899,7 +955,7 @@ describe('CartService', () => {
             type: 'centPrecision',
             currencyCode: 'EUR',
           },
-          slug: COUPON_CODE,
+          slug: 'Voucher, ',
           taxCategory: {
             id: defaultGetCouponTaxCategoryResponse.id,
           },
@@ -912,14 +968,15 @@ describe('CartService', () => {
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(1);
-        expect(setCustomFieldActions[0]).toEqual({
+        expect(setCustomFieldActions.length).toBe(2);
+        expect(setCustomFieldActions[1]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
             JSON.stringify({
               code: COUPON_CODE,
               status: 'APPLIED',
+              type: 'voucher',
               value: 3000,
             }),
           ],
