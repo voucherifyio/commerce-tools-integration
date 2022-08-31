@@ -273,6 +273,7 @@ describe('CartService', () => {
     taxCategoriesService.__simulateDefaultGetCouponTaxCategories();
     typesService.__simulateDefaultFindCouponType();
     voucherifyConnectorService.__simulateDefaultValidateStackable();
+    commerceToolsConnectorService.__simulateGetClient();
   });
 
   describe('checkCartAndMutate', () => {
