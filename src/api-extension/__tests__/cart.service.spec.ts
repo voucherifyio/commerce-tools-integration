@@ -200,7 +200,6 @@ describe('CartService', () => {
   let taxCategoriesService: MockedTaxCategoriesService;
   let typesService: MockedTypesService;
   let voucherifyConnectorService: MockedVoucherifyConnectorService;
-  // let commerceToolsConnectorService: CommerceToolsConnectorService;
   let commerceToolsConnectorService: MockedCommerceToolsConectorService;
 
   beforeAll(async () => {
@@ -208,7 +207,6 @@ describe('CartService', () => {
       providers: [
         CartService,
         ProductMapper,
-        // CommerceToolsConnectorService,
         ConfigService,
         Logger,
         {
@@ -254,9 +252,6 @@ describe('CartService', () => {
 
     cartService = app.get<CartService>(CartService);
     productMapper = app.get<ProductMapper>(ProductMapper);
-    // commerceToolsConnectorService = app.get<CommerceToolsConnectorService>(
-    //   CommerceToolsConnectorService,
-    // );
     taxCategoriesService = app.get<TaxCategoriesService>(
       TaxCategoriesService,
     ) as MockedTaxCategoriesService;
@@ -273,7 +268,6 @@ describe('CartService', () => {
     taxCategoriesService.__simulateDefaultGetCouponTaxCategories();
     typesService.__simulateDefaultFindCouponType();
     voucherifyConnectorService.__simulateDefaultValidateStackable();
-    // commerceToolsConnectorService.__simulateGetClient();
   });
 
   describe('checkCartAndMutate', () => {

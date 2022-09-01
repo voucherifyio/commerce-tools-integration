@@ -3,7 +3,6 @@ import {
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 import { PriceSelector, ProductToAdd } from './types';
-import { flatMap } from 'rxjs';
 import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
 
 const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
