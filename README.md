@@ -364,6 +364,8 @@ To learn more about predicates You can see [here](https://docs.commercetools.com
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2022-09-05 `v4.2.1`
+    - fixed saving total amount on paid orders
 - 2022-08-26 `v4.2.0`
     - added support for fixed price promotions
     - bugfixes handling proper price from commercetools when product have only main variant
