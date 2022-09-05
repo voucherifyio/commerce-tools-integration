@@ -79,7 +79,7 @@ export class OrderImportService {
 
     const client = this.voucherifyClient.getClient();
     do {
-      const response = client.orders.create(orders.pop());
+      client.orders.create(orders.pop());
 
       const apiLimitHandler = client.apiLimitsHandler.areLimitsAvailable();
 
