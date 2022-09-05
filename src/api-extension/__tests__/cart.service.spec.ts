@@ -352,7 +352,7 @@ describe('CartService', () => {
         commerceToolsConnectorService.__simulateGetClient();
       });
 
-      it('should create "setCustomField" action with empty value', async () => {
+      it('should create "setCustomField" action with empty value and "setLineItemCustomType" with no fields for each lineItem', async () => {
         const result = await cartService.checkCartAndMutate(cart);
 
         expect(result.actions).toEqual([
@@ -365,6 +365,14 @@ describe('CartService', () => {
             action: 'setCustomField',
             name: 'discount_codes',
             value: [],
+          },
+          {
+            action: 'setLineItemCustomType',
+            fields: {},
+            lineItemId: `line-item-id-${lineItemCounter}`,
+            type: {
+              key: 'lineItemCodesType',
+            },
           },
         ]);
       });
@@ -1359,13 +1367,14 @@ describe('CartService', () => {
         });
       });
 
-      it("should create one `setLineItemCustomType` action to apply items' applied_codes", async () => {
+      it("should create one `setLineItemCustomType` action to apply items' applied_codes and one `setLineItemCustomType` to one remaining line item in cart to remove all customTypes from it", async () => {
         const result = await cartService.checkCartAndMutate(cart);
 
         const setLineItemCustomTypeActions = result.actions.filter(
           byActionType('setLineItemCustomType'),
         );
-        expect(setLineItemCustomTypeActions.length).toBe(1);
+
+        expect(setLineItemCustomTypeActions.length).toBe(2);
         expect(setLineItemCustomTypeActions[0]).toEqual({
           action: 'setLineItemCustomType',
           lineItemId,

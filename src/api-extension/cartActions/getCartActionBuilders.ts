@@ -7,6 +7,7 @@ import removeFreeLineItemsForNonApplicableCoupon from './removeFreeLineItemsForN
 import setSessionAsCustomField from './setSessionAsCustomField';
 import updateDiscountsCodes from './updateDiscountCodes';
 import addShippingProductSourceIds from './addShippingProductSourceIds';
+import setFixedPriceForLineItems from './setFixedPriceForLineItems';
 
 export default function getCartActionBuilders(
   validateCouponsResult: ValidateCouponsResult,
@@ -22,9 +23,11 @@ export default function getCartActionBuilders(
         addFreeLineItems,
         removeFreeLineItemsForNonApplicableCoupon,
         addShippingProductSourceIds,
+        setFixedPriceForLineItems,
       ],
     );
   }
+
   cartActionBuilders.push(updateDiscountsCodes);
 
   return cartActionBuilders;

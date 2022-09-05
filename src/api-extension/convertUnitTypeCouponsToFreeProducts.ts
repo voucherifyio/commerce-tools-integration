@@ -43,9 +43,15 @@ async function getCtVariantPrice(
   productSkuSourceId: string,
   priceSelector: PriceSelector,
 ) {
-  const ctVariants = ctProduct.masterData.current.variants.filter(
+  let ctVariants =
+    ctProduct.masterData.current.variants.length > 0
+      ? ctProduct.masterData.current.variants
+      : [ctProduct.masterData.current.masterVariant];
+
+  ctVariants = ctVariants.filter(
     (variant) => variant.sku === productSkuSourceId,
   );
+
   const prices = [];
   // price.country and price.customerGroup could be set to 'any' we don't to
   // remove these elements from prices
@@ -131,6 +137,9 @@ export default async function convertUnitTypeCouponsToFreeProducts(
           priceSelector,
         );
         const currentPrice = prices[0];
+        const currentPriceAmount = currentPrice
+          ? currentPrice.value.centAmount
+          : 0;
 
         return [
           {
@@ -141,8 +150,8 @@ export default async function convertUnitTypeCouponsToFreeProducts(
             initial_quantity: freeItem?.initial_quantity,
             discount_quantity: freeItem?.discount_quantity,
             discount_difference:
-              freeItem?.applied_discount_amount - currentPrice.value.centAmount,
-            applied_discount_amount: currentPrice.value.centAmount,
+              freeItem?.applied_discount_amount - currentPriceAmount,
+            applied_discount_amount: currentPriceAmount,
             distributionChannel: priceSelector.distributionChannels[0],
           } as ProductToAdd,
         ] as ProductToAdd[];
@@ -175,6 +184,9 @@ export default async function convertUnitTypeCouponsToFreeProducts(
             priceSelector,
           );
           const currentPrice = prices[0];
+          const currentPriceAmount = currentPrice
+            ? currentPrice.value.centAmount
+            : 0;
           return {
             code: unitTypeRedeemable.id,
             effect: product.effect,
@@ -183,8 +195,8 @@ export default async function convertUnitTypeCouponsToFreeProducts(
             initial_quantity: freeItem.initial_quantity,
             discount_quantity: freeItem.discount_quantity,
             discount_difference:
-              freeItem?.applied_discount_amount - currentPrice.value.centAmount,
-            applied_discount_amount: currentPrice.value.centAmount,
+              freeItem?.applied_discount_amount - currentPriceAmount,
+            applied_discount_amount: currentPriceAmount,
             distributionChannel: priceSelector.distributionChannels[0],
           } as ProductToAdd;
         });
