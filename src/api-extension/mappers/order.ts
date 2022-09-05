@@ -29,7 +29,6 @@ export class OrderMapper {
         },
         phone: order.shippingAddress?.phone,
       },
-      amount: order.totalPrice.centAmount,
       items: order.lineItems.map((item) => {
         return {
           source_id: item.variant.sku,
