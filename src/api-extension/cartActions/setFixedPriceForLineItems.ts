@@ -23,7 +23,7 @@ function getLineItemsFromApplicableCoupons(applicableCoupons) {
 
 function getFixedCouponApplicableTo(fixedTypeCoupons) {
   let fixedCouponApplicableTo = fixedTypeCoupons.flatMap((coupon) => {
-    return coupon.applicable_to.data.map((applicable) => {
+    return coupon.applicable_to?.data?.map((applicable) => {
       return {
         id: applicable.id,
         price: applicable.price,
@@ -100,7 +100,7 @@ export default function setFixedPriceForLineItems(
   validateCouponsResult: ValidateCouponsResult,
 ): CartActionSetLineItemCustomType[] {
   const fixedTypeCoupons = validateCouponsResult.applicableCoupons.filter(
-    (coupon) => coupon.result.discount.type === 'FIXED',
+    (coupon) => coupon.result.discount?.type === 'FIXED',
   );
 
   const fixedCouponApplicableTo = getFixedCouponApplicableTo(fixedTypeCoupons);
