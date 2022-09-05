@@ -17,6 +17,7 @@ export default function updateDiscountsCodes(
     notApplicableCoupons,
     skippedCoupons,
     onlyNewCouponsFailed,
+    allInapplicableCouponsArePromotionTier,
   } = validateCouponsResult;
   const oldCouponsCodes: Coupon[] = (
     cart.custom?.fields?.discount_codes ?? []
@@ -35,9 +36,6 @@ export default function updateDiscountsCodes(
               : coupon.order?.applied_discount_amount ||
                 coupon.order?.items_applied_discount_amount ||
                 coupon.result?.discount?.amount_off ||
-                oldCouponsCodes.find(
-                  (oldCoupon) => coupon.id === oldCoupon.code,
-                )?.value ||
                 0,
         } as Coupon),
     ),
@@ -52,8 +50,8 @@ export default function updateDiscountsCodes(
         } as Coupon),
     ),
   ];
-
-  if (onlyNewCouponsFailed) {
+  console.log(12312312, allInapplicableCouponsArePromotionTier)
+  if (onlyNewCouponsFailed || allInapplicableCouponsArePromotionTier) {
     coupons.push(
       ...skippedCoupons.map(
         (coupon) =>
