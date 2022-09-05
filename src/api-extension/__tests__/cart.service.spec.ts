@@ -352,9 +352,9 @@ describe('CartService', () => {
         commerceToolsConnectorService.__simulateGetClient();
       });
 
-      it('should create "setCustomField" action with empty value', async () => {
+      it('should create "setCustomField" action with empty value and "setLineItemCustomType" with no fields for each lineItem', async () => {
         const result = await cartService.checkCartAndMutate(cart);
-
+        // `line-item-id-${++lineItemCounter}`
         expect(result.actions).toEqual([
           {
             action: 'setCustomField',
@@ -365,6 +365,14 @@ describe('CartService', () => {
             action: 'setCustomField',
             name: 'discount_codes',
             value: [],
+          },
+          {
+            action: 'setLineItemCustomType',
+            fields: {},
+            lineItemId: `line-item-id-${lineItemCounter}`,
+            type: {
+              key: 'lineItemCodesType',
+            },
           },
         ]);
       });
