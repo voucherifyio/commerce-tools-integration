@@ -59,6 +59,7 @@ We support coupons campaigns, including:
 - [Validation rules](https://docs.voucherify.io/docs/validation-rules) – coupons valid only for select scenarios based on customer, cart or order attributes.
 - [Discount effects](https://docs.voucherify.io/docs/discount-effects) – defining how to apply the discount to the customer's cart.
 - [Unit discount](https://docs.voucherify.io/docs/give-item-for-free-unit-discount) – add free items to orders.
+- [Loyalty program](https://support.voucherify.io/article/177-how-to-create-loyalty-program-step-by-step) - we support earning points from paid orders and using pay with points rewards
 
 If we want to allow customers to use coupons defined in Voucherify, the integration application needs to:
 
@@ -342,6 +343,9 @@ To learn more about predicates You can see [here](https://docs.commercetools.com
 2. If you choose free shipping code with custom product make sure that this product is properly defined in commerce tools and can be applied to cart.
 3. Make sure You configure zones and shipping rates in Your shipping method in commerce tools.
 
+## Loyalty program
+
+Currently, we support a few cases related to loyalty program. Firstly we provide earning points by paying orders and using rewards with type `pay with points`. To handle other type rewards like getting coupon for points You can simply use our [Customer cockpit](https://support.voucherify.io/article/177-how-to-create-loyalty-program-step-by-step#cockpits)   
 
 ## Typical use case
 
