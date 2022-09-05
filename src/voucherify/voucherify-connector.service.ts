@@ -119,7 +119,7 @@ export class VoucherifyConnectorService {
       order: {
         source_id: order.id,
         amount: items.reduce((acc, item) => acc + item.amount, 0),
-        discount_amount: 0,
+        status: 'PAID',
         items,
         metadata: Object.fromEntries(orderMetadata),
       },
