@@ -1,7 +1,10 @@
 import { Cart } from '@commercetools/platform-sdk';
 import { Coupon, desarializeCoupons } from '../coupon';
 import { ValidateCouponsResult } from '../types';
-import { CartActionSetCustomFieldWithCoupons } from './CartAction';
+import {
+  CartActionSetCustomFieldWithCoupons,
+  CartActionSetCustomFieldWithValidationFailed,
+} from './CartAction';
 import {
   FREE_SHIPPING,
   FREE_SHIPPING_UNIT_TYPE,
@@ -10,7 +13,9 @@ import {
 export default function updateDiscountsCodes(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
-): CartActionSetCustomFieldWithCoupons[] {
+):
+  | CartActionSetCustomFieldWithCoupons[]
+  | CartActionSetCustomFieldWithValidationFailed[] {
   const {
     availablePromotions,
     applicableCoupons,
@@ -19,6 +24,7 @@ export default function updateDiscountsCodes(
     onlyNewCouponsFailed,
     allInapplicableCouponsArePromotionTier,
   } = validateCouponsResult;
+  const validationFailedAction = [];
   const oldCouponsCodes: Coupon[] = (
     cart.custom?.fields?.discount_codes ?? []
   ).map(desarializeCoupons);
@@ -65,10 +71,21 @@ export default function updateDiscountsCodes(
       ),
     );
   } else if (skippedCoupons.length) {
+    validationFailedAction.push({
+      action: 'setCustomField',
+      name: 'isValidationFailed',
+      value: true,
+    });
   } else {
+    validationFailedAction.push({
+      action: 'setCustomField',
+      name: 'isValidationFailed',
+      value: false,
+    });
   }
 
   return [
+    ...validationFailedAction,
     {
       action: 'setCustomField',
       name: 'discount_codes',
