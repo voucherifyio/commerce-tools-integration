@@ -50,7 +50,7 @@ export default function updateDiscountsCodes(
         } as Coupon),
     ),
   ];
-  console.log(12312312, allInapplicableCouponsArePromotionTier)
+
   if (onlyNewCouponsFailed || allInapplicableCouponsArePromotionTier) {
     coupons.push(
       ...skippedCoupons.map(
@@ -64,6 +64,10 @@ export default function updateDiscountsCodes(
           } as Coupon),
       ),
     );
+  } else if (skippedCoupons.length) {
+
+  } else {
+
   }
 
   return [

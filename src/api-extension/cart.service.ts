@@ -59,7 +59,7 @@ function checkIfAllInapplicableCouponsArePromotionTier(
   notApplicableCoupons: StackableRedeemableResponse[],
 ) {
   const inapplicableCouponsPromitonTier = notApplicableCoupons.filter(
-    (notApplicableCoupon) => notApplicableCoupon.object === 'promotion_tier'
+    (notApplicableCoupon) => notApplicableCoupon.object === 'promotion_tier',
   );
 
   return notApplicableCoupons.length === inapplicableCouponsPromitonTier.length;
@@ -198,7 +198,7 @@ export class CartService {
         this.productMapper.mapLineItems(cart.lineItems),
         sessionKey,
       );
-    console.log(validatedCoupons);
+
     const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
       validatedCoupons.redeemables.filter(
         (redeemable) => redeemable.status === status,
