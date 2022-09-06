@@ -364,6 +364,9 @@ To learn more about predicates You can see [here](https://docs.commercetools.com
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2022-09-06 `v4.2.2`
+    - fixed sitiuation when redemptions fails and operations on order are blocked
+    - remove additional request to voucherify with metadata
 - 2022-09-05 `v4.2.1`
     - fixed saving total amount on paid orders
 - 2022-08-26 `v4.2.0`
