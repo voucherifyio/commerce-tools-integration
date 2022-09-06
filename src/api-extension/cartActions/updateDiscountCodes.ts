@@ -96,6 +96,7 @@ export default function updateDiscountsCodes(
   }
 
   return [
+    ...validationFailedAction,
     {
       action: 'setCustomField',
       name: 'discount_codes',
