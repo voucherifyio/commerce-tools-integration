@@ -5,6 +5,7 @@ import { desarializeCoupons, Coupon } from './coupon';
 import { OrderMapper } from './mappers/order';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { ProductMapper } from './mappers/product';
+import { RedemptionsRedeemStackableResponse } from '@voucherify/sdk';
 
 type SentCoupons = {
   result: string;
@@ -61,9 +62,9 @@ export class OrderService {
       );
 
     const sessionKey = order.custom?.fields.session;
-
-    const response =
-      await this.voucherifyConnectorService.redeemStackableVouchers(
+    let response: RedemptionsRedeemStackableResponse;
+    try {
+      response = await this.voucherifyConnectorService.redeemStackableVouchers(
         coupons,
         sessionKey,
         order,
@@ -73,6 +74,10 @@ export class OrderService {
         ),
         this.orderMapper.getMetadata(order, orderMetadataSchemaProperties),
       );
+    } catch (e) {
+      this.logger.debug({ msg: 'Reedeem operation failed', error: e.details });
+      return { status: true, actions: [] };
+    }
 
     sentCoupons.push(
       ...response.redemptions.map((redem) => {
@@ -106,8 +111,6 @@ export class OrderService {
       notUsedCoupons,
     );
 
-    await this.updateOrderMetadata(order, orderMetadataSchemaProperties);
-
     this.logger.debug({
       msg: 'Realized coupons',
       id,
@@ -140,22 +143,5 @@ export class OrderService {
     order.custom.fields['discount_codes'] = notUsedCoupons;
 
     return order;
-  }
-
-  public async updateOrderMetadata(order: Order, metadataSchemaProperties) {
-    const ordersCreate = this.orderMapper.getOrderObject(order) as OrdersCreate;
-
-    const metadata = this.orderMapper.getMetadata(
-      order,
-      metadataSchemaProperties,
-    );
-
-    await this.voucherifyConnectorService
-      .getClient()
-      .orders.create(
-        Object.keys(metadata).length
-          ? { ...ordersCreate, metadata: Object.fromEntries(metadata) }
-          : ordersCreate,
-      );
   }
 }
