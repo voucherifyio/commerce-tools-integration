@@ -364,6 +364,10 @@ To learn more about predicates You can see [here](https://docs.commercetools.com
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2022-09-06 `v4.3.0`
+    - added safeguard when auto-applied coupon failed to keep remaining codes in cart
+    - added showing errors when validation failed and there is no safeguards
+    - compatible with previews version but required to run `npm run config` command to proper set custom field `isValidationFailed`
 - 2022-09-05 `v4.2.1`
     - fixed saving total amount on paid orders
 - 2022-08-26 `v4.2.0`
