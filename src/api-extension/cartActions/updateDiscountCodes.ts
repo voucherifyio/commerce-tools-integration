@@ -65,9 +65,7 @@ export default function updateDiscountsCodes(
       ),
     );
   } else if (skippedCoupons.length) {
-
   } else {
-
   }
 
   return [
