@@ -4,13 +4,17 @@ import {
   CartActionAddCustomLineItem,
   COUPON_CUSTOM_LINE_SLUG,
 } from './CartAction';
-import couponText from './../../misc/coupon-text';
+import { ConfigService } from '@nestjs/config';
 
 export default // TODO don't create addCustomLineItem action if the summary doesn't actually change
 function addCustomLineItemWithDiscountSummary(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
 ): CartActionAddCustomLineItem[] {
+  const configService = new ConfigService();
+  const couponText = JSON.parse(
+    configService.get<string>('COMMERCE_TOOLS_COUPON_NAMES'),
+  );
   const { totalDiscountAmount, applicableCoupons, taxCategory } =
     validateCouponsResult;
 

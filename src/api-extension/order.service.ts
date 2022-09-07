@@ -3,7 +3,6 @@ import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.s
 import { Order } from '@commercetools/platform-sdk';
 import { desarializeCoupons, Coupon } from './coupon';
 import { OrderMapper } from './mappers/order';
-import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { ProductMapper } from './mappers/product';
 import { RedemptionsRedeemStackableResponse } from '@voucherify/sdk';
 

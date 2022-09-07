@@ -49,13 +49,14 @@ import { ProductMapper } from './api-extension/mappers/product';
         COMMERCE_TOOLS_API_URL: Joi.string().required(),
         COMMERCE_TOOLS_ID: Joi.string().required(),
         COMMERCE_TOOLS_SECRET: Joi.string().required(),
-        COMMERCE_TOOLS_PRODUCTS_CURRENCY: Joi.string().required(),
-        COMMERCE_TOOLS_PRODUCTS_COUNTRY: Joi.string().optional(),
-        COMMERCE_TOOLS_PRODUCT_CHANNEL: Joi.string().optional(),
-        COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP: Joi.string().optional(),
         COMMERCE_TOOLS_API_EXTENSION_KEY: Joi.string()
           .optional()
           .default('VOUCHERIFY_INTEGRATION'),
+        COMMERCE_TOOLS_COUPON_NAMES: Joi.string()
+          .optional()
+          .default(
+            '{"en":"Coupon codes discount","de":"Gutscheincodes rabatt"}',
+          ),
       }),
     }),
   ],
