@@ -178,9 +178,6 @@ export class OrderService {
     if (paid) {
       return;
     }
-    const response = await this.voucherifyConnectorService.rollbackRedemptions(
-      redemptions,
-    );
-    this.logger.error(response);
+    await this.voucherifyConnectorService.rollbackRedemptions(redemptions);
   }
 }
