@@ -1,6 +1,7 @@
 import { performance } from 'perf_hooks';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
+  OrdersItem,
   RedemptionsRedeemStackableParams,
   ValidationsValidateStackableParams,
   VoucherifyServerSide,
@@ -96,7 +97,11 @@ export class VoucherifyConnectorService {
     return response;
   }
 
-  async createOrder(order: Order, items, orderMetadata) {
+  async createOrder(
+    order: Order,
+    items: OrdersItem[],
+    orderMetadata: Record<string, any>,
+  ) {
     const orderCreate = {
       source_id: order.id,
       amount: items.reduce((acc, item) => acc + item.amount, 0),
@@ -113,8 +118,8 @@ export class VoucherifyConnectorService {
     coupons: Coupon[],
     sessionKey: string,
     order: Order,
-    items,
-    orderMetadata,
+    items: OrdersItem[],
+    orderMetadata: Record<string, any>,
   ) {
     const redeemables = coupons.map((code) => {
       return {
