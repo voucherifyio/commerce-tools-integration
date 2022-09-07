@@ -366,7 +366,7 @@ If you found a bug or want to suggest a new feature, please file a Github issue.
 
 ## Changelog
 - 2022-09-06 `v4.1.2`
-  - adding order with no coupons applied
+  - synchronizing orders, with no coupons applied, into voucherify
 - 2022-08-25 `v4.1.1`
   - added promotion tier handling
 - 2022-08-24 `v4.1.0`
