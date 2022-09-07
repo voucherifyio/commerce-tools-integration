@@ -60,14 +60,13 @@ export class ApiExtensionController {
       const response = await this.orderService.redeemVoucherifyCoupons(
         body.resource.obj as Order,
       );
-      console.log('aaaa', response?.parent_redemption?.id);
-      if (!response?.parent_redemption?.id) {
+      if (!response?.redemptions?.length) {
         return responseExpress.status(200).json({ actions: response.actions });
       }
       responseExpress.status(200).json({ actions: response.actions });
       await this.orderService.checkPaidOrderFallback(
         (body.resource.obj as Order).id,
-        response.parent_redemption,
+        response.redemptions,
       );
       return;
     }

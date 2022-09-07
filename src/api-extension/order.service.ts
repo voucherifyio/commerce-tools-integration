@@ -33,19 +33,7 @@ export class OrderService {
   ) {}
 
   public async redeemVoucherifyCoupons(order: Order): Promise<{
-    parent_redemption?: {
-      id: string;
-      object: 'redemption';
-      date: string;
-      customer_id?: string;
-      tracking_id?: string;
-      metadata?: Record<string, any>;
-      result: 'SUCCESS' | 'FAILURE';
-      order?: RedemptionsRedeemStackableOrderResponse;
-      customer?: SimpleCustomer;
-      related_object_type: 'redemption';
-      related_object_id: string;
-    };
+    redemptions?: RedemptionsRedeemStackableRedemptionResult[];
     actions: { name: string; action: string; value: string[] }[];
     status: boolean;
   }> {
@@ -159,7 +147,7 @@ export class OrderService {
     return {
       status: true,
       actions: actions,
-      parent_redemption: response?.parent_redemption,
+      redemptions: response?.redemptions,
     };
   }
 
@@ -176,19 +164,7 @@ export class OrderService {
 
   async checkPaidOrderFallback(
     orderId: string,
-    parent_redemption: {
-      id: string;
-      object: 'redemption';
-      date: string;
-      customer_id?: string;
-      tracking_id?: string;
-      metadata?: Record<string, any>;
-      result: 'SUCCESS' | 'FAILURE';
-      order?: RedemptionsRedeemStackableOrderResponse;
-      customer?: SimpleCustomer;
-      related_object_type: 'redemption';
-      related_object_id: string;
-    },
+    redemptions: RedemptionsRedeemStackableRedemptionResult[],
   ) {
     let paid = false;
     for (let i = 0; i < 2; i++) {
@@ -202,10 +178,9 @@ export class OrderService {
     if (paid) {
       return;
     }
-    const response =
-      await this.voucherifyConnectorService.rollbackStackableRedemptions(
-        parent_redemption,
-      );
-    console.log(222, response);
+    const response = await this.voucherifyConnectorService.rollbackRedemptions(
+      redemptions,
+    );
+    this.logger.error(response);
   }
 }

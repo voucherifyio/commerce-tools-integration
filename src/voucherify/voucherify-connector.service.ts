@@ -160,21 +160,15 @@ export class VoucherifyConnectorService {
     return response;
   }
 
-  async rollbackStackableRedemptions(parent_redemption: {
-    id: string;
-    object: 'redemption';
-    date: string;
-    customer_id?: string;
-    tracking_id?: string;
-    metadata?: Record<string, any>;
-    result: 'SUCCESS' | 'FAILURE';
-    order?: RedemptionsRedeemStackableOrderResponse;
-    customer?: SimpleCustomer;
-    related_object_type: 'redemption';
-    related_object_id: string;
-  }) {
+  async rollbackRedemptions(
+    redemptions: RedemptionsRedeemStackableRedemptionResult[],
+  ) {
     const client = await this.getClient();
-    return await client.redemptions.rollbackStackable(parent_redemption.id);
+    const result = [];
+    for (const redemption of redemptions) {
+      result.push(await client.redemptions.rollback(redemption.id));
+    }
+    return result;
   }
 
   async releaseValidationSession(code: string, sessionKey: string) {
