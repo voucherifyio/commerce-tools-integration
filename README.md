@@ -58,7 +58,7 @@ We support coupons campaigns, including:
 - [Stackable discounts](https://docs.voucherify.io/docs/manage-stackable-discounts) – allow customers to use up to 5 coupons at the same time.
 - [Validation rules](https://docs.voucherify.io/docs/validation-rules) – coupons valid only for select scenarios based on customer, cart or order attributes.
 - [Discount effects](https://docs.voucherify.io/docs/discount-effects) – defining how to apply the discount to the customer's cart.
-- [Unit discount](https://docs.voucherify.io/docs/give-item-for-free-unit-discount) – add free items to orders. Price of applied unit is fetched from commerce tools product price including [price selectors](https://docs.commercetools.com/api/projects/products#price-selection).
+- [Unit discount](https://docs.voucherify.io/docs/give-item-for-free-unit-discount) – add free items to orders. Price of applied unit is fetched from commercetools product price including [price selectors](https://docs.commercetools.com/api/projects/products#price-selection).
 - [Fixed amount](https://support.voucherify.io/article/512-complete-user-guide-on-discounts#fixed-order-amount) - coupons that set fixed prices of Your cart products or whole cart.
 - [Free shipping](https://docs.voucherify.io/docs/free-shipping-discount) - adding free shipping to your cart when proper code is applied. Check [Free shipping section](#free-shipping) for more information.
 - [Prepaid gift cards](https://docs.voucherify.io/docs/prepaid-gift-cards) - coupons that add to products or whole cart a certain discount value from gift cars.
@@ -329,21 +329,28 @@ All discounts are added as one `CustomLineItem` with a negative price. This item
 
 ## Free shipping
 
-Free shipping is one of our discount codes type. You can define it on two ways. Firstly you can create predefined coupon with `Free shipping` type. This coupon is connected to pre created product with `source id = 5h1pp1ng`. 
-The second way is to create new or use existing product which will represent Your shipping method.
-If you have chosen your product now You can create new discount with unit type of this product. When you apply whichever of this discount information about it will be set to commerce tools custom field named shippingProductSourceIds.
-Next step is to properly define shipping method in Your commerce tools panel and configure [Predicates](https://docs.commercetools.com/tutorials/shipping-method-with-predicate). Go to `Settings -> Project settings -> Shipping methods`. Use existed or create new shipping method which will be applied if one of codes will be used.
+Free shipping is one of our discount codes type. To handle this case You must define Free shipping code. You can define it on two ways:
+
+1. You can create predefined coupon with `Free shipping` type.
+   This coupon is connected to pre created product with `source id = 5h1pp1ng`.
+   In this case You can clearly define coupon type by this ID because it's given by Voucherify and cannot be changed.
+2. To create new or use existing product which will represent Your shipping method.
+   If you have chosen your product now You can create new discount with unit type of this product.
+
+When you apply whichever of this discount code, the connected `product id` it will be set to commercetools cart custom field named shippingProductSourceIds.
+Next step is to properly define shipping method in Your commercetools panel and configure [Predicates](https://docs.commercetools.com/tutorials/shipping-method-with-predicate). Go to `Settings -> Project settings -> Shipping methods`. Use existed or create new shipping method which will be applied if one of codes will be used.
 In `Shipping method -> Predicate` field You can define condition when a given shipping method will be available. To allow uses to use Your new free shipping method you need to define formula.
 
-`custom.shippingProductSourceIds contains any ("5h1pp1ng")` - this formula is used for default free shipping code
-`custom.shippingProductSourceIds contains any ("<your_source_id>")` - this formula should be used when you want to apply this shipping method with custom vourcherify shipping method. 
+`custom.`shippingProductSourceIds` contains any ("5h1pp1ng")` - this formula is used for default free shipping code with predefined `source id = 5h1pp1ng`
+
+`custom.shippingProductSourceIds contains any ("<your_source_id>")` - this formula should be used when you want to apply this shipping method with custom vourcherify shipping method.
 
 To learn more about predicates You can see [here](https://docs.commercetools.com/api/predicates/query).
 
 #### Important
 1. Make sure that you `customField` definition is properly set. You can run `npm run config` to make this configuration.
-2. If you choose free shipping code with custom product make sure that this product is properly defined in commerce tools and can be applied to cart.
-3. Make sure You configure zones and shipping rates in Your shipping method in commerce tools.
+2. If you choose free shipping code with custom product make sure that this product is properly defined in commercetools and can be applied to cart.
+3. Make sure You configure zones and shipping rates in Your shipping method in commercetools.
 
 
 ## Typical use case
