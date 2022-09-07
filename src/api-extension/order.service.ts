@@ -16,6 +16,10 @@ type SentCoupons = {
   coupon: string;
 };
 
+const sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms)).then((e) => null);
+};
+
 @Injectable()
 export class OrderService {
   constructor(
@@ -176,5 +180,40 @@ export class OrderService {
     order.custom.fields['discount_codes'] = notUsedCoupons;
 
     return order;
+  }
+
+  async checkPaidOrderFallback(
+    orderId: string,
+    parent_redemption: {
+      id: string;
+      object: 'redemption';
+      date: string;
+      customer_id?: string;
+      tracking_id?: string;
+      metadata?: Record<string, any>;
+      result: 'SUCCESS' | 'FAILURE';
+      order?: RedemptionsRedeemStackableOrderResponse;
+      customer?: SimpleCustomer;
+      related_object_type: 'redemption';
+      related_object_id: string;
+    },
+  ) {
+    let paid = false;
+    for (let i = 0; i < 2; i++) {
+      await sleep(500);
+      const order = await this.commerceToolsConnectorService.findOrder(orderId);
+      if (order.paymentState === 'Paid') {
+        paid = true;
+        break;
+      }
+    }
+    if (paid) {
+      return;
+    }
+    const response =
+      await this.voucherifyConnectorService.rollbackStackableRedemptions(
+        parent_redemption,
+      );
+    console.log(222, response);
   }
 }
