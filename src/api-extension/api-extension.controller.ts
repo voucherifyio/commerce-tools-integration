@@ -6,6 +6,7 @@ import {
   UseGuards,
   UseInterceptors,
   Logger,
+  Res,
 } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { OrderService } from './order.service';
@@ -13,6 +14,11 @@ import { TimeLoggingInterceptor } from 'src/misc/time-logging.interceptor';
 import { CartOrderDto } from 'src/api-extension/CartOrder.dto';
 import { ApiExtensionGuard } from './api-extension.guard';
 import { Cart, Order } from '@commercetools/platform-sdk';
+import { Response } from 'express';
+
+const sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms)).then((e) => null);
+};
 
 @UseInterceptors(TimeLoggingInterceptor)
 @Controller('api-extension')
@@ -25,7 +31,10 @@ export class ApiExtensionController {
   ) {}
 
   @Post()
-  async handleApiExtensionRequest(@Body() body: CartOrderDto): Promise<any> {
+  async handleApiExtensionRequest(
+    @Body() body: CartOrderDto,
+    @Res() responseExpress: Response,
+  ): Promise<any> {
     const type = body.resource?.typeId;
     const action = body.action;
     const id = body.resource?.obj?.id;
@@ -45,15 +54,24 @@ export class ApiExtensionController {
         throw new HttpException('', 400);
       }
 
-      return { actions: response.actions };
+      return responseExpress.status(200).json({ actions: response.actions });
     }
     if (type === 'order') {
       const response = await this.orderService.redeemVoucherifyCoupons(
         body.resource.obj as Order,
       );
-      return { actions: response.actions };
+      console.log('aaaa', response?.parent_redemption?.id);
+      if (!response?.parent_redemption?.id) {
+        return responseExpress.status(200).json({ actions: response.actions });
+      }
+      responseExpress.status(200).json({ actions: response.actions });
+      await this.orderService.checkPaidOrderFallback(
+        (body.resource.obj as Order).id,
+        response.parent_redemption,
+      );
+      return;
     }
 
-    return { status: 200, actions: [] };
+    return responseExpress.status(200).json({ actions: [] });
   }
 }

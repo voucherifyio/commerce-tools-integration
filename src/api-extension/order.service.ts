@@ -5,25 +5,50 @@ import { desarializeCoupons, Coupon } from './coupon';
 import { OrderMapper } from './mappers/order';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { ProductMapper } from './mappers/product';
-import { RedemptionsRedeemStackableResponse } from '@voucherify/sdk';
+import {
+  RedemptionsRedeemStackableOrderResponse,
+  RedemptionsRedeemStackableRedemptionResult,
+  RedemptionsRedeemStackableResponse,
+  SimpleCustomer,
+} from '@voucherify/sdk';
+import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
 
 type SentCoupons = {
   result: string;
   coupon: string;
 };
 
+const sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms)).then((e) => null);
+};
+
 @Injectable()
 export class OrderService {
   constructor(
+    private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
     private readonly logger: Logger,
     private readonly orderMapper: OrderMapper,
     private readonly productMapper: ProductMapper,
   ) {}
 
-  public async redeemVoucherifyCoupons(
-    order: Order,
-  ): Promise<{ status: boolean; actions: object[] }> {
+  public async redeemVoucherifyCoupons(order: Order): Promise<{
+    parent_redemption?: {
+      id: string;
+      object: 'redemption';
+      date: string;
+      customer_id?: string;
+      tracking_id?: string;
+      metadata?: Record<string, any>;
+      result: 'SUCCESS' | 'FAILURE';
+      order?: RedemptionsRedeemStackableOrderResponse;
+      customer?: SimpleCustomer;
+      related_object_type: 'redemption';
+      related_object_id: string;
+    };
+    actions: { name: string; action: string; value: string[] }[];
+    status: boolean;
+  }> {
     const coupons: Coupon[] = (order.custom?.fields?.discount_codes ?? [])
       .map(desarializeCoupons)
       .filter(
@@ -131,7 +156,11 @@ export class OrderService {
       },
     ];
 
-    return { status: true, actions: actions };
+    return {
+      status: true,
+      actions: actions,
+      parent_redemption: response?.parent_redemption,
+    };
   }
 
   public assignCouponsToOrderMetadata(
@@ -143,5 +172,40 @@ export class OrderService {
     order.custom.fields['discount_codes'] = notUsedCoupons;
 
     return order;
+  }
+
+  async checkPaidOrderFallback(
+    orderId: string,
+    parent_redemption: {
+      id: string;
+      object: 'redemption';
+      date: string;
+      customer_id?: string;
+      tracking_id?: string;
+      metadata?: Record<string, any>;
+      result: 'SUCCESS' | 'FAILURE';
+      order?: RedemptionsRedeemStackableOrderResponse;
+      customer?: SimpleCustomer;
+      related_object_type: 'redemption';
+      related_object_id: string;
+    },
+  ) {
+    let paid = false;
+    for (let i = 0; i < 2; i++) {
+      await sleep(500);
+      const order = await this.commerceToolsConnectorService.findOrder(orderId);
+      if (order.paymentState === 'Paid') {
+        paid = true;
+        break;
+      }
+    }
+    if (paid) {
+      return;
+    }
+    const response =
+      await this.voucherifyConnectorService.rollbackStackableRedemptions(
+        parent_redemption,
+      );
+    console.log(222, response);
   }
 }

@@ -2,6 +2,7 @@ import { performance } from 'perf_hooks';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   RedemptionsRedeemStackableParams,
+  RedemptionsRedeemStackableRedemptionResult,
   ValidationsValidateStackableParams,
   VoucherifyServerSide,
 } from '@voucherify/sdk';
@@ -12,6 +13,8 @@ import {
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
 import { Coupon } from 'src/api-extension/coupon';
+import { SimpleCustomer } from '@voucherify/sdk/dist/types/Customers';
+import { RedemptionsRedeemStackableOrderResponse } from '@voucherify/sdk/dist/types/Redemptions';
 
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;
@@ -155,6 +158,23 @@ export class VoucherifyConnectorService {
     );
 
     return response;
+  }
+
+  async rollbackStackableRedemptions(parent_redemption: {
+    id: string;
+    object: 'redemption';
+    date: string;
+    customer_id?: string;
+    tracking_id?: string;
+    metadata?: Record<string, any>;
+    result: 'SUCCESS' | 'FAILURE';
+    order?: RedemptionsRedeemStackableOrderResponse;
+    customer?: SimpleCustomer;
+    related_object_type: 'redemption';
+    related_object_id: string;
+  }) {
+    const client = await this.getClient();
+    return await client.redemptions.rollbackStackable(parent_redemption.id);
   }
 
   async releaseValidationSession(code: string, sessionKey: string) {
