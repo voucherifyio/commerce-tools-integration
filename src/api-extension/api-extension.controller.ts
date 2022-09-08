@@ -16,10 +16,6 @@ import { ApiExtensionGuard } from './api-extension.guard';
 import { Cart, Order } from '@commercetools/platform-sdk';
 import { Response } from 'express';
 
-const sleep = (ms) => {
-  return new Promise((resolve) => setTimeout(resolve, ms)).then((e) => null);
-};
-
 @UseInterceptors(TimeLoggingInterceptor)
 @Controller('api-extension')
 @UseGuards(ApiExtensionGuard)
