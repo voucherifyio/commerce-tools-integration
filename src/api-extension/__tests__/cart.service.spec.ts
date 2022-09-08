@@ -363,6 +363,11 @@ describe('CartService', () => {
           },
           {
             action: 'setCustomField',
+            name: 'couponsLimit',
+            value: 5,
+          },
+          {
+            action: 'setCustomField',
             name: 'discount_codes',
             value: [],
           },
@@ -756,8 +761,8 @@ describe('CartService', () => {
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(2);
-        expect(setCustomFieldActions[1]).toEqual({
+        expect(setCustomFieldActions.length).toBe(3);
+        expect(setCustomFieldActions[2]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -866,14 +871,14 @@ describe('CartService', () => {
         });
       });
 
-      it('should create one `setCustomField` action with all coupons applied', async () => {
+      it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
         const result = await cartService.checkCartAndMutate(cart);
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(2);
-        expect(setCustomFieldActions[1]).toEqual({
+        expect(setCustomFieldActions.length).toBe(3);
+        expect(setCustomFieldActions[2]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -978,14 +983,14 @@ describe('CartService', () => {
         });
       });
 
-      it('should create `setCustomField` action with storing coupon details to the cart', async () => {
+      it('should create three `setCustomField` with default values and action with storing coupon details to the cart', async () => {
         const result = await cartService.checkCartAndMutate(cart);
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(2);
-        expect(setCustomFieldActions[1]).toEqual({
+        expect(setCustomFieldActions.length).toBe(3);
+        expect(setCustomFieldActions[2]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -1110,14 +1115,14 @@ describe('CartService', () => {
         });
       });
 
-      it('should create `setCustomField` action with storing coupon details to the cart', async () => {
+      it('should create three `setCustomField` for default customFields settings and action storing coupon details to the cart', async () => {
         const result = await cartService.checkCartAndMutate(cart);
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(2);
-        expect(setCustomFieldActions[1]).toEqual({
+        expect(setCustomFieldActions.length).toBe(3);
+        expect(setCustomFieldActions[2]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -1235,14 +1240,14 @@ describe('CartService', () => {
         });
       });
 
-      it('should create one `setCustomField` action with coupon codes applied', async () => {
+      it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
         const result = await cartService.checkCartAndMutate(cart);
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(2);
-        expect(setCustomFieldActions[1]).toEqual({
+        expect(setCustomFieldActions.length).toBe(3);
+        expect(setCustomFieldActions[2]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -1395,14 +1400,14 @@ describe('CartService', () => {
         });
       });
 
-      it('should create one `setCustomField` action with coupon codes applied', async () => {
+      it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
         const result = await cartService.checkCartAndMutate(cart);
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(2);
-        expect(setCustomFieldActions[1]).toEqual({
+        expect(setCustomFieldActions.length).toBe(3);
+        expect(setCustomFieldActions[2]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
