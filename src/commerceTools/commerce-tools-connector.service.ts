@@ -13,6 +13,7 @@ import {
   ClientRequest,
 } from '@commercetools/sdk-client-v2';
 import {
+  Cart,
   createApiBuilderFromCtpClient,
   Order,
 } from '@commercetools/platform-sdk';
@@ -100,6 +101,11 @@ export class CommerceToolsConnectorService {
   public async findOrder(id: string): Promise<Order> {
     const client = this.getClient();
     return (await client.orders().withId({ ID: id }).get().execute())?.body;
+  }
+
+  public async findCart(id: string): Promise<Cart> {
+    const client = this.getClient();
+    return (await client.carts().withId({ ID: id }).get().execute())?.body;
   }
 
   public getClient(): ByProjectKeyRequestBuilder {

@@ -9,14 +9,11 @@ import {
   RedemptionsRedeemStackableResponse,
 } from '@voucherify/sdk';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
+import sleep from './utils/sleep';
 
 type SentCoupons = {
   result: string;
   coupon: string;
-};
-
-const sleep = (ms) => {
-  return new Promise((resolve) => setTimeout(resolve, ms)).then((e) => null);
 };
 
 @Injectable()
