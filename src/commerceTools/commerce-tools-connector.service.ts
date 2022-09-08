@@ -13,7 +13,6 @@ import {
   ClientRequest,
 } from '@commercetools/sdk-client-v2';
 import {
-  ClientResponse,
   createApiBuilderFromCtpClient,
   Order,
 } from '@commercetools/platform-sdk';
