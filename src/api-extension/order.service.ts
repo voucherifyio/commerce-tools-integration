@@ -164,8 +164,8 @@ export class OrderService {
     redemptions: RedemptionsRedeemStackableRedemptionResult[],
   ) {
     let paid = false;
-    for (let i = 0; i < 2; i++) {
-      await sleep(500);
+    for (let i = 0; i < 3; i++) {
+      await sleep(650);
       const order = await this.commerceToolsConnectorService.findOrder(orderId);
       if (order.paymentState === 'Paid') {
         paid = true;
@@ -176,5 +176,6 @@ export class OrderService {
       return;
     }
     await this.voucherifyConnectorService.rollbackRedemptions(redemptions);
+    await sleep(10000);
   }
 }
