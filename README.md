@@ -376,14 +376,12 @@ If you found a bug or want to suggest a new feature, please file a GitHub issue.
 - 2022-09-07 `v5.0.0`
     - this version is not fully backward compatible due to changes in a way how [coupon text](#coupon-text) is configured
     - change configuration of [coupon text](#coupon-text) from config in a `.ts` file to config via `COMMERCE_TOOLS_COUPON_NAMES` environment variable
-    - fix logging list of availble api extensions while using `npm run api-extension-list` command
-    - readme update
-- 2022-09-06 `v4.3.0` <--delete
+    - fix logging list of available api extensions while using `npm run api-extension-list` command
     - added safeguard when auto-applied coupon failed to keep remaining codes in cart
     - added showing errors when validation failed and there is no safeguards
-    - compatible with previews version but required to run `npm run config` command to proper set custom field `isValidationFailed`
-- 2022-09-06 `v4.2.2` <--delete
-    - fixed sitiuation when redemptions fails and operations on order are blocked
+    - required to run `npm run config` command to proper set custom field `isValidationFailed`
+- 2022-09-06 `v4.2.2`
+    - fixed situation when redemptions fails and operations on order are blocked
     - remove additional request to voucherify with metadata
 - 2022-09-05 `v4.2.1`
     - fixed saving total amount on paid orders
@@ -437,6 +435,7 @@ If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ### Migration from v4.x.x to v5.x.x
 - stringify object from `src/misc/coupon-text.ts` file and insert it as a value for `COMMERCE_TOOLS_COUPON_NAMES` environment variable
+- run `npm run config` command to proper set custom field `isValidationFailed`
 ### Migration from v3.x.x to v4.x.x
 - if you are using sunrise, update it to version `v.3.0.0` or higher
 - if there exists carts with added coupons, now it will be impossible to remove them properly from cart - write simple script, which will [list](https://docs.commercetools.com/api/projects/carts#query-carts) all existing carts and then [delete](https://docs.commercetools.com/api/projects/carts#delete-a-cart) them
