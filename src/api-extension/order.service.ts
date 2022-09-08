@@ -16,10 +16,6 @@ type SentCoupons = {
   coupon: string;
 };
 
-const sleep = (ms) => {
-  return new Promise((resolve) => setTimeout(resolve, ms)).then((e) => null);
-};
-
 @Injectable()
 export class OrderService {
   constructor(
