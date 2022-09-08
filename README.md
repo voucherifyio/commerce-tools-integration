@@ -144,7 +144,7 @@ Set environment variables with credentials to Voucherify and commercetools APIs.
     - `COMMERCE_TOOLS_ID`
     - `COMMERCE_TOOLS_SECRET`
 - Additional configuration variables
-    - (optional) `COMMERCE_TOOLS_COUPON_NAMES` - stringified object with possible values used as a coupon label in order summary
+    - (optional) `COMMERCE_TOOLS_COUPON_NAMES` - stringifies object with possible values used as a coupon label in order summary, for example `COMMERCE_TOOLS_COUPON_NAMES='{"en":"Coupon codes discount","de":"Gutscheincodes rabatt"}'`
     - (optional) `COMMERCE_TOOLS_API_EXTENSION_KEY` - value used in API Extension `key` attribute used to recognize its own API Extension records, default value is: `VOUCHERIFY_INTEGRATION`
     - (optional) `LOGGER_PRETTY_PRINT` - `true` to get console output in the text format (JSON by default).
     - (optional) `COMMERCE_TOOLS_WITH_LOGGER_MIDDLEWARE` - `false` to disable debugger mode in commercetools connector.
