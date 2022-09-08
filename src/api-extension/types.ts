@@ -46,4 +46,5 @@ export type ValidateCouponsResult = {
   productsToAdd: ProductToAdd[];
   onlyNewCouponsFailed?: boolean;
   taxCategory?: TaxCategory;
+  couponsLimit: number;
 };

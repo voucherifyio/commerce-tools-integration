@@ -155,7 +155,8 @@ Set environment variables with credentials to Voucherify and commercetools APIs.
     - (optional) `LOGGER_LEVEL` - logging level for `npm run test`. You can set it to `error` or `fatal`.
     - (optional) `DEBUG_STORE_REQUESTS_IN_JSON` - `true` if you want to keep external requests / response in a JSON file.
     - (optional) `DEBUG_STORE_REQUESTS_DIR` - name of the directory where JSON files with request / responses are stored.
-
+    - (optional) `COMMERCE_TOOLS_COUPONS_LIMIT` - maximum number of coupons that could be applied to cart. Default and maximum value is 5 related to [Voucherify Api](https://docs.voucherify.io/reference/redeem-stacked-discounts)
+  
 [*] Variables used to select suitable price per product in your shop. Due to the fact that in the commercetools can be a lot of possible prices per one product, but in Voucherify there is only one, it is needed to choose the proper price. You can find proper values by searching in `*any product* > Variants > *any variant* > Prices` for rows which have proper price scope for your project. Depending on the situation you may need to use all of four variables or fewer, but at least the COMMERCE_TOOLS_PRODUCTS_CURRENCY variable is required. In case when you do not choose the right values, then some functionalities won't work properly (e.g. adding free item with coupon). [Here](https://docs.commercetools.com/api/projects/products#price-selection) you can read more about commercetools mechanism called "Price Selection" which we used.
 
 ### Installation
@@ -364,6 +365,9 @@ To learn more about predicates You can see [here](https://docs.commercetools.com
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2022-09-08 `v4.3.0`
+    - handling configuration for maximum coupons limit 
+    - compatible with previews version but required to run `npm run config` command to proper set new cart custom field - `couponsLimit`
 - 2022-09-06 `v4.2.2`
     - fixed sitiuation when redemptions fails and operations on order are blocked
     - remove additional request to voucherify with metadata

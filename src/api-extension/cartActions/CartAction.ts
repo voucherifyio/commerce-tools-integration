@@ -28,6 +28,12 @@ export type CartActionSetCustomFieldWithSession = {
   value: string;
 };
 
+export type CartActionSetCustomFieldWithCouponsLimit = {
+  action: 'setCustomField';
+  name: 'couponsLimit';
+  value: number;
+};
+
 export type CartActionRemoveCustomLineItem = {
   action: 'removeCustomLineItem';
   customLineItemId: string;
@@ -101,7 +107,8 @@ export type CartAction =
   | CartActionSetLineItemCustomField
   | CartActionChangeLineItemQuantity
   | CartActionSetLineItemCustomType
-  | CartActionSetCustomFieldFreeShipping;
+  | CartActionSetCustomFieldFreeShipping
+  | CartActionSetCustomFieldWithCouponsLimit;
 
 export type CartActionsBuilder = (
   cart: Cart,

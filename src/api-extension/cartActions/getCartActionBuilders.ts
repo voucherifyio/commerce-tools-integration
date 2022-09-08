@@ -8,6 +8,7 @@ import setSessionAsCustomField from './setSessionAsCustomField';
 import updateDiscountsCodes from './updateDiscountCodes';
 import addShippingProductSourceIds from './addShippingProductSourceIds';
 import setFixedPriceForLineItems from './setFixedPriceForLineItems';
+import setCouponsLimit from './setCouponsLimit';
 
 export default function getCartActionBuilders(
   validateCouponsResult: ValidateCouponsResult,
@@ -24,6 +25,7 @@ export default function getCartActionBuilders(
         removeFreeLineItemsForNonApplicableCoupon,
         addShippingProductSourceIds,
         setFixedPriceForLineItems,
+        setCouponsLimit,
       ],
     );
   }
