@@ -85,6 +85,17 @@ export class TypesService {
           },
           inputHint: 'SingleLine',
         },
+        {
+          name: 'isValidationFailed',
+          label: {
+            en: 'isValidationFailed',
+          },
+          required: false,
+          type: {
+            name: 'Boolean',
+          },
+          inputHint: 'SingleLine',
+        },
       ],
     },
   };
@@ -109,6 +120,17 @@ export class TypesService {
           type: {
             name: 'Set',
             elementType: { name: 'String' },
+          },
+          inputHint: 'SingleLine',
+        },
+        {
+          name: 'coupon_fixed_price',
+          label: {
+            en: 'coupon_fixed_price',
+          },
+          required: false,
+          type: {
+            name: 'Number',
           },
           inputHint: 'SingleLine',
         },

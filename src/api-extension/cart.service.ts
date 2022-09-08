@@ -21,6 +21,11 @@ import {
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
 import { OrdersCreateResponse } from '@voucherify/sdk/dist/types/Orders';
 import { ProductMapper } from './mappers/product';
+import {
+  CartAction,
+  CartActionRemoveLineItem,
+  CartActionSetLineItemCustomType,
+} from './cartActions/CartAction';
 
 function getSession(cart: Cart): string | null {
   return cart.custom?.fields?.session ?? null;
@@ -48,6 +53,16 @@ function checkCouponsValidatedAsState(
         validatedCoupons.find((element) => element.id === coupon.code),
       )
   );
+}
+
+function checkIfAllInapplicableCouponsArePromotionTier(
+  notApplicableCoupons: StackableRedeemableResponse[],
+) {
+  const inapplicableCouponsPromitonTier = notApplicableCoupons.filter(
+    (notApplicableCoupon) => notApplicableCoupon.object === 'promotion_tier',
+  );
+
+  return notApplicableCoupons.length === inapplicableCouponsPromitonTier.length;
 }
 
 function checkIfOnlyNewCouponsFailed(
@@ -216,6 +231,9 @@ export class CartService {
       skippedCoupons,
     );
 
+    const allInapplicableCouponsArePromotionTier =
+      checkIfAllInapplicableCouponsArePromotionTier(notApplicableCoupons);
+
     this.logger.debug({
       msg: 'Validated coupons',
       availablePromotions,
@@ -230,6 +248,7 @@ export class CartService {
       totalDiscountAmount,
       productsToAdd,
       onlyNewCouponsFailed,
+      allInapplicableCouponsArePromotionTier,
       taxCategory,
     });
     const newSessionKey = !sessionKey || valid ? sessionKeyResponse : null;
@@ -244,6 +263,7 @@ export class CartService {
       totalDiscountAmount,
       productsToAdd,
       onlyNewCouponsFailed,
+      allInapplicableCouponsArePromotionTier,
       taxCategory,
     };
   }
@@ -303,11 +323,65 @@ export class CartService {
       (builder) => builder(cart, validateCouponsResult),
     );
 
-    this.logger.debug(actions);
+    const normalizedCartActions = this.normalizeCartActions(actions);
+
+    this.logger.debug(normalizedCartActions);
     return {
       status: true,
-      actions,
+      actions: normalizedCartActions,
     };
+  }
+
+  // TODO: make service for this if logic goes bigger
+  private normalizeCartActions(actions): CartAction[] {
+    let actionsSetLineItemCustomType = actions.filter(
+      (action) => action.action === 'setLineItemCustomType',
+    );
+
+    const actionsRemoveLineItem = actions.filter(
+      (action) => action.action === 'removeLineItem',
+    );
+
+    // If lineItem is going to be removed we don't want to set customField on it.
+    const removeLineItemIds = actionsRemoveLineItem.map(
+      (action: CartActionRemoveLineItem) => action.lineItemId,
+    );
+
+    const processedLineItemIds = [];
+    actionsSetLineItemCustomType = actionsSetLineItemCustomType
+      .map((action: CartActionSetLineItemCustomType) => {
+        if (
+          !processedLineItemIds.includes(action.lineItemId) &&
+          !removeLineItemIds.includes(action.lineItemId)
+        ) {
+          processedLineItemIds.push(action.lineItemId);
+          return {
+            action: action.action,
+            lineItemId: action.lineItemId,
+            type: action.type,
+            fields: Object.assign(
+              {},
+              ...actionsSetLineItemCustomType
+                .filter(
+                  (innerAction: CartActionSetLineItemCustomType) =>
+                    innerAction.lineItemId === action.lineItemId,
+                )
+                .map((innerAction: CartActionSetLineItemCustomType) => {
+                  return innerAction.fields;
+                }),
+            ),
+          } as CartActionSetLineItemCustomType;
+        }
+      })
+      .filter(
+        (action: CartActionSetLineItemCustomType) => action !== undefined,
+      );
+
+    actions = actions.filter(
+      (action) => action.action !== 'setLineItemCustomType',
+    );
+
+    return [...actions, ...actionsSetLineItemCustomType];
   }
 
   private getPriceSelectorFromCart(cart: Cart): PriceSelector {

@@ -16,6 +16,12 @@ export type CartActionSetCustomFieldWithCoupons = {
   value: string[];
 };
 
+export type CartActionSetCustomFieldWithValidationFailed = {
+  action: 'setCustomField';
+  name: 'isValidationFailed';
+  value: boolean;
+};
+
 export type CartActionSetCustomFieldFreeShipping = {
   action: 'setCustomField';
   name: 'shippingProductSourceIds';
@@ -79,7 +85,8 @@ export type CartActionSetLineItemCustomType = {
     key: 'lineItemCodesType';
   };
   fields: {
-    applied_codes: string[];
+    applied_codes?: string[];
+    coupon_fixed_price?: number;
   };
 };
 
@@ -100,7 +107,8 @@ export type CartAction =
   | CartActionSetLineItemCustomField
   | CartActionChangeLineItemQuantity
   | CartActionSetLineItemCustomType
-  | CartActionSetCustomFieldFreeShipping;
+  | CartActionSetCustomFieldFreeShipping
+  | CartActionSetCustomFieldWithValidationFailed;
 
 export type CartActionsBuilder = (
   cart: Cart,
