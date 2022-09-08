@@ -1,8 +1,10 @@
 import { performance } from 'perf_hooks';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
+  RedemptionsRedeemStackableOrderResponse,
   RedemptionsRedeemStackableParams,
   RedemptionsRedeemStackableRedemptionResult,
+  SimpleCustomer,
   ValidationsValidateStackableParams,
   VoucherifyServerSide,
 } from '@voucherify/sdk';
@@ -158,12 +160,34 @@ export class VoucherifyConnectorService {
     return response;
   }
 
+  async rollbackStackableRedemptions(parent_redemption: {
+    id: string;
+    object: 'redemption';
+    date: string;
+    customer_id?: string;
+    tracking_id?: string;
+    metadata?: Record<string, any>;
+    result: 'SUCCESS' | 'FAILURE';
+    order?: RedemptionsRedeemStackableOrderResponse;
+    customer?: SimpleCustomer;
+    related_object_type: 'redemption';
+    related_object_id: string;
+  }) {
+    if (parent_redemption.result === 'SUCCESS') {
+      const client = await this.getClient();
+      return await client.redemptions.rollbackStackable(parent_redemption.id);
+    }
+    return;
+  }
+
   async rollbackRedemptions(
     redemptions: RedemptionsRedeemStackableRedemptionResult[],
   ) {
     const client = await this.getClient();
     const result = [];
-    for (const redemption of redemptions) {
+    for (const redemption of redemptions.filter(
+      (redemption) => redemption.result === 'SUCCESS',
+    )) {
       result.push(await client.redemptions.rollback(redemption.id));
     }
     return result;

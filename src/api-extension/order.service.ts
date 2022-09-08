@@ -30,7 +30,7 @@ export class OrderService {
   ) {}
 
   public async redeemVoucherifyCoupons(order: Order): Promise<{
-    redemptions?: RedemptionsRedeemStackableRedemptionResult[];
+    redemptionsRedeemStackableResponse?: RedemptionsRedeemStackableResponse;
     actions: { name: string; action: string; value: string[] }[];
     status: boolean;
   }> {
@@ -144,7 +144,7 @@ export class OrderService {
     return {
       status: true,
       actions: actions,
-      redemptions: response?.redemptions,
+      redemptionsRedeemStackableResponse: response,
     };
   }
 
@@ -161,7 +161,7 @@ export class OrderService {
 
   async checkPaidOrderFallback(
     orderId: string,
-    redemptions: RedemptionsRedeemStackableRedemptionResult[],
+    redemptionsRedeemStackableResponse: RedemptionsRedeemStackableResponse,
   ) {
     let paid = false;
     for (let i = 0; i < 3; i++) {
@@ -175,7 +175,16 @@ export class OrderService {
     if (paid) {
       return;
     }
-    await this.voucherifyConnectorService.rollbackRedemptions(redemptions);
-    await sleep(10000);
+    if (redemptionsRedeemStackableResponse?.parent_redemption) {
+      return await this.voucherifyConnectorService.rollbackStackableRedemptions(
+        redemptionsRedeemStackableResponse.parent_redemption,
+      );
+    }
+    if (redemptionsRedeemStackableResponse?.redemptions?.length) {
+      return await this.voucherifyConnectorService.rollbackRedemptions(
+        redemptionsRedeemStackableResponse.redemptions,
+      );
+    }
+    return;
   }
 }
