@@ -1,3 +1,5 @@
+import { OrdersItem } from '@voucherify/sdk';
+
 export class ProductMapper {
   public getMetadata(attributes, metadataSchemaProperties) {
     return attributes
@@ -9,7 +11,7 @@ export class ProductMapper {
       : {};
   }
 
-  public mapLineItems(lineItems, metadataSchemaProperties = []) {
+  public mapLineItems(lineItems, metadataSchemaProperties = []): OrdersItem[] {
     return lineItems
       .filter((item) => this.getQuantity(item))
       .map((item) => {

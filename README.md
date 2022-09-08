@@ -59,7 +59,7 @@ We support coupons campaigns, including:
 - [Validation sessions](https://docs.voucherify.io/docs/locking-validation-session) – temporarily lock the voucher's usage until redemption is successful, which is helpful for coupons with limited use.
 - [Stackable discounts](https://docs.voucherify.io/docs/manage-stackable-discounts) – allow customers to use up to 5 coupons at the same time.
 - [Validation rules](https://docs.voucherify.io/docs/validation-rules) – coupons valid only for select scenarios based on customer, cart or order attributes.
-- [Discount effects](https://docs.voucherify.io/docs/discount-effects) – defining how to apply the discount to the customer's cart.
+- [Loyalty program](https://support.voucherify.io/article/177-how-to-create-loyalty-program-step-by-step) - we support earning points from paid orders and using pay with points rewards
 - [Unit discount](https://docs.voucherify.io/docs/give-item-for-free-unit-discount) – add free items to orders. Price of applied unit is fetched from commercetools product price including [price selectors](https://docs.commercetools.com/api/projects/products#price-selection).
 - [Fixed amount](https://support.voucherify.io/article/512-complete-user-guide-on-discounts#fixed-order-amount) - coupons that set fixed prices of Your cart products or whole cart.
 - [Free shipping](https://docs.voucherify.io/docs/free-shipping-discount) - adding free shipping to your cart when proper code is applied. Check [Free shipping section](#free-shipping) for more information.
@@ -351,6 +351,9 @@ To learn more about predicates You can see [here](https://docs.commercetools.com
 2. If you choose free shipping code with custom product make sure that this product is properly defined in commercetools and can be applied to cart.
 3. Make sure You configure zones and shipping rates in Your shipping method in commercetools.
 
+## Loyalty program
+
+Currently, we support a few cases related to loyalty program. Firstly we provide earning points by paying orders and using rewards with type `pay with points`. To handle other type rewards like getting coupon for points You can simply use our [Customer cockpit](https://support.voucherify.io/article/177-how-to-create-loyalty-program-step-by-step#cockpits)   
 
 ## Typical use case
 
@@ -388,8 +391,8 @@ If you found a bug or want to suggest a new feature, please file a GitHub issue.
     - added support for fixed price promotions
     - bugfixes handling proper price from commercetools when product have only main variant
     - compatible with previews version but required to run `npm run config` command to proper set new `lineItemCustomField`
-- 2022-08-25 `v4.1.2`
     - bugfixes empty values when applying prepaid gift cards
+    - synchronizing orders, with no coupons applied, into voucherify
 - 2022-08-25 `v4.1.1`
     - added promotion tier handling
 - 2022-08-24 `v4.1.0`
