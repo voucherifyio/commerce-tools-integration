@@ -17,8 +17,6 @@ import {
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
 import { Coupon } from 'src/api-extension/coupon';
-import { SimpleCustomer } from '@voucherify/sdk/dist/types/Customers';
-import { RedemptionsRedeemStackableOrderResponse } from '@voucherify/sdk/dist/types/Redemptions';
 
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;
