@@ -341,9 +341,9 @@ When you apply whichever of this discount code, the connected `product id` it wi
 Next step is to properly define shipping method in Your commercetools panel and configure [Predicates](https://docs.commercetools.com/tutorials/shipping-method-with-predicate). Go to `Settings -> Project settings -> Shipping methods`. Use existed or create new shipping method which will be applied if one of codes will be used.
 In `Shipping method -> Predicate` field You can define condition when a given shipping method will be available. To allow uses to use Your new free shipping method you need to define formula.
 
-`custom.`shippingProductSourceIds` contains any ("5h1pp1ng")` - this formula is used for default free shipping code with predefined `source id = 5h1pp1ng`
+`custom.shippingProductSourceIds` contains any `("5h1pp1ng")` - this formula is used for default free shipping code with predefined `source id = 5h1pp1ng`
 
-`custom.shippingProductSourceIds contains any ("<your_source_id>")` - this formula should be used when you want to apply this shipping method with custom vourcherify shipping method.
+`custom.shippingProductSourceIds` contains any `("<your_source_id>")` - this formula should be used when you want to apply this shipping method with custom vourcherify shipping method.
 
 To learn more about predicates You can see [here](https://docs.commercetools.com/api/predicates/query).
 
