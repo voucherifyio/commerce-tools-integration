@@ -365,10 +365,14 @@ If you found a bug or want to suggest a new feature, please file a GitHub issue.
 ## Changelog
 - 2022-09-07 `v5.0.0`
     - this version is not fully backward compatible due to changes in a way how [coupon text](#coupon-text) is configured
-    - change configouration of [coupon text](#coupon-text) from config in a `.ts` file to config via `COMMERCE_TOOLS_COUPON_NAMES` environment variable
+    - change configuration of [coupon text](#coupon-text) from config in a `.ts` file to config via `COMMERCE_TOOLS_COUPON_NAMES` environment variable
     - fix logging list of availble api extensions while using `npm run api-extension-list` command
     - readme update
-- 2022-09-06 `v4.2.2`
+- 2022-09-06 `v4.3.0` <--delete
+    - added safeguard when auto-applied coupon failed to keep remaining codes in cart
+    - added showing errors when validation failed and there is no safeguards
+    - compatible with previews version but required to run `npm run config` command to proper set custom field `isValidationFailed`
+- 2022-09-06 `v4.2.2` <--delete
     - fixed sitiuation when redemptions fails and operations on order are blocked
     - remove additional request to voucherify with metadata
 - 2022-09-05 `v4.2.1`
