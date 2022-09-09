@@ -98,6 +98,11 @@ export class CommerceToolsConnectorService {
     };
   }
 
+  public async findOrder(id: string): Promise<Order> {
+    const client = this.getClient();
+    return (await client.orders().withId({ ID: id }).get().execute())?.body;
+  }
+
   public async findCart(id: string): Promise<Cart> {
     const client = this.getClient();
     return (await client.carts().withId({ ID: id }).get().execute())?.body;
