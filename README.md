@@ -379,7 +379,8 @@ If you found a bug or want to suggest a new feature, please file a GitHub issue.
     - fix logging list of available api extensions while using `npm run api-extension-list` command
     - added safeguard when auto-applied coupon failed to keep remaining codes in cart
     - added showing errors when validation failed and there is no safeguards
-    - handling configuration for maximum coupons limit 
+    - handling configuration for maximum coupons limit
+    - adding rollback for coupon validation, session and redemption when connection with CT will time out
 - 2022-09-06 `v4.2.2`
     - fixed situation when redemptions fails and operations on order are blocked
     - remove additional request to voucherify with metadata
