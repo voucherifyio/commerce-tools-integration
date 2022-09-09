@@ -161,8 +161,8 @@ export class OrderService {
     redemptionsRedeemStackableResponse: RedemptionsRedeemStackableResponse,
   ) {
     let paid = false;
-    for (let i = 0; i < 3; i++) {
-      await sleep(650);
+    for (let i = 0; i < 2; i++) {
+      await sleep(500);
       const order = await this.commerceToolsConnectorService.findOrder(orderId);
       if (order.paymentState === 'Paid') {
         paid = true;

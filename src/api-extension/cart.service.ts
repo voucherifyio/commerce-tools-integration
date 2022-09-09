@@ -326,14 +326,21 @@ export class CartService {
   }
 
   async checkCartMutateFallback(cart: Cart) {
-    await sleep(500);
-    const updatedCart = await this.commerceToolsConnectorService.findCart(
-      cart.id,
-    );
-    if (updatedCart.version === cart.version) {
-      return await this.validateCoupons(cart, getSession(cart));
+    let cartMutated = false;
+    for (let i = 0; i < 2; i++) {
+      await sleep(500);
+      const updatedCart = await this.commerceToolsConnectorService.findCart(
+        cart.id,
+      );
+      if (updatedCart.version !== cart.version) {
+        cartMutated = true;
+        break;
+      }
     }
-    return;
+    if (cartMutated) {
+      return;
+    }
+    return await this.validateCoupons(cart, getSession(cart));
   }
 
   // TODO: make service for this if logic goes bigger
