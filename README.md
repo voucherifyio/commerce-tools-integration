@@ -6,10 +6,12 @@
 
 Voucherify's [commercetools](https://commercetools.com/) connector extends its discount capabilities with unique promo codes and advanced incentives, as well as with referral, gift card, and loyalty programs supported by [Voucherify promotion engine](https://www.voucherify.io).
 
-Demo store https://github.com/voucherifyio/sunrise-for-commerce-tools-integration/
+Demo store https://sunrise-ct-voucherify.herokuapp.com
 
 
-![https://www.voucherify.io/](./public/voucherify.png)
+<div style="background-color: rgb(0, 18, 70); padding: 50px; border-radius: 50px">
+   <img src="./public/voucherify-logo.svg" />
+</div>
 
 ---
 
@@ -57,8 +59,8 @@ We support coupons campaigns, including:
 - [Validation sessions](https://docs.voucherify.io/docs/locking-validation-session) – temporarily lock the voucher's usage until redemption is successful, which is helpful for coupons with limited use.
 - [Stackable discounts](https://docs.voucherify.io/docs/manage-stackable-discounts) – allow customers to use up to 5 coupons at the same time.
 - [Validation rules](https://docs.voucherify.io/docs/validation-rules) – coupons valid only for select scenarios based on customer, cart or order attributes.
-- [Discount effects](https://docs.voucherify.io/docs/discount-effects) – defining how to apply the discount to the customer's cart.
-- [Unit discount](https://docs.voucherify.io/docs/give-item-for-free-unit-discount) – add free items to orders. Price of applied unit is fetched from commerce tools product price including [price selectors](https://docs.commercetools.com/api/projects/products#price-selection).
+- [Loyalty program](https://support.voucherify.io/article/177-how-to-create-loyalty-program-step-by-step) - we support earning points from paid orders and using pay with points rewards
+- [Unit discount](https://docs.voucherify.io/docs/give-item-for-free-unit-discount) – add free items to orders. Price of applied unit is fetched from commercetools product price including [price selectors](https://docs.commercetools.com/api/projects/products#price-selection).
 - [Fixed amount](https://support.voucherify.io/article/512-complete-user-guide-on-discounts#fixed-order-amount) - coupons that set fixed prices of Your cart products or whole cart.
 - [Free shipping](https://docs.voucherify.io/docs/free-shipping-discount) - adding free shipping to your cart when proper code is applied. Check [Free shipping section](#free-shipping) for more information.
 - [Prepaid gift cards](https://docs.voucherify.io/docs/prepaid-gift-cards) - coupons that add to products or whole cart a certain discount value from gift cars.
@@ -142,11 +144,8 @@ Set environment variables with credentials to Voucherify and commercetools APIs.
     - `COMMERCE_TOOLS_ID`
     - `COMMERCE_TOOLS_SECRET`
 - Additional configuration variables
-    - `COMMERCE_TOOLS_PRODUCTS_CURRENCY` - (e.g. EUR) [*]
+    - (optional) `COMMERCE_TOOLS_COUPON_NAMES` - stringifies object with possible values used as a coupon label in order summary, for example `COMMERCE_TOOLS_COUPON_NAMES='{"en":"Coupon codes discount","de":"Gutscheincodes rabatt"}'`
     - (optional) `COMMERCE_TOOLS_API_EXTENSION_KEY` - value used in API Extension `key` attribute used to recognize its own API Extension records, default value is: `VOUCHERIFY_INTEGRATION`
-    - (optional) `COMMERCE_TOOLS_PRODUCTS_COUNTRY` - (e.g. DE) [*]
-    - (optional) `COMMERCE_TOOLS_PRODUCT_CHANNEL` - (e.g. Store London) [*]
-    - (optional) `COMMERCE_TOOLS_PRODUCT_CUSTOMER_GROUP` - (e.g. b2b) [*]
     - (optional) `LOGGER_PRETTY_PRINT` - `true` to get console output in the text format (JSON by default).
     - (optional) `COMMERCE_TOOLS_WITH_LOGGER_MIDDLEWARE` - `false` to disable debugger mode in commercetools connector.
     - (optional) `API_EXTENSION_BASIC_AUTH_PASSWORD` - (`String`) protects your API Extension URL from unwanted traffic.
@@ -156,9 +155,6 @@ Set environment variables with credentials to Voucherify and commercetools APIs.
     - (optional) `DEBUG_STORE_REQUESTS_IN_JSON` - `true` if you want to keep external requests / response in a JSON file.
     - (optional) `DEBUG_STORE_REQUESTS_DIR` - name of the directory where JSON files with request / responses are stored.
     - (optional) `COMMERCE_TOOLS_COUPONS_LIMIT` - maximum number of coupons that could be applied to cart. Default and maximum value is 5 related to [Voucherify Api](https://docs.voucherify.io/reference/redeem-stacked-discounts)
-  
-[*] Variables used to select suitable price per product in your shop. Due to the fact that in the commercetools can be a lot of possible prices per one product, but in Voucherify there is only one, it is needed to choose the proper price. You can find proper values by searching in `*any product* > Variants > *any variant* > Prices` for rows which have proper price scope for your project. Depending on the situation you may need to use all of four variables or fewer, but at least the COMMERCE_TOOLS_PRODUCTS_CURRENCY variable is required. In case when you do not choose the right values, then some functionalities won't work properly (e.g. adding free item with coupon). [Here](https://docs.commercetools.com/api/projects/products#price-selection) you can read more about commercetools mechanism called "Price Selection" which we used.
-
 ### Installation
 
 Set up the configuration for the first run.
@@ -191,7 +187,7 @@ npm run register
 
 `npm run test`
 
-Currently, we cover the following scenarios:
+We have created integration tests to cover the most important scenarios connected with handling validation process and operations on cart. We mocked requests from commercetools and Voucherify to check behaviour of our application. You can examine tests [here](src/api-extension/__tests__) and mocks here: [1](src/commerceTools/__mocks__/commerce-tools-connector.service.ts), [2](src/commerceTools/tax-categories/__mocks__/tax-categories.service.ts), [3](src/commerceTools/types/__mocks__/types.service.ts), [4](src/voucherify/__mocks__/voucherify-connector.service.ts). Currently, we cover the following scenarios:
 - creating a new cart (cart.version = 1)
 - running API extension without any applied coupons (testing integration between V% and CT)
 - running API extension when removing currently applied coupons
@@ -241,7 +237,7 @@ Currently, we cover the following scenarios:
 ## Heroku deployment
 
 ### Requirements
-
+- Heroku account [login](https://id.heroku.com/login) or [register](https://signup.heroku.com/)
 - [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
 - [Git](https://devcenter.heroku.com/articles/heroku-cli) installed
 
@@ -326,26 +322,38 @@ Additionally, each time migration happen metadata will be tried to sync. Metadat
 3. Syncing `cusomers` and `orders` uses CT `Custom Fields`. Syncing `products` uses `Attributes`. In this case be sure you provide CT `Attribute identifier` instead on `Attribute label`. You can check this under `Settings -> Product types and attributes` tab.
 
 ## Coupon text
-All discounts are added as one `CustomLineItem` with a negative price. This item should be visible to the customer on the invoice to know how the price is affected. To make this readable for each customer we provide the possibility to change the name of this item depending on the language which customer uses. To make it work correctly, a developer should modify the file `src/misc/coupon-text.ts` and include all possible languages used in the store. Later on, the text will be automatically chosen by the commercetools mechanism to match the language proper for a customer.
+All discounts are added as one `CustomLineItem` with a negative price. This item should be visible to the customer on the invoice to know how the price is affected. To make this readable for each customer we provide the possibility to change the name of this item depending on the language which customer uses. To make it work correctly, a developer should add `COMMERCE_TOOLS_COUPON_NAMES` environment variable, with stringified object, where keys are an [IETF language tags](https://en.wikipedia.org/wiki/IETF_language_tag) and its values are coupon names translated to that languages. Later on, the text will be automatically chosen by the commercetools mechanism to match the language proper for a customer.
+
+Example: `'{"en":"Coupon codes discount","de":"Gutscheincodes rabatt"}'`
 
 ## Free shipping
 
-Free shipping is one of our discount codes type. You can define it on two ways. Firstly you can create predefined coupon with `Free shipping` type. This coupon is connected to pre created product with `source id = 5h1pp1ng`. 
-The second way is to create new or use existing product which will represent Your shipping method.
-If you have chosen your product now You can create new discount with unit type of this product. When you apply whichever of this discount information about it will be set to commerce tools custom field named shippingProductSourceIds.
-Next step is to properly define shipping method in Your commerce tools panel and configure [Predicates](https://docs.commercetools.com/tutorials/shipping-method-with-predicate). Go to `Settings -> Project settings -> Shipping methods`. Use existed or create new shipping method which will be applied if one of codes will be used.
+Free shipping is one of our discount codes type. To handle this case You must define Free shipping code. You can define it on two ways:
+
+1. You can create predefined coupon with `Free shipping` type.
+   This coupon is connected to pre created product with `source id = 5h1pp1ng`.
+   In this case You can clearly define coupon type by this ID because it's given by Voucherify and cannot be changed.
+2. To create new or use existing product which will represent Your shipping method.
+   If you have chosen your product now You can create new discount with unit type of this product.
+
+When you apply whichever of this discount code, the connected `product id` it will be set to commercetools cart custom field named shippingProductSourceIds.
+Next step is to properly define shipping method in Your commercetools panel and configure [Predicates](https://docs.commercetools.com/tutorials/shipping-method-with-predicate). Go to `Settings -> Project settings -> Shipping methods`. Use existed or create new shipping method which will be applied if one of codes will be used.
 In `Shipping method -> Predicate` field You can define condition when a given shipping method will be available. To allow uses to use Your new free shipping method you need to define formula.
 
-`custom.shippingProductSourceIds contains any ("5h1pp1ng")` - this formula is used for default free shipping code
-`custom.shippingProductSourceIds contains any ("<your_source_id>")` - this formula should be used when you want to apply this shipping method with custom vourcherify shipping method. 
+`custom.shippingProductSourceIds` contains any `("5h1pp1ng")` - this formula is used for default free shipping code with predefined `source id = 5h1pp1ng`
+
+`custom.shippingProductSourceIds` contains any `("<your_source_id>")` - this formula should be used when you want to apply this shipping method with custom vourcherify shipping method.
 
 To learn more about predicates You can see [here](https://docs.commercetools.com/api/predicates/query).
 
 #### Important
 1. Make sure that you `customField` definition is properly set. You can run `npm run config` to make this configuration.
-2. If you choose free shipping code with custom product make sure that this product is properly defined in commerce tools and can be applied to cart.
-3. Make sure You configure zones and shipping rates in Your shipping method in commerce tools.
+2. If you choose free shipping code with custom product make sure that this product is properly defined in commercetools and can be applied to cart.
+3. Make sure You configure zones and shipping rates in Your shipping method in commercetools.
 
+## Loyalty program
+
+Currently, we support a few cases related to loyalty program. Firstly we provide earning points by paying orders and using rewards with type `pay with points`. To handle other type rewards like getting coupon for points You can simply use our [Customer cockpit](https://support.voucherify.io/article/177-how-to-create-loyalty-program-step-by-step#cockpits)   
 
 ## Typical use case
 
@@ -365,11 +373,15 @@ To learn more about predicates You can see [here](https://docs.commercetools.com
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
-- 2022-09-08 `v4.3.0`
+- 2022-09-07 `v5.0.0`
+    - this version is not fully backward compatible due to changes in a way how [coupon text](#coupon-text) is configured
+    - change configuration of [coupon text](#coupon-text) from config in a `.ts` file to config via `COMMERCE_TOOLS_COUPON_NAMES` environment variable
+    - fix logging list of available api extensions while using `npm run api-extension-list` command
+    - added safeguard when auto-applied coupon failed to keep remaining codes in cart
+    - added showing errors when validation failed and there is no safeguards
     - handling configuration for maximum coupons limit 
-    - compatible with previews version but required to run `npm run config` command to proper set new cart custom field - `couponsLimit`
 - 2022-09-06 `v4.2.2`
-    - fixed sitiuation when redemptions fails and operations on order are blocked
+    - fixed situation when redemptions fails and operations on order are blocked
     - remove additional request to voucherify with metadata
 - 2022-09-05 `v4.2.1`
     - fixed saving total amount on paid orders
@@ -377,8 +389,8 @@ If you found a bug or want to suggest a new feature, please file a GitHub issue.
     - added support for fixed price promotions
     - bugfixes handling proper price from commercetools when product have only main variant
     - compatible with previews version but required to run `npm run config` command to proper set new `lineItemCustomField`
-- 2022-08-25 `v4.1.2`
     - bugfixes empty values when applying prepaid gift cards
+    - synchronizing orders, with no coupons applied, into voucherify
 - 2022-08-25 `v4.1.1`
     - added promotion tier handling
 - 2022-08-24 `v4.1.0`
@@ -421,9 +433,12 @@ If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Migrations
 
+### Migration from v4.x.x to v5.x.x
+- stringify object from `src/misc/coupon-text.ts` file and insert it as a value for `COMMERCE_TOOLS_COUPON_NAMES` environment variable
+- run `npm run config` command to proper set custom field `isValidationFailed` and `couponsLimit`
 ### Migration from v3.x.x to v4.x.x
 - if you are using sunrise, update it to version `v.3.0.0` or higher
-- if there exists carts with added coupons, now it will be impossible to remove them properly from cart
+- if there exists carts with added coupons, now it will be impossible to remove them properly from cart - write simple script, which will [list](https://docs.commercetools.com/api/projects/carts#query-carts) all existing carts and then [delete](https://docs.commercetools.com/api/projects/carts#delete-a-cart) them
 
 ### Migration from v2.x.x to v3.x.x
 - run `npm i`, because of using new version of Voucherify SDK, which can handle metadata schemas

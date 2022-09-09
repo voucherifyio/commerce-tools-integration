@@ -16,6 +16,12 @@ export type CartActionSetCustomFieldWithCoupons = {
   value: string[];
 };
 
+export type CartActionSetCustomFieldWithValidationFailed = {
+  action: 'setCustomField';
+  name: 'isValidationFailed';
+  value: boolean;
+};
+
 export type CartActionSetCustomFieldFreeShipping = {
   action: 'setCustomField';
   name: 'shippingProductSourceIds';
@@ -107,8 +113,9 @@ export type CartAction =
   | CartActionSetLineItemCustomField
   | CartActionChangeLineItemQuantity
   | CartActionSetLineItemCustomType
-  | CartActionSetCustomFieldFreeShipping
-  | CartActionSetCustomFieldWithCouponsLimit;
+  | CartActionSetCustomFieldWithCouponsLimit
+  | CartActionSetCustomFieldWithValidationFailed
+  | CartActionSetCustomFieldFreeShipping;
 
 export type CartActionsBuilder = (
   cart: Cart,

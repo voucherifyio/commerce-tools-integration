@@ -34,6 +34,7 @@ export class ApiExtensionListCommand implements CommandRunner {
           ];
         }),
       );
+      console.log(table.toString());
     } else {
       spinner.fail(`No API Extensions`);
     }

@@ -56,6 +56,16 @@ function checkCouponsValidatedAsState(
   );
 }
 
+function checkIfAllInapplicableCouponsArePromotionTier(
+  notApplicableCoupons: StackableRedeemableResponse[],
+) {
+  const inapplicableCouponsPromitonTier = notApplicableCoupons.filter(
+    (notApplicableCoupon) => notApplicableCoupon.object === 'promotion_tier',
+  );
+
+  return notApplicableCoupons.length === inapplicableCouponsPromitonTier.length;
+}
+
 function checkIfOnlyNewCouponsFailed(
   coupons: Coupon[],
   applicableCoupons: StackableRedeemableResponse[],
@@ -232,6 +242,9 @@ export class CartService {
       skippedCoupons,
     );
 
+    const allInapplicableCouponsArePromotionTier =
+      checkIfAllInapplicableCouponsArePromotionTier(notApplicableCoupons);
+
     this.logger.debug({
       msg: 'Validated coupons',
       availablePromotions,
@@ -246,6 +259,7 @@ export class CartService {
       totalDiscountAmount,
       productsToAdd,
       onlyNewCouponsFailed,
+      allInapplicableCouponsArePromotionTier,
       taxCategory,
       couponsLimit,
     });
@@ -261,6 +275,7 @@ export class CartService {
       totalDiscountAmount,
       productsToAdd,
       onlyNewCouponsFailed,
+      allInapplicableCouponsArePromotionTier,
       taxCategory,
       couponsLimit,
     };

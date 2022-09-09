@@ -4,13 +4,30 @@ import {
   CartActionAddCustomLineItem,
   COUPON_CUSTOM_LINE_SLUG,
 } from './CartAction';
-import couponText from './../../misc/coupon-text';
+import { ConfigService } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
 
 export default // TODO don't create addCustomLineItem action if the summary doesn't actually change
 function addCustomLineItemWithDiscountSummary(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
 ): CartActionAddCustomLineItem[] {
+  const logger = new Logger();
+  const configService = new ConfigService();
+  let couponText = {};
+  try {
+    couponText = JSON.parse(
+      configService.get<string>('COMMERCE_TOOLS_COUPON_NAMES'),
+    );
+  } catch {
+    logger.error(
+      `Can't parse "COMMERCE_TOOLS_COUPON_NAME" environmental variable. Possibly it's not a valid stringifies object. Providing default value.`,
+    );
+    couponText = {
+      en: 'Coupon codes discount',
+      de: 'Gutscheincodes rabatt',
+    };
+  }
   const { totalDiscountAmount, applicableCoupons, taxCategory } =
     validateCouponsResult;
 
