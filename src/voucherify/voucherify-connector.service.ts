@@ -16,6 +16,7 @@ import {
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
 import { Coupon } from 'src/api-extension/coupon';
+import sleep from '../api-extension/utils/sleep';
 
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;
@@ -180,28 +181,27 @@ export class VoucherifyConnectorService {
     related_object_type: 'redemption';
     related_object_id: string;
   }) {
-    if (parent_redemption.result === 'SUCCESS') {
-      const client = await this.getClient();
+    if (parent_redemption.result !== 'SUCCESS') {
+      return;
+    }
+    const client = await this.getClient();
+    let rolledBack = false;
+    for (let i = 0; i < 10; i++) {
+      await sleep(1000);
       try {
-        return await client.redemptions.rollbackStackable(parent_redemption.id);
-      } catch (e) {}
+        await client.redemptions.rollbackStackable(parent_redemption.id);
+        rolledBack = true;
+      } catch (e) {
+        rolledBack = false;
+      }
+      if (rolledBack) {
+        break;
+      }
+    }
+    if (!rolledBack) {
+      this.logger.error('Could not rollback stackable redemption');
     }
     return;
-  }
-
-  async rollbackRedemptions(
-    redemptions: RedemptionsRedeemStackableRedemptionResult[],
-  ) {
-    const client = await this.getClient();
-    const result = [];
-    for (const redemption of redemptions.filter(
-      (redemption) => redemption.result === 'SUCCESS',
-    )) {
-      try {
-        result.push(await client.redemptions.rollback(redemption.id));
-      } catch (e) {}
-    }
-    return result;
   }
 
   private getCustomerFromOrder(order: Order) {

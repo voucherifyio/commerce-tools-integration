@@ -197,11 +197,6 @@ export class OrderService {
         redemptionsRedeemStackableResponse.parent_redemption,
       );
     }
-    if (redemptionsRedeemStackableResponse?.redemptions?.length) {
-      return await this.voucherifyConnectorService.rollbackRedemptions(
-        redemptionsRedeemStackableResponse.redemptions,
-      );
-    }
     return;
   }
 }
