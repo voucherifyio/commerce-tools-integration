@@ -26,19 +26,11 @@ export class OrderService {
     private readonly productMapper: ProductMapper,
   ) {}
 
-  public async redeemVoucherifyCoupons(orderFromRequest: Order): Promise<{
+  public async redeemVoucherifyCoupons(order: Order): Promise<{
     redemptionsRedeemStackableResponse?: RedemptionsRedeemStackableResponse;
     actions: { name: string; action: string; value: string[] }[];
     status: boolean;
   }> {
-    await sleep(1000);
-    const order = await this.commerceToolsConnectorService.findOrder(
-      orderFromRequest.id,
-    );
-    if (order.version === orderFromRequest.version) {
-      return;
-    }
-
     const { id, customerId } = order;
 
     if (order.paymentState !== 'Paid') {
