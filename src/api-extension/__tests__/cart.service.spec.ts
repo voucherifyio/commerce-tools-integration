@@ -606,8 +606,10 @@ describe('CartService', () => {
             },
           ],
           validateCouponsResult: {
+            allInapplicableCouponsArePromotionTier: false,
             availablePromotions: [],
             applicableCoupons: [],
+            couponsLimit: 5,
             notApplicableCoupons: [
               {
                 status: 'INAPPLICABLE',
@@ -938,8 +940,11 @@ describe('CartService', () => {
             },
           ],
           validateCouponsResult: {
+            allInapplicableCouponsArePromotionTier: false,
             availablePromotions: [],
             applicableCoupons: [],
+            couponsLimit: 5,
+            newSessionKey: undefined,
             notApplicableCoupons: [
               {
                 status: 'INAPPLICABLE',
