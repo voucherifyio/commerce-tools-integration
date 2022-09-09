@@ -182,7 +182,9 @@ export class VoucherifyConnectorService {
   }) {
     if (parent_redemption.result === 'SUCCESS') {
       const client = await this.getClient();
-      return await client.redemptions.rollbackStackable(parent_redemption.id);
+      try {
+        return await client.redemptions.rollbackStackable(parent_redemption.id);
+      } catch (e) {}
     }
     return;
   }
@@ -195,7 +197,9 @@ export class VoucherifyConnectorService {
     for (const redemption of redemptions.filter(
       (redemption) => redemption.result === 'SUCCESS',
     )) {
-      result.push(await client.redemptions.rollback(redemption.id));
+      try {
+        result.push(await client.redemptions.rollback(redemption.id));
+      } catch (e) {}
     }
     return result;
   }
