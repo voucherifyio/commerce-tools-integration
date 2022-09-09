@@ -124,9 +124,11 @@ export class MigrateCommand implements CommandRunner {
     options: MigrateCommandOptions,
   ): Promise<void> {
     if (!options.type) {
-      this.logger.warn(
-        `You didn't pass --type argument or it's value is not correct. Possible values are : 'products', 'orders', 'customers'`,
-      );
+      loadingCli('')
+        .start()
+        .fail(
+          `You didn't pass --type argument or it's value is not correct. Possible values are : 'products', 'orders', 'customers'`,
+        );
       return;
     }
 

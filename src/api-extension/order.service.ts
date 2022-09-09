@@ -40,12 +40,44 @@ export class OrderService {
 
     const { id, customerId } = order;
 
-    if (!coupons.length || order.paymentState !== 'Paid') {
+    if (order.paymentState !== 'Paid') {
       this.logger.debug({
-        msg: 'No coupons provided or order is not paid',
+        msg: 'Order is not paid',
         id,
         customerId,
       });
+      return { status: true, actions: [] };
+    }
+
+    const orderMetadataSchemaProperties =
+      await this.voucherifyConnectorService.getMetadataSchemaProperties(
+        'order',
+      );
+    const productMetadataSchemaProperties =
+      await this.voucherifyConnectorService.getMetadataSchemaProperties(
+        'product',
+      );
+    const orderMetadata = Object.fromEntries(
+      this.orderMapper.getMetadata(order, orderMetadataSchemaProperties),
+    );
+    const items = this.productMapper.mapLineItems(
+      order.lineItems,
+      productMetadataSchemaProperties,
+    );
+
+    if (!coupons.length) {
+      this.logger.debug({
+        msg: 'Attempt to add order without coupons',
+        id,
+        customerId,
+      });
+
+      await this.voucherifyConnectorService.createOrder(
+        order,
+        items,
+        orderMetadata,
+      );
+
       return { status: true, actions: [] };
     }
 
@@ -58,15 +90,6 @@ export class OrderService {
     const sentCoupons: SentCoupons[] = [];
     const usedCoupons: string[] = [];
     const notUsedCoupons: string[] = [];
-    const orderMetadataSchemaProperties =
-      await this.voucherifyConnectorService.getMetadataSchemaProperties(
-        'order',
-      );
-
-    const productMetadataSchemaProperties =
-      await this.voucherifyConnectorService.getMetadataSchemaProperties(
-        'product',
-      );
 
     const sessionKey = order.custom?.fields.session;
     let response: RedemptionsRedeemStackableResponse;
@@ -75,11 +98,8 @@ export class OrderService {
         coupons,
         sessionKey,
         order,
-        this.productMapper.mapLineItems(
-          order.lineItems,
-          productMetadataSchemaProperties,
-        ),
-        this.orderMapper.getMetadata(order, orderMetadataSchemaProperties),
+        items,
+        orderMetadata,
       );
     } catch (e) {
       this.logger.debug({ msg: 'Reedeem operation failed', error: e.details });

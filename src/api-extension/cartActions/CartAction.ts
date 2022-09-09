@@ -16,6 +16,12 @@ export type CartActionSetCustomFieldWithCoupons = {
   value: string[];
 };
 
+export type CartActionSetCustomFieldWithValidationFailed = {
+  action: 'setCustomField';
+  name: 'isValidationFailed';
+  value: boolean;
+};
+
 export type CartActionSetCustomFieldFreeShipping = {
   action: 'setCustomField';
   name: 'shippingProductSourceIds';
@@ -26,6 +32,12 @@ export type CartActionSetCustomFieldWithSession = {
   action: 'setCustomField';
   name: 'session';
   value: string;
+};
+
+export type CartActionSetCustomFieldWithCouponsLimit = {
+  action: 'setCustomField';
+  name: 'couponsLimit';
+  value: number;
 };
 
 export type CartActionRemoveCustomLineItem = {
@@ -101,6 +113,8 @@ export type CartAction =
   | CartActionSetLineItemCustomField
   | CartActionChangeLineItemQuantity
   | CartActionSetLineItemCustomType
+  | CartActionSetCustomFieldWithCouponsLimit
+  | CartActionSetCustomFieldWithValidationFailed
   | CartActionSetCustomFieldFreeShipping;
 
 export type CartActionsBuilder = (
