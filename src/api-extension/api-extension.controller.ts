@@ -43,14 +43,16 @@ export class ApiExtensionController {
     });
 
     if (type === 'cart') {
-      const response = await this.apiExtensionService.checkCartAndMutate(
-        body.resource.obj as Cart,
-      );
+      const cart = body.resource.obj as Cart;
+      const response = await this.apiExtensionService.checkCartAndMutate(cart);
       if (!response.status) {
         throw new HttpException('', 400);
       }
-
-      return responseExpress.status(200).json({ actions: response.actions });
+      if (!response.validateCouponsResult || !response.actions.length) {
+        return responseExpress.status(200).json({ actions: response.actions });
+      }
+      responseExpress.status(200).json({ actions: response.actions });
+      return await this.apiExtensionService.checkCartMutateFallback(cart);
     }
     if (type === 'order') {
       const response = await this.orderService.redeemVoucherifyCoupons(
