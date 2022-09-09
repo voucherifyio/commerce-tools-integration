@@ -31,7 +31,7 @@ export class OrderService {
     actions: { name: string; action: string; value: string[] }[];
     status: boolean;
   }> {
-    await sleep(500);
+    await sleep(650);
     const order = await this.commerceToolsConnectorService.findOrder(
       orderFromRequest.id,
     );
