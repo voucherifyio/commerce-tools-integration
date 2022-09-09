@@ -20,8 +20,8 @@ function addCustomLineItemWithDiscountSummary(
       configService.get<string>('COMMERCE_TOOLS_COUPON_NAMES'),
     );
   } catch {
-    logger.error(
-      `Can't parse "COMMERCE_TOOLS_COUPON_NAME" environmental variable. Possibly it's not a valid stringifies object. Providing default value.`,
+    logger.log(
+      `Can't parse "COMMERCE_TOOLS_COUPON_NAME" environmental variable. Possibly it's not a valid stringified object. Providing default value.`,
     );
     couponText = {
       en: 'Coupon codes discount',
