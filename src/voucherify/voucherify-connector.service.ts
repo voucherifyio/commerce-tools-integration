@@ -199,9 +199,11 @@ export class VoucherifyConnectorService {
       }
     }
     if (!rolledBack) {
-      this.logger.error('Could not rollback stackable redemption');
+      return this.logger.error('Could not rollback stackable redemption');
     }
-    return;
+    return this.logger.debug(
+      'Stackable redemption was rolled back successfully',
+    );
   }
 
   private getCustomerFromOrder(order: Order) {

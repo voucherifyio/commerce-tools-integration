@@ -389,7 +389,8 @@ export class CartService {
     if (cartMutated) {
       return;
     }
-    return await this.validateCoupons(cart, getSession(cart));
+    await this.validateCoupons(cart, getSession(cart));
+    return this.logger.debug('Coupons changes were rolled back successfully');
   }
 
   // TODO: make service for this if logic goes bigger
