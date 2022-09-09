@@ -4,7 +4,12 @@ import { Order } from '@commercetools/platform-sdk';
 import { desarializeCoupons, Coupon } from './coupon';
 import { OrderMapper } from './mappers/order';
 import { ProductMapper } from './mappers/product';
-import { RedemptionsRedeemStackableResponse } from '@voucherify/sdk';
+import {
+  RedemptionsRedeemStackableRedemptionResult,
+  RedemptionsRedeemStackableResponse,
+} from '@voucherify/sdk';
+import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
+import sleep from './utils/sleep';
 
 type SentCoupons = {
   result: string;
@@ -14,15 +19,18 @@ type SentCoupons = {
 @Injectable()
 export class OrderService {
   constructor(
+    private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
     private readonly logger: Logger,
     private readonly orderMapper: OrderMapper,
     private readonly productMapper: ProductMapper,
   ) {}
 
-  public async redeemVoucherifyCoupons(
-    order: Order,
-  ): Promise<{ status: boolean; actions: object[] }> {
+  public async redeemVoucherifyCoupons(order: Order): Promise<{
+    redemptionsRedeemStackableResponse?: RedemptionsRedeemStackableResponse;
+    actions: { name: string; action: string; value: string[] }[];
+    status: boolean;
+  }> {
     const coupons: Coupon[] = (order.custom?.fields?.discount_codes ?? [])
       .map(desarializeCoupons)
       .filter(
@@ -150,7 +158,11 @@ export class OrderService {
       },
     ];
 
-    return { status: true, actions: actions };
+    return {
+      status: true,
+      actions: actions,
+      redemptionsRedeemStackableResponse: response,
+    };
   }
 
   public assignCouponsToOrderMetadata(
@@ -162,5 +174,34 @@ export class OrderService {
     order.custom.fields['discount_codes'] = notUsedCoupons;
 
     return order;
+  }
+
+  async checkPaidOrderFallback(
+    orderId: string,
+    redemptionsRedeemStackableResponse: RedemptionsRedeemStackableResponse,
+  ) {
+    let paid = false;
+    for (let i = 0; i < 2; i++) {
+      await sleep(500);
+      const order = await this.commerceToolsConnectorService.findOrder(orderId);
+      if (order.paymentState === 'Paid') {
+        paid = true;
+        break;
+      }
+    }
+    if (paid) {
+      return;
+    }
+    if (redemptionsRedeemStackableResponse?.parent_redemption) {
+      return await this.voucherifyConnectorService.rollbackStackableRedemptions(
+        redemptionsRedeemStackableResponse.parent_redemption,
+      );
+    }
+    if (redemptionsRedeemStackableResponse?.redemptions?.length) {
+      return await this.voucherifyConnectorService.rollbackRedemptions(
+        redemptionsRedeemStackableResponse.redemptions,
+      );
+    }
+    return;
   }
 }

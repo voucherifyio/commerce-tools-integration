@@ -27,6 +27,7 @@ import {
   CartActionSetLineItemCustomType,
 } from './cartActions/CartAction';
 import { ConfigService } from '@nestjs/config';
+import sleep from './utils/sleep';
 
 function getSession(cart: Cart): string | null {
   return cart.custom?.fields?.session ?? null;
@@ -346,12 +347,18 @@ export class CartService {
     };
   }
 
-  async checkCartAndMutate(cart: Cart): Promise<CartResponse> {
+  async checkCartAndMutate(cart: Cart): Promise<{
+    validateCouponsResult?: ValidateCouponsResult;
+    actions: CartAction[];
+    status: boolean;
+  }> {
     if (cart.version === 1) {
       return this.setCustomTypeForInitializedCart();
     }
-    const sessionKey = getSession(cart);
-    const validateCouponsResult = await this.validateCoupons(cart, sessionKey);
+    const validateCouponsResult = await this.validateCoupons(
+      cart,
+      getSession(cart),
+    );
 
     const actions = getCartActionBuilders(validateCouponsResult).flatMap(
       (builder) => builder(cart, validateCouponsResult),
@@ -363,7 +370,26 @@ export class CartService {
     return {
       status: true,
       actions: normalizedCartActions,
+      validateCouponsResult,
     };
+  }
+
+  async checkCartMutateFallback(cart: Cart) {
+    let cartMutated = false;
+    for (let i = 0; i < 2; i++) {
+      await sleep(500);
+      const updatedCart = await this.commerceToolsConnectorService.findCart(
+        cart.id,
+      );
+      if (updatedCart.version !== cart.version) {
+        cartMutated = true;
+        break;
+      }
+    }
+    if (cartMutated) {
+      return;
+    }
+    return await this.validateCoupons(cart, getSession(cart));
   }
 
   // TODO: make service for this if logic goes bigger

@@ -12,7 +12,11 @@ import {
   createLoggerMiddleware,
   ClientRequest,
 } from '@commercetools/sdk-client-v2';
-import { createApiBuilderFromCtpClient } from '@commercetools/platform-sdk';
+import {
+  Cart,
+  createApiBuilderFromCtpClient,
+  Order,
+} from '@commercetools/platform-sdk';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 import {
   RequestJsonLogger,
@@ -92,6 +96,16 @@ export class CommerceToolsConnectorService {
 
       next(request, response);
     };
+  }
+
+  public async findOrder(id: string): Promise<Order> {
+    const client = this.getClient();
+    return (await client.orders().withId({ ID: id }).get().execute())?.body;
+  }
+
+  public async findCart(id: string): Promise<Cart> {
+    const client = this.getClient();
+    return (await client.carts().withId({ ID: id }).get().execute())?.body;
   }
 
   public getClient(): ByProjectKeyRequestBuilder {
