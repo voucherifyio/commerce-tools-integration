@@ -26,6 +26,7 @@ import {
   CartActionRemoveLineItem,
   CartActionSetLineItemCustomType,
 } from './cartActions/CartAction';
+import { ConfigService } from '@nestjs/config';
 
 function getSession(cart: Cart): string | null {
   return cart.custom?.fields?.session ?? null;
@@ -106,6 +107,7 @@ export class CartService {
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly productMapper: ProductMapper,
+    private readonly configService: ConfigService,
   ) {}
 
   private async validateCoupons(
@@ -113,8 +115,13 @@ export class CartService {
     sessionKey?: string | null,
   ): Promise<ValidateCouponsResult> {
     const { id, customerId, anonymousId } = cart;
-    const coupons: Coupon[] = getCouponsFromCart(cart);
+    let coupons: Coupon[] = getCouponsFromCart(cart);
     const taxCategory = await this.checkCouponTaxCategoryWithCountries(cart);
+
+    const couponsLimit =
+      (this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT') ?? 5) < 5
+        ? this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT')
+        : 5;
 
     const promotions =
       await this.voucherifyConnectorService.getAvailablePromotions(
@@ -156,6 +163,7 @@ export class CartService {
         skippedCoupons: [],
         productsToAdd: [],
         totalDiscountAmount: 0,
+        couponsLimit,
       };
     }
     this.logger.debug({
@@ -188,8 +196,11 @@ export class CartService {
         skippedCoupons: [],
         productsToAdd: [],
         totalDiscountAmount: 0,
+        couponsLimit,
       };
     }
+
+    coupons = this.filterCouponsByLimit(coupons, couponsLimit);
 
     const validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
@@ -250,6 +261,7 @@ export class CartService {
       onlyNewCouponsFailed,
       allInapplicableCouponsArePromotionTier,
       taxCategory,
+      couponsLimit,
     });
     const newSessionKey = !sessionKey || valid ? sessionKeyResponse : null;
 
@@ -265,7 +277,29 @@ export class CartService {
       onlyNewCouponsFailed,
       allInapplicableCouponsArePromotionTier,
       taxCategory,
+      couponsLimit,
     };
+  }
+
+  private filterCouponsByLimit(coupons: Coupon[], couponsLimit: number) {
+    if (coupons.length > couponsLimit) {
+      const couponsToRemove = coupons.length - couponsLimit;
+      const newCouponsCodes = coupons
+        .filter((coupon) => coupon.status === 'NEW')
+        .map((coupon) => coupon.code);
+
+      coupons = coupons.filter(
+        (coupon) => !newCouponsCodes.includes(coupon.code),
+      );
+
+      if (newCouponsCodes.length < couponsToRemove) {
+        coupons = coupons.splice(
+          0,
+          coupons.length - (couponsToRemove - newCouponsCodes.length),
+        );
+      }
+    }
+    return coupons;
   }
 
   private async checkCouponTaxCategoryWithCountries(cart: Cart) {

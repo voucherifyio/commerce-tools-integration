@@ -96,6 +96,17 @@ export class TypesService {
           },
           inputHint: 'SingleLine',
         },
+        {
+          name: 'couponsLimit',
+          label: {
+            en: 'couponsLimit',
+          },
+          required: false,
+          type: {
+            name: 'Number',
+          },
+          inputHint: 'SingleLine',
+        },
       ],
     },
   };

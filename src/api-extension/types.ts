@@ -47,4 +47,5 @@ export type ValidateCouponsResult = {
   onlyNewCouponsFailed?: boolean;
   allInapplicableCouponsArePromotionTier?: boolean;
   taxCategory?: TaxCategory;
+  couponsLimit: number;
 };

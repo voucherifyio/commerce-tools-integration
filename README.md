@@ -154,7 +154,7 @@ Set environment variables with credentials to Voucherify and commercetools APIs.
     - (optional) `LOGGER_LEVEL` - logging level for `npm run test`. You can set it to `error` or `fatal`.
     - (optional) `DEBUG_STORE_REQUESTS_IN_JSON` - `true` if you want to keep external requests / response in a JSON file.
     - (optional) `DEBUG_STORE_REQUESTS_DIR` - name of the directory where JSON files with request / responses are stored.
-
+    - (optional) `COMMERCE_TOOLS_COUPONS_LIMIT` - maximum number of coupons that could be applied to cart. Default and maximum value is 5 related to [Voucherify Api](https://docs.voucherify.io/reference/redeem-stacked-discounts)
 ### Installation
 
 Set up the configuration for the first run.
@@ -379,7 +379,7 @@ If you found a bug or want to suggest a new feature, please file a GitHub issue.
     - fix logging list of available api extensions while using `npm run api-extension-list` command
     - added safeguard when auto-applied coupon failed to keep remaining codes in cart
     - added showing errors when validation failed and there is no safeguards
-    - required to run `npm run config` command to proper set custom field `isValidationFailed`
+    - handling configuration for maximum coupons limit 
 - 2022-09-06 `v4.2.2`
     - fixed situation when redemptions fails and operations on order are blocked
     - remove additional request to voucherify with metadata
@@ -435,7 +435,7 @@ If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ### Migration from v4.x.x to v5.x.x
 - stringify object from `src/misc/coupon-text.ts` file and insert it as a value for `COMMERCE_TOOLS_COUPON_NAMES` environment variable
-- run `npm run config` command to proper set custom field `isValidationFailed`
+- run `npm run config` command to proper set custom field `isValidationFailed` and `couponsLimit`
 ### Migration from v3.x.x to v4.x.x
 - if you are using sunrise, update it to version `v.3.0.0` or higher
 - if there exists carts with added coupons, now it will be impossible to remove them properly from cart - write simple script, which will [list](https://docs.commercetools.com/api/projects/carts#query-carts) all existing carts and then [delete](https://docs.commercetools.com/api/projects/carts#delete-a-cart) them
