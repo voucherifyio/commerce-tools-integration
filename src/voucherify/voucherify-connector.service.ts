@@ -5,6 +5,7 @@ import {
   RedemptionsRedeemStackableOrderResponse,
   RedemptionsRedeemStackableParams,
   RedemptionsRedeemStackableRedemptionResult,
+  RedemptionsRedeemStackableResponse,
   SimpleCustomer,
   ValidationsValidateStackableParams,
   VoucherifyServerSide,
@@ -16,7 +17,6 @@ import {
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
 import { Coupon } from 'src/api-extension/coupon';
-import sleep from '../api-extension/utils/sleep';
 
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;
@@ -166,44 +166,6 @@ export class VoucherifyConnectorService {
     );
 
     return response;
-  }
-
-  async rollbackStackableRedemptions(parent_redemption: {
-    id: string;
-    object: 'redemption';
-    date: string;
-    customer_id?: string;
-    tracking_id?: string;
-    metadata?: Record<string, any>;
-    result: 'SUCCESS' | 'FAILURE';
-    order?: RedemptionsRedeemStackableOrderResponse;
-    customer?: SimpleCustomer;
-    related_object_type: 'redemption';
-    related_object_id: string;
-  }) {
-    if (parent_redemption.result !== 'SUCCESS') {
-      return;
-    }
-    const client = await this.getClient();
-    let rolledBack = false;
-    for (let i = 0; i < 10; i++) {
-      await sleep(1000);
-      try {
-        await client.redemptions.rollbackStackable(parent_redemption.id);
-        rolledBack = true;
-      } catch (e) {
-        rolledBack = false;
-      }
-      if (rolledBack) {
-        break;
-      }
-    }
-    if (!rolledBack) {
-      return this.logger.error('Could not rollback stackable redemption');
-    }
-    return this.logger.debug(
-      'Stackable redemption was rolled back successfully',
-    );
   }
 
   private getCustomerFromOrder(order: Order) {

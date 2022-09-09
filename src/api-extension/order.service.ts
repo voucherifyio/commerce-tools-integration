@@ -175,28 +175,4 @@ export class OrderService {
 
     return order;
   }
-
-  async checkPaidOrderFallback(
-    orderId: string,
-    redemptionsRedeemStackableResponse: RedemptionsRedeemStackableResponse,
-  ) {
-    let paid = false;
-    for (let i = 0; i < 2; i++) {
-      await sleep(500);
-      const order = await this.commerceToolsConnectorService.findOrder(orderId);
-      if (order.paymentState === 'Paid') {
-        paid = true;
-        break;
-      }
-    }
-    if (paid) {
-      return;
-    }
-    if (redemptionsRedeemStackableResponse?.parent_redemption) {
-      return await this.voucherifyConnectorService.rollbackStackableRedemptions(
-        redemptionsRedeemStackableResponse.parent_redemption,
-      );
-    }
-    return;
-  }
 }
