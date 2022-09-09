@@ -55,10 +55,10 @@ export class ApiExtensionController {
       return await this.apiExtensionService.checkCartMutateFallback(cart);
     }
     if (type === 'order') {
-      const response = await this.orderService.redeemVoucherifyCoupons(
+      await responseExpress.status(200).json({ actions: [] });
+      await this.orderService.redeemVoucherifyCoupons(
         body.resource.obj as Order,
       );
-      await responseExpress.status(200).json({ actions: response.actions });
       return;
     }
 

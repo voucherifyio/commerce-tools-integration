@@ -31,6 +31,13 @@ export class OrderService {
     actions: { name: string; action: string; value: string[] }[];
     status: boolean;
   }> {
+    await sleep(1000);
+    const orderCart = await this.commerceToolsConnectorService.findCart(
+      order.id,
+    );
+    if (orderCart.version === order.version) {
+      return;
+    }
     const coupons: Coupon[] = (order.custom?.fields?.discount_codes ?? [])
       .map(desarializeCoupons)
       .filter(
@@ -131,12 +138,6 @@ export class OrderService {
         notUsedCoupons.push(sendedCoupon.coupon);
       }
     });
-
-    order = this.assignCouponsToOrderMetadata(
-      order,
-      usedCoupons,
-      notUsedCoupons,
-    );
 
     this.logger.debug({
       msg: 'Realized coupons',
