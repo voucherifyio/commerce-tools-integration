@@ -26,24 +26,18 @@ export class OrderService {
     private readonly productMapper: ProductMapper,
   ) {}
 
-  public async redeemVoucherifyCoupons(order: Order): Promise<{
+  public async redeemVoucherifyCoupons(orderFromRequest: Order): Promise<{
     redemptionsRedeemStackableResponse?: RedemptionsRedeemStackableResponse;
     actions: { name: string; action: string; value: string[] }[];
     status: boolean;
   }> {
     await sleep(1000);
-    const orderCart = await this.commerceToolsConnectorService.findCart(
-      order.id,
+    const order = await this.commerceToolsConnectorService.findOrder(
+      orderFromRequest.id,
     );
-    if (orderCart.version === order.version) {
+    if (order.version === orderFromRequest.version) {
       return;
     }
-    const coupons: Coupon[] = (order.custom?.fields?.discount_codes ?? [])
-      .map(desarializeCoupons)
-      .filter(
-        (coupon) =>
-          coupon.status !== 'NOT_APPLIED' && coupon.status !== 'AVAILABLE',
-      );
 
     const { id, customerId } = order;
 
@@ -53,7 +47,7 @@ export class OrderService {
         id,
         customerId,
       });
-      return { status: true, actions: [] };
+      return;
     }
 
     const orderMetadataSchemaProperties =
@@ -71,6 +65,13 @@ export class OrderService {
       order.lineItems,
       productMetadataSchemaProperties,
     );
+
+    const coupons: Coupon[] = (order.custom?.fields?.discount_codes ?? [])
+      .map(desarializeCoupons)
+      .filter(
+        (coupon) =>
+          coupon.status !== 'NOT_APPLIED' && coupon.status !== 'AVAILABLE',
+      );
 
     if (!coupons.length) {
       this.logger.debug({
