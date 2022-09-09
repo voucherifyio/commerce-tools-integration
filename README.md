@@ -435,6 +435,7 @@ If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ### Migration from v4.x.x to v5.x.x
 - stringify object from `src/misc/coupon-text.ts` file and insert it as a value for `COMMERCE_TOOLS_COUPON_NAMES` environment variable
+- run `npm i`
 - run `npm run config` command to proper set custom field `isValidationFailed` and `couponsLimit`
 ### Migration from v3.x.x to v4.x.x
 - if you are using sunrise, update it to version `v.3.0.0` or higher
