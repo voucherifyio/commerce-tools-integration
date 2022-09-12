@@ -35,7 +35,7 @@ export class OrderService {
     const order = await this.commerceToolsConnectorService.findOrder(
       orderFromRequest.id,
     );
-    if (order.version > orderFromRequest.version) {
+    if (order.version <= orderFromRequest.version) {
       return;
     }
 
