@@ -33,6 +33,7 @@ export default function updateDiscountsCodes(
     ...applicableCoupons.map((coupon) => {
       let value;
       if (Object.keys(coupon?.result).length) {
+        console.log(coupon);
         value =
           coupon.result.discount?.unit_type === FREE_SHIPPING_UNIT_TYPE
             ? FREE_SHIPPING
@@ -40,6 +41,10 @@ export default function updateDiscountsCodes(
               coupon.order?.items_applied_discount_amount ||
               coupon.result?.discount?.amount_off ||
               0;
+
+        if (coupon.result.discount?.type === 'UNIT') {
+          value *= coupon.result.discount?.unit_off ?? 1;
+        }
       } else {
         value = oldCouponsCodes.find(
           (oldCoupon) => coupon.id === oldCoupon.code,
