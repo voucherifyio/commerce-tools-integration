@@ -33,7 +33,6 @@ export default function updateDiscountsCodes(
     ...applicableCoupons.map((coupon) => {
       let value;
       if (Object.keys(coupon?.result).length) {
-        console.log(coupon);
         value =
           coupon.result.discount?.unit_type === FREE_SHIPPING_UNIT_TYPE
             ? FREE_SHIPPING
