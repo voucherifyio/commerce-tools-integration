@@ -28,23 +28,31 @@ export default function updateDiscountsCodes(
   const oldCouponsCodes: Coupon[] = (
     cart.custom?.fields?.discount_codes ?? []
   ).map(desarializeCoupons);
+
   const coupons = [
     ...availablePromotions,
-    ...applicableCoupons.map(
-      (coupon) =>
-        ({
-          code: coupon.id,
-          status: 'APPLIED',
-          type: coupon.object,
-          value:
-            coupon.result.discount?.unit_type === FREE_SHIPPING_UNIT_TYPE
-              ? FREE_SHIPPING
-              : coupon.order?.applied_discount_amount ||
-                coupon.order?.items_applied_discount_amount ||
-                coupon.result?.discount?.amount_off ||
-                0,
-        } as Coupon),
-    ),
+    ...applicableCoupons.map((coupon) => {
+      let value;
+      if (Object.keys(coupon.result).length) {
+        value =
+          coupon.result.discount?.unit_type === FREE_SHIPPING_UNIT_TYPE
+            ? FREE_SHIPPING
+            : coupon.order?.applied_discount_amount ||
+              coupon.order?.items_applied_discount_amount ||
+              coupon.result?.discount?.amount_off ||
+              0;
+      } else {
+        value = oldCouponsCodes.find(
+          (oldCoupon) => coupon.id === oldCoupon.code,
+        )?.value;
+      }
+      return {
+        code: coupon.id,
+        status: 'APPLIED',
+        type: coupon.object,
+        value: value,
+      } as Coupon;
+    }),
     ...notApplicableCoupons.map(
       (coupon) =>
         ({
