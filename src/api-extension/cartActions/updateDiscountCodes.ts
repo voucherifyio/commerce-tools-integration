@@ -28,12 +28,11 @@ export default function updateDiscountsCodes(
   const oldCouponsCodes: Coupon[] = (
     cart.custom?.fields?.discount_codes ?? []
   ).map(desarializeCoupons);
-
   const coupons = [
     ...availablePromotions,
     ...applicableCoupons.map((coupon) => {
       let value;
-      if (Object.keys(coupon.result).length) {
+      if (Object.keys(coupon?.result).length) {
         value =
           coupon.result.discount?.unit_type === FREE_SHIPPING_UNIT_TYPE
             ? FREE_SHIPPING
