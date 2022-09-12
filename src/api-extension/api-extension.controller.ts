@@ -55,10 +55,24 @@ export class ApiExtensionController {
       return await this.apiExtensionService.checkCartMutateFallback(cart);
     }
     if (type === 'order') {
-      const response = await this.orderService.redeemVoucherifyCoupons(
+      const { paymentState } = body.resource.obj as Order;
+      responseExpress.status(200).json({
+        actions: paymentState
+          ? [
+              {
+                action: 'changePaymentState',
+                paymentState: paymentState === 'Paid' ? 'Failed' : 'Paid',
+              },
+              {
+                action: 'changePaymentState',
+                paymentState: paymentState === 'Paid' ? 'Paid' : paymentState,
+              },
+            ]
+          : [],
+      });
+      await this.orderService.redeemVoucherifyCoupons(
         body.resource.obj as Order,
       );
-      await responseExpress.status(200).json({ actions: response.actions });
       return;
     }
 
