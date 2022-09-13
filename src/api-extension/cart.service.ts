@@ -395,10 +395,10 @@ export class CartService {
 
   // TODO: make service for this if logic goes bigger
   private normalizeCartActions(actions): CartAction[] {
-    let actionsSetLineItemCustomType = actions.filter(
-      (action) => action.action === 'setLineItemCustomType',
-    );
-
+    let actionsSetLineItemCustomType = actions
+      .filter((action) => action.action === 'setLineItemCustomType')
+      .reverse(); //Reverse is important according to order of card actions execution calls
+    console.log(actionsSetLineItemCustomType);
     const actionsRemoveLineItem = actions.filter(
       (action) => action.action === 'removeLineItem',
     );
@@ -441,7 +441,7 @@ export class CartService {
     actions = actions.filter(
       (action) => action.action !== 'setLineItemCustomType',
     );
-
+    console.log(actionsSetLineItemCustomType);
     return [...actions, ...actionsSetLineItemCustomType];
   }
 
