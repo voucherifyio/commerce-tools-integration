@@ -398,14 +398,19 @@ export class CartService {
     let actionsSetLineItemCustomType = actions
       .filter((action) => action.action === 'setLineItemCustomType')
       .reverse(); //Reverse is important according to order of card actions execution calls
-    console.log(actionsSetLineItemCustomType);
+
     const actionsRemoveLineItem = actions.filter(
       (action) => action.action === 'removeLineItem',
     );
 
     // If lineItem is going to be removed we don't want to set customField on it.
-    const removeLineItemIds = actionsRemoveLineItem.map(
-      (action: CartActionRemoveLineItem) => action.lineItemId,
+    const removeLineItemIdsWithQuantity = actionsRemoveLineItem.map(
+      (action: CartActionRemoveLineItem) => {
+        return {
+          lineItemId: action.lineItemId,
+          quantity: action.quantity,
+        };
+      },
     );
 
     const processedLineItemIds = [];
@@ -413,7 +418,9 @@ export class CartService {
       .map((action: CartActionSetLineItemCustomType) => {
         if (
           !processedLineItemIds.includes(action.lineItemId) &&
-          !removeLineItemIds.includes(action.lineItemId)
+          !removeLineItemIdsWithQuantity
+            .map((element) => element.lineItemId)
+            .includes(action.lineItemId)
         ) {
           processedLineItemIds.push(action.lineItemId);
           return {
@@ -441,7 +448,7 @@ export class CartService {
     actions = actions.filter(
       (action) => action.action !== 'setLineItemCustomType',
     );
-    console.log(actionsSetLineItemCustomType);
+
     return [...actions, ...actionsSetLineItemCustomType];
   }
 

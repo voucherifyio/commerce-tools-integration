@@ -77,19 +77,6 @@ function addLineItem(
 
 const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
 
-function canBeApplied(cart: Cart, product: ProductToAdd): boolean {
-  const item = findLineItemRelatedToProduct(cart, product);
-  const freeQuantity =
-    product.effect === 'ADD_MISSING_ITEMS'
-      ? product.discount_quantity
-      : product.quantity;
-  return (
-    !item ||
-    (APPLICABLE_PRODUCT_EFFECT.includes(product.effect) &&
-      item.quantity < freeQuantity)
-  );
-}
-
 export default function addFreeLineItems(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
@@ -107,58 +94,60 @@ export default function addFreeLineItems(
     }
   });
 
-  return validateCouponsResult.productsToAdd
-    .filter((product) => canBeApplied(cart, product))
-    .flatMap((product) => {
-      const item = findLineItemBySku(product.product);
-      if (product.effect === 'ADD_NEW_ITEMS') {
-        const appliedCode = toAppliedCode(
-          product,
-          product.quantity,
-          productToAddQuantities[product.product] ?? product.quantity,
-        );
+  return (
+    validateCouponsResult.productsToAdd
+      // .filter((product) => canBeApplied(cart, product))
+      .flatMap((product) => {
+        const item = findLineItemBySku(product.product);
+        if (product.effect === 'ADD_NEW_ITEMS') {
+          const appliedCode = toAppliedCode(
+            product,
+            product.quantity,
+            productToAddQuantities[product.product] ?? product.quantity,
+          );
 
-        if (item) {
-          return [
-            changeLineItemQuantity(item, item.quantity + product.quantity),
-            setLineItemCustomType(item, appliedCode),
-          ] as CartAction[];
+          if (item) {
+            return [
+              changeLineItemQuantity(item, item.quantity + product.quantity),
+              setLineItemCustomType(item, appliedCode),
+            ] as CartAction[];
+          }
+          return [addLineItem(product, product.quantity, appliedCode)];
         }
-        return [addLineItem(product, product.quantity, appliedCode)];
-      }
 
-      // ADD_MISSING_ITEMS
-      if (item) {
-        const quantity =
-          item.quantity >= product.discount_quantity
-            ? item.quantity
-            : product.discount_quantity;
-        const appliedCodeQuantity =
-          item.quantity >= product.discount_quantity ? 0 : item.quantity;
+        // ADD_MISSING_ITEMS
+        if (item) {
+          const quantity =
+            item.quantity >= product.discount_quantity
+              ? item.quantity
+              : product.discount_quantity;
+          const appliedCodeQuantity =
+            item.quantity >= product.discount_quantity ? 0 : item.quantity;
 
+          const appliedCode = toAppliedCode(
+            product,
+            appliedCodeQuantity,
+            productToAddQuantities[product.product] ?? product.quantity,
+          );
+
+          return [
+            changeLineItemQuantity(item, quantity),
+            setLineItemCustomType(item, appliedCode),
+          ];
+        }
         const appliedCode = toAppliedCode(
           product,
-          appliedCodeQuantity,
-          productToAddQuantities[product.product] ?? product.quantity,
+          product.discount_quantity - product.initial_quantity,
+          product.discount_quantity,
         );
 
         return [
-          changeLineItemQuantity(item, quantity),
-          setLineItemCustomType(item, appliedCode),
+          addLineItem(
+            product,
+            product.discount_quantity - product.initial_quantity,
+            appliedCode,
+          ),
         ];
-      }
-      const appliedCode = toAppliedCode(
-        product,
-        product.discount_quantity - product.initial_quantity,
-        product.discount_quantity,
-      );
-
-      return [
-        addLineItem(
-          product,
-          product.discount_quantity - product.initial_quantity,
-          appliedCode,
-        ),
-      ];
-    });
+      })
+  );
 }
