@@ -1,4 +1,4 @@
-import {Cart, LineItem} from '@commercetools/platform-sdk';
+import { Cart, LineItem } from '@commercetools/platform-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import {
   StackableRedeemableResponse,
