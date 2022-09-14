@@ -365,7 +365,6 @@ export class CartService {
     );
 
     const normalizedCartActions = this.normalizeCartActions(actions);
-
     this.logger.debug(normalizedCartActions);
     return {
       status: true,
@@ -418,9 +417,12 @@ export class CartService {
       .map((action: CartActionSetLineItemCustomType) => {
         if (
           !processedLineItemIds.includes(action.lineItemId) &&
-          !removeLineItemIdsWithQuantity
+          (!removeLineItemIdsWithQuantity
             .map((element) => element.lineItemId)
-            .includes(action.lineItemId)
+            .includes(action.lineItemId) ||
+            removeLineItemIdsWithQuantity
+              .filter((element) => element.lineItemId === action.lineItemId)
+              .reduce((acc, element) => acc + element.quantity, 0) > 0)
         ) {
           processedLineItemIds.push(action.lineItemId);
           return {
