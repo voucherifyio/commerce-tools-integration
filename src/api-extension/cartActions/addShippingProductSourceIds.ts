@@ -9,8 +9,9 @@ function getShippingProductSourceIds(
   return applicableCoupons
     .filter((coupon) => coupon.result.discount?.type === 'UNIT')
     .map((coupon) => {
-      return coupon.result.discount.product.source_id;
-    });
+      return coupon.result.discount?.product?.source_id;
+    })
+    .filter((coupon) => coupon != undefined);
 }
 
 export default function addShippingProductSourceIds(
