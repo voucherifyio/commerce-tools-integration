@@ -26,6 +26,8 @@ import {
   CartActionRemoveLineItem,
   CartActionSetLineItemCustomType,
 } from './cartActions/CartAction';
+import { ConfigService } from '@nestjs/config';
+import sleep from './utils/sleep';
 
 function getSession(cart: Cart): string | null {
   return cart.custom?.fields?.session ?? null;
@@ -53,6 +55,16 @@ function checkCouponsValidatedAsState(
         validatedCoupons.find((element) => element.id === coupon.code),
       )
   );
+}
+
+function checkIfAllInapplicableCouponsArePromotionTier(
+  notApplicableCoupons: StackableRedeemableResponse[],
+) {
+  const inapplicableCouponsPromitonTier = notApplicableCoupons.filter(
+    (notApplicableCoupon) => notApplicableCoupon.object === 'promotion_tier',
+  );
+
+  return notApplicableCoupons.length === inapplicableCouponsPromitonTier.length;
 }
 
 function checkIfOnlyNewCouponsFailed(
@@ -96,6 +108,7 @@ export class CartService {
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
     private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly productMapper: ProductMapper,
+    private readonly configService: ConfigService,
   ) {}
 
   private async validateCoupons(
@@ -103,8 +116,13 @@ export class CartService {
     sessionKey?: string | null,
   ): Promise<ValidateCouponsResult> {
     const { id, customerId, anonymousId } = cart;
-    const coupons: Coupon[] = getCouponsFromCart(cart);
+    let coupons: Coupon[] = getCouponsFromCart(cart);
     const taxCategory = await this.checkCouponTaxCategoryWithCountries(cart);
+
+    const couponsLimit =
+      (this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT') ?? 5) < 5
+        ? this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT')
+        : 5;
 
     const promotions =
       await this.voucherifyConnectorService.getAvailablePromotions(
@@ -146,6 +164,7 @@ export class CartService {
         skippedCoupons: [],
         productsToAdd: [],
         totalDiscountAmount: 0,
+        couponsLimit,
       };
     }
     this.logger.debug({
@@ -178,8 +197,11 @@ export class CartService {
         skippedCoupons: [],
         productsToAdd: [],
         totalDiscountAmount: 0,
+        couponsLimit,
       };
     }
+
+    coupons = this.filterCouponsByLimit(coupons, couponsLimit);
 
     const validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
@@ -221,6 +243,9 @@ export class CartService {
       skippedCoupons,
     );
 
+    const allInapplicableCouponsArePromotionTier =
+      checkIfAllInapplicableCouponsArePromotionTier(notApplicableCoupons);
+
     this.logger.debug({
       msg: 'Validated coupons',
       availablePromotions,
@@ -235,7 +260,9 @@ export class CartService {
       totalDiscountAmount,
       productsToAdd,
       onlyNewCouponsFailed,
+      allInapplicableCouponsArePromotionTier,
       taxCategory,
+      couponsLimit,
     });
     const newSessionKey = !sessionKey || valid ? sessionKeyResponse : null;
 
@@ -249,8 +276,31 @@ export class CartService {
       totalDiscountAmount,
       productsToAdd,
       onlyNewCouponsFailed,
+      allInapplicableCouponsArePromotionTier,
       taxCategory,
+      couponsLimit,
     };
+  }
+
+  private filterCouponsByLimit(coupons: Coupon[], couponsLimit: number) {
+    if (coupons.length > couponsLimit) {
+      const couponsToRemove = coupons.length - couponsLimit;
+      const newCouponsCodes = coupons
+        .filter((coupon) => coupon.status === 'NEW')
+        .map((coupon) => coupon.code);
+
+      coupons = coupons.filter(
+        (coupon) => !newCouponsCodes.includes(coupon.code),
+      );
+
+      if (newCouponsCodes.length < couponsToRemove) {
+        coupons = coupons.splice(
+          0,
+          coupons.length - (couponsToRemove - newCouponsCodes.length),
+        );
+      }
+    }
+    return coupons;
   }
 
   private async checkCouponTaxCategoryWithCountries(cart: Cart) {
@@ -297,12 +347,18 @@ export class CartService {
     };
   }
 
-  async checkCartAndMutate(cart: Cart): Promise<CartResponse> {
+  async checkCartAndMutate(cart: Cart): Promise<{
+    validateCouponsResult?: ValidateCouponsResult;
+    actions: CartAction[];
+    status: boolean;
+  }> {
     if (cart.version === 1) {
       return this.setCustomTypeForInitializedCart();
     }
-    const sessionKey = getSession(cart);
-    const validateCouponsResult = await this.validateCoupons(cart, sessionKey);
+    const validateCouponsResult = await this.validateCoupons(
+      cart,
+      getSession(cart),
+    );
 
     const actions = getCartActionBuilders(validateCouponsResult).flatMap(
       (builder) => builder(cart, validateCouponsResult),
@@ -314,7 +370,27 @@ export class CartService {
     return {
       status: true,
       actions: normalizedCartActions,
+      validateCouponsResult,
     };
+  }
+
+  async checkCartMutateFallback(cart: Cart) {
+    let cartMutated = false;
+    for (let i = 0; i < 2; i++) {
+      await sleep(500);
+      const updatedCart = await this.commerceToolsConnectorService.findCart(
+        cart.id,
+      );
+      if (updatedCart.version !== cart.version) {
+        cartMutated = true;
+        break;
+      }
+    }
+    if (cartMutated) {
+      return;
+    }
+    await this.validateCoupons(cart, getSession(cart));
+    return this.logger.debug('Coupons changes were rolled back successfully');
   }
 
   // TODO: make service for this if logic goes bigger

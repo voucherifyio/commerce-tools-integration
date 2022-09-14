@@ -6,6 +6,7 @@ import {
   UseGuards,
   UseInterceptors,
   Logger,
+  Res,
 } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { OrderService } from './order.service';
@@ -13,6 +14,7 @@ import { TimeLoggingInterceptor } from 'src/misc/time-logging.interceptor';
 import { CartOrderDto } from 'src/api-extension/CartOrder.dto';
 import { ApiExtensionGuard } from './api-extension.guard';
 import { Cart, Order } from '@commercetools/platform-sdk';
+import { Response } from 'express';
 
 @UseInterceptors(TimeLoggingInterceptor)
 @Controller('api-extension')
@@ -25,7 +27,10 @@ export class ApiExtensionController {
   ) {}
 
   @Post()
-  async handleApiExtensionRequest(@Body() body: CartOrderDto): Promise<any> {
+  async handleApiExtensionRequest(
+    @Body() body: CartOrderDto,
+    @Res() responseExpress: Response,
+  ): Promise<any> {
     const type = body.resource?.typeId;
     const action = body.action;
     const id = body.resource?.obj?.id;
@@ -36,24 +41,49 @@ export class ApiExtensionController {
       id,
       action,
     });
-
-    if (type === 'cart') {
-      const response = await this.apiExtensionService.checkCartAndMutate(
-        body.resource.obj as Cart,
-      );
-      if (!response.status) {
-        throw new HttpException('', 400);
+    try {
+      if (type === 'cart') {
+        const cart = body.resource.obj as Cart;
+        const response = await this.apiExtensionService.checkCartAndMutate(
+          cart,
+        );
+        if (!response.status) {
+          throw new HttpException('', 400);
+        }
+        if (!response.validateCouponsResult || !response.actions.length) {
+          return responseExpress
+            .status(200)
+            .json({ actions: response.actions });
+        }
+        responseExpress.status(200).json({ actions: response.actions });
+        return await this.apiExtensionService.checkCartMutateFallback(cart);
+      }
+      if (type === 'order') {
+        const { paymentState } = body.resource.obj as Order;
+        responseExpress.status(200).json({
+          actions: paymentState
+            ? [
+                {
+                  action: 'changePaymentState',
+                  paymentState: paymentState === 'Paid' ? 'Failed' : 'Paid',
+                },
+                {
+                  action: 'changePaymentState',
+                  paymentState: paymentState === 'Paid' ? 'Paid' : paymentState,
+                },
+              ]
+            : [],
+        });
+        await this.orderService.redeemVoucherifyCoupons(
+          body.resource.obj as Order,
+        );
+        return;
       }
 
-      return { actions: response.actions };
+      return responseExpress.status(200).json({ actions: [] });
+    } catch (error) {
+      this.logger.debug({ msg: error });
+      return responseExpress.status(200).json({ actions: [] });
     }
-    if (type === 'order') {
-      const response = await this.orderService.redeemVoucherifyCoupons(
-        body.resource.obj as Order,
-      );
-      return { actions: response.actions };
-    }
-
-    return { status: 200, actions: [] };
   }
 }

@@ -1,7 +1,12 @@
 import { performance } from 'perf_hooks';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
+  OrdersItem,
+  RedemptionsRedeemStackableOrderResponse,
   RedemptionsRedeemStackableParams,
+  RedemptionsRedeemStackableRedemptionResult,
+  RedemptionsRedeemStackableResponse,
+  SimpleCustomer,
   ValidationsValidateStackableParams,
   VoucherifyServerSide,
 } from '@voucherify/sdk';
@@ -96,12 +101,29 @@ export class VoucherifyConnectorService {
     return response;
   }
 
+  async createOrder(
+    order: Order,
+    items: OrdersItem[],
+    orderMetadata: Record<string, any>,
+  ) {
+    const orderCreate = {
+      source_id: order.id,
+      amount: items.reduce((acc, item) => acc + item.amount, 0),
+      discount_amount: 0,
+      items,
+      metadata: orderMetadata,
+      customer: this.getCustomerFromOrder(order),
+    };
+
+    await this.getClient().orders.create(orderCreate);
+  }
+
   async redeemStackableVouchers(
     coupons: Coupon[],
     sessionKey: string,
     order: Order,
-    items,
-    orderMetadata,
+    items: OrdersItem[],
+    orderMetadata: Record<string, any>,
   ) {
     const redeemables = coupons.map((code) => {
       return {
@@ -121,20 +143,9 @@ export class VoucherifyConnectorService {
         amount: items.reduce((acc, item) => acc + item.amount, 0),
         status: 'PAID',
         items,
-        metadata: Object.fromEntries(orderMetadata),
+        metadata: orderMetadata,
       },
-      customer: {
-        source_id: order.customerId || order.anonymousId,
-        name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
-        email: order.shippingAddress?.email,
-        address: {
-          city: order.shippingAddress?.city,
-          country: order.shippingAddress?.country,
-          postal_code: order.shippingAddress?.postalCode,
-          line_1: order.shippingAddress?.streetName,
-        },
-        phone: order.shippingAddress?.phone,
-      },
+      customer: this.getCustomerFromOrder(order),
     } as RedemptionsRedeemStackableParams;
 
     const start = performance.now();
@@ -155,6 +166,21 @@ export class VoucherifyConnectorService {
     );
 
     return response;
+  }
+
+  private getCustomerFromOrder(order: Order) {
+    return {
+      source_id: order.customerId || order.anonymousId,
+      name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
+      email: order.shippingAddress?.email,
+      address: {
+        city: order.shippingAddress?.city,
+        country: order.shippingAddress?.country,
+        postal_code: order.shippingAddress?.postalCode,
+        line_1: order.shippingAddress?.streetName,
+      },
+      phone: order.shippingAddress?.phone,
+    };
   }
 
   async releaseValidationSession(code: string, sessionKey: string) {

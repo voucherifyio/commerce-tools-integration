@@ -3,9 +3,13 @@ import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.s
 import { Order } from '@commercetools/platform-sdk';
 import { desarializeCoupons, Coupon } from './coupon';
 import { OrderMapper } from './mappers/order';
-import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { ProductMapper } from './mappers/product';
-import { RedemptionsRedeemStackableResponse } from '@voucherify/sdk';
+import {
+  RedemptionsRedeemStackableRedemptionResult,
+  RedemptionsRedeemStackableResponse,
+} from '@voucherify/sdk';
+import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
+import sleep from './utils/sleep';
 
 type SentCoupons = {
   result: string;
@@ -15,15 +19,53 @@ type SentCoupons = {
 @Injectable()
 export class OrderService {
   constructor(
+    private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
     private readonly logger: Logger,
     private readonly orderMapper: OrderMapper,
     private readonly productMapper: ProductMapper,
   ) {}
 
-  public async redeemVoucherifyCoupons(
-    order: Order,
-  ): Promise<{ status: boolean; actions: object[] }> {
+  public async redeemVoucherifyCoupons(orderFromRequest: Order): Promise<{
+    redemptionsRedeemStackableResponse?: RedemptionsRedeemStackableResponse;
+    actions: { name: string; action: string; value: string[] }[];
+    status: boolean;
+  }> {
+    await sleep(650);
+    const order = await this.commerceToolsConnectorService.findOrder(
+      orderFromRequest.id,
+    );
+    if (order.version <= orderFromRequest.version) {
+      return;
+    }
+
+    const { id, customerId } = order;
+
+    if (order.paymentState !== 'Paid') {
+      this.logger.debug({
+        msg: 'Order is not paid',
+        id,
+        customerId,
+      });
+      return;
+    }
+
+    const orderMetadataSchemaProperties =
+      await this.voucherifyConnectorService.getMetadataSchemaProperties(
+        'order',
+      );
+    const productMetadataSchemaProperties =
+      await this.voucherifyConnectorService.getMetadataSchemaProperties(
+        'product',
+      );
+    const orderMetadata = Object.fromEntries(
+      this.orderMapper.getMetadata(order, orderMetadataSchemaProperties),
+    );
+    const items = this.productMapper.mapLineItems(
+      order.lineItems,
+      productMetadataSchemaProperties,
+    );
+
     const coupons: Coupon[] = (order.custom?.fields?.discount_codes ?? [])
       .map(desarializeCoupons)
       .filter(
@@ -31,14 +73,19 @@ export class OrderService {
           coupon.status !== 'NOT_APPLIED' && coupon.status !== 'AVAILABLE',
       );
 
-    const { id, customerId } = order;
-
-    if (!coupons.length || order.paymentState !== 'Paid') {
+    if (!coupons.length) {
       this.logger.debug({
-        msg: 'No coupons provided or order is not paid',
+        msg: 'Attempt to add order without coupons',
         id,
         customerId,
       });
+
+      await this.voucherifyConnectorService.createOrder(
+        order,
+        items,
+        orderMetadata,
+      );
+
       return { status: true, actions: [] };
     }
 
@@ -51,15 +98,6 @@ export class OrderService {
     const sentCoupons: SentCoupons[] = [];
     const usedCoupons: string[] = [];
     const notUsedCoupons: string[] = [];
-    const orderMetadataSchemaProperties =
-      await this.voucherifyConnectorService.getMetadataSchemaProperties(
-        'order',
-      );
-
-    const productMetadataSchemaProperties =
-      await this.voucherifyConnectorService.getMetadataSchemaProperties(
-        'product',
-      );
 
     const sessionKey = order.custom?.fields.session;
     let response: RedemptionsRedeemStackableResponse;
@@ -68,11 +106,8 @@ export class OrderService {
         coupons,
         sessionKey,
         order,
-        this.productMapper.mapLineItems(
-          order.lineItems,
-          productMetadataSchemaProperties,
-        ),
-        this.orderMapper.getMetadata(order, orderMetadataSchemaProperties),
+        items,
+        orderMetadata,
       );
     } catch (e) {
       this.logger.debug({ msg: 'Reedeem operation failed', error: e.details });
@@ -105,12 +140,6 @@ export class OrderService {
       }
     });
 
-    order = this.assignCouponsToOrderMetadata(
-      order,
-      usedCoupons,
-      notUsedCoupons,
-    );
-
     this.logger.debug({
       msg: 'Realized coupons',
       id,
@@ -131,7 +160,11 @@ export class OrderService {
       },
     ];
 
-    return { status: true, actions: actions };
+    return {
+      status: true,
+      actions: actions,
+      redemptionsRedeemStackableResponse: response,
+    };
   }
 
   public assignCouponsToOrderMetadata(

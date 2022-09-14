@@ -352,7 +352,7 @@ describe('CartService', () => {
         commerceToolsConnectorService.__simulateGetClient();
       });
 
-      it('should create "setCustomField" action with empty value and "setLineItemCustomType" with no fields for each lineItem', async () => {
+      it('should create "setCustomField" action with empty values and "setLineItemCustomType" with no fields for each lineItem', async () => {
         const result = await cartService.checkCartAndMutate(cart);
 
         expect(result.actions).toEqual([
@@ -363,8 +363,18 @@ describe('CartService', () => {
           },
           {
             action: 'setCustomField',
+            name: 'couponsLimit',
+            value: 5,
+          },
+          {
+            action: 'setCustomField',
             name: 'discount_codes',
             value: [],
+          },
+          {
+            action: 'setCustomField',
+            name: 'isValidationFailed',
+            value: false,
           },
           {
             action: 'setLineItemCustomType',
@@ -591,14 +601,287 @@ describe('CartService', () => {
               action: 'setCustomField',
               name: 'discount_codes',
               value: [
-                JSON.stringify({
-                  code: COUPON_CODE,
-                  status: 'NOT_APPLIED',
-                  errMsg: 'quantity exceeded',
-                }),
+                '{"code":"AMOUNT20","status":"NOT_APPLIED","errMsg":"quantity exceeded"}',
               ],
             },
           ],
+          validateCouponsResult: {
+            allInapplicableCouponsArePromotionTier: false,
+            availablePromotions: [],
+            applicableCoupons: [],
+            couponsLimit: 5,
+            notApplicableCoupons: [
+              {
+                status: 'INAPPLICABLE',
+                id: 'AMOUNT20',
+                object: 'voucher',
+                result: {
+                  error: {
+                    code: 400,
+                    key: 'quantity_exceeded',
+                    message: 'quantity exceeded',
+                    details: 'AMOUNT20',
+                    request_id: 'v-123123123123',
+                  },
+                },
+              },
+            ],
+            skippedCoupons: [],
+            newSessionKey: null,
+            valid: false,
+            totalDiscountAmount: 0,
+            productsToAdd: [],
+            onlyNewCouponsFailed: true,
+            taxCategory: {
+              id: '64a3b50d-245c-465a-bb5e-faf59d729031',
+              version: 30,
+              createdAt: '2022-07-06T10:31:15.807Z',
+              lastModifiedAt: '2022-07-06T10:31:46.488Z',
+              lastModifiedBy: {
+                clientId: 'S7ikAUxscunVOCl_qQ1uUzLP',
+                isPlatformClient: false,
+              },
+              createdBy: {
+                clientId: 'S7ikAUxscunVOCl_qQ1uUzLP',
+                isPlatformClient: false,
+              },
+              name: 'coupon',
+              rates: [
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'US',
+                  id: 'sometaxUS',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'DE',
+                  id: 'sometaxDE',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'IT',
+                  id: 'sometaxIT',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'GB',
+                  id: 'sometaxGB',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'BE',
+                  id: 'sometaxBE',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'BG',
+                  id: 'sometaxBG',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'DK',
+                  id: 'sometaxDK',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'EE',
+                  id: 'sometaxEE',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'FI',
+                  id: 'sometaxFI',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'FR',
+                  id: 'sometaxFR',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'GR',
+                  id: 'sometaxGR',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'IE',
+                  id: 'sometaxIE',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'HR',
+                  id: 'sometaxHR',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'LV',
+                  id: 'sometaxLV',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'LT',
+                  id: 'sometaxLT',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'LU',
+                  id: 'sometaxLU',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'MT',
+                  id: 'sometaxMT',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'NL',
+                  id: 'sometaxNL',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'AT',
+                  id: 'sometaxAT',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'PL',
+                  id: 'sometaxPL',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'PT',
+                  id: 'sometaxPT',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'RO',
+                  id: 'sometaxRO',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'SE',
+                  id: 'sometaxSE',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'SK',
+                  id: 'sometaxSK',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'SI',
+                  id: 'sometaxSI',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'ES',
+                  id: 'sometaxES',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'CZ',
+                  id: 'sometaxCZ',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'HU',
+                  id: 'sometaxHU',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'CY',
+                  id: 'sometaxCY',
+                  subRates: [],
+                },
+              ],
+            },
+          },
         });
       });
     });
@@ -645,7 +928,6 @@ describe('CartService', () => {
 
       it('should return only one `setCustomField` action with information about failure', async () => {
         const result = await cartService.checkCartAndMutate(cart);
-
         expect(result).toEqual({
           status: true,
           actions: [
@@ -653,14 +935,287 @@ describe('CartService', () => {
               action: 'setCustomField',
               name: 'discount_codes',
               value: [
-                JSON.stringify({
-                  code: COUPON_CODE,
-                  status: 'NOT_APPLIED',
-                  errMsg: 'Resource not found',
-                }),
+                '{"code":"NOT EXIST","status":"NOT_APPLIED","errMsg":"Resource not found"}',
               ],
             },
           ],
+          validateCouponsResult: {
+            allInapplicableCouponsArePromotionTier: false,
+            availablePromotions: [],
+            applicableCoupons: [],
+            couponsLimit: 5,
+            newSessionKey: undefined,
+            notApplicableCoupons: [
+              {
+                status: 'INAPPLICABLE',
+                id: 'NOT EXIST',
+                object: 'voucher',
+                result: {
+                  error: {
+                    code: 404,
+                    key: 'not_found',
+                    message: 'Resource not found',
+                    details: 'Cannot find voucher with id NOT EXIST',
+                    request_id: 'v-123123123123',
+                  },
+                },
+              },
+            ],
+            skippedCoupons: [],
+            valid: false,
+            totalDiscountAmount: 0,
+            productsToAdd: [],
+            onlyNewCouponsFailed: true,
+            taxCategory: {
+              id: '64a3b50d-245c-465a-bb5e-faf59d729031',
+              version: 30,
+              createdAt: '2022-07-06T10:31:15.807Z',
+              lastModifiedAt: '2022-07-06T10:31:46.488Z',
+              lastModifiedBy: {
+                clientId: 'S7ikAUxscunVOCl_qQ1uUzLP',
+                isPlatformClient: false,
+              },
+              createdBy: {
+                clientId: 'S7ikAUxscunVOCl_qQ1uUzLP',
+                isPlatformClient: false,
+              },
+              name: 'coupon',
+              rates: [
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'US',
+                  id: 'sometaxUS',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'DE',
+                  id: 'sometaxDE',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'IT',
+                  id: 'sometaxIT',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'GB',
+                  id: 'sometaxGB',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'BE',
+                  id: 'sometaxBE',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'BG',
+                  id: 'sometaxBG',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'DK',
+                  id: 'sometaxDK',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'EE',
+                  id: 'sometaxEE',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'FI',
+                  id: 'sometaxFI',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'FR',
+                  id: 'sometaxFR',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'GR',
+                  id: 'sometaxGR',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'IE',
+                  id: 'sometaxIE',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'HR',
+                  id: 'sometaxHR',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'LV',
+                  id: 'sometaxLV',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'LT',
+                  id: 'sometaxLT',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'LU',
+                  id: 'sometaxLU',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'MT',
+                  id: 'sometaxMT',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'NL',
+                  id: 'sometaxNL',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'AT',
+                  id: 'sometaxAT',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'PL',
+                  id: 'sometaxPL',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'PT',
+                  id: 'sometaxPT',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'RO',
+                  id: 'sometaxRO',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'SE',
+                  id: 'sometaxSE',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'SK',
+                  id: 'sometaxSK',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'SI',
+                  id: 'sometaxSI',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'ES',
+                  id: 'sometaxES',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'CZ',
+                  id: 'sometaxCZ',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'HU',
+                  id: 'sometaxHU',
+                  subRates: [],
+                },
+                {
+                  name: 'coupon',
+                  amount: 0,
+                  includedInPrice: true,
+                  country: 'CY',
+                  id: 'sometaxCY',
+                  subRates: [],
+                },
+              ],
+            },
+          },
         });
       });
     });
@@ -756,8 +1311,8 @@ describe('CartService', () => {
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(2);
-        expect(setCustomFieldActions[1]).toEqual({
+        expect(setCustomFieldActions.length).toBe(3);
+        expect(setCustomFieldActions[2]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -866,14 +1421,14 @@ describe('CartService', () => {
         });
       });
 
-      it('should create one `setCustomField` action with all coupons applied', async () => {
+      it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
         const result = await cartService.checkCartAndMutate(cart);
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(2);
-        expect(setCustomFieldActions[1]).toEqual({
+        expect(setCustomFieldActions.length).toBe(3);
+        expect(setCustomFieldActions[2]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -978,14 +1533,14 @@ describe('CartService', () => {
         });
       });
 
-      it('should create `setCustomField` action with storing coupon details to the cart', async () => {
+      it('should create three `setCustomField` with default values and action with storing coupon details to the cart', async () => {
         const result = await cartService.checkCartAndMutate(cart);
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(2);
-        expect(setCustomFieldActions[1]).toEqual({
+        expect(setCustomFieldActions.length).toBe(3);
+        expect(setCustomFieldActions[2]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -1110,14 +1665,14 @@ describe('CartService', () => {
         });
       });
 
-      it('should create `setCustomField` action with storing coupon details to the cart', async () => {
+      it('should create three `setCustomField` for default customFields settings and action storing coupon details to the cart', async () => {
         const result = await cartService.checkCartAndMutate(cart);
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(2);
-        expect(setCustomFieldActions[1]).toEqual({
+        expect(setCustomFieldActions.length).toBe(3);
+        expect(setCustomFieldActions[2]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -1235,14 +1790,14 @@ describe('CartService', () => {
         });
       });
 
-      it('should create one `setCustomField` action with coupon codes applied', async () => {
+      it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
         const result = await cartService.checkCartAndMutate(cart);
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(2);
-        expect(setCustomFieldActions[1]).toEqual({
+        expect(setCustomFieldActions.length).toBe(3);
+        expect(setCustomFieldActions[2]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -1395,14 +1950,14 @@ describe('CartService', () => {
         });
       });
 
-      it('should create one `setCustomField` action with coupon codes applied', async () => {
+      it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
         const result = await cartService.checkCartAndMutate(cart);
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
         );
-        expect(setCustomFieldActions.length).toBe(2);
-        expect(setCustomFieldActions[1]).toEqual({
+        expect(setCustomFieldActions.length).toBe(3);
+        expect(setCustomFieldActions[2]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [

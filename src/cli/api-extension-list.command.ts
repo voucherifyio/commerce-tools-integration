@@ -34,6 +34,8 @@ export class ApiExtensionListCommand implements CommandRunner {
           ];
         }),
       );
+      //Do not remove this console.log it's important to proper work of CLI
+      console.log(table.toString());
     } else {
       spinner.fail(`No API Extensions`);
     }
