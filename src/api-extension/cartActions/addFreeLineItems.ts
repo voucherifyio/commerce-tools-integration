@@ -74,6 +74,12 @@ export default function addFreeLineItems(
   const findLineItemBySku = (sku: string) =>
     cart.lineItems.find((item) => item.variant.sku === sku);
 
+  const isCouponAppliedToItem = (item, couponCode: string) => {
+    return item?.custom?.fields?.applied_codes
+      .map((code) => JSON.parse(code))
+      .find((code) => code.code === couponCode);
+  };
+
   const productToAddQuantities = {} as Record<string, number>;
 
   validateCouponsResult.productsToAdd.map((product) => {
@@ -92,7 +98,9 @@ export default function addFreeLineItems(
         product.quantity,
         productToAddQuantities[product.product] ?? product.quantity,
       );
-
+      if (item && isCouponAppliedToItem(item, product.code)) {
+        return;
+      }
       if (item) {
         return [
           changeLineItemQuantity(item, item.quantity + product.quantity),
