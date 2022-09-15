@@ -485,14 +485,7 @@ export class CartService {
     });
 
     productsToAdd.map((productToAdd) => {
-      applicableCoupons
-        .filter((redeem) => redeem.id === productToAdd.code)
-        .map((redeem) => {
-          this.countOrderDiscountDifference(
-            redeem.order,
-            productToAdd.discount_difference,
-          );
-        });
+      applicableCoupons.filter((redeem) => redeem.id === productToAdd.code);
     });
   }
 }
