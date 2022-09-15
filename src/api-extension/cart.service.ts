@@ -234,7 +234,9 @@ export class CartService {
     const sessionKeyResponse = validatedCoupons.session?.key;
     const { valid } = validatedCoupons;
     const totalDiscountAmount =
-      validatedCoupons.order?.total_discount_amount ?? 0;
+      validatedCoupons.order?.items_applied_discount_amount ??
+      validatedCoupons.order?.total_discount_amount ??
+      0;
 
     const onlyNewCouponsFailed = checkIfOnlyNewCouponsFailed(
       coupons,
