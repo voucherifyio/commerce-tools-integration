@@ -21,14 +21,6 @@ function toAppliedCode(
   });
 }
 
-const findLineItemRelatedToProduct = (cart: Cart, product: ProductToAdd) =>
-  cart.lineItems.find(
-    (item) =>
-      item.custom?.fields?.applied_codes?.filter(
-        (applied) => JSON.parse(applied).code === product.code,
-      ).length === 1,
-  );
-
 function changeLineItemQuantity(
   item: LineItem,
   quantity: number,
@@ -75,21 +67,6 @@ function addLineItem(
   };
 }
 
-const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
-
-function canBeApplied(cart: Cart, product: ProductToAdd): boolean {
-  const item = findLineItemRelatedToProduct(cart, product);
-  const freeQuantity =
-    product.effect === 'ADD_MISSING_ITEMS'
-      ? product.discount_quantity
-      : product.quantity;
-  return (
-    !item ||
-    (APPLICABLE_PRODUCT_EFFECT.includes(product.effect) &&
-      item.quantity < freeQuantity)
-  );
-}
-
 export default function addFreeLineItems(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
@@ -97,58 +74,72 @@ export default function addFreeLineItems(
   const findLineItemBySku = (sku: string) =>
     cart.lineItems.find((item) => item.variant.sku === sku);
 
-  return validateCouponsResult.productsToAdd
-    .filter((product) => canBeApplied(cart, product))
-    .flatMap((product) => {
-      const item = findLineItemBySku(product.product);
-      if (product.effect === 'ADD_NEW_ITEMS') {
-        const appliedCode = toAppliedCode(
-          product,
-          product.quantity,
-          product.quantity,
-        );
+  const isCouponAppliedToItem = (item, couponCode: string) => {
+    return item?.custom?.fields?.applied_codes
+      .map((code) => JSON.parse(code))
+      .find((code) => code.code === couponCode);
+  };
 
-        if (item) {
-          return [
-            changeLineItemQuantity(item, item.quantity + product.quantity),
-            setLineItemCustomType(item, appliedCode),
-          ] as CartAction[];
-        }
-        return [addLineItem(product, product.quantity, appliedCode)];
-      }
+  const productToAddQuantities = {} as Record<string, number>;
 
-      // ADD_MISSING_ITEMS
-      if (item) {
-        const quantity =
-          item.quantity >= product.discount_quantity
-            ? item.quantity
-            : product.discount_quantity;
-        const appliedCodeQuantity =
-          item.quantity >= product.discount_quantity ? 0 : item.quantity;
+  validateCouponsResult.productsToAdd.map((product) => {
+    if (productToAddQuantities[product.product]) {
+      productToAddQuantities[product.product] += product.quantity;
+    } else {
+      productToAddQuantities[product.product] = product.quantity;
+    }
+  });
 
-        const appliedCode = toAppliedCode(
-          product,
-          appliedCodeQuantity,
-          product.discount_quantity,
-        );
-
-        return [
-          changeLineItemQuantity(item, quantity),
-          setLineItemCustomType(item, appliedCode),
-        ];
-      }
+  return validateCouponsResult.productsToAdd.flatMap((product) => {
+    const item = findLineItemBySku(product.product);
+    if (product.effect === 'ADD_NEW_ITEMS') {
       const appliedCode = toAppliedCode(
         product,
-        product.discount_quantity - product.initial_quantity,
+        product.quantity,
+        productToAddQuantities[product.product] ?? product.quantity,
+      );
+      if (item && isCouponAppliedToItem(item, product.code)) {
+        return;
+      }
+      if (item) {
+        return [
+          changeLineItemQuantity(item, item.quantity + product.quantity),
+          setLineItemCustomType(item, appliedCode),
+        ] as CartAction[];
+      }
+      return [addLineItem(product, product.quantity, appliedCode)];
+    }
+
+    // ADD_MISSING_ITEMS
+    if (item) {
+      const quantity =
+        item.quantity >= product.discount_quantity
+          ? item.quantity
+          : product.discount_quantity;
+
+      const appliedCode = toAppliedCode(
+        product,
         product.discount_quantity,
+        productToAddQuantities[product.product] ?? product.quantity,
       );
 
       return [
-        addLineItem(
-          product,
-          product.discount_quantity - product.initial_quantity,
-          appliedCode,
-        ),
+        changeLineItemQuantity(item, quantity),
+        setLineItemCustomType(item, appliedCode),
       ];
-    });
+    }
+    const appliedCode = toAppliedCode(
+      product,
+      product.discount_quantity - product.initial_quantity,
+      product.discount_quantity,
+    );
+
+    return [
+      addLineItem(
+        product,
+        product.discount_quantity - product.initial_quantity,
+        appliedCode,
+      ),
+    ];
+  });
 }
