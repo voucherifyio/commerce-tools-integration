@@ -150,7 +150,8 @@ export default async function convertUnitTypeCouponsToFreeProducts(
             initial_quantity: freeItem?.initial_quantity,
             discount_quantity: freeItem?.discount_quantity,
             discount_difference:
-              freeItem?.applied_discount_amount - currentPriceAmount,
+              freeItem?.applied_discount_amount -
+              currentPriceAmount * freeItem?.discount_quantity,
             applied_discount_amount: currentPriceAmount,
             distributionChannel: priceSelector.distributionChannels[0],
           } as ProductToAdd,
@@ -195,7 +196,8 @@ export default async function convertUnitTypeCouponsToFreeProducts(
             initial_quantity: freeItem.initial_quantity,
             discount_quantity: freeItem.discount_quantity,
             discount_difference:
-              freeItem?.applied_discount_amount - currentPriceAmount,
+              freeItem?.applied_discount_amount -
+              currentPriceAmount * freeItem?.discount_quantity,
             applied_discount_amount: currentPriceAmount,
             distributionChannel: priceSelector.distributionChannels[0],
           } as ProductToAdd;

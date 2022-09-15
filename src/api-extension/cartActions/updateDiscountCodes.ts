@@ -40,10 +40,6 @@ export default function updateDiscountsCodes(
               coupon.order?.items_applied_discount_amount ||
               coupon.result?.discount?.amount_off ||
               0;
-
-        if (coupon.result.discount?.type === 'UNIT') {
-          value *= coupon.result.discount?.unit_off ?? 1;
-        }
       } else {
         value = oldCouponsCodes.find(
           (oldCoupon) => coupon.id === oldCoupon.code,

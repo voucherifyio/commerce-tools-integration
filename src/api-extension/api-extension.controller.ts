@@ -41,41 +41,49 @@ export class ApiExtensionController {
       id,
       action,
     });
-
-    if (type === 'cart') {
-      const cart = body.resource.obj as Cart;
-      const response = await this.apiExtensionService.checkCartAndMutate(cart);
-      if (!response.status) {
-        throw new HttpException('', 400);
+    try {
+      if (type === 'cart') {
+        const cart = body.resource.obj as Cart;
+        const response = await this.apiExtensionService.checkCartAndMutate(
+          cart,
+        );
+        if (!response.status) {
+          throw new HttpException('', 400);
+        }
+        if (!response.validateCouponsResult || !response.actions.length) {
+          return responseExpress
+            .status(200)
+            .json({ actions: response.actions });
+        }
+        responseExpress.status(200).json({ actions: response.actions });
+        return await this.apiExtensionService.checkCartMutateFallback(cart);
       }
-      if (!response.validateCouponsResult || !response.actions.length) {
-        return responseExpress.status(200).json({ actions: response.actions });
+      if (type === 'order') {
+        const { paymentState } = body.resource.obj as Order;
+        responseExpress.status(200).json({
+          actions: paymentState
+            ? [
+                {
+                  action: 'changePaymentState',
+                  paymentState: paymentState === 'Paid' ? 'Failed' : 'Paid',
+                },
+                {
+                  action: 'changePaymentState',
+                  paymentState: paymentState === 'Paid' ? 'Paid' : paymentState,
+                },
+              ]
+            : [],
+        });
+        await this.orderService.redeemVoucherifyCoupons(
+          body.resource.obj as Order,
+        );
+        return;
       }
-      responseExpress.status(200).json({ actions: response.actions });
-      return await this.apiExtensionService.checkCartMutateFallback(cart);
-    }
-    if (type === 'order') {
-      const { paymentState } = body.resource.obj as Order;
-      responseExpress.status(200).json({
-        actions: paymentState
-          ? [
-              {
-                action: 'changePaymentState',
-                paymentState: paymentState === 'Paid' ? 'Failed' : 'Paid',
-              },
-              {
-                action: 'changePaymentState',
-                paymentState: paymentState === 'Paid' ? 'Paid' : paymentState,
-              },
-            ]
-          : [],
-      });
-      await this.orderService.redeemVoucherifyCoupons(
-        body.resource.obj as Order,
-      );
-      return;
-    }
 
-    return responseExpress.status(200).json({ actions: [] });
+      return responseExpress.status(200).json({ actions: [] });
+    } catch (error) {
+      this.logger.debug({ msg: error });
+      return responseExpress.status(200).json({ actions: [] });
+    }
   }
 }
