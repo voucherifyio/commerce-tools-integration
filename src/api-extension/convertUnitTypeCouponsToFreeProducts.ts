@@ -102,6 +102,25 @@ async function getCtVariantPrice(
   return prices;
 }
 
+async function getCurrentPriceAmountFromCtProducts(
+  ctProducts,
+  productSkuSourceId,
+  priceSelector: PriceSelector,
+) {
+  let currentPriceAmount = null;
+
+  if (ctProducts.length) {
+    const prices = await getCtVariantPrice(
+      ctProducts[0],
+      productSkuSourceId,
+      priceSelector,
+    );
+    const currentPrice = prices[0];
+    currentPriceAmount = currentPrice ? currentPrice.value.centAmount : null;
+  }
+  return currentPriceAmount;
+}
+
 export default async function convertUnitTypeCouponsToFreeProducts(
   response: ValidationValidateStackableResponse,
   ctClient,
@@ -131,15 +150,12 @@ export default async function convertUnitTypeCouponsToFreeProducts(
           priceSelector,
           ctClient,
         );
-        const prices = await getCtVariantPrice(
-          ctProducts.body.results[0],
+
+        const currentPriceAmount = await getCurrentPriceAmountFromCtProducts(
+          ctProducts.body.results,
           productSkuSourceId,
           priceSelector,
         );
-        const currentPrice = prices[0];
-        const currentPriceAmount = currentPrice
-          ? currentPrice.value.centAmount
-          : 0;
 
         return [
           {
@@ -149,10 +165,12 @@ export default async function convertUnitTypeCouponsToFreeProducts(
             product: unitTypeRedeemable.result?.discount.sku.source_id,
             initial_quantity: freeItem?.initial_quantity,
             discount_quantity: freeItem?.discount_quantity,
-            discount_difference:
-              freeItem?.applied_discount_amount -
-              currentPriceAmount * freeItem?.discount_quantity,
-            applied_discount_amount: currentPriceAmount,
+            discount_difference: currentPriceAmount
+              ? freeItem?.applied_discount_amount - currentPriceAmount * freeItem?.discount_quantity
+              : 0,
+            applied_discount_amount: currentPriceAmount
+              ? currentPriceAmount
+              : freeItem?.applied_discount_amount,
             distributionChannel: priceSelector.distributionChannels[0],
           } as ProductToAdd,
         ] as ProductToAdd[];
@@ -176,18 +194,18 @@ export default async function convertUnitTypeCouponsToFreeProducts(
             (item: ExtendedOrdersItem) =>
               item.product.source_id === product.product.source_id,
           ) as ExtendedOrdersItem;
-          const ctProduct = ctProducts.body.results.filter((ctProduct) => {
-            return ctProduct.id === product.product.source_id;
-          })[0];
-          const prices = await getCtVariantPrice(
-            ctProduct,
+          const ctProductsFiltered = ctProducts.body.results.filter(
+            (ctProduct) => {
+              return ctProduct.id === product.product.source_id;
+            },
+          );
+
+          const currentPriceAmount = await getCurrentPriceAmountFromCtProducts(
+            ctProductsFiltered,
             product.sku.source_id,
             priceSelector,
           );
-          const currentPrice = prices[0];
-          const currentPriceAmount = currentPrice
-            ? currentPrice.value.centAmount
-            : 0;
+
           return {
             code: unitTypeRedeemable.id,
             effect: product.effect,
@@ -195,10 +213,12 @@ export default async function convertUnitTypeCouponsToFreeProducts(
             product: product.sku.source_id,
             initial_quantity: freeItem.initial_quantity,
             discount_quantity: freeItem.discount_quantity,
-            discount_difference:
-              freeItem?.applied_discount_amount -
-              currentPriceAmount * freeItem?.discount_quantity,
-            applied_discount_amount: currentPriceAmount,
+            discount_difference: currentPriceAmount
+              ? freeItem?.applied_discount_amount - currentPriceAmount * freeItem?.discount_quantity
+              : 0,
+            applied_discount_amount: currentPriceAmount
+              ? currentPriceAmount
+              : freeItem?.applied_discount_amount,
             distributionChannel: priceSelector.distributionChannels[0],
           } as ProductToAdd;
         });
