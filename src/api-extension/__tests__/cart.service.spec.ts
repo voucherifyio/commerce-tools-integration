@@ -1942,7 +1942,7 @@ describe('CartService', () => {
                 code: COUPON_CODE,
                 type: 'UNIT',
                 effect: 'ADD_MISSING_ITEMS',
-                quantity: 0,
+                quantity: 1,
                 totalDiscountQuantity: 1,
               }),
             ],
