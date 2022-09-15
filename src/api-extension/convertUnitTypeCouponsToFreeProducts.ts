@@ -166,7 +166,8 @@ export default async function convertUnitTypeCouponsToFreeProducts(
             initial_quantity: freeItem?.initial_quantity,
             discount_quantity: freeItem?.discount_quantity,
             discount_difference: currentPriceAmount
-              ? freeItem?.applied_discount_amount - currentPriceAmount * freeItem?.discount_quantity
+              ? freeItem?.applied_discount_amount -
+                currentPriceAmount * freeItem?.discount_quantity
               : 0,
             applied_discount_amount: currentPriceAmount
               ? currentPriceAmount
@@ -214,7 +215,8 @@ export default async function convertUnitTypeCouponsToFreeProducts(
             initial_quantity: freeItem.initial_quantity,
             discount_quantity: freeItem.discount_quantity,
             discount_difference: currentPriceAmount
-              ? freeItem?.applied_discount_amount - currentPriceAmount * freeItem?.discount_quantity
+              ? freeItem?.applied_discount_amount -
+                currentPriceAmount * freeItem?.discount_quantity
               : 0,
             applied_discount_amount: currentPriceAmount
               ? currentPriceAmount
