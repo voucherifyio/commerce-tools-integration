@@ -211,7 +211,7 @@ export class CartService {
     );
 
     const productsToChange = productsToAdd.filter(
-      (product) => product.discount_difference !== 0,
+      (product) => product.discount_difference,
     );
 
     if (productsToChange) {
