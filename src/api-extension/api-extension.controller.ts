@@ -48,7 +48,7 @@ export class ApiExtensionController {
           cart,
         );
         if (!response.status) {
-          throw new HttpException('', 400);
+          return responseExpress.status(400).json({});
         }
         if (!response.validateCouponsResult || !response.actions.length) {
           return responseExpress

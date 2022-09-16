@@ -3,7 +3,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   StackableRedeemableResponse,
   StackableRedeemableResponseStatus,
-  ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
@@ -12,14 +11,8 @@ import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.s
 import getCartActionBuilders from './cartActions/getCartActionBuilders';
 import convertUnitTypeCouponsToFreeProducts from './convertUnitTypeCouponsToFreeProducts';
 import { desarializeCoupons, Coupon, CouponStatus } from './coupon';
-import {
-  CartResponse,
-  PriceSelector,
-  ProductToAdd,
-  ValidateCouponsResult,
-} from './types';
+import { CartResponse, PriceSelector, ValidateCouponsResult } from './types';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
-import { OrdersCreateResponse } from '@voucherify/sdk/dist/types/Orders';
 import { ProductMapper } from './mappers/product';
 import {
   CartAction,
@@ -268,12 +261,6 @@ export class CartService {
     const skippedCoupons = getCouponsByStatus('SKIPPED');
     const applicableCoupons = getCouponsByStatus('APPLICABLE');
 
-    this.handleCartDiscountDifferences(
-      productsToAdd,
-      validatedCoupons,
-      applicableCoupons,
-    );
-
     const sessionKeyResponse = validatedCoupons.session?.key;
     const { valid } = validatedCoupons;
     const totalDiscountAmount =
@@ -405,8 +392,6 @@ export class CartService {
       getSession(cart),
     );
 
-    console.log(888, JSON.stringify(validateCouponsResult));
-
     const actions = getCartActionBuilders(validateCouponsResult).flatMap(
       (builder) => builder(cart, validateCouponsResult),
     );
@@ -505,29 +490,5 @@ export class CartService {
         ),
       ],
     };
-  }
-
-  private countOrderDiscountDifference(
-    order: OrdersCreateResponse,
-    discountDifference: number,
-  ) {
-    order.items_discount_amount -= discountDifference;
-    order.total_discount_amount -= discountDifference;
-    order.total_applied_discount_amount -= discountDifference;
-    order.items_applied_discount_amount -= discountDifference;
-  }
-
-  private handleCartDiscountDifferences(
-    productsToAdd: ProductToAdd[],
-    validatedCoupons: ValidationValidateStackableResponse,
-    applicableCoupons: StackableRedeemableResponse[],
-  ) {
-    productsToAdd.map((productToAdd) => {
-      this.countOrderDiscountDifference(validatedCoupons.order, 0);
-    });
-
-    productsToAdd.map((productToAdd) => {
-      applicableCoupons.filter((redeem) => redeem.id === productToAdd.code);
-    });
   }
 }
