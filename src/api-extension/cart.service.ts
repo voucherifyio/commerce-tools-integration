@@ -203,7 +203,7 @@ export class CartService {
 
     coupons = this.filterCouponsByLimit(coupons, couponsLimit);
 
-    const validatedCoupons =
+    let validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
         coupons.filter((coupon) => coupon.status != 'DELETED'),
         cart,
@@ -211,19 +211,62 @@ export class CartService {
         sessionKey,
       );
 
-    const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
-      validatedCoupons.redeemables.filter(
-        (redeemable) => redeemable.status === status,
-      );
-    const notApplicableCoupons = getCouponsByStatus('INAPPLICABLE');
-    const skippedCoupons = getCouponsByStatus('SKIPPED');
-    const applicableCoupons = getCouponsByStatus('APPLICABLE');
-
     const productsToAdd = await convertUnitTypeCouponsToFreeProducts(
       validatedCoupons,
       this.commerceToolsConnectorService.getClient(),
       this.getPriceSelectorFromCart(cart),
     );
+
+    const productsToChange = productsToAdd.filter(
+      (product) => product.discount_difference !== 0,
+    );
+
+    if (productsToChange) {
+      const productsToChangeSKUs = productsToChange.map(
+        (productsToChange) => productsToChange.product,
+      );
+      let items = validatedCoupons.order.items;
+      items = items.map((item: any) => {
+        if (
+          !productsToChangeSKUs.includes((item.sku as any).source_id) ||
+          item.amount !== item.discount_amount
+        ) {
+          return item;
+        }
+        const currentProductToChange = productsToChange.find(
+          (productsToChange) =>
+            productsToChange.product === (item.sku as any).source_id,
+        );
+        delete item.quantity;
+        delete item.discount_quantity;
+        delete item.discount_amount;
+        delete item.applied_discount_amount;
+        delete item.amount;
+        item.price = currentProductToChange.applied_discount_amount;
+        item.sku = {
+          ...item.sku,
+          price: currentProductToChange.applied_discount_amount,
+        };
+
+        return item;
+      });
+      validatedCoupons =
+        await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
+          coupons.filter((coupon) => coupon.status != 'DELETED'),
+          cart,
+          items,
+          sessionKey,
+        );
+    }
+
+    const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
+      validatedCoupons.redeemables.filter(
+        (redeemable) => redeemable.status === status,
+      );
+
+    const notApplicableCoupons = getCouponsByStatus('INAPPLICABLE');
+    const skippedCoupons = getCouponsByStatus('SKIPPED');
+    const applicableCoupons = getCouponsByStatus('APPLICABLE');
 
     this.handleCartDiscountDifferences(
       productsToAdd,
@@ -362,6 +405,8 @@ export class CartService {
       getSession(cart),
     );
 
+    console.log(888, JSON.stringify(validateCouponsResult));
+
     const actions = getCartActionBuilders(validateCouponsResult).flatMap(
       (builder) => builder(cart, validateCouponsResult),
     );
@@ -478,10 +523,7 @@ export class CartService {
     applicableCoupons: StackableRedeemableResponse[],
   ) {
     productsToAdd.map((productToAdd) => {
-      this.countOrderDiscountDifference(
-        validatedCoupons.order,
-        productToAdd.discount_difference,
-      );
+      this.countOrderDiscountDifference(validatedCoupons.order, 0);
     });
 
     productsToAdd.map((productToAdd) => {

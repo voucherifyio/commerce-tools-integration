@@ -4,6 +4,7 @@ import {
 } from '@voucherify/sdk';
 import { PriceSelector, ProductToAdd } from './types';
 import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
+import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 
 const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
 
@@ -23,7 +24,7 @@ interface ExtendedOrdersItem extends OrdersItem {
 async function getCtProducts(
   productSourceIds: string[],
   priceSelector: PriceSelector,
-  ctClient,
+  ctClient: ByProjectKeyRequestBuilder,
 ) {
   return await ctClient
     .products()
@@ -104,7 +105,7 @@ async function getCtVariantPrice(
 
 export default async function convertUnitTypeCouponsToFreeProducts(
   response: ValidationValidateStackableResponse,
-  ctClient,
+  ctClient: ByProjectKeyRequestBuilder,
   priceSelector: PriceSelector,
 ): Promise<ProductToAdd[]> {
   const discountTypeUnit = response.redeemables.filter(
