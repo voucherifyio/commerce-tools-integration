@@ -204,6 +204,8 @@ export class CartService {
         sessionKey,
       );
 
+    console.log(111, JSON.stringify(validatedCoupons));
+
     const productsToAdd = await convertUnitTypeCouponsToFreeProducts(
       validatedCoupons,
       this.commerceToolsConnectorService.getClient(),
@@ -263,10 +265,23 @@ export class CartService {
 
     const sessionKeyResponse = validatedCoupons.session?.key;
     const { valid } = validatedCoupons;
-    const totalDiscountAmount =
-      validatedCoupons.order?.items_applied_discount_amount ??
-      validatedCoupons.order?.total_discount_amount ??
-      0;
+    let totalDiscountAmount = 0;
+    for (const redeemable of validatedCoupons.redeemables) {
+      redeemable.order.items.forEach((item) => {
+        if ((item as any).total_applied_discount_amount) {
+          totalDiscountAmount += (item as any).total_applied_discount_amount;
+        } else if ((item as any).total_discount_amount) {
+          totalDiscountAmount += (item as any).total_discount_amount;
+        }
+      });
+    }
+
+    if (totalDiscountAmount === 0) {
+      totalDiscountAmount =
+        validatedCoupons.order?.total_applied_discount_amount ??
+        validatedCoupons.order?.total_discount_amount ??
+        0;
+    }
 
     const onlyNewCouponsFailed = checkIfOnlyNewCouponsFailed(
       coupons,
