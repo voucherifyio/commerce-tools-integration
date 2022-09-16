@@ -2,7 +2,6 @@ import {
   Controller,
   Post,
   Body,
-  HttpException,
   UseGuards,
   UseInterceptors,
   Logger,
