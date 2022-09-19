@@ -373,7 +373,9 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
-- 2022-09-07 `v5.0.0`
+- 2022-09-15 `v5.0.1`
+    - fixes to unit type discount
+- 2022-09-14 `v5.0.0`
     - this version is not fully backward compatible due to changes in a way how [coupon text](#coupon-text) is configured
     - change configuration of [coupon text](#coupon-text) from config in a `.ts` file to config via `COMMERCE_TOOLS_COUPON_NAMES` environment variable
     - fix logging list of available api extensions while using `npm run api-extension-list` command

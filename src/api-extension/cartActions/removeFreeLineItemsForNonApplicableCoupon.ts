@@ -37,11 +37,13 @@ export default function removeFreeLineItemsForNonApplicableCoupon(
         });
       }
 
-      cartActions.push({
-        action: 'removeLineItem',
-        lineItemId: item.id,
-        quantity: quantityFromCode,
-      });
+      if (item.quantity >= quantityFromCode) {
+        cartActions.push({
+          action: 'removeLineItem',
+          lineItemId: item.id,
+          quantity: quantityFromCode,
+        });
+      }
     });
 
   return cartActions;

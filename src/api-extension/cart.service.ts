@@ -1,4 +1,4 @@
-import { Cart } from '@commercetools/platform-sdk';
+import { Cart, LineItem } from '@commercetools/platform-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import {
   StackableRedeemableResponse,
@@ -364,8 +364,10 @@ export class CartService {
       (builder) => builder(cart, validateCouponsResult),
     );
 
-    const normalizedCartActions = this.normalizeCartActions(actions);
-
+    const normalizedCartActions = this.normalizeCartActions(
+      actions,
+      cart.lineItems,
+    );
     this.logger.debug(normalizedCartActions);
     return {
       status: true,
@@ -394,18 +396,26 @@ export class CartService {
   }
 
   // TODO: make service for this if logic goes bigger
-  private normalizeCartActions(actions): CartAction[] {
-    let actionsSetLineItemCustomType = actions.filter(
-      (action) => action.action === 'setLineItemCustomType',
-    );
+  private normalizeCartActions(
+    actions: CartAction[],
+    lineItems: LineItem[],
+  ): CartAction[] {
+    let actionsSetLineItemCustomType = actions
+      .filter((action) => action.action === 'setLineItemCustomType')
+      .reverse(); //Reverse is important according to order of card actions execution calls
 
     const actionsRemoveLineItem = actions.filter(
       (action) => action.action === 'removeLineItem',
     );
 
     // If lineItem is going to be removed we don't want to set customField on it.
-    const removeLineItemIds = actionsRemoveLineItem.map(
-      (action: CartActionRemoveLineItem) => action.lineItemId,
+    const removeLineItemIdsWithQuantity = actionsRemoveLineItem.map(
+      (action: CartActionRemoveLineItem) => {
+        return {
+          lineItemId: action.lineItemId,
+          quantity: action.quantity,
+        };
+      },
     );
 
     const processedLineItemIds = [];
@@ -413,7 +423,13 @@ export class CartService {
       .map((action: CartActionSetLineItemCustomType) => {
         if (
           !processedLineItemIds.includes(action.lineItemId) &&
-          !removeLineItemIds.includes(action.lineItemId)
+          // We need to decide if this case remove item from cart on only will change quantity to lower
+          removeLineItemIdsWithQuantity
+            .filter((element) => element.lineItemId === action.lineItemId)
+            .reduce((acc, element) => acc + element.quantity, 0) <
+            lineItems
+              .filter((lineItem) => lineItem.id === action.lineItemId)
+              .reduce((acc, lineItems) => acc + lineItems.quantity, 0)
         ) {
           processedLineItemIds.push(action.lineItemId);
           return {
