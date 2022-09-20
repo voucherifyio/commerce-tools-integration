@@ -47,7 +47,9 @@ export class ProductMapper {
       custom
         .map((code) => JSON.parse(code))
         .filter((code) => code.type === 'UNIT')
-        .forEach((code) => (itemQuantity = itemQuantity - code.quantity));
+        .forEach(
+          (code) => (itemQuantity = itemQuantity - code.totalDiscountQuantity),
+        );
     }
     return itemQuantity;
   }

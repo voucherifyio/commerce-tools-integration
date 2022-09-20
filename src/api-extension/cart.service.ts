@@ -204,8 +204,6 @@ export class CartService {
         sessionKey,
       );
 
-    console.log(111, JSON.stringify(validatedCoupons));
-
     const productsToAdd = await convertUnitTypeCouponsToFreeProducts(
       validatedCoupons,
       this.commerceToolsConnectorService.getClient(),
@@ -216,7 +214,7 @@ export class CartService {
       (product) => product.discount_difference,
     );
 
-    if (productsToChange) {
+    if (productsToChange.length) {
       const productsToChangeSKUs = productsToChange.map(
         (productsToChange) => productsToChange.product,
       );
@@ -232,12 +230,13 @@ export class CartService {
           (productsToChange) =>
             productsToChange.product === (item.sku as any).source_id,
         );
-        delete item.quantity;
+
         delete item.discount_quantity;
-        delete item.discount_amount;
-        delete item.applied_discount_amount;
         delete item.amount;
+        delete item.quantity;
+
         item.price = currentProductToChange.applied_discount_amount;
+        item.amount = item.price * item.quantity ?? item.initial_quantity;
         item.sku = {
           ...item.sku,
           price: currentProductToChange.applied_discount_amount,
@@ -245,6 +244,16 @@ export class CartService {
 
         return item;
       });
+
+      items = items.map((item: any) => {
+        delete item.initial_amount;
+        delete item.discount_amount;
+        delete item.applied_discount_amount;
+        delete item.subtotal_amount;
+
+        return item;
+      });
+
       validatedCoupons =
         await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
           coupons.filter((coupon) => coupon.status != 'DELETED'),
