@@ -214,15 +214,7 @@ export class CartService {
       (product) => product.discount_difference,
     );
 
-    if (
-      productsToChange.length ||
-      (validatedCoupons.redeemables.find(
-        (redeemable) => redeemable.result.discount.type === 'UNIT',
-      ) &&
-        validatedCoupons.redeemables.filter(
-          (redeemable) => redeemable.status === 'APPLICABLE',
-        ).length > 1)
-    ) {
+    if (productsToChange.length) {
       const productsToChangeSKUs = productsToChange.map(
         (productsToChange) => productsToChange.product,
       );
