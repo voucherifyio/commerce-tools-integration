@@ -46,7 +46,9 @@ export class ProductMapper {
     if (custom) {
       custom
         .map((code) => JSON.parse(code))
-        .filter((code) => code.type === 'UNIT')
+        .filter(
+          (code) => code.type === 'UNIT' && code.effect !== 'ADD_MISSING_ITEMS',
+        )
         .forEach(
           (code) => (itemQuantity = itemQuantity - code.totalDiscountQuantity),
         );
