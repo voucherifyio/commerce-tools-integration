@@ -239,18 +239,23 @@ export class CartService {
             productsToChange.product === (item.sku as any).source_id,
         );
 
-        delete item.discount_quantity;
         delete item.amount;
         delete item.quantity;
 
         item.price = currentProductToChange.applied_discount_amount;
-        item.amount = item.price * item.quantity ?? item.initial_quantity;
+        item.amount = item.price * (item.quantity ?? item.initial_quantity);
         item.sku = {
           ...item.sku,
           price: currentProductToChange.applied_discount_amount,
         };
+        if (item.product) {
+          item.product = {
+            ...item.product,
+            price: currentProductToChange.applied_discount_amount,
+          };
 
-        return item;
+          return item;
+        }
       });
 
       items = items.map((item: any) => {
@@ -258,6 +263,8 @@ export class CartService {
         delete item.discount_amount;
         delete item.applied_discount_amount;
         delete item.subtotal_amount;
+        delete item.quantity;
+        delete item.discount_quantity;
 
         return item;
       });
