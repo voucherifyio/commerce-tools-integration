@@ -2,11 +2,7 @@ import { performance } from 'perf_hooks';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
-  RedemptionsRedeemStackableOrderResponse,
   RedemptionsRedeemStackableParams,
-  RedemptionsRedeemStackableRedemptionResult,
-  RedemptionsRedeemStackableResponse,
-  SimpleCustomer,
   ValidationsValidateStackableParams,
   VoucherifyServerSide,
 } from '@voucherify/sdk';
