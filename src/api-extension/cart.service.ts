@@ -299,6 +299,10 @@ export class CartService {
         0;
     }
 
+    if (totalDiscountAmount > validatedCoupons.order.amount) {
+      totalDiscountAmount = validatedCoupons.order.amount;
+    }
+
     const onlyNewCouponsFailed = checkIfOnlyNewCouponsFailed(
       coupons,
       applicableCoupons,
