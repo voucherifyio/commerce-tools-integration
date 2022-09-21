@@ -517,7 +517,7 @@ describe('CartService', () => {
           },
           quantity: 1,
           money: {
-            centAmount: -2000,
+            centAmount: 0,
             type: 'centPrecision',
             currencyCode: 'EUR',
           },
@@ -1294,7 +1294,7 @@ describe('CartService', () => {
           },
           quantity: 1,
           money: {
-            centAmount: -4650,
+            centAmount: 0,
             type: 'centPrecision',
             currencyCode: 'EUR',
           },
@@ -1410,7 +1410,7 @@ describe('CartService', () => {
           },
           quantity: 1,
           money: {
-            centAmount: -7300,
+            centAmount: 0,
             type: 'centPrecision',
             currencyCode: 'EUR',
           },
