@@ -7,6 +7,24 @@ import {
   CartActionSetLineItemCustomType,
 } from './CartAction';
 
+function toAppliedMultipleCode(
+  product: ProductToAdd,
+  quantity: number,
+  totalDiscountQuantity: number,
+  previousCode: string,
+): string[] {
+  return [
+    previousCode,
+    ...JSON.stringify({
+      code: product.code,
+      type: 'UNIT',
+      effect: product.effect,
+      quantity,
+      totalDiscountQuantity,
+    }),
+  ];
+}
+
 function toAppliedCode(
   product: ProductToAdd,
   quantity: number,
@@ -34,7 +52,7 @@ function changeLineItemQuantity(
 
 function setLineItemCustomType(
   item: LineItem,
-  appliedCode: string,
+  appliedCode: string[],
 ): CartActionSetLineItemCustomType {
   return {
     action: 'setLineItemCustomType',
@@ -43,7 +61,7 @@ function setLineItemCustomType(
       key: 'lineItemCodesType',
     },
     fields: {
-      applied_codes: [appliedCode],
+      applied_codes: appliedCode,
     },
   };
 }
@@ -80,6 +98,10 @@ export default function addFreeLineItems(
       .find((code) => code.code === couponCode);
   };
 
+  const couponsCurrentlyAppliedToItem = (item): any[] | null => {
+    return item?.custom?.fields?.applied_codes.map((code) => code);
+  };
+
   const productToAddQuantities = {} as Record<string, number>;
 
   validateCouponsResult.productsToAdd.map((product) => {
@@ -92,6 +114,7 @@ export default function addFreeLineItems(
 
   return validateCouponsResult.productsToAdd.flatMap((product) => {
     const item = findLineItemBySku(product.product);
+
     if (product.effect === 'ADD_NEW_ITEMS') {
       const appliedCode = toAppliedCode(
         product,
@@ -102,9 +125,22 @@ export default function addFreeLineItems(
         return;
       }
       if (item) {
+        let appliedCodes = couponsCurrentlyAppliedToItem(item).length
+          ? [...couponsCurrentlyAppliedToItem(item), appliedCode]
+          : [appliedCode];
+        if (couponsCurrentlyAppliedToItem(item).length) {
+          const totalDiscountQuantity = appliedCodes
+            .map((code) => JSON.parse(code).quantity)
+            .reduce((a, b) => a + b, 0);
+          appliedCodes = appliedCodes.map((code) => {
+            const _code = JSON.parse(code);
+            _code.totalDiscountQuantity = totalDiscountQuantity;
+            return JSON.stringify(_code);
+          });
+        }
         return [
           changeLineItemQuantity(item, item.quantity + product.quantity),
-          setLineItemCustomType(item, appliedCode),
+          setLineItemCustomType(item, appliedCodes),
         ] as CartAction[];
       }
       return [addLineItem(product, product.quantity, appliedCode)];
@@ -123,11 +159,26 @@ export default function addFreeLineItems(
         productToAddQuantities[product.product] ?? product.quantity,
       );
 
+      let appliedCodes = couponsCurrentlyAppliedToItem(item).length
+        ? [...couponsCurrentlyAppliedToItem(item), appliedCode]
+        : [appliedCode];
+      if (couponsCurrentlyAppliedToItem(item).length) {
+        const totalDiscountQuantity = appliedCodes
+          .map((code) => JSON.parse(code).quantity)
+          .reduce((a, b) => a + b, 0);
+        appliedCodes = appliedCodes.map((code) => {
+          const _code = JSON.parse(code);
+          _code.totalDiscountQuantity = totalDiscountQuantity;
+          return JSON.stringify(_code);
+        });
+      }
+
       return [
         changeLineItemQuantity(item, quantity),
-        setLineItemCustomType(item, appliedCode),
+        setLineItemCustomType(item, appliedCodes),
       ];
     }
+
     const appliedCode = toAppliedCode(
       product,
       product.discount_quantity - product.initial_quantity,

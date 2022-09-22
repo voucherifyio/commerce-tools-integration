@@ -433,9 +433,9 @@ export class CartService {
       getSession(cart),
     );
 
-    const actions = getCartActionBuilders(validateCouponsResult).flatMap(
-      (builder) => builder(cart, validateCouponsResult),
-    );
+    const actions = getCartActionBuilders(validateCouponsResult)
+      .flatMap((builder) => builder(cart, validateCouponsResult))
+      .filter((e) => e);
 
     const normalizedCartActions = this.normalizeCartActions(
       actions,
