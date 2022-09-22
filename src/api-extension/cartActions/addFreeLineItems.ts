@@ -102,6 +102,23 @@ export default function addFreeLineItems(
     return item?.custom?.fields?.applied_codes.map((code) => code);
   };
 
+  const getAllAppliedCodes = (item, appliedCode) => {
+    let appliedCodes = couponsCurrentlyAppliedToItem(item)?.length
+      ? [...couponsCurrentlyAppliedToItem(item), appliedCode]
+      : [appliedCode];
+    if (couponsCurrentlyAppliedToItem(item)?.length) {
+      const totalDiscountQuantity = appliedCodes
+        .map((code) => JSON.parse(code).quantity)
+        .reduce((a, b) => a + b, 0);
+      appliedCodes = appliedCodes.map((code) => {
+        const _code = JSON.parse(code);
+        _code.totalDiscountQuantity = totalDiscountQuantity;
+        return JSON.stringify(_code);
+      });
+    }
+    return appliedCodes;
+  };
+
   const productToAddQuantities = {} as Record<string, number>;
 
   validateCouponsResult.productsToAdd.map((product) => {
@@ -125,22 +142,9 @@ export default function addFreeLineItems(
         return;
       }
       if (item) {
-        let appliedCodes = couponsCurrentlyAppliedToItem(item).length
-          ? [...couponsCurrentlyAppliedToItem(item), appliedCode]
-          : [appliedCode];
-        if (couponsCurrentlyAppliedToItem(item).length) {
-          const totalDiscountQuantity = appliedCodes
-            .map((code) => JSON.parse(code).quantity)
-            .reduce((a, b) => a + b, 0);
-          appliedCodes = appliedCodes.map((code) => {
-            const _code = JSON.parse(code);
-            _code.totalDiscountQuantity = totalDiscountQuantity;
-            return JSON.stringify(_code);
-          });
-        }
         return [
           changeLineItemQuantity(item, item.quantity + product.quantity),
-          setLineItemCustomType(item, appliedCodes),
+          setLineItemCustomType(item, getAllAppliedCodes(item, appliedCode)),
         ] as CartAction[];
       }
       return [addLineItem(product, product.quantity, appliedCode)];
@@ -159,23 +163,9 @@ export default function addFreeLineItems(
         productToAddQuantities[product.product] ?? product.quantity,
       );
 
-      let appliedCodes = couponsCurrentlyAppliedToItem(item).length
-        ? [...couponsCurrentlyAppliedToItem(item), appliedCode]
-        : [appliedCode];
-      if (couponsCurrentlyAppliedToItem(item).length) {
-        const totalDiscountQuantity = appliedCodes
-          .map((code) => JSON.parse(code).quantity)
-          .reduce((a, b) => a + b, 0);
-        appliedCodes = appliedCodes.map((code) => {
-          const _code = JSON.parse(code);
-          _code.totalDiscountQuantity = totalDiscountQuantity;
-          return JSON.stringify(_code);
-        });
-      }
-
       return [
         changeLineItemQuantity(item, quantity),
-        setLineItemCustomType(item, appliedCodes),
+        setLineItemCustomType(item, getAllAppliedCodes(item, appliedCode)),
       ];
     }
 

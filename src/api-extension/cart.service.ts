@@ -1,6 +1,7 @@
 import { Cart, LineItem } from '@commercetools/platform-sdk';
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import {
+  OrdersItem,
   StackableRedeemableResponse,
   StackableRedeemableResponseStatus,
 } from '@voucherify/sdk';
@@ -103,6 +104,29 @@ export class CartService {
     private readonly productMapper: ProductMapper,
     private readonly configService: ConfigService,
   ) {}
+
+  public checkIfQuantityIsEqualOrHigherThanTotalQuantityDiscount(
+    lineItems: LineItem[],
+  ): boolean {
+    for (const item of lineItems) {
+      if (item.custom?.fields?.applied_codes) {
+        const quantity = item.quantity;
+        const codes = item.custom?.fields?.applied_codes
+          .map((code) => JSON.parse(code))
+          .filter((code) => code.type === 'UNIT');
+        let totalQuantityDiscount = 0;
+        for (const code of codes) {
+          if (code.quantity) {
+            totalQuantityDiscount += code.quantity;
+          }
+        }
+        if (totalQuantityDiscount > quantity) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 
   private async validateCoupons(
     cart: Cart,
@@ -427,6 +451,13 @@ export class CartService {
   }> {
     if (cart.version === 1) {
       return this.setCustomTypeForInitializedCart();
+    }
+    if (
+      !this.checkIfQuantityIsEqualOrHigherThanTotalQuantityDiscount(
+        cart.lineItems,
+      )
+    ) {
+      return null;
     }
     const validateCouponsResult = await this.validateCoupons(
       cart,
