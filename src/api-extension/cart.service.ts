@@ -282,14 +282,20 @@ export class CartService {
     const sessionKeyResponse = validatedCoupons.session?.key;
     const { valid } = validatedCoupons;
     let totalDiscountAmount = 0;
-    for (const redeemable of validatedCoupons.redeemables) {
-      redeemable.order.items.forEach((item) => {
-        if ((item as any).total_applied_discount_amount) {
-          totalDiscountAmount += (item as any).total_applied_discount_amount;
-        } else if ((item as any).total_discount_amount) {
-          totalDiscountAmount += (item as any).total_discount_amount;
-        }
-      });
+    if (
+      validatedCoupons.redeemables.find(
+        (redeemable) => redeemable?.order?.items?.length,
+      )
+    ) {
+      for (const redeemable of validatedCoupons.redeemables) {
+        redeemable.order.items.forEach((item) => {
+          if ((item as any).total_applied_discount_amount) {
+            totalDiscountAmount += (item as any).total_applied_discount_amount;
+          } else if ((item as any).total_discount_amount) {
+            totalDiscountAmount += (item as any).total_discount_amount;
+          }
+        });
+      }
     }
 
     if (totalDiscountAmount === 0) {
@@ -299,7 +305,7 @@ export class CartService {
         0;
     }
 
-    if (totalDiscountAmount > validatedCoupons.order.amount) {
+    if (totalDiscountAmount > (validatedCoupons?.order?.amount ?? 0)) {
       totalDiscountAmount = validatedCoupons.order.amount;
     }
 
