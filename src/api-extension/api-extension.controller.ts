@@ -81,7 +81,7 @@ export class ApiExtensionController {
 
       return responseExpress.status(200).json({ actions: [] });
     } catch (error) {
-      this.logger.debug({ msg: error });
+      this.logger.error({ msg: error });
       return responseExpress.status(200).json({ actions: [] });
     }
   }
