@@ -401,11 +401,11 @@ export class CartService {
     lineItems: LineItem[],
   ): CartAction[] {
     let actionsSetLineItemCustomType = actions
-      .filter((action) => action.action === 'setLineItemCustomType')
+      .filter((action) => action?.action === 'setLineItemCustomType')
       .reverse(); //Reverse is important according to order of card actions execution calls
 
     const actionsRemoveLineItem = actions.filter(
-      (action) => action.action === 'removeLineItem',
+      (action) => action?.action === 'removeLineItem',
     );
 
     // If lineItem is going to be removed we don't want to set customField on it.
@@ -455,7 +455,7 @@ export class CartService {
       );
 
     actions = actions.filter(
-      (action) => action.action !== 'setLineItemCustomType',
+      (action) => action?.action !== 'setLineItemCustomType',
     );
 
     return [...actions, ...actionsSetLineItemCustomType];

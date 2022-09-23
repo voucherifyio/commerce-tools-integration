@@ -102,6 +102,10 @@ export type CartActionChangeLineItemQuantity = {
   quantity: number;
 };
 
+export type CartActionRecalculate = {
+  action: 'recalculate';
+};
+
 export type CartAction =
   | CartActionSetCustomType
   | CartActionSetCustomFieldWithCoupons
@@ -115,7 +119,8 @@ export type CartAction =
   | CartActionSetLineItemCustomType
   | CartActionSetCustomFieldWithCouponsLimit
   | CartActionSetCustomFieldWithValidationFailed
-  | CartActionSetCustomFieldFreeShipping;
+  | CartActionSetCustomFieldFreeShipping
+  | CartActionRecalculate;
 
 export type CartActionsBuilder = (
   cart: Cart,

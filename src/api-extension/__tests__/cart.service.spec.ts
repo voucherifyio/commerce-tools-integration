@@ -190,9 +190,9 @@ const setupCouponCodes = (cart, ...coupons: Coupon[]) => {
 };
 
 const byActionType = (actionName: string) => (action: CartAction) =>
-  action.action === actionName;
+  action?.action === actionName;
 const byCustomField = (fieldName: string) => (action: CartAction) =>
-  action.action === 'setCustomField' && action.name === fieldName;
+  action?.action === 'setCustomField' && action.name === fieldName;
 
 describe('CartService', () => {
   let cartService: CartService;
