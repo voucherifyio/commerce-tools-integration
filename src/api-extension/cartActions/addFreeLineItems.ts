@@ -6,6 +6,7 @@ import {
   CartActionChangeLineItemQuantity,
   CartActionSetLineItemCustomType,
 } from './CartAction';
+import { uniqBy } from 'lodash';
 
 function toAppliedMultipleCode(
   product: ProductToAdd,
@@ -60,9 +61,12 @@ function setLineItemCustomType(
     type: {
       key: 'lineItemCodesType',
     },
-    fields: {
-      applied_codes: appliedCode,
-    },
+    fields:
+      appliedCode.length === 0
+        ? {}
+        : {
+            applied_codes: appliedCode,
+          },
   };
 }
 
@@ -89,6 +93,10 @@ export default function addFreeLineItems(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
 ): CartAction[] {
+  const applicableCouponsIds = validateCouponsResult.applicableCoupons.map(
+    (couponData) => couponData.id,
+  );
+
   const findLineItemBySku = (sku: string) =>
     cart.lineItems.find((item) => item.variant.sku === sku);
 
@@ -102,10 +110,22 @@ export default function addFreeLineItems(
     return item?.custom?.fields?.applied_codes.map((code) => code);
   };
 
-  const getAllAppliedCodes = (item, appliedCode) => {
-    let appliedCodes = couponsCurrentlyAppliedToItem(item)?.length
-      ? [...couponsCurrentlyAppliedToItem(item), appliedCode]
-      : [appliedCode];
+  const getAllAppliedCodes = (item, appliedCode): string[] => {
+    let appliedCodes = (
+      couponsCurrentlyAppliedToItem(item)?.length
+        ? [...couponsCurrentlyAppliedToItem(item), appliedCode]
+        : [appliedCode]
+    ).filter((codeString) => {
+      const codeDetails = JSON.parse(codeString);
+      return applicableCouponsIds.includes(codeDetails.code);
+    });
+    const uniqueAppliedCodes = uniqBy(
+      appliedCodes.map((codeString) => JSON.parse(codeString)),
+      'code',
+    );
+    appliedCodes = uniqueAppliedCodes.map((codeDetails) =>
+      JSON.stringify(codeDetails),
+    );
     if (couponsCurrentlyAppliedToItem(item)?.length) {
       const totalDiscountQuantity = appliedCodes
         .map((code) => JSON.parse(code).quantity)
@@ -159,7 +179,7 @@ export default function addFreeLineItems(
 
       const appliedCode = toAppliedCode(
         product,
-        product.discount_quantity,
+        product.quantity,
         productToAddQuantities[product.product] ?? product.quantity,
       );
 
@@ -171,7 +191,7 @@ export default function addFreeLineItems(
 
     const appliedCode = toAppliedCode(
       product,
-      product.discount_quantity - product.initial_quantity,
+      product?.quantity,
       product.discount_quantity,
     );
 

@@ -527,7 +527,7 @@ export class CartService {
       .map((action: CartActionSetLineItemCustomType) => {
         if (
           !processedLineItemIds.includes(action.lineItemId) &&
-          // We need to decide if this case remove item from cart on only will change quantity to lower
+          // We need to decide if this case remove item from cart or only will change quantity to lower
           removeLineItemIdsWithQuantity
             .filter((element) => element.lineItemId === action.lineItemId)
             .reduce((acc, element) => acc + element.quantity, 0) <
