@@ -190,9 +190,9 @@ const setupCouponCodes = (cart, ...coupons: Coupon[]) => {
 };
 
 const byActionType = (actionName: string) => (action: CartAction) =>
-  action.action === actionName;
+  action?.action === actionName;
 const byCustomField = (fieldName: string) => (action: CartAction) =>
-  action.action === 'setCustomField' && action.name === fieldName;
+  action?.action === 'setCustomField' && action.name === fieldName;
 
 describe('CartService', () => {
   let cartService: CartService;
@@ -517,7 +517,7 @@ describe('CartService', () => {
           },
           quantity: 1,
           money: {
-            centAmount: 0,
+            centAmount: -2000,
             type: 'centPrecision',
             currencyCode: 'EUR',
           },
@@ -1294,7 +1294,7 @@ describe('CartService', () => {
           },
           quantity: 1,
           money: {
-            centAmount: 0,
+            centAmount: -4650,
             type: 'centPrecision',
             currencyCode: 'EUR',
           },
@@ -1410,7 +1410,7 @@ describe('CartService', () => {
           },
           quantity: 1,
           money: {
-            centAmount: 0,
+            centAmount: -7300,
             type: 'centPrecision',
             currencyCode: 'EUR',
           },
@@ -1522,7 +1522,7 @@ describe('CartService', () => {
           },
           quantity: 1,
           money: {
-            centAmount: -3000,
+            centAmount: 0,
             type: 'centPrecision',
             currencyCode: 'EUR',
           },
