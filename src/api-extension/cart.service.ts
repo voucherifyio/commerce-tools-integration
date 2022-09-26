@@ -524,6 +524,24 @@ export class CartService {
 
     const processedLineItemIds = [];
     actionsSetLineItemCustomType = actionsSetLineItemCustomType
+      .sort(
+        (
+          a: CartActionSetLineItemCustomType,
+          b: CartActionSetLineItemCustomType,
+        ) => {
+          if (!a?.fields?.applied_codes?.length) {
+            return 1;
+          }
+          if (!b?.fields?.applied_codes?.length) {
+            return -1;
+          }
+          if (
+            a?.fields?.applied_codes?.length < b?.fields?.applied_codes?.length
+          )
+            return 1;
+          return -1;
+        },
+      )
       .map((action: CartActionSetLineItemCustomType) => {
         if (
           !processedLineItemIds.includes(action.lineItemId) &&
