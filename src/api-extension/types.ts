@@ -49,3 +49,8 @@ export type ValidateCouponsResult = {
   taxCategory?: TaxCategory;
   couponsLimit: number;
 };
+
+export enum CartDiscountApplyMode {
+  CustomLineItem,
+  DirectDiscount,
+}

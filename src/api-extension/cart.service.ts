@@ -17,6 +17,7 @@ import {
   PriceSelector,
   ProductToAdd,
   ValidateCouponsResult,
+  CartDiscountApplyMode,
 } from './types';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
 import { OrdersCreateResponse } from '@voucherify/sdk/dist/types/Orders';
@@ -360,9 +361,17 @@ export class CartService {
       getSession(cart),
     );
 
-    const actions = getCartActionBuilders(validateCouponsResult).flatMap(
-      (builder) => builder(cart, validateCouponsResult),
-    );
+    const cartDiscountApplyMode =
+      this.configService.get<string>(
+        'APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT',
+      ) === 'true'
+        ? CartDiscountApplyMode.DirectDiscount
+        : CartDiscountApplyMode.CustomLineItem;
+
+    const actions = getCartActionBuilders(
+      validateCouponsResult,
+      cartDiscountApplyMode,
+    ).flatMap((builder) => builder(cart, validateCouponsResult));
 
     const normalizedCartActions = this.normalizeCartActions(
       actions,

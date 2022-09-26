@@ -154,7 +154,9 @@ Set environment variables with credentials to Voucherify and commercetools APIs.
     - (optional) `LOGGER_LEVEL` - logging level for `npm run test`. You can set it to `error` or `fatal`.
     - (optional) `DEBUG_STORE_REQUESTS_IN_JSON` - `true` if you want to keep external requests / response in a JSON file.
     - (optional) `DEBUG_STORE_REQUESTS_DIR` - name of the directory where JSON files with request / responses are stored.
-    - (optional) `COMMERCE_TOOLS_COUPONS_LIMIT` - maximum number of coupons that could be applied to cart. Default and maximum value is 5 related to [Voucherify Api](https://docs.voucherify.io/reference/redeem-stacked-discounts)
+    - (optional) `COMMERCE_TOOLS_COUPONS_LIMIT` - maximum number of coupons that could be applied to cart. Default and maximum value is 5 related to [Voucherify Api](https://docs.voucherify.io/reference/redeem-stacked-discounts)a
+    - (optional) `APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT` - by default, the application applies a cart discount by adding a custom line item. Set this option value as `true` to enforces the application to use the commercetools beta feature called [direct discounts](https://docs.commercetools.com/api/projects/carts#set-directdiscounts) to apply discounts on the cart.
+    
 ### Installation
 
 Set up the configuration for the first run.
