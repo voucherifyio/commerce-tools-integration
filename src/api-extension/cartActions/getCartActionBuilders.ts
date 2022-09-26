@@ -21,10 +21,10 @@ export default function getCartActionBuilders(
       ...[
         removeDiscountedCustomLineItems,
         addCustomLineItemWithDiscountSummary,
+        setFixedPriceForLineItems,
         addFreeLineItems,
         removeFreeLineItemsForNonApplicableCoupon,
         addShippingProductSourceIds,
-        setFixedPriceForLineItems,
         setCouponsLimit,
       ],
     );
