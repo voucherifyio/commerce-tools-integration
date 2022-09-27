@@ -8,24 +8,6 @@ import {
 } from './CartAction';
 import { uniqBy } from 'lodash';
 
-function toAppliedMultipleCode(
-  product: ProductToAdd,
-  quantity: number,
-  totalDiscountQuantity: number,
-  previousCode: string,
-): string[] {
-  return [
-    previousCode,
-    ...JSON.stringify({
-      code: product.code,
-      type: 'UNIT',
-      effect: product.effect,
-      quantity,
-      totalDiscountQuantity,
-    }),
-  ];
-}
-
 function toAppliedCode(
   product: ProductToAdd,
   quantity: number,
