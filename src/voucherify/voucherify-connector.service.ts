@@ -2,11 +2,7 @@ import { performance } from 'perf_hooks';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
-  RedemptionsRedeemStackableOrderResponse,
   RedemptionsRedeemStackableParams,
-  RedemptionsRedeemStackableRedemptionResult,
-  RedemptionsRedeemStackableResponse,
-  SimpleCustomer,
   ValidationsValidateStackableParams,
   VoucherifyServerSide,
 } from '@voucherify/sdk';
@@ -197,6 +193,10 @@ export class VoucherifyConnectorService {
 
   async getAvailablePromotions(cart, items) {
     const promotions = await this.getClient().promotions.validate({
+      customer: {
+        id: cart.customerId || cart.anonymousId,
+        source_id: cart.customerId || cart.anonymousId,
+      },
       order: {
         source_id: cart.id,
         items: items,
