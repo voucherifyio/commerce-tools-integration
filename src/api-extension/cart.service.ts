@@ -1,7 +1,6 @@
 import { Cart, LineItem } from '@commercetools/platform-sdk';
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
-  OrdersItem,
   StackableRedeemableResponse,
   StackableRedeemableResponseStatus,
 } from '@voucherify/sdk';
@@ -504,9 +503,9 @@ export class CartService {
     actions: CartAction[],
     lineItems: LineItem[],
   ): CartAction[] {
-    let actionsSetLineItemCustomType = actions
-      .filter((action) => action?.action === 'setLineItemCustomType')
-      .reverse(); //Reverse is important according to order of card actions execution calls
+    let actionsSetLineItemCustomType = actions.filter(
+      (action) => action?.action === 'setLineItemCustomType',
+    );
 
     const actionsRemoveLineItem = actions.filter(
       (action) => action?.action === 'removeLineItem',
