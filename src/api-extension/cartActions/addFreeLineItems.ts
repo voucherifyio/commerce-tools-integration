@@ -6,6 +6,7 @@ import {
   CartActionChangeLineItemQuantity,
   CartActionSetLineItemCustomType,
 } from './CartAction';
+import { uniqBy } from 'lodash';
 
 function toAppliedCode(
   product: ProductToAdd,
@@ -34,7 +35,7 @@ function changeLineItemQuantity(
 
 function setLineItemCustomType(
   item: LineItem,
-  appliedCode: string,
+  appliedCode: string[],
 ): CartActionSetLineItemCustomType {
   return {
     action: 'setLineItemCustomType',
@@ -42,9 +43,12 @@ function setLineItemCustomType(
     type: {
       key: 'lineItemCodesType',
     },
-    fields: {
-      applied_codes: [appliedCode],
-    },
+    fields:
+      appliedCode.length === 0
+        ? {}
+        : {
+            applied_codes: appliedCode,
+          },
   };
 }
 
@@ -71,6 +75,10 @@ export default function addFreeLineItems(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
 ): CartAction[] {
+  const applicableCouponsIds = validateCouponsResult.applicableCoupons.map(
+    (couponData) => couponData.id,
+  );
+
   const findLineItemBySku = (sku: string) =>
     cart.lineItems.find((item) => item.variant.sku === sku);
 
@@ -78,6 +86,39 @@ export default function addFreeLineItems(
     return item?.custom?.fields?.applied_codes
       .map((code) => JSON.parse(code))
       .find((code) => code.code === couponCode);
+  };
+
+  const couponsCurrentlyAppliedToItem = (item): any[] | null => {
+    return item?.custom?.fields?.applied_codes.map((code) => code);
+  };
+
+  const getAllAppliedCodes = (item, appliedCode): string[] => {
+    let appliedCodes = (
+      couponsCurrentlyAppliedToItem(item)?.length
+        ? [...couponsCurrentlyAppliedToItem(item), appliedCode]
+        : [appliedCode]
+    ).filter((codeString) => {
+      const codeDetails = JSON.parse(codeString);
+      return applicableCouponsIds.includes(codeDetails.code);
+    });
+    const uniqueAppliedCodes = uniqBy(
+      appliedCodes.map((codeString) => JSON.parse(codeString)),
+      'code',
+    );
+    appliedCodes = uniqueAppliedCodes.map((codeDetails) =>
+      JSON.stringify(codeDetails),
+    );
+    if (couponsCurrentlyAppliedToItem(item)?.length) {
+      const totalDiscountQuantity = appliedCodes
+        .map((code) => JSON.parse(code).quantity)
+        .reduce((a, b) => a + b, 0);
+      appliedCodes = appliedCodes.map((code) => {
+        const _code = JSON.parse(code);
+        _code.totalDiscountQuantity = totalDiscountQuantity;
+        return JSON.stringify(_code);
+      });
+    }
+    return appliedCodes;
   };
 
   const productToAddQuantities = {} as Record<string, number>;
@@ -92,6 +133,7 @@ export default function addFreeLineItems(
 
   return validateCouponsResult.productsToAdd.flatMap((product) => {
     const item = findLineItemBySku(product.product);
+
     if (product.effect === 'ADD_NEW_ITEMS') {
       const appliedCode = toAppliedCode(
         product,
@@ -104,7 +146,7 @@ export default function addFreeLineItems(
       if (item) {
         return [
           changeLineItemQuantity(item, item.quantity + product.quantity),
-          setLineItemCustomType(item, appliedCode),
+          setLineItemCustomType(item, getAllAppliedCodes(item, appliedCode)),
         ] as CartAction[];
       }
       return [addLineItem(product, product.quantity, appliedCode)];
@@ -119,18 +161,19 @@ export default function addFreeLineItems(
 
       const appliedCode = toAppliedCode(
         product,
-        product.discount_quantity,
+        product.quantity,
         productToAddQuantities[product.product] ?? product.quantity,
       );
 
       return [
         changeLineItemQuantity(item, quantity),
-        setLineItemCustomType(item, appliedCode),
+        setLineItemCustomType(item, getAllAppliedCodes(item, appliedCode)),
       ];
     }
+
     const appliedCode = toAppliedCode(
       product,
-      product.discount_quantity - product.initial_quantity,
+      product?.quantity,
       product.discount_quantity,
     );
 

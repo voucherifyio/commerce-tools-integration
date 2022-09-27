@@ -104,6 +104,29 @@ export class CartService {
     private readonly configService: ConfigService,
   ) {}
 
+  public checkIfQuantityIsEqualOrHigherThanTotalQuantityDiscount(
+    lineItems: LineItem[],
+  ): boolean {
+    for (const item of lineItems) {
+      if (item.custom?.fields?.applied_codes) {
+        const quantity = item.quantity;
+        const codes = item.custom?.fields?.applied_codes
+          .map((code) => JSON.parse(code))
+          .filter((code) => code.type === 'UNIT');
+        let totalQuantityDiscount = 0;
+        for (const code of codes) {
+          if (code.quantity) {
+            totalQuantityDiscount += code.quantity;
+          }
+        }
+        if (totalQuantityDiscount > quantity) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   private async validateCoupons(
     cart: Cart,
     sessionKey?: string | null,
@@ -428,14 +451,21 @@ export class CartService {
     if (cart.version === 1) {
       return this.setCustomTypeForInitializedCart();
     }
+    if (
+      !this.checkIfQuantityIsEqualOrHigherThanTotalQuantityDiscount(
+        cart.lineItems,
+      )
+    ) {
+      return null;
+    }
     const validateCouponsResult = await this.validateCoupons(
       cart,
       getSession(cart),
     );
 
-    const actions = getCartActionBuilders(validateCouponsResult).flatMap(
-      (builder) => builder(cart, validateCouponsResult),
-    );
+    const actions = getCartActionBuilders(validateCouponsResult)
+      .flatMap((builder) => builder(cart, validateCouponsResult))
+      .filter((e) => e);
 
     const normalizedCartActions = this.normalizeCartActions(
       actions,
@@ -473,9 +503,9 @@ export class CartService {
     actions: CartAction[],
     lineItems: LineItem[],
   ): CartAction[] {
-    let actionsSetLineItemCustomType = actions
-      .filter((action) => action?.action === 'setLineItemCustomType')
-      .reverse(); //Reverse is important according to order of card actions execution calls
+    let actionsSetLineItemCustomType = actions.filter(
+      (action) => action?.action === 'setLineItemCustomType',
+    );
 
     const actionsRemoveLineItem = actions.filter(
       (action) => action?.action === 'removeLineItem',
@@ -496,7 +526,7 @@ export class CartService {
       .map((action: CartActionSetLineItemCustomType) => {
         if (
           !processedLineItemIds.includes(action.lineItemId) &&
-          // We need to decide if this case remove item from cart on only will change quantity to lower
+          // We need to decide if this case remove item from cart or only will change quantity to lower
           removeLineItemIdsWithQuantity
             .filter((element) => element.lineItemId === action.lineItemId)
             .reduce((acc, element) => acc + element.quantity, 0) <

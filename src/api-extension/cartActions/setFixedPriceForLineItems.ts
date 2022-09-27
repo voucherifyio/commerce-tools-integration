@@ -1,6 +1,7 @@
 import { Cart } from '@commercetools/platform-sdk';
 import { ValidateCouponsResult } from '../types';
 import { CartActionSetLineItemCustomType } from './CartAction';
+import { StackableRedeemableResponse } from '@voucherify/sdk';
 
 type FixedCouponApplicableTo = {
   id: string;
@@ -65,7 +66,11 @@ function getLineItemsWithFixedAmount(
 function getLineItemCustomFieldActions(
   cart: Cart,
   lineItemsWithFixedAmount,
+  applicableCoupons: StackableRedeemableResponse[],
 ): CartActionSetLineItemCustomType[] {
+  const applicableCouponsIds = applicableCoupons.map(
+    (couponData) => couponData.id,
+  );
   return cart.lineItems.map((lineItem) => {
     const action = {
       action: 'setLineItemCustomType',
@@ -86,9 +91,23 @@ function getLineItemCustomFieldActions(
         lineItemWithFixedAmount[0].couponFixedPrice;
     }
 
-    // Make sure you add case here if more lineItem custom fields will be added
-    if (lineItem.custom?.fields?.applied_codes) {
-      action.fields.applied_codes = lineItem.custom.fields.applied_codes;
+    const applied_codes = lineItem.custom?.fields?.applied_codes;
+    if (applied_codes?.length) {
+      let _applied_codes = applied_codes
+        .map((codeString) => JSON.parse(codeString))
+        .filter((codeData) => applicableCouponsIds.includes(codeData.code));
+      let totalDiscountQuantity = 0;
+      for (const applied_code of _applied_codes) {
+        totalDiscountQuantity += applied_code.quantity;
+      }
+      _applied_codes = _applied_codes
+        .filter((codeData) => codeData.quantity > 0)
+        .map((codeData) => {
+          return { ...codeData, totalDiscountQuantity };
+        });
+      action.fields.applied_codes = _applied_codes.map((codeData) =>
+        JSON.stringify(codeData),
+      );
     }
 
     return action;
@@ -105,11 +124,16 @@ export default function setFixedPriceForLineItems(
 
   const fixedCouponApplicableTo = getFixedCouponApplicableTo(fixedTypeCoupons);
   const couponLineItems = getLineItemsFromApplicableCoupons(fixedTypeCoupons);
+  const applicableCoupons = validateCouponsResult.applicableCoupons;
 
   const lineProductsWithFixedAmount = getLineItemsWithFixedAmount(
     fixedCouponApplicableTo,
     couponLineItems,
   );
 
-  return getLineItemCustomFieldActions(cart, lineProductsWithFixedAmount);
+  return getLineItemCustomFieldActions(
+    cart,
+    lineProductsWithFixedAmount,
+    applicableCoupons,
+  );
 }

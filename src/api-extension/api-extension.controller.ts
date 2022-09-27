@@ -43,18 +43,23 @@ export class ApiExtensionController {
     try {
       if (type === 'cart') {
         const cart = body.resource.obj as Cart;
-        const response = await this.apiExtensionService.checkCartAndMutate(
-          cart,
-        );
-        if (!response.status) {
-          return responseExpress.status(400).json({});
+        try {
+          const response = await this.apiExtensionService.checkCartAndMutate(
+            cart,
+          );
+          if (!response.status) {
+            return responseExpress.status(400).json({});
+          }
+          if (!response.validateCouponsResult || !response.actions.length) {
+            return responseExpress
+              .status(200)
+              .json({ actions: response.actions });
+          }
+          responseExpress.status(200).json({ actions: response.actions });
+        } catch (error) {
+          console.log(error); //Do not change it to logger
+          return await this.apiExtensionService.checkCartMutateFallback(cart);
         }
-        if (!response.validateCouponsResult || !response.actions.length) {
-          return responseExpress
-            .status(200)
-            .json({ actions: response.actions });
-        }
-        responseExpress.status(200).json({ actions: response.actions });
         return await this.apiExtensionService.checkCartMutateFallback(cart);
       }
       if (type === 'order') {
@@ -81,7 +86,7 @@ export class ApiExtensionController {
 
       return responseExpress.status(200).json({ actions: [] });
     } catch (error) {
-      this.logger.error({ msg: error });
+      console.log(error); //Do not change it to logger
       return responseExpress.status(200).json({ actions: [] });
     }
   }
