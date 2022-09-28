@@ -19,6 +19,11 @@ interface ExtendedOrdersItem extends OrdersItem {
     name?: string;
     metadata?: Record<string, any>;
   };
+  sku?: {
+    id: string;
+    source_id: string;
+    sku: string;
+  };
 }
 
 async function getCtProducts(
@@ -116,12 +121,11 @@ export default async function convertUnitTypeCouponsToFreeProducts(
   const freeProductsToAdd = discountTypeUnit.flatMap(
     async (unitTypeRedeemable) => {
       const { effect: discountEffect } = unitTypeRedeemable.result?.discount;
-
       if (APPLICABLE_PRODUCT_EFFECT.includes(discountEffect)) {
         const freeItem = unitTypeRedeemable.order?.items?.find(
           (item: ExtendedOrdersItem) =>
-            item.product?.source_id ===
-            unitTypeRedeemable.result?.discount?.product?.source_id,
+            item.sku?.source_id ===
+            unitTypeRedeemable.result?.discount?.sku?.source_id,
         ) as ExtendedOrdersItem;
         const productSourceId =
           unitTypeRedeemable.result.discount.product.source_id;
@@ -173,10 +177,11 @@ export default async function convertUnitTypeCouponsToFreeProducts(
           priceSelector,
           ctClient,
         );
+
         const productsToAdd = filteredProducts.map(async (product) => {
           const freeItem = unitTypeRedeemable.order?.items?.find(
             (item: ExtendedOrdersItem) =>
-              item.product.source_id === product.product.source_id,
+              item.sku.source_id === product.sku.source_id,
           ) as ExtendedOrdersItem;
           const ctProduct = ctProducts.body.results.filter((ctProduct) => {
             return ctProduct.id === product.product.source_id;

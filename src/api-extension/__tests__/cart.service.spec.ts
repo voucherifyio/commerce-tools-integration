@@ -1930,7 +1930,7 @@ describe('CartService', () => {
         );
 
         expect(setLineItemCustomTypeActions.length).toBe(2);
-        expect(setLineItemCustomTypeActions[0]).toEqual({
+        expect(setLineItemCustomTypeActions[1]).toEqual({
           action: 'setLineItemCustomType',
           lineItemId,
           type: {

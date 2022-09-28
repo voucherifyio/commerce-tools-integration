@@ -89,7 +89,7 @@ export default function addFreeLineItems(
   };
 
   const couponsCurrentlyAppliedToItem = (item): any[] | null => {
-    return item?.custom?.fields?.applied_codes.map((code) => code);
+    return item?.custom?.fields?.applied_codes?.map((code) => code);
   };
 
   const getAllAppliedCodes = (item, appliedCode): string[] => {
