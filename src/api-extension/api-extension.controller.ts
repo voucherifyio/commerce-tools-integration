@@ -47,7 +47,7 @@ export class ApiExtensionController {
           const response = await this.apiExtensionService.checkCartAndMutate(
             cart,
           );
-          if (!response.status) {
+          if (!response?.status) {
             return responseExpress.status(400).json({});
           }
           if (!response.validateCouponsResult || !response.actions.length) {
