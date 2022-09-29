@@ -565,6 +565,7 @@ export class CartService {
     const processedAddLineItemIds = [];
     const processedAddLineItems = [];
     for (const currentAction of allActionsAddLineItem as CartActionAddLineItem[]) {
+      //We delete duplicates
       if (!processedAddLineItemIds.includes(currentAction.sku)) {
         processedAddLineItemIds.push(currentAction.sku);
         processedAddLineItems.push(currentAction);
