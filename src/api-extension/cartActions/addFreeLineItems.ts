@@ -84,7 +84,7 @@ export default function addFreeLineItems(
 
   const isCouponAppliedToItem = (item, couponCode: string) => {
     return item?.custom?.fields?.applied_codes
-      .map((code) => JSON.parse(code))
+      ?.map((code) => JSON.parse(code))
       .find((code) => code.code === couponCode);
   };
 

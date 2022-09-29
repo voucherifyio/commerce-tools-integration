@@ -16,6 +16,7 @@ import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-c
 import { ProductMapper } from './mappers/product';
 import {
   CartAction,
+  CartActionAddLineItem,
   CartActionRemoveLineItem,
   CartActionSetLineItemCustomType,
 } from './cartActions/CartAction';
@@ -503,7 +504,7 @@ export class CartService {
     actions: CartAction[],
     lineItems: LineItem[],
   ): CartAction[] {
-    let actionsSetLineItemCustomType = actions.filter(
+    const allActionsSetLineItemCustomType = actions.filter(
       (action) => action?.action === 'setLineItemCustomType',
     );
 
@@ -521,47 +522,67 @@ export class CartService {
       },
     );
 
-    const processedLineItemIds = [];
-    actionsSetLineItemCustomType = actionsSetLineItemCustomType
-      .map((action: CartActionSetLineItemCustomType) => {
-        if (
-          !processedLineItemIds.includes(action.lineItemId) &&
-          // We need to decide if this case remove item from cart or only will change quantity to lower
-          removeLineItemIdsWithQuantity
-            .filter((element) => element.lineItemId === action.lineItemId)
-            .reduce((acc, element) => acc + element.quantity, 0) <
-            lineItems
-              .filter((lineItem) => lineItem.id === action.lineItemId)
-              .reduce((acc, lineItems) => acc + lineItems.quantity, 0)
-        ) {
-          processedLineItemIds.push(action.lineItemId);
-          return {
-            action: action.action,
-            lineItemId: action.lineItemId,
-            type: action.type,
-            fields: Object.assign(
-              {},
-              ...actionsSetLineItemCustomType
-                .filter(
-                  (innerAction: CartActionSetLineItemCustomType) =>
-                    innerAction.lineItemId === action.lineItemId,
-                )
-                .map((innerAction: CartActionSetLineItemCustomType) => {
-                  return innerAction.fields;
-                }),
-            ),
-          } as CartActionSetLineItemCustomType;
-        }
-      })
-      .filter(
-        (action: CartActionSetLineItemCustomType) => action !== undefined,
-      );
+    const processedSetLineItemIds = [];
+    const processedActionsSetLineItemCustomType =
+      allActionsSetLineItemCustomType
+        .map((action: CartActionSetLineItemCustomType) => {
+          if (
+            !processedSetLineItemIds.includes(action.lineItemId) &&
+            // We need to decide if this case remove item from cart or only will change quantity to lower
+            removeLineItemIdsWithQuantity
+              .filter((element) => element.lineItemId === action.lineItemId)
+              .reduce((acc, element) => acc + element.quantity, 0) <
+              lineItems
+                .filter((lineItem) => lineItem.id === action.lineItemId)
+                .reduce((acc, lineItems) => acc + lineItems.quantity, 0)
+          ) {
+            processedSetLineItemIds.push(action.lineItemId);
+            return {
+              action: action.action,
+              lineItemId: action.lineItemId,
+              type: action.type,
+              fields: Object.assign(
+                {},
+                ...allActionsSetLineItemCustomType
+                  .filter(
+                    (innerAction: CartActionSetLineItemCustomType) =>
+                      innerAction.lineItemId === action.lineItemId,
+                  )
+                  .map((innerAction: CartActionSetLineItemCustomType) => {
+                    return innerAction.fields;
+                  }),
+              ),
+            } as CartActionSetLineItemCustomType;
+          }
+        })
+        .filter(
+          (action: CartActionSetLineItemCustomType) => action !== undefined,
+        );
+
+    const allActionsAddLineItem = actions.filter(
+      (action) => action?.action === 'addLineItem',
+    );
+    const processedAddLineItemIds = [];
+    const processedAddLineItems = [];
+    for (const currentAction of allActionsAddLineItem as CartActionAddLineItem[]) {
+      //We delete duplicates
+      if (!processedAddLineItemIds.includes(currentAction.sku)) {
+        processedAddLineItemIds.push(currentAction.sku);
+        processedAddLineItems.push(currentAction);
+      }
+    }
 
     actions = actions.filter(
-      (action) => action?.action !== 'setLineItemCustomType',
+      (action) =>
+        action?.action !== 'setLineItemCustomType' &&
+        action?.action !== 'addLineItem',
     );
 
-    return [...actions, ...actionsSetLineItemCustomType];
+    return [
+      ...actions,
+      ...processedActionsSetLineItemCustomType,
+      ...processedAddLineItems,
+    ];
   }
 
   private getPriceSelectorFromCart(cart: Cart): PriceSelector {
