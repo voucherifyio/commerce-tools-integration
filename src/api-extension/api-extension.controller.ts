@@ -57,6 +57,7 @@ export class ApiExtensionController {
         msg: `Error while validatePromotionsAndBuildCartActionsFallback function`,
       });
     }
+    return;
   }
 
   async handleRequestOrder(order: Order, responseExpress: Response) {
