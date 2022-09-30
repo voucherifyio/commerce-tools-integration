@@ -22,6 +22,7 @@ import {
 } from './cartActions/CartAction';
 import { ConfigService } from '@nestjs/config';
 import sleep from './utils/sleep';
+import checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount from './utils/checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount';
 
 function getSession(cart: Cart): string | null {
   return cart.custom?.fields?.session ?? null;
@@ -104,29 +105,6 @@ export class CartService {
     private readonly productMapper: ProductMapper,
     private readonly configService: ConfigService,
   ) {}
-
-  public checkIfQuantityIsEqualOrHigherThanTotalQuantityDiscount(
-    lineItems: LineItem[],
-  ): boolean {
-    for (const item of lineItems) {
-      if (item.custom?.fields?.applied_codes) {
-        const quantity = item.quantity;
-        const codes = item.custom?.fields?.applied_codes
-          .map((code) => JSON.parse(code))
-          .filter((code) => code.type === 'UNIT');
-        let totalQuantityDiscount = 0;
-        for (const code of codes) {
-          if (code.quantity) {
-            totalQuantityDiscount += code.quantity;
-          }
-        }
-        if (totalQuantityDiscount > quantity) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
 
   private async validateCoupons(
     cart: Cart,
@@ -452,13 +430,16 @@ export class CartService {
     if (cart.version === 1) {
       return this.setCustomTypeForInitializedCart();
     }
+
     if (
-      this.checkIfQuantityIsEqualOrHigherThanTotalQuantityDiscount(
+      checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount(
         cart.lineItems,
       )
     ) {
+      console.log('a');
       return null;
     }
+
     const validateCouponsResult = await this.validateCoupons(
       cart,
       getSession(cart),
