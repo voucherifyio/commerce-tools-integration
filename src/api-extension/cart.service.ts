@@ -1,8 +1,10 @@
 import { Cart, LineItem } from '@commercetools/platform-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import {
+  OrdersItem,
   StackableRedeemableResponse,
   StackableRedeemableResponseStatus,
+  ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
@@ -11,7 +13,12 @@ import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.s
 import getCartActionBuilders from './cartActions/getCartActionBuilders';
 import convertUnitTypeCouponsToFreeProducts from './convertUnitTypeCouponsToFreeProducts';
 import { desarializeCoupons, Coupon, CouponStatus } from './coupon';
-import { CartResponse, PriceSelector, ValidateCouponsResult } from './types';
+import {
+  CartResponse,
+  PriceSelector,
+  ProductToAdd,
+  ValidateCouponsResult,
+} from './types';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
 import { ProductMapper } from './mappers/product';
 import {
@@ -239,57 +246,12 @@ export class CartService {
     );
 
     if (productsToChange.length) {
-      const productsToChangeSKUs = productsToChange.map(
-        (productsToChange) => productsToChange.product,
-      );
-      let items = validatedCoupons.order.items;
-      items = items.map((item: any) => {
-        if (
-          !productsToChangeSKUs.includes((item.sku as any).source_id) ||
-          item.amount !== item.discount_amount
-        ) {
-          return item;
-        }
-        const currentProductToChange = productsToChange.find(
-          (productsToChange) =>
-            productsToChange.product === (item.sku as any).source_id,
-        );
-
-        delete item.amount;
-        delete item.quantity;
-
-        item.price = currentProductToChange.applied_discount_amount;
-        item.amount = item.price * (item.quantity ?? item.initial_quantity);
-        item.sku = {
-          ...item.sku,
-          price: currentProductToChange.applied_discount_amount,
-        };
-        if (item.product) {
-          item.product = {
-            ...item.product,
-            price: currentProductToChange.applied_discount_amount,
-          };
-
-          return item;
-        }
-      });
-
-      items = items.map((item: any) => {
-        delete item.initial_amount;
-        delete item.discount_amount;
-        delete item.applied_discount_amount;
-        delete item.subtotal_amount;
-        delete item.quantity;
-        delete item.discount_quantity;
-
-        return item;
-      });
-
       validatedCoupons =
-        await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
+        await this.revalidateCouponsBecauseNewUnitTypeCouponHaveAppliedWithWrongPrice(
+          validatedCoupons,
+          productsToChange,
           coupons.filter((coupon) => coupon.status != 'DELETED'),
           cart,
-          items,
           sessionKey,
         );
     }
@@ -377,6 +339,60 @@ export class CartService {
       taxCategory,
       couponsLimit,
     };
+  }
+
+  private async revalidateCouponsBecauseNewUnitTypeCouponHaveAppliedWithWrongPrice(
+    validatedCoupons: ValidationValidateStackableResponse,
+    productsToChange: ProductToAdd[],
+    coupons: Coupon[],
+    cart: Cart,
+    sessionKey?: string | null,
+  ) {
+    const productsToChangeSKUs = productsToChange.map(
+      (productsToChange) => productsToChange.product,
+    );
+    const items = validatedCoupons.order.items.map((item: any) => {
+      //item: OrdersItem when Voucherify SDK will fix TS bug
+      if (
+        !productsToChangeSKUs.includes((item.sku as any).source_id) ||
+        item.amount !== item.discount_amount
+      ) {
+        return item;
+      }
+      const currentProductToChange = productsToChange.find(
+        (productsToChange) =>
+          productsToChange.product === (item.sku as any).source_id,
+      );
+      return {
+        object: item?.object,
+        product_id: item?.product_id,
+        sku_id: item?.sku_id,
+        initial_quantity: item?.initial_quantity ?? 0,
+        amount:
+          currentProductToChange.applied_discount_amount *
+          (item.quantity ?? item.initial_quantity ?? 0),
+        price: currentProductToChange.applied_discount_amount,
+        product: {
+          id: item?.product?.id,
+          source_id: item?.product?.source_id,
+          name: item?.product?.name,
+          price: currentProductToChange.applied_discount_amount,
+        },
+        sku: {
+          id: item?.sku?.id,
+          source_id: item?.sku?.source_id,
+          sku: item?.sku?.sku,
+          price: currentProductToChange.applied_discount_amount,
+        },
+      };
+    });
+
+    return await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
+      coupons.filter((coupon) => coupon.status != 'DELETED'),
+      cart,
+      items,
+      sessionKey,
+    );
   }
 
   private filterCouponsByLimit(coupons: Coupon[], couponsLimit: number) {
