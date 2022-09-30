@@ -158,11 +158,11 @@ export class CartService {
           }
         }
         if (totalQuantityDiscount > quantity) {
-          return false;
+          return true;
         }
       }
     }
-    return true;
+    return false;
   }
 
   private async validateCoupons(
@@ -455,7 +455,7 @@ export class CartService {
     };
   }
 
-  async checkCartAndMutate(cart: Cart): Promise<{
+  async validatePromotionsAndBuildCartActions(cart: Cart): Promise<{
     validateCouponsResult?: ValidateCouponsResult;
     actions: CartAction[];
     status: boolean;
@@ -464,7 +464,7 @@ export class CartService {
       return this.setCustomTypeForInitializedCart();
     }
     if (
-      !this.checkIfQuantityIsEqualOrHigherThanTotalQuantityDiscount(
+      this.checkIfQuantityIsEqualOrHigherThanTotalQuantityDiscount(
         cart.lineItems,
       )
     ) {
@@ -491,7 +491,7 @@ export class CartService {
     };
   }
 
-  async checkCartMutateFallback(cart: Cart) {
+  async validatePromotionsAndBuildCartActionsFallback(cart: Cart) {
     let cartMutated = false;
     for (let i = 0; i < 2; i++) {
       await sleep(500);
