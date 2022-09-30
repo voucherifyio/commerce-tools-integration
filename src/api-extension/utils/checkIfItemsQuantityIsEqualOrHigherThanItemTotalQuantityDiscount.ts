@@ -6,15 +6,17 @@ export default function checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantity
   return !!lineItems?.find((lineItem) => {
     if (lineItem.custom?.fields?.applied_codes) {
       const { quantity: itemQuantity } = lineItem;
-      const appliedCodes = (lineItem.custom?.fields?.applied_codes ?? [])
+      const totalQuantityDiscount = (
+        lineItem.custom?.fields?.applied_codes ?? []
+      )
         .map((code) => JSON.parse(code))
-        .filter((code) => code.type === 'UNIT');
-      const totalQuantityDiscount = appliedCodes.reduce((sum, codeObject) => {
-        if (codeObject.quantity) {
-          sum += codeObject.quantity;
-        }
-        return sum;
-      }, 0);
+        .filter((code) => code.type === 'UNIT')
+        .reduce((sum, codeObject) => {
+          if (codeObject.quantity) {
+            sum += codeObject.quantity;
+          }
+          return sum;
+        }, 0);
       if (totalQuantityDiscount > itemQuantity) {
         return true;
       }

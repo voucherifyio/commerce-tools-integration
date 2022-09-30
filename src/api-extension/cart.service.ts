@@ -447,7 +447,6 @@ export class CartService {
         cart.lineItems,
       )
     ) {
-      console.log('a');
       return null;
     }
 
