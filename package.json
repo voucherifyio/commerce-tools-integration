@@ -37,7 +37,7 @@
     "@nestjs/config": "^2.0.0",
     "@nestjs/core": "^8.0.0",
     "@nestjs/platform-express": "^8.0.0",
-    "@voucherify/sdk": "^2.0.9",
+    "@voucherify/sdk": "^2.0.15",
     "async": "^3.2.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
