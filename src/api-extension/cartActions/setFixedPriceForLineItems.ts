@@ -47,7 +47,7 @@ function getLineItemsWithFixedAmount(
 ) {
   return fixedCouponApplicableTo.flatMap((fixedCoupon) => {
     return couponLineItems
-      .filter((couponLineItem) => couponLineItem.sku.id === fixedCoupon.id)
+      .filter((couponLineItem) => couponLineItem.sku.id === fixedCoupon?.id)
       .map((couponLineItem) => {
         if (
           fixedCoupon.price ===
