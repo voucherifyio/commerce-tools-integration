@@ -348,13 +348,20 @@ export class CartService {
     cart: Cart,
     sessionKey?: string | null,
   ) {
+    type OrderItemSku = {
+      id?: string;
+      source_id?: string;
+      override?: boolean;
+      sku?: string;
+      price?: number;
+    };
     const productsToChangeSKUs = productsToChange.map(
       (productsToChange) => productsToChange.product,
     );
-    const items = validatedCoupons.order.items.map((item: any) => {
+    const items = validatedCoupons.order.items.map((item: OrdersItem) => {
       //item: OrdersItem when Voucherify SDK will fix TS bug
       if (
-        !productsToChangeSKUs.includes((item.sku as any).source_id) ||
+        !productsToChangeSKUs.includes((item.sku as OrderItemSku).source_id) ||
         item.amount !== item.discount_amount
       ) {
         return item;
