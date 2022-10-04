@@ -59,7 +59,7 @@ export class VoucherifyConnectorService {
     });
     const request = {
       // options?: StackableOptions;
-      redeemables: redeemables,
+      redeemables,
       session: {
         type: 'LOCK',
         ...(sessionKey && { key: sessionKey }),
