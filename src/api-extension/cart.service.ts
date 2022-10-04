@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   StackableRedeemableResponse,
   StackableRedeemableResponseStatus,
+  ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
@@ -91,6 +92,42 @@ function checkIfOnlyNewCouponsFailed(
     areAllAppliedCouponsSkipped &&
     areAllAppliedCouponsApplicable
   );
+}
+
+function calculateTotalDiscountAmount(
+  validatedCoupons: ValidationValidateStackableResponse,
+) {
+  let totalDiscountAmount = 0;
+  if (
+    validatedCoupons.redeemables.find(
+      (redeemable) => redeemable?.order?.items?.length,
+    )
+  ) {
+    //Voucherify "order.total_applied_discount_amount" is not always calculated correctly,
+    //so we need to iterate through the items to calculated discounted amount
+    validatedCoupons.redeemables.forEach((redeemable) => {
+      redeemable.order.items.forEach((item) => {
+        if ((item as any).total_applied_discount_amount) {
+          totalDiscountAmount += (item as any).total_applied_discount_amount;
+        } else if ((item as any).total_discount_amount) {
+          totalDiscountAmount += (item as any).total_discount_amount;
+        }
+      });
+    });
+  }
+
+  if (totalDiscountAmount === 0) {
+    return (
+      validatedCoupons.order?.total_applied_discount_amount ??
+      validatedCoupons.order?.total_discount_amount ??
+      0
+    );
+  }
+
+  if (totalDiscountAmount > (validatedCoupons?.order?.amount ?? 0)) {
+    return validatedCoupons.order.amount;
+  }
+  return totalDiscountAmount;
 }
 
 @Injectable()
@@ -305,33 +342,7 @@ export class CartService {
 
     const sessionKeyResponse = validatedCoupons.session?.key;
     const { valid } = validatedCoupons;
-    let totalDiscountAmount = 0;
-    if (
-      validatedCoupons.redeemables.find(
-        (redeemable) => redeemable?.order?.items?.length,
-      )
-    ) {
-      for (const redeemable of validatedCoupons.redeemables) {
-        redeemable.order.items.forEach((item) => {
-          if ((item as any).total_applied_discount_amount) {
-            totalDiscountAmount += (item as any).total_applied_discount_amount;
-          } else if ((item as any).total_discount_amount) {
-            totalDiscountAmount += (item as any).total_discount_amount;
-          }
-        });
-      }
-    }
-
-    if (totalDiscountAmount === 0) {
-      totalDiscountAmount =
-        validatedCoupons.order?.total_applied_discount_amount ??
-        validatedCoupons.order?.total_discount_amount ??
-        0;
-    }
-
-    if (totalDiscountAmount > (validatedCoupons?.order?.amount ?? 0)) {
-      totalDiscountAmount = validatedCoupons.order.amount;
-    }
+    const totalDiscountAmount = calculateTotalDiscountAmount(validatedCoupons);
 
     const onlyNewCouponsFailed = checkIfOnlyNewCouponsFailed(
       coupons,
