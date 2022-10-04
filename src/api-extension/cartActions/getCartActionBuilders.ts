@@ -4,33 +4,36 @@ import addFreeLineItems from './addFreeLineItems';
 import { CartActionsBuilder } from './CartAction';
 import removeDiscountedCustomLineItems from './removeDiscountedCustomLineItems';
 import removeFreeLineItemsForNonApplicableCoupon from './removeFreeLineItemsForNonApplicableCoupon';
-import setSessionAsCustomField from './setSessionAsCustomField';
-import updateDiscountsCodes from './updateDiscountCodes';
-import addShippingProductSourceIds from './addShippingProductSourceIds';
 import setFixedPriceForLineItems from './setFixedPriceForLineItems';
-import setCouponsLimit from './setCouponsLimit';
+import setCustomFields from './new/setCustomFields';
 
 export default function getCartActionBuilders(
   validateCouponsResult: ValidateCouponsResult,
 ): CartActionsBuilder[] {
   const { valid, onlyNewCouponsFailed } = validateCouponsResult;
 
-  const cartActionBuilders = [setSessionAsCustomField] as CartActionsBuilder[];
+  const cartActionBuilders = [] as CartActionsBuilder[]; //setCustomField
+
   if (valid || !onlyNewCouponsFailed) {
     cartActionBuilders.push(
       ...[
-        removeDiscountedCustomLineItems,
-        addCustomLineItemWithDiscountSummary,
-        setFixedPriceForLineItems,
-        addFreeLineItems,
-        removeFreeLineItemsForNonApplicableCoupon,
-        addShippingProductSourceIds,
-        setCouponsLimit,
+        removeDiscountedCustomLineItems, //removeCustomLineItem
+        addCustomLineItemWithDiscountSummary, //addCustomLineItem
+        setFixedPriceForLineItems, //setLineItemCustomType
+        addFreeLineItems, //setLineItemCustomType //addLineItem //changeLineItemQuantity
+        removeFreeLineItemsForNonApplicableCoupon, //setLineItemCustomField //removeLineItem
+        // addShippingProductSourceIds, //setCustomField
+        // setCouponsLimit, //setCustomField
       ],
     );
   }
 
-  cartActionBuilders.push(updateDiscountsCodes);
+  // cartActionBuilders.push(updateDiscountsCodes); //setCustomField
+
+
+  // const newCartActionsBuilder = [] as CartActionsBuilder[];
+
+  cartActionBuilders.push(...[setCustomFields]);
 
   return cartActionBuilders;
 }
