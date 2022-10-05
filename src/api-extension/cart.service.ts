@@ -346,7 +346,7 @@ export class CartService {
     const productsToChangeSKUs = productsToChange.map(
       (productsToChange) => productsToChange.product,
     );
-    const items = validatedCoupons.order.items.map((item: OrdersItem) => {
+    const items = validatedCoupons.order.items.map((item: any) => {
       //item: OrdersItem when Voucherify SDK will fix TS bug
       if (
         !productsToChangeSKUs.includes((item.sku as OrderItemSku).source_id) ||
