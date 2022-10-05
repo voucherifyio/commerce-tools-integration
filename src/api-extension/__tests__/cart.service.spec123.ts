@@ -423,13 +423,14 @@ describe('CartService', () => {
         );
 
         expect(result.actions.length).toBeGreaterThanOrEqual(2);
-        const removeCustomLineItemAction = result.actions.find(
-          byActionType('removeCustomLineItem'),
+        expect(result.actions).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              action: 'removeCustomLineItem',
+              customLineItemId: 'custom-line-item-1',
+            }),
+          ]),
         );
-        expect(removeCustomLineItemAction).toEqual({
-          action: 'removeCustomLineItem',
-          customLineItemId: 'custom-line-item-1',
-        });
       });
 
       it('should NOT create "removeCustomLineItem" action when cart contains unknown custom lines', async () => {

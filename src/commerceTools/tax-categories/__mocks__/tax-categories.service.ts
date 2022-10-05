@@ -1,11 +1,6 @@
 import { TaxCategory } from '@commercetools/platform-sdk';
 import { TaxCategoriesService } from '../tax-categories.service';
 
-interface MockedTaxCategoriesService extends TaxCategoriesService {
-  __simulateDefaultGetCouponTaxCategories: () => void;
-  __simulateCouponTaxCategoryIsNotDefined: () => void;
-}
-
 const taxRateForCountry = (country) => ({
   name: 'coupon',
   amount: 0,
@@ -47,7 +42,7 @@ const COUNTRIES = [
   'CY',
 ];
 
-const defaultGetCouponTaxCategoryResponse = {
+export const defaultGetCouponTaxCategoryResponse = {
   id: '64a3b50d-245c-465a-bb5e-faf59d729031',
   version: 30,
   createdAt: '2022-07-06T10:31:15.807Z',
@@ -64,27 +59,32 @@ const defaultGetCouponTaxCategoryResponse = {
   rates: COUNTRIES.map((country) => taxRateForCountry(country)),
 } as TaxCategory;
 
-const taxCategoriesService = jest.createMockFromModule(
-  '../tax-categories.service',
-) as MockedTaxCategoriesService;
+export const getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse =
+  () => {
+    const taxCategoriesService = jest.createMockFromModule(
+      '../tax-categories.service',
+    ) as TaxCategoriesService;
 
-taxCategoriesService.__simulateDefaultGetCouponTaxCategories = () => {
-  taxCategoriesService.getCouponTaxCategory = jest.fn(() =>
-    Promise.resolve(defaultGetCouponTaxCategoryResponse),
-  );
-};
+    taxCategoriesService.getCouponTaxCategory = jest
+      .fn()
+      .mockResolvedValue(defaultGetCouponTaxCategoryResponse);
 
-taxCategoriesService.__simulateCouponTaxCategoryIsNotDefined = () => {
-  taxCategoriesService.getCouponTaxCategory = jest.fn(() =>
-    Promise.resolve(null),
-  );
-};
+    taxCategoriesService.addCountryToCouponTaxCategory = jest.fn();
 
-taxCategoriesService.__simulateDefaultGetCouponTaxCategories();
-taxCategoriesService.addCountryToCouponTaxCategory = jest.fn();
+    return taxCategoriesService;
+  };
 
-export {
-  defaultGetCouponTaxCategoryResponse,
-  taxCategoriesService as TaxCategoriesService,
-  MockedTaxCategoriesService,
-};
+export const getTaxCategoryServiceMockWithNotDefinedTaxCategoryResponse =
+  () => {
+    const taxCategoriesService = jest.createMockFromModule(
+      '../tax-categories.service',
+    ) as TaxCategoriesService;
+
+    taxCategoriesService.getCouponTaxCategory = jest
+      .fn()
+      .mockResolvedValue(null);
+
+    taxCategoriesService.addCountryToCouponTaxCategory = jest.fn();
+
+    return taxCategoriesService;
+  };

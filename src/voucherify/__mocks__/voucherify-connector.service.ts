@@ -10,6 +10,183 @@ import {
 } from '@voucherify/sdk';
 import { VoucherifyConnectorService } from '../voucherify-connector.service';
 
+type StackableValidationResponseModifier = (
+  response: ValidationValidateStackableResponse,
+) => ValidationValidateStackableResponse;
+
+export const getVoucherifyConnectorServiceMockWithDefinedResponse = (
+  modifiers: StackableValidationResponseModifier[] = [],
+) => {
+  const voucherifyConnectorService = jest.createMockFromModule(
+    '../voucherify-connector.service',
+  ) as VoucherifyConnectorService;
+
+  voucherifyConnectorService.getAvailablePromotions = jest
+    .fn()
+    .mockResolvedValue([]);
+
+  const validationResponse = modifiers.reduce((response, modifier) => {
+    return modifier(response);
+  }, defaultValidateVouchersResponse());
+
+  voucherifyConnectorService.validateStackableVouchersWithCTCart = jest
+    .fn()
+    .mockResolvedValue(validationResponse);
+
+  return voucherifyConnectorService;
+};
+
+const resetOrderAmounts = (
+  response: ValidationValidateStackableResponse,
+): ValidationValidateStackableResponse => {
+  return {
+    ...response,
+    order: {
+      ...response.order,
+      discount_amount: 0,
+      items_discount_amount: 0,
+      total_discount_amount: 0,
+      applied_discount_amount: 0,
+      items_applied_discount_amount: 0,
+      total_applied_discount_amount: 0,
+    },
+  };
+};
+
+export const useCartAsOrderReferenceModifier =
+  (cart: Cart) =>
+  (
+    response: ValidationValidateStackableResponse,
+  ): ValidationValidateStackableResponse => {
+    return resetOrderAmounts({
+      ...response,
+      redeemables: [],
+      order: {
+        ...response.order,
+        source_id: cart.id,
+        amount: cart.totalPrice.centAmount,
+        initial_amount: cart.totalPrice.centAmount,
+        items: cart.lineItems.map(
+          (lineItem) =>
+            ({
+              sku_id: lineItem.variant.sku,
+              product_id: lineItem.productId,
+              related_object: 'product',
+              quantity: lineItem.quantity,
+              price: lineItem.price.value.centAmount,
+              amount: lineItem.price.value.centAmount,
+              object: 'order_item',
+            } as OrdersItem),
+        ),
+      },
+    });
+  };
+
+export const addDiscountCoupon =
+  (
+    couponCode: string,
+    amount: number,
+    status: StackableRedeemableResponseStatus = 'APPLICABLE',
+  ) =>
+  (
+    response: ValidationValidateStackableResponse,
+  ): ValidationValidateStackableResponse => {
+    const responseWithRedeemables = useRedeemable(
+      {
+        id: couponCode,
+        status,
+        object: 'voucher',
+        result: {
+          discount: {
+            type: 'AMOUNT',
+            effect: 'APPLY_TO_ORDER',
+            amount_off: amount,
+          },
+        },
+      },
+      amount,
+    )(response);
+
+    const { order } = responseWithRedeemables;
+
+    return {
+      ...responseWithRedeemables,
+      order: {
+        ...responseWithRedeemables.order,
+        discount_amount: order.discount_amount + amount,
+        total_discount_amount: order.total_discount_amount + amount,
+        applied_discount_amount: order.applied_discount_amount + amount,
+        total_applied_discount_amount:
+          order.total_applied_discount_amount + amount,
+      },
+    };
+  };
+
+const useRedeemable =
+  (
+    redeemable: StackableRedeemableResponse,
+    redeemedAmount: number,
+    applyToItems = false,
+  ) =>
+  (
+    response: ValidationValidateStackableResponse,
+  ): ValidationValidateStackableResponse => {
+    const { order } = response;
+    const discountRedeemedAlready = response.redeemables.reduce(
+      (total, redeemable) => total + redeemable.order.applied_discount_amount,
+      0,
+    );
+    const itemsRedeemedAlready = response.redeemables.reduce(
+      (total, redeemable) =>
+        total + redeemable.order.items_applied_discount_amount,
+      0,
+    );
+
+    return {
+      ...response,
+      redeemables: [
+        ...response.redeemables,
+        {
+          order: {
+            ...order,
+            discount_amount:
+              discountRedeemedAlready + (!applyToItems ? redeemedAmount : 0),
+            items_discount_amount:
+              itemsRedeemedAlready + (applyToItems ? redeemedAmount : 0),
+            total_discount_amount: discountRedeemedAlready + redeemedAmount,
+            // total_amount: order.amount - redeemedAlready - redeemedAmount,
+            items_applied_discount_amount:
+              itemsRedeemedAlready + (applyToItems ? redeemedAmount : 0),
+            total_applied_discount_amount:
+              discountRedeemedAlready + itemsRedeemedAlready + redeemedAmount,
+            applied_discount_amount: !applyToItems ? redeemedAmount : 0,
+          },
+          applicable_to: {
+            data: [],
+            total: 0,
+            object: 'list',
+          },
+          inapplicable_to: {
+            data: [],
+            total: 0,
+            object: 'list',
+          },
+          metadata: {},
+          ...redeemable,
+        },
+      ],
+    };
+  };
+
+export const useSessionKey =
+  (sessionKey) =>
+  (
+    response: ValidationValidateStackableResponse,
+  ): ValidationValidateStackableResponse => ({
+    ...response,
+    session: { ...response.session, key: sessionKey },
+  });
+
 interface MockedVoucherifyConnectorService extends VoucherifyConnectorService {
   __simulateDefaultValidateStackable: () => MockedVoucherifyConnectorService;
   __useCartAsOrderReference: (cart: Cart) => MockedVoucherifyConnectorService;
@@ -155,51 +332,39 @@ voucherifyConnectorService.__simulateDefaultValidateStackable = () => {
   return voucherifyConnectorService;
 };
 
-const resetOrderAmounts = () => {
-  voucherifyConnectorService.__currentValidateVouchersResponse.order = {
-    ...voucherifyConnectorService.__currentValidateVouchersResponse.order,
-    discount_amount: 0,
-    items_discount_amount: 0,
-    total_discount_amount: 0,
-    applied_discount_amount: 0,
-    items_applied_discount_amount: 0,
-    total_applied_discount_amount: 0,
-  };
-};
+// voucherifyConnectorService.__useCartAsOrderReference = (cart: Cart) => {
+//   voucherifyConnectorService.__currentValidateVouchersResponse = {
+//     ...voucherifyConnectorService.__currentValidateVouchersResponse,
+//     order: {
+//       ...voucherifyConnectorService.__currentValidateVouchersResponse.order,
+//       source_id: cart.id,
+//       amount: cart.totalPrice.centAmount,
+//       initial_amount: cart.totalPrice.centAmount,
+//       items: cart.lineItems.map(
+//         (lineItem) =>
+//           ({
+//             sku_id: lineItem.variant.sku,
+//             product_id: lineItem.productId,
+//             related_object: 'product',
+//             quantity: lineItem.quantity,
+//             price: lineItem.price.value.centAmount,
+//             amount: lineItem.price.value.centAmount,
+//             object: 'order_item',
+//           } as OrdersItem),
+//       ),
+//     },
+//     redeemables: [],
+//   };
+//   resetOrderAmounts();
 
-voucherifyConnectorService.__useCartAsOrderReference = (cart: Cart) => {
-  voucherifyConnectorService.__currentValidateVouchersResponse = {
-    ...voucherifyConnectorService.__currentValidateVouchersResponse,
-    order: {
-      ...voucherifyConnectorService.__currentValidateVouchersResponse.order,
-      source_id: cart.id,
-      amount: cart.totalPrice.centAmount,
-      initial_amount: cart.totalPrice.centAmount,
-      items: cart.lineItems.map(
-        (lineItem) =>
-          ({
-            sku_id: lineItem.variant.sku,
-            product_id: lineItem.productId,
-            related_object: 'product',
-            quantity: lineItem.quantity,
-            price: lineItem.price.value.centAmount,
-            amount: lineItem.price.value.centAmount,
-            object: 'order_item',
-          } as OrdersItem),
-      ),
-    },
-    redeemables: [],
-  };
-  resetOrderAmounts();
+//   return voucherifyConnectorService;
+// };
 
-  return voucherifyConnectorService;
-};
-
-voucherifyConnectorService.__emptyRedeemables = () => {
-  voucherifyConnectorService.__currentValidateVouchersResponse.redeemables = [];
-  resetOrderAmounts();
-  return voucherifyConnectorService;
-};
+// voucherifyConnectorService.__emptyRedeemables = () => {
+//   voucherifyConnectorService.__currentValidateVouchersResponse.redeemables = [];
+//   resetOrderAmounts();
+//   return voucherifyConnectorService;
+// };
 
 voucherifyConnectorService.__useRedeemable = (
   redeemable: StackableRedeemableResponse,
