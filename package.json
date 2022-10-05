@@ -43,6 +43,7 @@
     "class-validator": "^0.13.2",
     "cli-table": "^0.3.11",
     "concurrently": "^7.1.0",
+    "flat": "^5.0.2",
     "form-data": "^4.0.0",
     "install": "^0.13.0",
     "joi": "^17.6.0",

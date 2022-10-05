@@ -4,12 +4,11 @@ import { Order } from '@commercetools/platform-sdk';
 import { desarializeCoupons, Coupon } from './coupon';
 import { OrderMapper } from './mappers/order';
 import { ProductMapper } from './mappers/product';
-import {
-  RedemptionsRedeemStackableRedemptionResult,
-  RedemptionsRedeemStackableResponse,
-} from '@voucherify/sdk';
+import { RedemptionsRedeemStackableResponse } from '@voucherify/sdk';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
 import sleep from './utils/sleep';
+import flatten from 'flat';
+import { deleteObjectsFromObject } from './utils/deleteObjectsFromObject';
 
 type SentCoupons = {
   result: string;
@@ -25,6 +24,73 @@ export class OrderService {
     private readonly orderMapper: OrderMapper,
     private readonly productMapper: ProductMapper,
   ) {}
+
+  public async getMetadataForOrder(
+    order: Order,
+    allMetadataSchemaProperties: string[],
+  ) {
+    const standardMetaProperties = allMetadataSchemaProperties.filter(
+      (key) => !key.includes('custom_filed_'),
+    );
+    const customMetaProperties = allMetadataSchemaProperties.filter(
+      (key) => key.length > 13 && key.slice(0, 13) === 'custom_filed_',
+    );
+
+    const metadata = {};
+
+    const addToMataData = (variable: any, name: string) => {
+      if (typeof variable === 'number' || typeof variable === 'string') {
+        return (metadata[name] = variable);
+      }
+      if (Array.isArray(variable)) {
+        const newArray = [];
+        variable.forEach((element) => {
+          if (typeof element === 'number' || typeof element === 'string') {
+            newArray.push(element);
+          }
+          if (!Array.isArray(variable)) {
+            newArray.push(deleteObjectsFromObject(flatten(element)));
+          }
+        });
+        return (metadata[name] = newArray);
+      }
+      if (typeof variable === 'object') {
+        return (metadata[name] = deleteObjectsFromObject(flatten(variable)));
+      }
+      return;
+    };
+
+    standardMetaProperties.forEach((key) => {
+      if (order[key]) {
+        addToMataData(order[key], key);
+      }
+    });
+
+    if (order?.custom?.fields && customMetaProperties.length) {
+      customMetaProperties.forEach((key) => {
+        if (order.custom.fields?.[key.slice(13)]) {
+          addToMataData(order.custom.fields[key.slice(13)], key);
+        }
+      });
+    }
+
+    if (standardMetaProperties.find((key) => key === 'payments')) {
+      const payments = [];
+      const paymentReferences = order?.paymentInfo?.payments ?? [];
+      for await (const paymentReference of paymentReferences) {
+        payments.push(
+          await this.commerceToolsConnectorService.findPayment(
+            paymentReference.id,
+          ),
+        );
+      }
+      metadata['payments'] = payments
+        .filter((payment) => payment?.id)
+        .map((payment) => deleteObjectsFromObject(flatten(payment)));
+    }
+
+    return metadata;
+  }
 
   public async redeemVoucherifyCoupons(orderFromRequest: Order): Promise<{
     redemptionsRedeemStackableResponse?: RedemptionsRedeemStackableResponse;
@@ -54,13 +120,16 @@ export class OrderService {
       await this.voucherifyConnectorService.getMetadataSchemaProperties(
         'order',
       );
+
     const productMetadataSchemaProperties =
       await this.voucherifyConnectorService.getMetadataSchemaProperties(
         'product',
       );
-    const orderMetadata = Object.fromEntries(
-      this.orderMapper.getMetadata(order, orderMetadataSchemaProperties),
+    const orderMetadata = await this.getMetadataForOrder(
+      order,
+      orderMetadataSchemaProperties,
     );
+
     const items = this.productMapper.mapLineItems(
       order.lineItems,
       productMetadataSchemaProperties,
@@ -110,17 +179,17 @@ export class OrderService {
         orderMetadata,
       );
     } catch (e) {
-      this.logger.debug({ msg: 'Reedeem operation failed', error: e.details });
+      this.logger.debug({ msg: 'Redeem operation failed', error: e.details });
       return { status: true, actions: [] };
     }
 
     sentCoupons.push(
-      ...response.redemptions.map((redem) => {
+      ...response.redemptions.map((redeem) => {
         return {
-          result: redem.result,
-          coupon: redem.voucher?.code
-            ? redem.voucher.code
-            : redem['promotion_tier']['id'],
+          result: redeem.result,
+          coupon: redeem.voucher?.code
+            ? redeem.voucher.code
+            : redeem['promotion_tier']['id'],
         };
       }),
     );
