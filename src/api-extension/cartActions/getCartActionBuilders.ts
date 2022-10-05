@@ -1,11 +1,10 @@
 import { ValidateCouponsResult } from '../types';
-import addCustomLineItemWithDiscountSummary from './addCustomLineItemWithDiscountSummary';
 import addFreeLineItems from './addFreeLineItems';
 import { CartActionsBuilder } from './CartAction';
-import removeDiscountedCustomLineItems from './removeDiscountedCustomLineItems';
 import removeFreeLineItemsForNonApplicableCoupon from './removeFreeLineItemsForNonApplicableCoupon';
 import setFixedPriceForLineItems from './setFixedPriceForLineItems';
 import setCustomFields from './new/setCustomFields';
+import customLineItems from './new/customLineItems';
 
 export default function getCartActionBuilders(
   validateCouponsResult: ValidateCouponsResult,
@@ -17,8 +16,8 @@ export default function getCartActionBuilders(
   if (valid || !onlyNewCouponsFailed) {
     cartActionBuilders.push(
       ...[
-        removeDiscountedCustomLineItems, //removeCustomLineItem
-        addCustomLineItemWithDiscountSummary, //addCustomLineItem
+        // removeDiscountedCustomLineItems, //removeCustomLineItem
+        // addCustomLineItemWithDiscountSummary, //addCustomLineItem
         setFixedPriceForLineItems, //setLineItemCustomType
         addFreeLineItems, //setLineItemCustomType //addLineItem //changeLineItemQuantity
         removeFreeLineItemsForNonApplicableCoupon, //setLineItemCustomField //removeLineItem
@@ -30,10 +29,9 @@ export default function getCartActionBuilders(
 
   // cartActionBuilders.push(updateDiscountsCodes); //setCustomField
 
-
   // const newCartActionsBuilder = [] as CartActionsBuilder[];
 
-  cartActionBuilders.push(...[setCustomFields]);
+  cartActionBuilders.push(...[setCustomFields, customLineItems]);
 
   return cartActionBuilders;
 }
