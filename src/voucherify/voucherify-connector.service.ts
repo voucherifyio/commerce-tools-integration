@@ -99,10 +99,9 @@ export class VoucherifyConnectorService {
   }
 
   async createOrder(
-    order: Order,
-    items: OrdersItem[],
+    order: Order, //CommerceTools Order
+    items: OrdersItem[], //V% OrderItems
     orderMetadata: Record<string, any>,
-    status?: OrdersCreate['status'],
   ) {
     const orderCreate = {
       source_id: order.id,
@@ -111,7 +110,9 @@ export class VoucherifyConnectorService {
       items,
       metadata: orderMetadata,
       customer: this.getCustomerFromOrder(order),
-      status: status ?? 'CREATED',
+      status: (order.paymentState === 'Paid'
+        ? 'PAID'
+        : 'CREATED') as OrdersCreate['status'],
     };
 
     await this.getClient().orders.create(orderCreate);

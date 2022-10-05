@@ -84,7 +84,6 @@ export class OrderService {
         order,
         items,
         orderMetadata,
-        order.paymentState === 'Paid' ? 'PAID' : undefined,
       );
 
       return { status: true, actions: [] };
