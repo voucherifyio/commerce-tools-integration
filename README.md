@@ -322,7 +322,7 @@ this specific order metadata will be tried to sync too.
 #### Important
 1. If you set some metadata in Voucherify to required, and this attribute would not be on your resource in commercetools, then whole operation will fail!
 2. Make sure that Voucherify metadata it's defined properly. If set types are not compatible with data provided by CT update may fail.
-3. Syncing `cusomers` and `orders` uses CT `Custom Fields`. Syncing `products` uses `Attributes`. In this case be sure you provide CT `Attribute identifier` instead on `Attribute label`. You can check this under `Settings -> Product types and attributes` tab.
+3. Syncing `customers` and `orders` uses CT `Custom Fields`. Syncing `products` uses `Attributes`. In this case be sure you provide CT `Attribute identifier` instead on `Attribute label`. You can check this under `Settings -> Product types and attributes` tab.
 
 ## Coupon text
 All discounts are added as one `CustomLineItem` with a negative price.
