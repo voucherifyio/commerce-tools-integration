@@ -25,7 +25,7 @@ export class OrderService {
     private readonly productMapper: ProductMapper,
   ) {}
 
-  public async getMetadata(
+  public async getMetadataForOrder(
     order: Order,
     allMetadataSchemaProperties: string[],
   ) {
@@ -125,7 +125,7 @@ export class OrderService {
       await this.voucherifyConnectorService.getMetadataSchemaProperties(
         'product',
       );
-    const orderMetadata = await this.getMetadata(
+    const orderMetadata = await this.getMetadataForOrder(
       order,
       orderMetadataSchemaProperties,
     );

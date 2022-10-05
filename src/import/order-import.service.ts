@@ -63,7 +63,7 @@ export class OrderImportService {
           continue;
         }
 
-        const metadata = await this.orderService.getMetadata(
+        const metadata = await this.orderService.getMetadataForOrder(
           order,
           metadataSchemaProperties,
         );

@@ -314,7 +314,10 @@ This command should be run once (or each time after `npm run api-extension-delet
 Data migration allows us to handle more advanced features of Voucherify, so it is important to keep data updated (however it is still optional if you use only basic functionalities). Migration is done via `npm run migrate` commands. When you are launching the integration app the first time you should fetch all data (`products`, `orders`, `customers`). After that to keep Voucherify updated it will be convenient to sync data once in a while. To not process all the data each time you can pass additional arguments (e.g. `days`, `date`) to shorten the sync period and as a result decrease time of these operations. You can do it manually, but we highly recommend automating this process with some tool like `Cron`. The period between syncs should depend on traffic on your platform or the time when new vouchers, campaigns, etc. are created to make them as close to the newest data as possible.
 
 ### Metadata
-Additionally, each time migration happen metadata will be tried to sync. Metadata is [a feature of Voucherify](https://docs.voucherify.io/docs/metadata-custom-fields) which allows you to create more specific vouchers and campaigns. These properties are mapped from names of custom fields from commercetools for order and customer and from attributes for products. You can set which metadata you want to have by setting it in `Voucherify -> <your profile> -> Project Settings -> Metadata Schema`. During redemption an `order` and a `product sku` included in this specific order metadata will be tried to sync too. 
+Additionally, each time migration happen metadata will be tried to sync. Metadata is [a feature of Voucherify](https://docs.voucherify.io/docs/metadata-custom-fields) which allows
+you to create more specific vouchers and campaigns. These properties are mapped from names of custom fields from commercetools for customer, from attributes for products and from attributes
+and names of custom fields from order (please add `custom_field_`). You can set which metadata you want to have by setting it in `Voucherify -> <your profile> -> Project Settings -> Metadata Schema`. During redemption an `order` and a `product sku` included in
+this specific order metadata will be tried to sync too.
 
 #### Important
 1. If you set some metadata in Voucherify to required, and this attribute would not be on your resource in commercetools, then whole operation will fail!
@@ -322,7 +325,10 @@ Additionally, each time migration happen metadata will be tried to sync. Metadat
 3. Syncing `cusomers` and `orders` uses CT `Custom Fields`. Syncing `products` uses `Attributes`. In this case be sure you provide CT `Attribute identifier` instead on `Attribute label`. You can check this under `Settings -> Product types and attributes` tab.
 
 ## Coupon text
-All discounts are added as one `CustomLineItem` with a negative price. This item should be visible to the customer on the invoice to know how the price is affected. To make this readable for each customer we provide the possibility to change the name of this item depending on the language which customer uses. To make it work correctly, a developer should add `COMMERCE_TOOLS_COUPON_NAMES` environment variable, with stringified object, where keys are an [IETF language tags](https://en.wikipedia.org/wiki/IETF_language_tag) and its values are coupon names translated to that languages. Later on, the text will be automatically chosen by the commercetools mechanism to match the language proper for a customer.
+All discounts are added as one `CustomLineItem` with a negative price.
+This item should be visible to the customer on the invoice to know how the price is affected.
+To make this readable for each customer we provide the possibility to change the name of this item depending on the language which customer uses.
+To make it work correctly, a developer should add `COMMERCE_TOOLS_COUPON_NAMES` environment variable, with stringified object, where keys are an [IETF language tags](https://en.wikipedia.org/wiki/IETF_language_tag) and its values are coupon names translated to that languages. Later on, the text will be automatically chosen by the commercetools mechanism to match the language proper for a customer.
 
 Example: `'{"en":"Coupon codes discount","de":"Gutscheincodes rabatt"}'`
 
