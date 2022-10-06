@@ -86,25 +86,6 @@ describe('when one -20€ amount voucher is provided in new session', () => {
   });
 
   it('should assign new session with voucherify and store in cart', async () => {
-    const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
-    const taxCategoriesService =
-      getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();
-    const voucherifyConnectorService =
-      getVoucherifyConnectorServiceMockWithDefinedResponse([
-        useCartAsOrderReferenceModifier(cart),
-        addDiscountCoupon(COUPON_CODE, 2000),
-        useSessionKey(SESSION_KEY),
-      ]);
-    const commerceToolsConnectorService =
-      getCommerceToolsConnectorServiceMockWithResponse();
-
-    const { cartService } = await buildCartServiceWithMockedDependencies({
-      typesService,
-      taxCategoriesService,
-      voucherifyConnectorService,
-      commerceToolsConnectorService,
-    });
-
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );
@@ -121,25 +102,6 @@ describe('when one -20€ amount voucher is provided in new session', () => {
   });
 
   it('should create "addCustomLineItem" action with coupons total value', async () => {
-    const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
-    const taxCategoriesService =
-      getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();
-    const voucherifyConnectorService =
-      getVoucherifyConnectorServiceMockWithDefinedResponse([
-        useCartAsOrderReferenceModifier(cart),
-        addDiscountCoupon(COUPON_CODE, 2000),
-        useSessionKey(SESSION_KEY),
-      ]);
-    const commerceToolsConnectorService =
-      getCommerceToolsConnectorServiceMockWithResponse();
-
-    const { cartService } = await buildCartServiceWithMockedDependencies({
-      typesService,
-      taxCategoriesService,
-      voucherifyConnectorService,
-      commerceToolsConnectorService,
-    });
-
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );
@@ -167,25 +129,6 @@ describe('when one -20€ amount voucher is provided in new session', () => {
     );
   });
   it('should create "setCustomField" action with validated coupons', async () => {
-    const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
-    const taxCategoriesService =
-      getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();
-    const voucherifyConnectorService =
-      getVoucherifyConnectorServiceMockWithDefinedResponse([
-        useCartAsOrderReferenceModifier(cart),
-        addDiscountCoupon(COUPON_CODE, 2000),
-        useSessionKey(SESSION_KEY),
-      ]);
-    const commerceToolsConnectorService =
-      getCommerceToolsConnectorServiceMockWithResponse();
-
-    const { cartService } = await buildCartServiceWithMockedDependencies({
-      typesService,
-      taxCategoriesService,
-      voucherifyConnectorService,
-      commerceToolsConnectorService,
-    });
-
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );

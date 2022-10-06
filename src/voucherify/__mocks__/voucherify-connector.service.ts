@@ -187,6 +187,39 @@ export const useSessionKey =
     session: { ...response.session, key: sessionKey },
   });
 
+export const simulateInvalidValidation = (
+  response: ValidationValidateStackableResponse,
+): ValidationValidateStackableResponse => {
+  return resetOrderAmounts({ ...response, valid: false, redeemables: [] });
+};
+
+export const withInapplicableCoupon =
+  (couponCode: string) =>
+  (
+    response: ValidationValidateStackableResponse,
+  ): ValidationValidateStackableResponse => {
+    return {
+      ...response,
+      redeemables: [
+        ...response.redeemables,
+        {
+          status: 'INAPPLICABLE',
+          id: couponCode,
+          object: 'voucher',
+          result: {
+            error: {
+              code: 400,
+              key: 'quantity_exceeded',
+              message: 'quantity exceeded',
+              details: couponCode,
+              request_id: 'v-123123123123',
+            },
+          },
+        },
+      ],
+    };
+  };
+
 interface MockedVoucherifyConnectorService extends VoucherifyConnectorService {
   __simulateDefaultValidateStackable: () => MockedVoucherifyConnectorService;
   __useCartAsOrderReference: (cart: Cart) => MockedVoucherifyConnectorService;
