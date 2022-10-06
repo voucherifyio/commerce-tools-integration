@@ -74,10 +74,14 @@ export default function customLineItems(
 ): CartAction[] {
   const cartActions = [] as CartAction[];
 
-  cartActions.push(
-    ...addCustomLineItemWithDiscountSummary(cart, validateCouponsResult),
-    ...removeDiscountedCustomLineItems(cart),
-  );
+  const { valid, onlyNewCouponsFailed } = validateCouponsResult;
+
+  if (valid || !onlyNewCouponsFailed) {
+    cartActions.push(
+      ...addCustomLineItemWithDiscountSummary(cart, validateCouponsResult),
+      ...removeDiscountedCustomLineItems(cart),
+    );
+  }
 
   return cartActions;
 }
