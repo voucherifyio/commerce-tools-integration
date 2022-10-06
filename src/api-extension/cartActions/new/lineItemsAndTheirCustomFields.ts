@@ -4,7 +4,7 @@ import { CartAction, CartActionSetLineItemCustomType } from '../CartAction';
 import mapValidateCouponsResultToLineProductsWithFixedAmount from './helpers/fixedPrice';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
 import addFreeLineItems22 from './helpers/addFreeLineItems';
-import addFreeLineItems from "../addFreeLineItems";
+import addFreeLineItems from '../addFreeLineItems';
 
 type LineItemFixedPrice = {
   lineItemId: string;
