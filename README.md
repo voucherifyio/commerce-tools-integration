@@ -381,6 +381,8 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2022-12-21 `v999`//change it
+    - metadata for order now uses `Properties` of Commercetools [Orders](https://docs.commercetools.com/api/projects/orders) for example: `shippingAddress` or `country` or `Custom Fields` when starts with `custom_filed_`
 - 2022-09-15 `v5.0.1`
     - fixes to unit type discount
 - 2022-09-14 `v5.0.0`
