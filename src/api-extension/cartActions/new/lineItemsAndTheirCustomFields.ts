@@ -3,7 +3,8 @@ import { ValidateCouponsResult } from '../../types';
 import { CartAction, CartActionSetLineItemCustomType } from '../CartAction';
 import mapValidateCouponsResultToLineProductsWithFixedAmount from './helpers/fixedPrice';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
-import addFreeLineItems from './helpers/addFreeLineItems';
+import addFreeLineItems22 from './helpers/addFreeLineItems';
+import addFreeLineItems from "../addFreeLineItems";
 
 type LineItemFixedPrice = {
   lineItemId: string;
@@ -212,13 +213,16 @@ export default function lineItemsAndTheirCustomFields(
     validateCouponsResult.applicableCoupons,
   );
 
-  const freeLineItemsActions = addFreeLineItems(cart, validateCouponsResult);
+  const freeLineItemsActions = addFreeLineItems22(cart, validateCouponsResult);
+  const test = addFreeLineItems(cart, validateCouponsResult);
 
+  console.log('case 1 = ', freeLineItemsActions);
+  console.log('case 2 = ', test);
   const mergedSetLineItemCustomTypeActions = mergeSetLineItemCustomType(
     cart.lineItems,
     fixedPrice,
     freeLineItemsActions.filter(
-      (freeLineItem) => freeLineItem.action === 'setLineItemCustomType',
+      (freeLineItem) => freeLineItem?.action === 'setLineItemCustomType',
     ) as CartActionSetLineItemCustomType[],
   );
 
@@ -230,7 +234,7 @@ export default function lineItemsAndTheirCustomFields(
   return [
     ...removeActions,
     ...freeLineItemsActions.filter(
-      (freeLineItem) => freeLineItem.action !== 'setLineItemCustomType',
+      (freeLineItem) => freeLineItem?.action !== 'setLineItemCustomType',
     ),
     ...mergedSetLineItemCustomTypeActions,
   ];

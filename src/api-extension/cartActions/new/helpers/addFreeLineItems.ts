@@ -71,7 +71,7 @@ function addLineItem(
   };
 }
 
-export default function addFreeLineItems(
+export default function addFreeLineItems22(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
 ): CartAction[] {
