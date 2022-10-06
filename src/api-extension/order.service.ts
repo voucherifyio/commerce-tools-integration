@@ -39,13 +39,13 @@ export class OrderService {
     const metadata = {};
 
     const addToMataData = (variable: any, name: string) => {
-      if (typeof variable === 'number' || typeof variable === 'string') {
+      if (typeof variable !== 'object') {
         return (metadata[name] = variable);
       }
       if (Array.isArray(variable)) {
         const newArray = [];
         variable.forEach((element) => {
-          if (typeof element === 'number' || typeof element === 'string') {
+          if (typeof variable !== 'object') {
             newArray.push(element);
           }
           if (!Array.isArray(variable)) {
