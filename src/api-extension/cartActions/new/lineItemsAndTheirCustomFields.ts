@@ -134,7 +134,6 @@ function mergeSetLineItemCustomType(
           type: {
             key: 'lineItemCodesType',
           },
-          fields: {},
         } as CartActionSetLineItemCustomType;
       }),
   );
@@ -206,13 +205,13 @@ export default function lineItemsAndTheirCustomFields(
     mapValidateCouponsResultToLineProductsWithFixedAmount(
       validateCouponsResult,
     );
-  console.log(99, lineProductsWithFixedAmount, 10);
+
   const fixedPrice = getLineItemCustomFieldActions(
     cart,
     lineProductsWithFixedAmount,
     validateCouponsResult.applicableCoupons,
   );
-  console.log(111, fixedPrice, 222);
+
   const freeLineItemsActions = addFreeLineItems(cart, validateCouponsResult);
 
   const mergedSetLineItemCustomTypeActions = mergeSetLineItemCustomType(
@@ -222,17 +221,17 @@ export default function lineItemsAndTheirCustomFields(
       (freeLineItem) => freeLineItem.action === 'setLineItemCustomType',
     ) as CartActionSetLineItemCustomType[],
   );
-  console.log(99999, mergedSetLineItemCustomTypeActions, 1001010);
+
   const removeActions = removeFreeLineItemsForNonApplicableCoupon(
     cart,
     validateCouponsResult,
   );
 
   return [
-    ...mergedSetLineItemCustomTypeActions,
+    ...removeActions,
     ...freeLineItemsActions.filter(
       (freeLineItem) => freeLineItem.action !== 'setLineItemCustomType',
     ),
-    ...removeActions,
+    ...mergedSetLineItemCustomTypeActions,
   ];
 }

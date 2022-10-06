@@ -481,14 +481,15 @@ export class CartService {
       .flatMap((builder) => builder(cart, validateCouponsResult))
       .filter((e) => e);
 
-    const normalizedCartActions = this.normalizeCartActions(
-      actions,
-      cart.lineItems,
-    );
-    this.logger.debug(normalizedCartActions);
+    // const normalizedCartActions = this.normalizeCartActions(
+    //   actions,
+    //   cart.lineItems,
+    // );
+
+    this.logger.debug(actions);
     return {
       status: true,
-      actions: normalizedCartActions,
+      actions: actions,
       validateCouponsResult,
     };
   }

@@ -14,6 +14,16 @@ function addCustomLineItemWithDiscountSummary(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
 ): CartActionAddCustomLineItem[] {
+  const voucherCustomLineItem = cart.customLineItems.find(
+    (customLineItem) => customLineItem?.slug === COUPON_CUSTOM_LINE_SLUG,
+  );
+  if (voucherCustomLineItem) return [];
+
+  const { totalDiscountAmount, applicableCoupons, taxCategory } =
+    validateCouponsResult;
+
+  if (applicableCoupons.length === 0) return [];
+
   const logger = new Logger();
   const configService = new ConfigService();
   let couponText = {};
@@ -30,10 +40,7 @@ function addCustomLineItemWithDiscountSummary(
       de: 'Gutscheincodes rabatt',
     };
   }
-  const { totalDiscountAmount, applicableCoupons, taxCategory } =
-    validateCouponsResult;
 
-  if (applicableCoupons.length === 0) return [];
   const { currencyCode } = cart.totalPrice;
 
   return [
