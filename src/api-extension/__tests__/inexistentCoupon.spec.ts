@@ -1,26 +1,9 @@
-import {
-  defaultCart,
-  defaultTypeId,
-  setupCouponCodes,
-  buildPriceValue,
-  lineItemCounter,
-} from './cart.mock';
-import {
-  getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
-  getTaxCategoryServiceMockWithNotDefinedTaxCategoryResponse,
-  defaultGetCouponTaxCategoryResponse,
-} from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
-import {
-  getTypesServiceMockWithConfiguredCouponTypeResponse,
-  getTypesServiceMockWithNotDefinedCouponTypeResponse,
-} from '../../commerceTools/types/__mocks__/types.service';
+import { defaultCart, setupCouponCodes } from './cart.mock';
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../commerceTools/types/__mocks__/types.service';
 import {
   getVoucherifyConnectorServiceMockWithDefinedResponse,
-  useCartAsOrderReferenceModifier,
-  addDiscountCoupon,
-  useSessionKey,
   simulateInvalidValidation,
-  withInapplicableCoupon,
   withInexistentCoupon,
 } from '../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../commerceTools/__mocks__/commerce-tools-connector.service';
@@ -30,7 +13,7 @@ import { CartService } from '../cart.service';
 import { ProductMapper } from '../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 
-describe('when trying to apply inexistent coupon code', () => {
+describe('When trying to apply inexistent coupon code', () => {
   let cart;
   let cartService: CartService;
   let productMapper: ProductMapper;
@@ -65,7 +48,7 @@ describe('when trying to apply inexistent coupon code', () => {
       }));
   });
 
-  it('should call voucherify exactly once', async () => {
+  it('Should call voucherify exactly once', async () => {
     await cartService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
@@ -86,7 +69,7 @@ describe('when trying to apply inexistent coupon code', () => {
     );
   });
 
-  it('should return only one `setCustomField` action with information about failure', async () => {
+  it('Should return only one `setCustomField` action with information about failure', async () => {
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );

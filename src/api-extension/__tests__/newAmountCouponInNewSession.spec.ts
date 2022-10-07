@@ -1,19 +1,9 @@
-import {
-  defaultCart,
-  defaultTypeId,
-  setupCouponCodes,
-  buildPriceValue,
-  lineItemCounter,
-} from './cart.mock';
+import { defaultCart, setupCouponCodes } from './cart.mock';
 import {
   getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
-  getTaxCategoryServiceMockWithNotDefinedTaxCategoryResponse,
   defaultGetCouponTaxCategoryResponse,
 } from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
-import {
-  getTypesServiceMockWithConfiguredCouponTypeResponse,
-  getTypesServiceMockWithNotDefinedCouponTypeResponse,
-} from '../../commerceTools/types/__mocks__/types.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../commerceTools/types/__mocks__/types.service';
 import {
   getVoucherifyConnectorServiceMockWithDefinedResponse,
   useCartAsOrderReferenceModifier,
@@ -27,7 +17,7 @@ import { CartService } from '../cart.service';
 import { ProductMapper } from '../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 
-describe('when one -20€ amount voucher is provided in new session', () => {
+describe('When one -20€ amount voucher is provided in new session', () => {
   let cart;
   let cartService: CartService;
   let productMapper: ProductMapper;
@@ -64,7 +54,7 @@ describe('when one -20€ amount voucher is provided in new session', () => {
       }));
   });
 
-  it('should call voucherify exactly once', async () => {
+  it('Should call voucherify exactly once', async () => {
     await cartService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
@@ -85,7 +75,7 @@ describe('when one -20€ amount voucher is provided in new session', () => {
     );
   });
 
-  it('should assign new session with voucherify and store in cart', async () => {
+  it('Should assign new session with voucherify and store in cart', async () => {
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );
@@ -101,7 +91,7 @@ describe('when one -20€ amount voucher is provided in new session', () => {
     );
   });
 
-  it('should create "addCustomLineItem" action with coupons total value', async () => {
+  it('Should create "addCustomLineItem" action with coupons total value', async () => {
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );
@@ -128,7 +118,7 @@ describe('when one -20€ amount voucher is provided in new session', () => {
       ]),
     );
   });
-  it('should create "setCustomField" action with validated coupons', async () => {
+  it('Should create "setCustomField" action with validated coupons', async () => {
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );

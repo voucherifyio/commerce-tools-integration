@@ -1,9 +1,4 @@
-import {
-  defaultCart,
-  setupCouponCodes,
-  buildPriceValue,
-  createLineItem,
-} from './cart.mock';
+import { defaultCart, setupCouponCodes, createLineItem } from './cart.mock';
 import {
   getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
   defaultGetCouponTaxCategoryResponse,
@@ -13,44 +8,45 @@ import {
   getVoucherifyConnectorServiceMockWithDefinedResponse,
   useCartAsOrderReferenceModifier,
   useSessionKey,
-  addProductDiscount,
+  addGiftProductToCartDiscount,
 } from '../../voucherify/__mocks__/voucherify-connector.service';
-import { getCommerceToolsConnectorServiceMockWithResponse } from '../../commerceTools/__mocks__/commerce-tools-connector.service';
+import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../commerceTools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from './cart-service.factory';
-import { Coupon } from '../coupon';
 import { CartService } from '../cart.service';
 import { ProductMapper } from '../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 
-describe('when applying discount code on a specific product in the cart', () => {
+describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` effect and having that product already in cart', () => {
   let cart;
   let cartService: CartService;
   let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
-  const COUPON_CODE = 'SNEAKERS30';
-  const PRODUCT_ID = 'discounted-sneakers';
+  const COUPON_CODE = 'ADD_GIFT';
+  const SKU_ID = 'gift-sku-id';
+  const PRODUCT_ID = 'gift-product-id';
   const SESSION_KEY = 'existing-session-id';
-  const PRICE = 20000;
+  const PRODUCT_PRICE = 6500;
+  let lineItemId;
 
   beforeEach(async () => {
     cart = defaultCart();
-    cart.version = 2;
-    cart.lineItems = [
-      createLineItem({
-        name: 'Sneakers',
-        productId: PRODUCT_ID,
-        sku: `sku${PRODUCT_ID}`,
-        price: PRICE,
-        netPrice: 16807,
-        vatValue: 3193,
-        quantity: 1,
-      }),
-    ];
-    cart.totalPrice = buildPriceValue(PRICE, 'EUR');
+    cart.version = 20;
+    const item = createLineItem({
+      name: 'Free product',
+      productId: PRODUCT_ID,
+      sku: SKU_ID,
+      price: PRODUCT_PRICE,
+      netPrice: 5462,
+      vatValue: 1038,
+      quantity: 1,
+    });
+    lineItemId = item.id;
+    cart.lineItems.push(item);
     setupCouponCodes(cart, {
-      status: 'NEW',
       code: COUPON_CODE,
-    } as Coupon);
+      status: 'NEW',
+    });
+    cart.amount += PRODUCT_PRICE;
     cart.custom.fields.session = SESSION_KEY;
 
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
@@ -59,11 +55,21 @@ describe('when applying discount code on a specific product in the cart', () => 
     voucherifyConnectorService =
       getVoucherifyConnectorServiceMockWithDefinedResponse([
         useCartAsOrderReferenceModifier(cart),
-        addProductDiscount(COUPON_CODE, PRODUCT_ID, 3000),
+        addGiftProductToCartDiscount(
+          COUPON_CODE,
+          SKU_ID,
+          PRODUCT_ID,
+          PRODUCT_PRICE,
+          'ADD_MISSING_ITEMS',
+        ),
         useSessionKey(SESSION_KEY),
       ]);
     const commerceToolsConnectorService =
-      getCommerceToolsConnectorServiceMockWithResponse();
+      getCommerceToolsConnectorServiceMockWithProductResponse({
+        sku: SKU_ID,
+        price: PRODUCT_PRICE,
+        id: PRODUCT_ID,
+      });
 
     ({ cartService, productMapper } =
       await buildCartServiceWithMockedDependencies({
@@ -73,7 +79,7 @@ describe('when applying discount code on a specific product in the cart', () => 
         commerceToolsConnectorService,
       }));
   });
-  it('call voucherify once', async () => {
+  it('should call voucherify once', async () => {
     await cartService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
@@ -84,7 +90,7 @@ describe('when applying discount code on a specific product in the cart', () => 
     ).toBeCalledWith(
       [
         {
-          code: 'SNEAKERS30',
+          code: 'ADD_GIFT',
           status: 'NEW',
         },
       ],
@@ -93,10 +99,15 @@ describe('when applying discount code on a specific product in the cart', () => 
       SESSION_KEY,
     );
   });
-  it('should create `addCustomLineItem` action with total coupons value applied', async () => {
+
+  it('should create one `addCustomLineItem` with applied coupon summary', async () => {
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );
+
+    expect(
+      result.actions.filter((e) => e.action === 'addCustomLineItem'),
+    ).toHaveLength(1);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([
@@ -108,7 +119,7 @@ describe('when applying discount code on a specific product in the cart', () => 
           },
           quantity: 1,
           money: {
-            centAmount: 0,
+            centAmount: -PRODUCT_PRICE,
             type: 'centPrecision',
             currencyCode: 'EUR',
           },
@@ -119,16 +130,69 @@ describe('when applying discount code on a specific product in the cart', () => 
         }),
       ]),
     );
-
-    expect(
-      result.actions.filter((e) => e.action === 'addCustomLineItem'),
-    ).toHaveLength(1);
   });
 
-  it('should create three `setCustomField` with default values and action with storing coupon details to the cart', async () => {
+  it('should create one `changeLineItemQuantity` action with the id of the discounted product', async () => {
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );
+
+    expect(
+      result.actions.filter((e) => e.action === 'changeLineItemQuantity'),
+    ).toHaveLength(1);
+
+    expect(result.actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: 'changeLineItemQuantity',
+          lineItemId,
+          quantity: 1,
+        }),
+      ]),
+    );
+  });
+
+  it("should create one `setLineItemCustomType` action to apply items' applied_codes and one `setLineItemCustomType` to one remaining line item in cart to remove all customTypes from it", async () => {
+    const result = await cartService.validatePromotionsAndBuildCartActions(
+      cart,
+    );
+
+    expect(
+      result.actions.filter((e) => e.action === 'setLineItemCustomType'),
+    ).toHaveLength(2);
+
+    expect(result.actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: 'setLineItemCustomType',
+          lineItemId,
+          type: {
+            key: 'lineItemCodesType',
+          },
+          fields: {
+            applied_codes: [
+              JSON.stringify({
+                code: COUPON_CODE,
+                type: 'UNIT',
+                effect: 'ADD_MISSING_ITEMS',
+                quantity: 1,
+                totalDiscountQuantity: 1,
+              }),
+            ],
+          },
+        }),
+      ]),
+    );
+  });
+
+  it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
+    const result = await cartService.validatePromotionsAndBuildCartActions(
+      cart,
+    );
+
+    expect(
+      result.actions.filter((e) => e.action === 'setCustomField'),
+    ).toHaveLength(3);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([
@@ -140,14 +204,11 @@ describe('when applying discount code on a specific product in the cart', () => 
               code: COUPON_CODE,
               status: 'APPLIED',
               type: 'voucher',
-              value: 3000,
+              value: PRODUCT_PRICE,
             }),
           ],
         }),
       ]),
     );
-    expect(
-      result.actions.filter((e) => e.action === 'setCustomField'),
-    ).toHaveLength(3);
   });
 });

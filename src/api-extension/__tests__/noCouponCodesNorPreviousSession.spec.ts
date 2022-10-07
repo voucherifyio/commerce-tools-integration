@@ -1,24 +1,19 @@
 import {
   defaultCart,
-  defaultTypeId,
   setupCouponCodes,
   buildPriceValue,
   lineItemCounter,
 } from './cart.mock';
 import {
   getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
-  getTaxCategoryServiceMockWithNotDefinedTaxCategoryResponse,
   defaultGetCouponTaxCategoryResponse,
 } from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
-import {
-  getTypesServiceMockWithConfiguredCouponTypeResponse,
-  getTypesServiceMockWithNotDefinedCouponTypeResponse,
-} from '../../commerceTools/types/__mocks__/types.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../commerceTools/types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../commerceTools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from './cart-service.factory';
 
-describe('when no coupon codes provided and have no previous voucherify session,', () => {
+describe('When no coupon codes provided and have no previous voucherify session,', () => {
   it('should create "setCustomField" action with empty values and "setLineItemCustomType" with no fields for each lineItem', async () => {
     const cart = defaultCart();
     cart.version = 2;
@@ -74,7 +69,7 @@ describe('when no coupon codes provided and have no previous voucherify session,
       },
     ]);
   });
-  it('should NOT call voucherify', async () => {
+  it('Should NOT call voucherify', async () => {
     const cart = defaultCart();
     cart.version = 2;
     setupCouponCodes(cart);
@@ -100,7 +95,7 @@ describe('when no coupon codes provided and have no previous voucherify session,
       voucherifyConnectorService.validateStackableVouchersWithCTCart,
     ).not.toBeCalled();
   });
-  it('should create "removeCustomLineItem" action if had customLineItems previously', async () => {
+  it('Should create "removeCustomLineItem" action if had customLineItems previously', async () => {
     const cart = defaultCart();
     cart.version = 2;
     setupCouponCodes(cart);
@@ -148,7 +143,7 @@ describe('when no coupon codes provided and have no previous voucherify session,
       ]),
     );
   });
-  it('should NOT create "removeCustomLineItem" action when cart contains unknown custom lines', async () => {
+  it('Should NOT create "removeCustomLineItem" action when cart contains unknown custom lines', async () => {
     const cart = defaultCart();
     cart.version = 2;
     setupCouponCodes(cart);

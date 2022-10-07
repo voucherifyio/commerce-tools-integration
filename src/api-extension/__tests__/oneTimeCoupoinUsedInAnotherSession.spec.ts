@@ -1,24 +1,8 @@
-import {
-  defaultCart,
-  defaultTypeId,
-  setupCouponCodes,
-  buildPriceValue,
-  lineItemCounter,
-} from './cart.mock';
-import {
-  getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
-  getTaxCategoryServiceMockWithNotDefinedTaxCategoryResponse,
-  defaultGetCouponTaxCategoryResponse,
-} from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
-import {
-  getTypesServiceMockWithConfiguredCouponTypeResponse,
-  getTypesServiceMockWithNotDefinedCouponTypeResponse,
-} from '../../commerceTools/types/__mocks__/types.service';
+import { defaultCart, setupCouponCodes } from './cart.mock';
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../commerceTools/types/__mocks__/types.service';
 import {
   getVoucherifyConnectorServiceMockWithDefinedResponse,
-  useCartAsOrderReferenceModifier,
-  addDiscountCoupon,
-  useSessionKey,
   simulateInvalidValidation,
   withInapplicableCoupon,
 } from '../../voucherify/__mocks__/voucherify-connector.service';
@@ -29,7 +13,7 @@ import { CartService } from '../cart.service';
 import { ProductMapper } from '../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 
-describe('when one-time -20€ amount voucher is provided in another cart within another session', () => {
+describe('When one-time -20€ amount voucher is provided in another cart within another session', () => {
   let cart;
   let cartService: CartService;
   let productMapper: ProductMapper;
@@ -66,7 +50,7 @@ describe('when one-time -20€ amount voucher is provided in another cart within
       }));
   });
 
-  it('should call voucherify exactly once using session identifier', async () => {
+  it('Should call voucherify exactly once using session identifier', async () => {
     await cartService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
@@ -87,7 +71,7 @@ describe('when one-time -20€ amount voucher is provided in another cart within
     );
   });
 
-  it('should return only one `setCustomField` action with information about failure', async () => {
+  it('Should return only one `setCustomField` action with information about failure', async () => {
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );

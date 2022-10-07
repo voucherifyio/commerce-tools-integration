@@ -1,28 +1,15 @@
-import {
-  defaultCart,
-  defaultTypeId,
-  setupCouponCodes,
-  buildPriceValue,
-  lineItemCounter,
-} from './cart.mock';
+import { defaultCart, setupCouponCodes } from './cart.mock';
 import {
   getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
-  getTaxCategoryServiceMockWithNotDefinedTaxCategoryResponse,
   defaultGetCouponTaxCategoryResponse,
 } from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
-import {
-  getTypesServiceMockWithConfiguredCouponTypeResponse,
-  getTypesServiceMockWithNotDefinedCouponTypeResponse,
-} from '../../commerceTools/types/__mocks__/types.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../commerceTools/types/__mocks__/types.service';
 import {
   getVoucherifyConnectorServiceMockWithDefinedResponse,
   useCartAsOrderReferenceModifier,
   addDiscountCoupon,
   useSessionKey,
-  simulateInvalidValidation,
-  withInapplicableCoupon,
   addPercentageRateCoupon,
-  withInexistentCoupon,
 } from '../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../commerceTools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from './cart-service.factory';
@@ -30,9 +17,8 @@ import { Coupon } from '../coupon';
 import { CartService } from '../cart.service';
 import { ProductMapper } from '../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
-import { response } from 'express';
 
-describe('when another -20€ amount voucher is provided after -10% coupon in one session', () => {
+describe('When another -20€ amount voucher is provided after -10% coupon in one session', () => {
   let cart;
   let cartService: CartService;
   let productMapper: ProductMapper;
@@ -80,7 +66,7 @@ describe('when another -20€ amount voucher is provided after -10% coupon in on
       }));
   });
 
-  it('should call voucherify once', async () => {
+  it('Should call voucherify once', async () => {
     await cartService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
@@ -105,7 +91,7 @@ describe('when another -20€ amount voucher is provided after -10% coupon in on
       SESSION_KEY,
     );
   });
-  it('should create one `addCustomLineItem` action with all coupons value combined', async () => {
+  it('Should create one `addCustomLineItem` action with all coupons value combined', async () => {
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );
@@ -133,7 +119,7 @@ describe('when another -20€ amount voucher is provided after -10% coupon in on
     );
   });
 
-  it('should create one `setCustomField` action with all coupons applied', async () => {
+  it('Should create one `setCustomField` action with all coupons applied', async () => {
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );

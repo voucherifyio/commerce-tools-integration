@@ -1,31 +1,13 @@
-import {
-  defaultCart,
-  defaultTypeId,
-  setupCouponCodes,
-  buildPriceValue,
-  lineItemCounter,
-  doubleFirstLineItem,
-  createLineItem,
-} from './cart.mock';
+import { defaultCart, setupCouponCodes } from './cart.mock';
 import {
   getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
-  getTaxCategoryServiceMockWithNotDefinedTaxCategoryResponse,
   defaultGetCouponTaxCategoryResponse,
 } from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
-import {
-  getTypesServiceMockWithConfiguredCouponTypeResponse,
-  getTypesServiceMockWithNotDefinedCouponTypeResponse,
-} from '../../commerceTools/types/__mocks__/types.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../commerceTools/types/__mocks__/types.service';
 import {
   getVoucherifyConnectorServiceMockWithDefinedResponse,
   useCartAsOrderReferenceModifier,
-  addDiscountCoupon,
   useSessionKey,
-  simulateInvalidValidation,
-  withInapplicableCoupon,
-  addPercentageRateCoupon,
-  withInexistentCoupon,
-  addProductDiscount,
   addGiftProductToCartDiscount,
 } from '../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../commerceTools/__mocks__/commerce-tools-connector.service';

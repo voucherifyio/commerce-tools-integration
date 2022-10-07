@@ -1,6 +1,4 @@
 import { Test } from '@nestjs/testing';
-import { Type, TaxCategory } from '@commercetools/platform-sdk';
-
 import { CartService } from '../cart.service';
 import { TypesService } from '../../commerceTools/types/types.service';
 import { TaxCategoriesService } from '../../commerceTools/tax-categories/tax-categories.service';
