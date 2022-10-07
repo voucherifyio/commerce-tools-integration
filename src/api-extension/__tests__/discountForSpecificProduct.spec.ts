@@ -9,12 +9,7 @@ import {
   defaultGetCouponTaxCategoryResponse,
 } from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
 import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../commerceTools/types/__mocks__/types.service';
-import {
-  getVoucherifyConnectorServiceMockWithDefinedResponse,
-  useCartAsOrderReferenceModifier,
-  useSessionKey,
-  addProductDiscount,
-} from '../../voucherify/__mocks__/voucherify-connector.service';
+import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../commerceTools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from './cart-service.factory';
 import { Coupon } from '../coupon';
@@ -22,6 +17,109 @@ import { CartService } from '../cart.service';
 import { ProductMapper } from '../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 
+const voucherifyResponse = {
+  valid: true,
+  redeemables: [
+    {
+      order: {
+        id: 'e66e763f-589a-4cb8-b478-7bac59f75814',
+        source_id: 'cart-id',
+        created_at: '2022-07-07T11:26:37.521Z',
+        amount: 20000,
+        discount_amount: 0,
+        total_discount_amount: 3000,
+        initial_amount: 20000,
+        applied_discount_amount: 0,
+        total_applied_discount_amount: 3000,
+        items: [
+          {
+            sku_id: 'skudiscounted-sneakers',
+            product_id: 'discounted-sneakers',
+            related_object: 'product',
+            quantity: 1,
+            price: 20000,
+            amount: 20000,
+            object: 'order_item',
+            discount_amount: 3000,
+            applied_discount_amount: 3000,
+            subtotal_amount: 17000,
+          },
+        ],
+        metadata: {},
+        object: 'order',
+        items_discount_amount: 3000,
+        items_applied_discount_amount: 3000,
+      },
+      applicable_to: {
+        data: [
+          {
+            object: 'products_collection',
+            id: 'pc_id',
+            effect: 'APPLY_TO_EVERY',
+            strict: false,
+          },
+          {
+            object: 'sku',
+            id: 'skudiscounted-sneakers',
+            source_id: 'discounted-sneakers',
+            strict: true,
+            effect: 'APPLY_TO_EVERY',
+          },
+        ],
+        total: 2,
+        object: 'list',
+      },
+      inapplicable_to: { data: [], total: 0, object: 'list' },
+      metadata: {},
+      id: 'SNEAKERS30',
+      status: 'APPLICABLE',
+      object: 'voucher',
+      result: {
+        discount: {
+          type: 'AMOUNT',
+          effect: 'APPLY_TO_ITEMS',
+          amount_off: 3000,
+        },
+      },
+    },
+  ],
+  order: {
+    id: 'e66e763f-589a-4cb8-b478-7bac59f75814',
+    source_id: 'cart-id',
+    created_at: '2022-07-07T11:26:37.521Z',
+    amount: 20000,
+    discount_amount: 3000,
+    total_discount_amount: 3000,
+    initial_amount: 20000,
+    applied_discount_amount: 0,
+    total_applied_discount_amount: 0,
+    items: [
+      {
+        sku_id: 'skudiscounted-sneakers',
+        product_id: 'discounted-sneakers',
+        related_object: 'product',
+        quantity: 1,
+        price: 20000,
+        amount: 20000,
+        object: 'order_item',
+        discount_amount: 3000,
+        applied_discount_amount: 3000,
+        subtotal_amount: 17000,
+      },
+    ],
+    metadata: {},
+    object: 'order',
+    items_discount_amount: 3000,
+    items_applied_discount_amount: 3000,
+  },
+  tracking_id: 'track_zTa+v4d+mc0ixHNURqEvtCLxvdT5orvdtWeqzafQxfA5XDblMYxS/w==',
+  session: {
+    key: 'existing-session-id',
+    type: 'LOCK',
+    ttl: 7,
+    ttl_unit: 'DAYS',
+  },
+};
 describe('when applying discount code on a specific product in the cart', () => {
   let cart;
   let cartService: CartService;
@@ -57,11 +155,7 @@ describe('when applying discount code on a specific product in the cart', () => 
     const taxCategoriesService =
       getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();
     voucherifyConnectorService =
-      getVoucherifyConnectorServiceMockWithDefinedResponse([
-        useCartAsOrderReferenceModifier(cart),
-        addProductDiscount(COUPON_CODE, PRODUCT_ID, 3000),
-        useSessionKey(SESSION_KEY),
-      ]);
+      getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
     const commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithResponse();
 
