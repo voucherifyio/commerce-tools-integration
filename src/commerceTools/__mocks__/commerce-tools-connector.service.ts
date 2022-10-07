@@ -66,6 +66,56 @@ export const getCommerceToolsConnectorServiceMockWithResponse = () => {
   return commerceToolsConnectoService;
 };
 
+type Product = {
+  sku: string;
+  price: number;
+  id: string;
+};
+export const getCommerceToolsConnectorServiceMockWithProductResponse = (
+  product: Product,
+) => {
+  const commerceToolsConnectoService = jest.createMockFromModule(
+    '../commerce-tools-connector.service',
+  ) as CommerceToolsConnectorService;
+
+  const products: any = {
+    body: {
+      results: [
+        {
+          id: product.id,
+          masterData: {
+            current: {
+              variants: [
+                {
+                  sku: product.sku,
+                  prices: [
+                    {
+                      value: {
+                        centAmount: product.price,
+                        currencyCode: 'EUR',
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ],
+    },
+  };
+
+  commerceToolsConnectoService.getClient = jest.fn().mockReturnValue({
+    products: jest.fn().mockReturnValue({
+      get: jest.fn().mockReturnValue({
+        execute: jest.fn().mockReturnValue(products),
+      }),
+    }),
+  });
+
+  return commerceToolsConnectoService;
+};
+
 const commerceToolsConnectoService = jest.createMockFromModule(
   '../commerce-tools-connector.service',
 ) as MockedCommerceToolsConectorService;

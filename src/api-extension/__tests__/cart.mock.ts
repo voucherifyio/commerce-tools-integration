@@ -138,3 +138,22 @@ export const setupCouponCodes = (cart, ...coupons: Coupon[]) => {
     },
   };
 };
+
+declare type itemAmountProvider = (item: LineItem) => number;
+
+export const doubleFirstLineItem = (cart) => {
+  const item = cart.lineItems[0];
+  item.quantity *= 2;
+  item.state[0].quantity *= 2;
+  item.totalPrice.centAmount *= 2;
+  item.taxedPrice.totalNet.centAmount *= 2;
+  item.taxedPrice.totalGross.centAmount *= 2;
+  item.taxedPrice.totalTax.centAmount *= 2;
+
+  const sum = (provider: itemAmountProvider) =>
+    cart.lineItems.reduce(
+      (total: number, item: LineItem) => total + provider(item),
+      0,
+    );
+  cart.totalPrice.centAmount = sum((item) => item.totalPrice.centAmount);
+};

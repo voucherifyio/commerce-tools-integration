@@ -288,6 +288,159 @@ export const addPercentageRateCoupon =
     };
   };
 
+export const addProductDiscount =
+  (
+    couponCode: string,
+    productId: string,
+    amount: number,
+    status: StackableRedeemableResponseStatus = 'APPLICABLE',
+  ) =>
+  (
+    response: ValidationValidateStackableResponse,
+  ): ValidationValidateStackableResponse => {
+    const newResponse = useRedeemable(
+      {
+        id: couponCode,
+        status,
+        object: 'voucher',
+        result: {
+          discount: {
+            type: 'AMOUNT',
+            effect: 'APPLY_TO_ITEMS',
+            amount_off: amount,
+          },
+        },
+        applicable_to: {
+          data: [
+            {
+              object: 'products_collection',
+              id: 'pc_id',
+              effect: 'APPLY_TO_EVERY',
+              strict: false,
+            },
+            {
+              object: 'sku',
+              id: `sku${productId}`,
+              source_id: productId,
+              strict: true,
+              effect: 'APPLY_TO_EVERY',
+            },
+          ],
+          total: 2,
+          object: 'list',
+        },
+      },
+      amount,
+      true,
+    )(response);
+
+    const item = newResponse.order.items.find(
+      (i) => i.product_id === productId,
+    );
+
+    if (item) {
+      Object.assign(item, {
+        discount_amount: amount,
+        applied_discount_amount: amount,
+        subtotal_amount: item.amount - amount,
+      });
+    }
+    const { order } = newResponse;
+
+    return {
+      ...newResponse,
+      order: {
+        ...newResponse.order,
+        discount_amount: order.discount_amount + amount,
+        total_discount_amount: order.total_discount_amount + amount,
+        items_discount_amount: order.items_discount_amount + amount,
+        items_applied_discount_amount:
+          order.items_applied_discount_amount + amount,
+      },
+    };
+  };
+
+export const addGiftProductToCartDiscount =
+  (
+    couponCode,
+    skuId,
+    productId,
+    productPrice,
+    effect: DiscountVouchersEffectTypes = 'ADD_NEW_ITEMS',
+    status: StackableRedeemableResponseStatus = 'APPLICABLE',
+  ) =>
+  (
+    response: ValidationValidateStackableResponse,
+  ): ValidationValidateStackableResponse => {
+    const newResponse = useRedeemable(
+      {
+        id: couponCode,
+        status,
+        object: 'voucher',
+        result: {
+          discount: {
+            type: 'UNIT',
+            effect,
+            unit_off: 1,
+            unit_type: productId,
+            sku: {
+              id: 'sku-id',
+              source_id: skuId,
+            },
+            product: {
+              id: 'product-id',
+              source_id: productId,
+            },
+          },
+        },
+      },
+      productPrice,
+      true,
+    )(response);
+    const { order } = newResponse;
+
+    Object.assign(newResponse.order, {
+      initial_amount: order.amount,
+      amount: order.amount + productPrice,
+      items_discount_amount: order.items_discount_amount + productPrice,
+      total_discount_amount: order.total_discount_amount + productPrice,
+      items_applied_discount_amount:
+        order.items_applied_discount_amount + productPrice,
+      total_applied_discount_amount:
+        order.total_applied_discount_amount + productPrice,
+    });
+    const { redeemables } = newResponse;
+    const lastRedeemable = redeemables[redeemables.length - 1];
+    lastRedeemable.order.items = lastRedeemable.order.items || [];
+    lastRedeemable.order.items.push({
+      source_id: skuId,
+      related_object: 'sku',
+      product_id: productId,
+      quantity: 1,
+      discount_quantity: 1,
+      initial_quantity: 1,
+      amount: productPrice,
+      discount_amount: productPrice,
+      initial_amount: productPrice,
+      applied_discount_amount: productPrice,
+      price: productPrice,
+      subtotal_amount: 0,
+      product: {
+        id: 'product-id',
+        source_id: productId,
+        override: true,
+      },
+      sku: {
+        id: 'sku-id',
+        source_id: skuId,
+        price: productPrice,
+        override: true,
+      },
+    } as any);
+
+    return newResponse;
+  };
+
 interface MockedVoucherifyConnectorService extends VoucherifyConnectorService {
   __simulateDefaultValidateStackable: () => MockedVoucherifyConnectorService;
   __useCartAsOrderReference: (cart: Cart) => MockedVoucherifyConnectorService;
