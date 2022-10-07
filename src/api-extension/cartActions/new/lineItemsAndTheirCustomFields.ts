@@ -3,8 +3,7 @@ import { ValidateCouponsResult } from '../../types';
 import { CartAction, CartActionSetLineItemCustomType } from '../CartAction';
 import mapValidateCouponsResultToLineProductsWithFixedAmount from './helpers/fixedPrice';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
-import addFreeLineItems22 from './helpers/addFreeLineItems';
-import addFreeLineItems from '../addFreeLineItems';
+import addFreeLineItems from './helpers/addFreeLineItems';
 
 type LineItemFixedPrice = {
   lineItemId: string;
@@ -78,6 +77,77 @@ function getLineItemCustomFieldActions(
 
 function mergeSetLineItemCustomType(
   lineItems: LineItem[],
+  lineItemFixedPrices,
+  setLineItemCustomTypeActions: CartActionSetLineItemCustomType[],
+  applicableCoupons: StackableRedeemableResponse[],
+) {
+  const applicableCouponsIds = applicableCoupons.map(
+    (couponData) => couponData.id,
+  );
+  console.log('length = ', lineItems.length);
+  return lineItems.map((lineItem) => {
+    const action = {
+      action: 'setLineItemCustomType',
+      lineItemId: lineItem.id,
+      type: {
+        key: 'lineItemCodesType',
+      },
+      fields: {},
+    } as CartActionSetLineItemCustomType;
+
+    const lineItemWithFixedAmount = lineItemFixedPrices.filter(
+      (lineItemWithFixedAmount) =>
+        lineItem.productId === lineItemWithFixedAmount.product.source_id,
+    );
+
+    console.log('produkt id = ', lineItem.productId);
+    console.log('fixed prices = ', lineItemFixedPrices);
+    console.log('filtered = ', lineItemWithFixedAmount, 11);
+
+    if (lineItemWithFixedAmount.length > 0) {
+      action.fields.coupon_fixed_price =
+        lineItemWithFixedAmount[0].couponFixedPrice;
+    }
+
+    const singleSetLineItemCustomTypeAction =
+      setLineItemCustomTypeActions.filter(
+        (setLineItemCustomTypeAction) =>
+          lineItem.id === setLineItemCustomTypeAction.lineItemId,
+      );
+
+    console.log('actions = ', setLineItemCustomTypeActions);
+    console.log('filtered = ', singleSetLineItemCustomTypeAction);
+
+    if (singleSetLineItemCustomTypeAction.length > 0) {
+      action.fields.applied_codes =
+        singleSetLineItemCustomTypeAction[0].fields.applied_codes;
+    } else {
+      const applied_codes = lineItem.custom?.fields?.applied_codes;
+      if (applied_codes?.length) {
+        let _applied_codes = applied_codes
+          .map((codeString) => JSON.parse(codeString))
+          .filter((codeData) => applicableCouponsIds.includes(codeData.code));
+        let totalDiscountQuantity = 0;
+        for (const applied_code of _applied_codes) {
+          totalDiscountQuantity += applied_code.quantity;
+        }
+        _applied_codes = _applied_codes
+          .filter((codeData) => codeData.quantity > 0)
+          .map((codeData) => {
+            return { ...codeData, totalDiscountQuantity };
+          });
+        action.fields.applied_codes = _applied_codes.map((codeData) =>
+          JSON.stringify(codeData),
+        );
+      }
+    }
+
+    return action;
+  });
+}
+
+function mergeSetLineItemCustomType12312(
+  lineItems: LineItem[],
   lineItemFixedPrices: LineItemFixedPrice[],
   setLineItemCustomTypeActions: CartActionSetLineItemCustomType[],
 ) {
@@ -92,7 +162,7 @@ function mergeSetLineItemCustomType(
           lineItemFixedPrice.lineItemId ===
           setLineItemCustomTypeAction.lineItemId,
       )?.couponFixedPrice;
-      console.log(lineItemFixedPrices);
+
       if (couponFixedPrice >= 0) {
         setLineItemCustomTypeAction.fields.coupon_fixed_price =
           couponFixedPrice;
@@ -207,23 +277,21 @@ export default function lineItemsAndTheirCustomFields(
       validateCouponsResult,
     );
 
-  const fixedPrice = getLineItemCustomFieldActions(
-    cart,
-    lineProductsWithFixedAmount,
-    validateCouponsResult.applicableCoupons,
-  );
+  // const fixedPrice = getLineItemCustomFieldActions(
+  //   cart,
+  //   lineProductsWithFixedAmount,
+  //   validateCouponsResult.applicableCoupons,
+  // );
 
-  const freeLineItemsActions = addFreeLineItems22(cart, validateCouponsResult);
-  const test = addFreeLineItems(cart, validateCouponsResult);
+  const freeLineItemsActions = addFreeLineItems(cart, validateCouponsResult);
 
-  console.log('case 1 = ', freeLineItemsActions);
-  console.log('case 2 = ', test);
   const mergedSetLineItemCustomTypeActions = mergeSetLineItemCustomType(
     cart.lineItems,
-    fixedPrice,
+    lineProductsWithFixedAmount,
     freeLineItemsActions.filter(
       (freeLineItem) => freeLineItem?.action === 'setLineItemCustomType',
     ) as CartActionSetLineItemCustomType[],
+    validateCouponsResult.applicableCoupons,
   );
 
   const removeActions = removeFreeLineItemsForNonApplicableCoupon(
@@ -232,10 +300,11 @@ export default function lineItemsAndTheirCustomFields(
   );
 
   return [
-    ...removeActions,
+    // ...freeLineItemsActions,
     ...freeLineItemsActions.filter(
       (freeLineItem) => freeLineItem?.action !== 'setLineItemCustomType',
     ),
     ...mergedSetLineItemCustomTypeActions,
+    ...removeActions,
   ];
 }
