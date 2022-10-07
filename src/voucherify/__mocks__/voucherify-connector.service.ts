@@ -220,6 +220,74 @@ export const withInapplicableCoupon =
     };
   };
 
+export const withInexistentCoupon =
+  (couponCode: string) =>
+  (
+    response: ValidationValidateStackableResponse,
+  ): ValidationValidateStackableResponse => {
+    return {
+      ...response,
+      redeemables: [
+        ...response.redeemables,
+        {
+          status: 'INAPPLICABLE',
+          id: couponCode,
+          object: 'voucher',
+          result: {
+            error: {
+              code: 404,
+              key: 'not_found',
+              message: 'Resource not found',
+              details: `Cannot find voucher with id ${couponCode}`,
+              request_id: 'v-123123123123',
+            },
+          },
+        },
+      ],
+    };
+  };
+
+export const addPercentageRateCoupon =
+  (
+    couponCode: string,
+    percentage: number,
+    status: StackableRedeemableResponseStatus = 'APPLICABLE',
+  ) =>
+  (
+    response: ValidationValidateStackableResponse,
+  ): ValidationValidateStackableResponse => {
+    const { order } = response;
+    const discount = Math.round((order.amount * percentage) / 100);
+
+    const newResponse = useRedeemable(
+      {
+        id: couponCode,
+        status,
+        object: 'voucher',
+        result: {
+          discount: {
+            type: 'PERCENT',
+            effect: 'APPLY_TO_ORDER',
+            percent_off: percentage,
+          },
+        },
+      },
+      discount,
+    )(response);
+
+    return {
+      ...newResponse,
+      order: {
+        ...newResponse.order,
+        discount_amount: order.discount_amount + discount,
+        total_discount_amount: order.total_discount_amount + discount,
+        applied_discount_amount: order.applied_discount_amount + discount,
+        total_applied_discount_amount:
+          order.total_applied_discount_amount + discount,
+      },
+    };
+  };
+
 interface MockedVoucherifyConnectorService extends VoucherifyConnectorService {
   __simulateDefaultValidateStackable: () => MockedVoucherifyConnectorService;
   __useCartAsOrderReference: (cart: Cart) => MockedVoucherifyConnectorService;
