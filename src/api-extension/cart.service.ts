@@ -162,12 +162,12 @@ export class CartService {
         ? this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT')
         : 5;
 
-    const promotions =
-      await this.voucherifyConnectorService.getAvailablePromotions(
-        cart,
-        this.productMapper.mapLineItems(cart.lineItems),
-      );
-
+    // const promotions =
+    //   await this.voucherifyConnectorService.getAvailablePromotions(
+    //     cart,
+    //     this.productMapper.mapLineItems(cart.lineItems),
+    //   );
+    const promotions = []
     const availablePromotions = promotions
       .filter((promo) => {
         if (!coupons.length) {
@@ -481,10 +481,8 @@ export class CartService {
       .flatMap((builder) => builder(cart, validateCouponsResult))
       .filter((e) => e);
 
-    // const normalizedCartActions = this.normalizeCartActions(
-    //   actions,
-    //   cart.lineItems,
-    // );
+    console.log(actions);
+
     this.logger.debug(actions);
     return {
       status: true,

@@ -39,8 +39,14 @@ function getShippingProductSourceIds(
     ...new Set(
       applicableCoupons
         .filter((coupon) => coupon.result.discount?.type === 'UNIT')
-        .map((coupon) => {
-          return coupon.result.discount?.product?.source_id;
+        .flatMap((coupon) => {
+          if (coupon.result.discount?.units) {
+            return coupon.result.discount.units.map((unit) => {
+              return unit?.product?.source_id;
+            });
+          } else {
+            return coupon.result.discount?.product?.source_id;
+          }
         })
         .filter((coupon) => coupon != undefined),
     ),
