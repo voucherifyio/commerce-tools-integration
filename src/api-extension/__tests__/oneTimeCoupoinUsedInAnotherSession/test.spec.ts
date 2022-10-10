@@ -1,7 +1,4 @@
-import {
-  getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
-  defaultGetCouponTaxCategoryResponse,
-} from '../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
 import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commerceTools/types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commerceTools/__mocks__/commerce-tools-connector.service';
@@ -11,12 +8,13 @@ import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
-describe('when applying discount code on a specific product in the cart', () => {
+
+describe('When one-time -20€ amount voucher is provided in another cart within another session', () => {
   let cartService: CartService;
   let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
-  const COUPON_CODE = 'SNEAKERS30';
-  const SESSION_KEY = 'existing-session-id';
+  const COUPON_CODE = 'AMOUNT20';
+  const NEW_SESSION_ID = 'new-session-id';
 
   beforeEach(async () => {
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
@@ -35,7 +33,8 @@ describe('when applying discount code on a specific product in the cart', () => 
         commerceToolsConnectorService,
       }));
   });
-  it('call voucherify once', async () => {
+
+  it('Should call voucherify exactly once using session identifier', async () => {
     await cartService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
@@ -46,70 +45,29 @@ describe('when applying discount code on a specific product in the cart', () => 
     ).toBeCalledWith(
       [
         {
-          code: 'SNEAKERS30',
+          code: COUPON_CODE,
           status: 'NEW',
         },
       ],
       cart,
       productMapper.mapLineItems(cart.lineItems),
-      SESSION_KEY,
+      NEW_SESSION_ID,
     );
   });
-  it('should create `addCustomLineItem` action with total coupons value applied', async () => {
+
+  it('Should return only one `setCustomField` action with information about failure', async () => {
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );
 
-    expect(result.actions).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          action: 'addCustomLineItem',
-          name: {
-            de: 'Gutscheincodes rabatt',
-            en: 'Coupon codes discount',
-          },
-          quantity: 1,
-          money: {
-            centAmount: 0,
-            type: 'centPrecision',
-            currencyCode: 'EUR',
-          },
-          slug: 'Voucher, ',
-          taxCategory: {
-            id: defaultGetCouponTaxCategoryResponse.id,
-          },
-        }),
-      ]),
-    );
-
-    expect(
-      result.actions.filter((e) => e.action === 'addCustomLineItem'),
-    ).toHaveLength(1);
-  });
-
-  it('should create three `setCustomField` with default values and action with storing coupon details to the cart', async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
-
-    expect(result.actions).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          action: 'setCustomField',
-          name: 'discount_codes',
-          value: [
-            JSON.stringify({
-              code: COUPON_CODE,
-              status: 'APPLIED',
-              type: 'voucher',
-              value: 3000,
-            }),
-          ],
-        }),
-      ]),
-    );
-    expect(
-      result.actions.filter((e) => e.action === 'setCustomField'),
-    ).toHaveLength(3);
+    expect(result.actions).toEqual([
+      {
+        action: 'setCustomField',
+        name: 'discount_codes',
+        value: [
+          '{"code":"AMOUNT20","status":"NOT_APPLIED","errMsg":"quantity exceeded"}',
+        ],
+      },
+    ]);
   });
 });

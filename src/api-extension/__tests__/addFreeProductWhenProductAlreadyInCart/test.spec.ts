@@ -1,4 +1,3 @@
-import { defaultCart, setupCouponCodes, createLineItem } from '../cart.mock';
 import {
   getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
   defaultGetCouponTaxCategoryResponse,

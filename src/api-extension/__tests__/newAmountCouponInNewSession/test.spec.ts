@@ -1,93 +1,17 @@
-import { defaultCart, setupCouponCodes } from './cart.mock';
 import {
   getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
   defaultGetCouponTaxCategoryResponse,
-} from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
-import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../commerceTools/types/__mocks__/types.service';
-import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../voucherify/__mocks__/voucherify-connector.service';
-import { getCommerceToolsConnectorServiceMockWithResponse } from '../../commerceTools/__mocks__/commerce-tools-connector.service';
-import { buildCartServiceWithMockedDependencies } from './cart-service.factory';
-import { Coupon } from '../coupon';
-import { CartService } from '../cart.service';
-import { ProductMapper } from '../mappers/product';
+} from '../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commerceTools/types/__mocks__/types.service';
+import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
+import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commerceTools/__mocks__/commerce-tools-connector.service';
+import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
+import { CartService } from '../../cart.service';
+import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
-
-const voucherifyResponse = {
-  valid: true,
-  redeemables: [
-    {
-      order: {
-        id: 'e66e763f-589a-4cb8-b478-7bac59f75814',
-        source_id: 'cart-id',
-        created_at: '2022-07-07T11:26:37.521Z',
-        amount: 26500,
-        discount_amount: 2000,
-        total_discount_amount: 2000,
-        initial_amount: 26500,
-        applied_discount_amount: 2000,
-        total_applied_discount_amount: 2000,
-        items: [
-          {
-            sku_id: 'product-sku1',
-            product_id: 'product-id',
-            related_object: 'product',
-            quantity: 1,
-            price: 26500,
-            amount: 26500,
-            object: 'order_item',
-          },
-        ],
-        metadata: {},
-        object: 'order',
-        items_discount_amount: 0,
-        items_applied_discount_amount: 0,
-      },
-      applicable_to: { data: [], total: 0, object: 'list' },
-      inapplicable_to: { data: [], total: 0, object: 'list' },
-      metadata: {},
-      id: 'AMOUNT20',
-      status: 'APPLICABLE',
-      object: 'voucher',
-      result: {
-        discount: {
-          type: 'AMOUNT',
-          effect: 'APPLY_TO_ORDER',
-          amount_off: 2000,
-        },
-      },
-    },
-  ],
-  order: {
-    id: 'e66e763f-589a-4cb8-b478-7bac59f75814',
-    source_id: 'cart-id',
-    created_at: '2022-07-07T11:26:37.521Z',
-    amount: 26500,
-    discount_amount: 2000,
-    total_discount_amount: 2000,
-    initial_amount: 26500,
-    applied_discount_amount: 2000,
-    total_applied_discount_amount: 2000,
-    items: [
-      {
-        sku_id: 'product-sku1',
-        product_id: 'product-id',
-        related_object: 'product',
-        quantity: 1,
-        price: 26500,
-        amount: 26500,
-        object: 'order_item',
-      },
-    ],
-    metadata: {},
-    object: 'order',
-    items_discount_amount: 0,
-    items_applied_discount_amount: 0,
-  },
-  tracking_id: 'track_zTa+v4d+mc0ixHNURqEvtCLxvdT5orvdtWeqzafQxfA5XDblMYxS/w==',
-  session: { key: 'new-session-id', type: 'LOCK', ttl: 7, ttl_unit: 'DAYS' },
-};
+import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
+import { cart } from './snapshots/cart.snapshot';
 describe('When one -20€ amount voucher is provided in new session', () => {
-  let cart;
   let cartService: CartService;
   let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
@@ -95,13 +19,6 @@ describe('When one -20€ amount voucher is provided in new session', () => {
   const SESSION_KEY = 'new-session-id';
 
   beforeEach(async () => {
-    cart = defaultCart();
-    cart.version = 2;
-    setupCouponCodes(cart, {
-      code: COUPON_CODE,
-      status: 'NEW',
-    } as Coupon);
-
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
     const taxCategoriesService =
       getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();

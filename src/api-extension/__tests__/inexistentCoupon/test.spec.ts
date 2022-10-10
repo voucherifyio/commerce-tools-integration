@@ -1,95 +1,20 @@
-import { defaultCart, setupCouponCodes } from './cart.mock';
-import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../commerceTools/tax-categories/__mocks__/tax-categories.service';
-import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../commerceTools/types/__mocks__/types.service';
-import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../voucherify/__mocks__/voucherify-connector.service';
-import { getCommerceToolsConnectorServiceMockWithResponse } from '../../commerceTools/__mocks__/commerce-tools-connector.service';
-import { buildCartServiceWithMockedDependencies } from './cart-service.factory';
-import { Coupon } from '../coupon';
-import { CartService } from '../cart.service';
-import { ProductMapper } from '../mappers/product';
-import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commerceTools/types/__mocks__/types.service';
+import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
+import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commerceTools/__mocks__/commerce-tools-connector.service';
+import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 
-const voucherifyResponse = {
-  valid: false,
-  redeemables: [
-    {
-      status: 'INAPPLICABLE',
-      id: 'NOT EXIST',
-      object: 'voucher',
-      result: {
-        error: {
-          code: 404,
-          key: 'not_found',
-          message: 'Resource not found',
-          details: 'Cannot find voucher with id NOT EXIST',
-          request_id: 'v-123123123123',
-        },
-      },
-    },
-  ],
-  order: {
-    id: 'e66e763f-589a-4cb8-b478-7bac59f75814',
-    source_id: 'e66e763f-589a-4cb8-b478-7bac59f75814',
-    created_at: '2022-07-07T11:26:37.521Z',
-    amount: 29200,
-    discount_amount: 0,
-    total_discount_amount: 0,
-    initial_amount: 29200,
-    applied_discount_amount: 0,
-    total_applied_discount_amount: 0,
-    items: [
-      {
-        object: 'order_item',
-        source_id: 'M0E20000000E1AZ',
-        related_object: 'sku',
-        product_id: 'prod_0b5672a19f4147f017',
-        quantity: 1,
-        amount: 12000,
-        price: 12000,
-        subtotal_amount: 12000,
-        product: {
-          id: 'prod_0b5672a19f4147f017',
-          source_id: '9050a5d2-8f14-4e01-bcdc-c100dd1b441f',
-          name: 'Sneakers New Balance multi',
-          override: true,
-        },
-        sku: {
-          id: 'sku_0b56734248814789a5',
-          source_id: 'M0E20000000E1AZ',
-          sku: 'Sneakers New Balance multi',
-          price: 12000,
-          override: true,
-        },
-      },
-    ],
-    metadata: {},
-    object: 'order',
-    items_discount_amount: 0,
-    items_applied_discount_amount: 0,
-  },
-  tracking_id: 'track_zTa+v4d+mc0ixHNURqEvtCLxvdT5orvdtWeqzafQxfA5XDblMYxS/w==',
-  session: {
-    key: 'ssn_HFTS1dgkRTrJikmCfKAUbDEmGrXpScuw',
-    type: 'LOCK',
-    ttl: 7,
-    ttl_unit: 'DAYS',
-  },
-};
+import { CartService } from '../../cart.service';
+import { ProductMapper } from '../../mappers/product';
+import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
+import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
+import { cart } from './snapshots/cart.snapshot';
 describe('When trying to apply inexistent coupon code', () => {
-  let cart;
   let cartService: CartService;
   let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
-  const COUPON_CODE = 'NOT EXIST';
 
   beforeEach(async () => {
-    cart = defaultCart();
-    cart.version = 2;
-    setupCouponCodes(cart, {
-      code: COUPON_CODE,
-      status: 'NEW',
-    } as Coupon);
-
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
     const taxCategoriesService =
       getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();

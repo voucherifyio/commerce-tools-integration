@@ -1,4 +1,3 @@
-import { defaultCart, defaultTypeId } from '../cart.mock';
 import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
 import {
   getTypesServiceMockWithConfiguredCouponTypeResponse,
@@ -27,7 +26,7 @@ describe('Cart custom types', () => {
         {
           action: 'setCustomType',
           type: {
-            id: defaultTypeId,
+            id: '5aa76235-9d61-41c7-9d57-278b2bcc2f75',
           },
           name: 'couponCodes',
         },
@@ -38,7 +37,6 @@ describe('Cart custom types', () => {
   });
 
   it('Should throw error if "couponCodes" type is not found', async () => {
-    const cart = defaultCart();
     const typesService = getTypesServiceMockWithNotDefinedCouponTypeResponse();
     const taxCategoriesService =
       getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();

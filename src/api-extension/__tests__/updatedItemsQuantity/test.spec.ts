@@ -4,22 +4,20 @@ import {
 } from '../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
 import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commerceTools/types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
-import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../../commerceTools/__mocks__/commerce-tools-connector.service';
+import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commerceTools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 import { CartService } from '../../cart.service';
 import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
-describe('when applying discount code which adds free product to the cart', () => {
+describe('When two discount codes (percentage and amount) are already applied and quantity of items have been updated', () => {
   let cartService: CartService;
   let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
-  const COUPON_CODE = 'ADD_GIFT';
-  const SKU_ID = 'gift-sku-id';
-  const PRODUCT_ID = 'gift-product-id';
+  const FIRST_COUPON_CODE = 'PERC10';
+  const SECOND_COUPON_CODE = 'AMOUNT20';
   const SESSION_KEY = 'existing-session-id';
-  const PRODUCT_PRICE = 6500;
 
   beforeEach(async () => {
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
@@ -28,11 +26,7 @@ describe('when applying discount code which adds free product to the cart', () =
     voucherifyConnectorService =
       getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
     const commerceToolsConnectorService =
-      getCommerceToolsConnectorServiceMockWithProductResponse({
-        sku: SKU_ID,
-        price: PRODUCT_PRICE,
-        id: PRODUCT_ID,
-      });
+      getCommerceToolsConnectorServiceMockWithResponse();
 
     ({ cartService, productMapper } =
       await buildCartServiceWithMockedDependencies({
@@ -42,8 +36,7 @@ describe('when applying discount code which adds free product to the cart', () =
         commerceToolsConnectorService,
       }));
   });
-
-  it('should call voucherify once', async () => {
+  it('Should call voucherify to validate applied coupons again against updated cart', async () => {
     await cartService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
@@ -54,8 +47,14 @@ describe('when applying discount code which adds free product to the cart', () =
     ).toBeCalledWith(
       [
         {
-          code: 'ADD_GIFT',
-          status: 'NEW',
+          code: 'PERC10',
+          status: 'APPLIED',
+          value: 2650,
+        },
+        {
+          code: 'AMOUNT20',
+          status: 'APPLIED',
+          value: 2000,
         },
       ],
       cart,
@@ -64,41 +63,7 @@ describe('when applying discount code which adds free product to the cart', () =
     );
   });
 
-  it('should create `addLineItem` action with gift product', async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
-
-    expect(result.actions).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          action: 'addLineItem',
-          sku: SKU_ID,
-          quantity: 1,
-          custom: {
-            typeKey: 'lineItemCodesType',
-            fields: {
-              applied_codes: [
-                JSON.stringify({
-                  code: COUPON_CODE,
-                  type: 'UNIT',
-                  effect: 'ADD_NEW_ITEMS',
-                  quantity: 1,
-                  totalDiscountQuantity: 1,
-                }),
-              ],
-            },
-          },
-        }),
-      ]),
-    );
-
-    expect(
-      result.actions.filter((e) => e.action === 'addLineItem'),
-    ).toHaveLength(1);
-  });
-
-  it('should create `addCustomLineItem` action with total coupons value applied', async () => {
+  it('Should create one `addCustomLineItem` action with all coupons value combined', async () => {
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );
@@ -113,23 +78,24 @@ describe('when applying discount code which adds free product to the cart', () =
           },
           quantity: 1,
           money: {
-            centAmount: -6500,
+            centAmount: -7300,
             type: 'centPrecision',
             currencyCode: 'EUR',
           },
-          slug: 'Voucher, ',
+          slug: `Voucher, `,
           taxCategory: {
             id: defaultGetCouponTaxCategoryResponse.id,
           },
         }),
       ]),
     );
+
     expect(
       result.actions.filter((e) => e.action === 'addCustomLineItem'),
     ).toHaveLength(1);
   });
 
-  it('should create three `setCustomField` for default customFields settings and action storing coupon details to the cart', async () => {
+  it('Should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
     );
@@ -141,15 +107,22 @@ describe('when applying discount code which adds free product to the cart', () =
           name: 'discount_codes',
           value: [
             JSON.stringify({
-              code: COUPON_CODE,
+              code: FIRST_COUPON_CODE,
               status: 'APPLIED',
               type: 'voucher',
-              value: 6500,
+              value: 5300,
+            }),
+            JSON.stringify({
+              code: SECOND_COUPON_CODE,
+              status: 'APPLIED',
+              type: 'voucher',
+              value: 2000,
             }),
           ],
         }),
       ]),
     );
+
     expect(
       result.actions.filter((e) => e.action === 'setCustomField'),
     ).toHaveLength(3);
