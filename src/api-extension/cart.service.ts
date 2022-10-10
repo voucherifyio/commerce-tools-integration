@@ -167,7 +167,7 @@ export class CartService {
     //     cart,
     //     this.productMapper.mapLineItems(cart.lineItems),
     //   );
-    const promotions = []
+    const promotions = [];
     const availablePromotions = promotions
       .filter((promo) => {
         if (!coupons.length) {
