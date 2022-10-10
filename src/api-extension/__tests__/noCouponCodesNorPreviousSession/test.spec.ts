@@ -1,7 +1,4 @@
-import {
-  getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
-  defaultGetCouponTaxCategoryResponse,
-} from '../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
 import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commerceTools/types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commerceTools/__mocks__/commerce-tools-connector.service';
