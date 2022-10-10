@@ -15,7 +15,7 @@ export default function getCartActionBuilders(
   const cartActionBuilders = [] as CartActionsBuilder[]; //setCustomField
 
   cartActionBuilders.push(
-    ...[customLineItems, setCustomFields, lineItemsAndTheirCustomFields],
+    ...[customLineItems, lineItemsAndTheirCustomFields, setCustomFields],
   );
 
   if (valid || !onlyNewCouponsFailed) {

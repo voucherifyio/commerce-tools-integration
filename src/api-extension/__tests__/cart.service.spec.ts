@@ -363,14 +363,12 @@ describe('CartService', () => {
 
         expect(result.actions).toEqual([
           {
-            action: 'setCustomField',
-            name: 'shippingProductSourceIds',
-            value: [],
-          },
-          {
-            action: 'setCustomField',
-            name: 'couponsLimit',
-            value: 5,
+            action: 'setLineItemCustomType',
+            fields: {},
+            lineItemId: `line-item-id-${lineItemCounter}`,
+            type: {
+              key: 'lineItemCodesType',
+            },
           },
           {
             action: 'setCustomField',
@@ -383,12 +381,14 @@ describe('CartService', () => {
             value: false,
           },
           {
-            action: 'setLineItemCustomType',
-            fields: {},
-            lineItemId: `line-item-id-${lineItemCounter}`,
-            type: {
-              key: 'lineItemCodesType',
-            },
+            action: 'setCustomField',
+            name: 'shippingProductSourceIds',
+            value: [],
+          },
+          {
+            action: 'setCustomField',
+            name: 'couponsLimit',
+            value: 5,
           },
         ]);
       });
@@ -1336,7 +1336,7 @@ describe('CartService', () => {
           byActionType('setCustomField'),
         );
         expect(setCustomFieldActions.length).toBe(3);
-        expect(setCustomFieldActions[2]).toEqual({
+        expect(setCustomFieldActions[0]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -1456,7 +1456,7 @@ describe('CartService', () => {
           byActionType('setCustomField'),
         );
         expect(setCustomFieldActions.length).toBe(3);
-        expect(setCustomFieldActions[2]).toEqual({
+        expect(setCustomFieldActions[0]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -1572,7 +1572,7 @@ describe('CartService', () => {
           byActionType('setCustomField'),
         );
         expect(setCustomFieldActions.length).toBe(3);
-        expect(setCustomFieldActions[2]).toEqual({
+        expect(setCustomFieldActions[0]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -1710,7 +1710,7 @@ describe('CartService', () => {
           byActionType('setCustomField'),
         );
         expect(setCustomFieldActions.length).toBe(3);
-        expect(setCustomFieldActions[2]).toEqual({
+        expect(setCustomFieldActions[0]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -1839,7 +1839,7 @@ describe('CartService', () => {
           byActionType('setCustomField'),
         );
         expect(setCustomFieldActions.length).toBe(3);
-        expect(setCustomFieldActions[2]).toEqual({
+        expect(setCustomFieldActions[0]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [
@@ -2007,7 +2007,7 @@ describe('CartService', () => {
           byActionType('setCustomField'),
         );
         expect(setCustomFieldActions.length).toBe(3);
-        expect(setCustomFieldActions[2]).toEqual({
+        expect(setCustomFieldActions[0]).toEqual({
           action: 'setCustomField',
           name: 'discount_codes',
           value: [

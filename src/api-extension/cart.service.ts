@@ -1,4 +1,4 @@
-import { Cart, LineItem } from '@commercetools/platform-sdk';
+import { Cart } from '@commercetools/platform-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
@@ -21,12 +21,7 @@ import {
 } from './types';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
 import { ProductMapper } from './mappers/product';
-import {
-  CartAction,
-  CartActionAddLineItem,
-  CartActionRemoveLineItem,
-  CartActionSetLineItemCustomType,
-} from './cartActions/CartAction';
+import { CartAction } from './cartActions/CartAction';
 import { ConfigService } from '@nestjs/config';
 import sleep from './utils/sleep';
 import checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount from './utils/checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount';
@@ -481,8 +476,6 @@ export class CartService {
       .flatMap((builder) => builder(cart, validateCouponsResult))
       .filter((e) => e);
 
-    console.log(actions);
-
     this.logger.debug(actions);
     return {
       status: true,
@@ -508,92 +501,6 @@ export class CartService {
     }
     await this.validateCoupons(cart, getSession(cart));
     return this.logger.debug('Coupons changes were rolled back successfully');
-  }
-
-  // TODO: make service for this if logic goes bigger
-  private normalizeCartActions(
-    actions: CartAction[],
-    lineItems: LineItem[],
-  ): CartAction[] {
-    const allActionsSetLineItemCustomType = actions.filter(
-      (action) => action?.action === 'setLineItemCustomType',
-    );
-
-    const actionsRemoveLineItem = actions.filter(
-      (action) => action?.action === 'removeLineItem',
-    );
-
-    // If lineItem is going to be removed we don't want to set customField on it.
-    const removeLineItemIdsWithQuantity = actionsRemoveLineItem.map(
-      (action: CartActionRemoveLineItem) => {
-        return {
-          lineItemId: action.lineItemId,
-          quantity: action.quantity,
-        };
-      },
-    );
-
-    const processedSetLineItemIds = [];
-    const processedActionsSetLineItemCustomType =
-      allActionsSetLineItemCustomType
-        .map((action: CartActionSetLineItemCustomType) => {
-          if (
-            !processedSetLineItemIds.includes(action.lineItemId) &&
-            // We need to decide if this case remove item from cart or only will change quantity to lower
-            removeLineItemIdsWithQuantity
-              .filter((element) => element.lineItemId === action.lineItemId)
-              .reduce((acc, element) => acc + element.quantity, 0) <
-              lineItems
-                .filter((lineItem) => lineItem.id === action.lineItemId)
-                .reduce((acc, lineItems) => acc + lineItems.quantity, 0)
-          ) {
-            processedSetLineItemIds.push(action.lineItemId);
-            return {
-              action: action.action,
-              lineItemId: action.lineItemId,
-              type: action.type,
-              fields: Object.assign(
-                {},
-                ...allActionsSetLineItemCustomType
-                  .filter(
-                    (innerAction: CartActionSetLineItemCustomType) =>
-                      innerAction.lineItemId === action.lineItemId,
-                  )
-                  .map((innerAction: CartActionSetLineItemCustomType) => {
-                    return innerAction.fields;
-                  }),
-              ),
-            } as CartActionSetLineItemCustomType;
-          }
-        })
-        .filter(
-          (action: CartActionSetLineItemCustomType) => action !== undefined,
-        );
-
-    const allActionsAddLineItem = actions.filter(
-      (action) => action?.action === 'addLineItem',
-    );
-    const processedAddLineItemIds = [];
-    const processedAddLineItems = [];
-    for (const currentAction of allActionsAddLineItem as CartActionAddLineItem[]) {
-      //We delete duplicates
-      if (!processedAddLineItemIds.includes(currentAction.sku)) {
-        processedAddLineItemIds.push(currentAction.sku);
-        processedAddLineItems.push(currentAction);
-      }
-    }
-
-    actions = actions.filter(
-      (action) =>
-        action?.action !== 'setLineItemCustomType' &&
-        action?.action !== 'addLineItem',
-    );
-
-    return [
-      ...actions,
-      ...processedActionsSetLineItemCustomType,
-      ...processedAddLineItems,
-    ];
   }
 
   private getPriceSelectorFromCart(cart: Cart): PriceSelector {

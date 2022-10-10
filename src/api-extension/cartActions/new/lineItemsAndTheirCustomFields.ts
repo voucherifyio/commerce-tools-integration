@@ -16,7 +16,6 @@ function removeDuplicatedAddLineItems(
   const processedAddLineItemIds = [];
   const processedAddLineItems = [];
   for (const currentAction of actionsAddLineItem as CartActionAddLineItem[]) {
-    //We delete duplicates
     if (!processedAddLineItemIds.includes(currentAction.sku)) {
       processedAddLineItemIds.push(currentAction.sku);
       processedAddLineItems.push(currentAction);
@@ -108,8 +107,6 @@ export default function lineItemsAndTheirCustomFields(
     cart,
     validateCouponsResult,
   );
-
-  console.log(123, removeActions);
 
   const removeLineItemActions = removeActions.filter(
     (removeAction) => removeAction?.action === 'removeLineItem',
