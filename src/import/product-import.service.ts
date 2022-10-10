@@ -98,9 +98,11 @@ export class ProductImportService {
               product_id: product.id,
               sku: product.masterData.current.name.en,
               source_id: variant.sku,
-              price:
-                product.masterData.current.masterVariant.price.value
-                  .centAmount / 100,
+              price: product.masterData.current.masterVariant.price
+                ? product.masterData.current.masterVariant.price.value
+                    .centAmount / 100
+                : product.masterData.current.masterVariant.prices[0].value
+                    .centAmount / 100,
             });
           });
         } else {
@@ -108,9 +110,11 @@ export class ProductImportService {
             product_id: product.id,
             sku: product.masterData.current.name.en,
             source_id: product.masterData.current.masterVariant.sku,
-            price:
-              product.masterData.current.masterVariant.price.value.centAmount /
-              100,
+            price: product.masterData.current.masterVariant.price
+              ? product.masterData.current.masterVariant.price.value
+                  .centAmount / 100
+              : product.masterData.current.masterVariant.prices[0].value
+                  .centAmount / 100,
           });
         }
       });
