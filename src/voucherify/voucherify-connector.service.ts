@@ -13,6 +13,7 @@ import {
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
 import { Coupon } from 'src/api-extension/coupon';
+import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;
@@ -98,8 +99,8 @@ export class VoucherifyConnectorService {
   }
 
   async createOrder(
-    order: Order,
-    items: OrdersItem[],
+    order: Order, //CommerceTools Order
+    items: OrdersItem[], //V% OrderItems
     orderMetadata: Record<string, any>,
   ) {
     const orderCreate = {
@@ -109,6 +110,9 @@ export class VoucherifyConnectorService {
       items,
       metadata: orderMetadata,
       customer: this.getCustomerFromOrder(order),
+      status: (order.paymentState === 'Paid'
+        ? 'PAID'
+        : 'CREATED') as OrdersCreate['status'],
     };
 
     await this.getClient().orders.create(orderCreate);
