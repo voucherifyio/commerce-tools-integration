@@ -15,6 +15,8 @@ type SentCoupons = {
   coupon: string;
 };
 
+const CUSTOM_FIELD_PREFIX = 'custom_filed_';
+
 @Injectable()
 export class OrderService {
   constructor(
@@ -30,10 +32,12 @@ export class OrderService {
     allMetadataSchemaProperties: string[],
   ) {
     const standardMetaProperties = allMetadataSchemaProperties.filter(
-      (key) => !key.includes('custom_filed_'),
+      (key) => !key.includes(CUSTOM_FIELD_PREFIX),
     );
     const customMetaProperties = allMetadataSchemaProperties.filter(
-      (key) => key.length > 13 && key.slice(0, 13) === 'custom_filed_',
+      (key) =>
+        key.length > CUSTOM_FIELD_PREFIX.length &&
+        key.slice(0, CUSTOM_FIELD_PREFIX.length) === CUSTOM_FIELD_PREFIX,
     );
 
     const metadata = {};
@@ -68,8 +72,11 @@ export class OrderService {
 
     if (order?.custom?.fields && customMetaProperties.length) {
       customMetaProperties.forEach((key) => {
-        if (order.custom.fields?.[key.slice(13)]) {
-          addToMataData(order.custom.fields[key.slice(13)], key);
+        if (order.custom.fields?.[key.slice(CUSTOM_FIELD_PREFIX.length)]) {
+          addToMataData(
+            order.custom.fields[key.slice(CUSTOM_FIELD_PREFIX.length)],
+            key,
+          );
         }
       });
     }
