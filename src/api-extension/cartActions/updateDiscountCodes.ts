@@ -51,7 +51,7 @@ export default function updateDiscountsCodes(
         )?.value;
       }
       return {
-        code: coupon.id,
+        code: coupon['banner'] ? coupon['banner'] : coupon.id,
         status: 'APPLIED',
         type: coupon.object,
         value: value,

@@ -175,7 +175,7 @@ export class CartService {
         cart,
         this.productMapper.mapLineItems(cart.lineItems),
       );
-
+    console.log(999, promotions, 111);
     const availablePromotions = promotions
       .filter((promo) => {
         if (!uniqCoupons.length) {
@@ -278,6 +278,11 @@ export class CartService {
         );
     }
 
+    validatedCoupons = this.setBannerOnValidatedPromotions(
+      validatedCoupons,
+      promotions,
+    );
+
     const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
       validatedCoupons.redeemables.filter(
         (redeemable) => redeemable.status === status,
@@ -335,6 +340,31 @@ export class CartService {
       taxCategory,
       couponsLimit,
     };
+  }
+
+  private setBannerOnValidatedPromotions(
+    validatedCoupons: ValidationValidateStackableResponse,
+    promotions,
+  ) {
+    const promotionTiersWithBanner = validatedCoupons.redeemables
+      .filter((element) => element.object === 'promotion_tier')
+      .map((element) => {
+        const appliedPromotion = promotions.find(
+          (promotion) => promotion.id === element.id,
+        );
+        element['banner'] = appliedPromotion.banner;
+
+        return element;
+      });
+
+    validatedCoupons.redeemables = [
+      ...validatedCoupons.redeemables.filter(
+        (element) => element.object !== 'promotion_tier',
+      ),
+      ...promotionTiersWithBanner,
+    ];
+
+    return validatedCoupons;
   }
 
   private async revalidateCouponsBecauseNewUnitTypeCouponHaveAppliedWithWrongPrice(
