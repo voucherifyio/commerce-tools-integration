@@ -14,7 +14,7 @@ import {
   FREE_SHIPPING,
   FREE_SHIPPING_UNIT_TYPE,
 } from '../../../consts/voucherify';
-import isValidAndNewCouponNotFailed from '../helpers/util';
+import isValidAndNewCouponNotFailed from '../helpers/utils';
 
 function setSessionAsCustomField(
   cart: Cart,

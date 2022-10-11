@@ -9,7 +9,7 @@ import {
 import mapValidateCouponsResultToLineProductsWithFixedAmount from '../helpers/fixedPrice';
 import addFreeLineItems from '../helpers/addFreeLineItems';
 import removeFreeLineItemsForNonApplicableCoupon from '../helpers/removeFreeLineItemsForNonApplicableCoupon';
-import isValidAndNewCouponNotFailed from '../helpers/util';
+import isValidAndNewCouponNotFailed from '../helpers/utils';
 
 function removeDuplicatedAddLineItems(
   actionsAddLineItem: CartActionAddLineItem[],

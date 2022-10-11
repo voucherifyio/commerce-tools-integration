@@ -8,7 +8,7 @@ import {
 import { ValidateCouponsResult } from '../../types';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import isValidAndNewCouponNotFailed from '../helpers/util';
+import isValidAndNewCouponNotFailed from '../helpers/utils';
 
 // TODO don't create addCustomLineItem action if the summary doesn't actually change
 function addCustomLineItemWithDiscountSummary(
