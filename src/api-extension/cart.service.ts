@@ -6,6 +6,7 @@ import {
   StackableRedeemableResponseStatus,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
+import { uniqBy } from 'lodash';
 
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
 import { TypesService } from '../commerceTools/types/types.service';
@@ -154,7 +155,14 @@ export class CartService {
     sessionKey?: string | null,
   ): Promise<ValidateCouponsResult> {
     const { id, customerId, anonymousId } = cart;
-    let coupons: Coupon[] = getCouponsFromCart(cart);
+    const coupons: Coupon[] = getCouponsFromCart(cart);
+    let uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
+    if (coupons.length !== uniqCoupons.length) {
+      this.logger.debug({
+        msg: 'Duplicates found and deleted',
+      });
+    }
+
     const taxCategory = await this.checkCouponTaxCategoryWithCountries(cart);
 
     const couponsLimit =
@@ -170,11 +178,11 @@ export class CartService {
 
     const availablePromotions = promotions
       .filter((promo) => {
-        if (!coupons.length) {
+        if (!uniqCoupons.length) {
           return true;
         }
 
-        const codes = coupons
+        const codes = uniqCoupons
           .filter((coupon) => coupon.status !== 'DELETED')
           .map((coupon) => coupon.code);
         return !codes.includes(promo.id);
@@ -189,7 +197,7 @@ export class CartService {
         };
       });
 
-    if (!coupons.length) {
+    if (!uniqCoupons.length) {
       this.logger.debug({
         msg: 'No coupons applied, skipping voucherify call',
       });
@@ -207,13 +215,13 @@ export class CartService {
     }
     this.logger.debug({
       msg: 'Attempt to apply coupons',
-      coupons,
+      coupons: uniqCoupons,
       id,
       customerId,
       anonymousId,
     });
 
-    const deletedCoupons = coupons.filter(
+    const deletedCoupons = uniqCoupons.filter(
       (coupon) => coupon.status === 'DELETED',
     );
 
@@ -226,7 +234,7 @@ export class CartService {
         ),
       );
 
-    if (deletedCoupons.length === coupons.length) {
+    if (deletedCoupons.length === uniqCoupons.length) {
       return {
         valid: false,
         availablePromotions: availablePromotions,
@@ -239,11 +247,11 @@ export class CartService {
       };
     }
 
-    coupons = this.filterCouponsByLimit(coupons, couponsLimit);
+    uniqCoupons = this.filterCouponsByLimit(uniqCoupons, couponsLimit);
 
     let validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
-        coupons.filter((coupon) => coupon.status != 'DELETED'),
+        uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
         cart,
         this.productMapper.mapLineItems(cart.lineItems),
         sessionKey,
@@ -264,7 +272,7 @@ export class CartService {
         await this.revalidateCouponsBecauseNewUnitTypeCouponHaveAppliedWithWrongPrice(
           validatedCoupons,
           productsToChange,
-          coupons.filter((coupon) => coupon.status != 'DELETED'),
+          uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
           cart,
           sessionKey,
         );
@@ -284,7 +292,7 @@ export class CartService {
     const totalDiscountAmount = calculateTotalDiscountAmount(validatedCoupons);
 
     const onlyNewCouponsFailed = checkIfOnlyNewCouponsFailed(
-      coupons,
+      uniqCoupons,
       applicableCoupons,
       notApplicableCoupons,
       skippedCoupons,
