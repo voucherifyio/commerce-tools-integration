@@ -157,12 +157,12 @@ export class CartService {
         ? this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT')
         : 5;
 
-    // const promotions =
-    //   await this.voucherifyConnectorService.getAvailablePromotions(
-    //     cart,
-    //     this.productMapper.mapLineItems(cart.lineItems),
-    //   );
-    const promotions = [];
+    const promotions =
+      await this.voucherifyConnectorService.getAvailablePromotions(
+        cart,
+        this.productMapper.mapLineItems(cart.lineItems),
+      );
+
     const availablePromotions = promotions
       .filter((promo) => {
         if (!coupons.length) {
