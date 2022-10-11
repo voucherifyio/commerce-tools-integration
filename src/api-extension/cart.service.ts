@@ -175,7 +175,7 @@ export class CartService {
         cart,
         this.productMapper.mapLineItems(cart.lineItems),
       );
-    console.log(999, promotions, 111);
+
     const availablePromotions = promotions
       .filter((promo) => {
         if (!uniqCoupons.length) {
