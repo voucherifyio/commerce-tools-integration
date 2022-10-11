@@ -1,6 +1,6 @@
 import { Cart } from '@commercetools/platform-sdk';
-import { ValidateCouponsResult } from '../../../types';
-import { CartActionSetLineItemCustomType } from '../../CartAction';
+import { ValidateCouponsResult } from '../../types';
+import { CartActionSetLineItemCustomType } from '../CartAction';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
 
 type FixedCouponApplicableTo = {

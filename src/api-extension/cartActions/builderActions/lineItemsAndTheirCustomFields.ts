@@ -6,9 +6,10 @@ import {
   CartActionRemoveLineItem,
   CartActionSetLineItemCustomType,
 } from '../CartAction';
-import mapValidateCouponsResultToLineProductsWithFixedAmount from './helpers/fixedPrice';
-import addFreeLineItems from './helpers/addFreeLineItems';
-import removeFreeLineItemsForNonApplicableCoupon from './helpers/removeFreeLineItemsForNonApplicableCoupon';
+import mapValidateCouponsResultToLineProductsWithFixedAmount from '../helpers/fixedPrice';
+import addFreeLineItems from '../helpers/addFreeLineItems';
+import removeFreeLineItemsForNonApplicableCoupon from '../helpers/removeFreeLineItemsForNonApplicableCoupon';
+import isValidAndNewCouponNotFailed from '../helpers/util';
 
 function removeDuplicatedAddLineItems(
   actionsAddLineItem: CartActionAddLineItem[],
@@ -84,9 +85,7 @@ export default function lineItemsAndTheirCustomFields(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
 ): CartAction[] {
-  const { valid, onlyNewCouponsFailed } = validateCouponsResult;
-
-  if (!valid && onlyNewCouponsFailed) {
+  if (!isValidAndNewCouponNotFailed(validateCouponsResult)) {
     return [];
   }
 

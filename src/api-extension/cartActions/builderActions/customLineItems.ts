@@ -8,6 +8,7 @@ import {
 import { ValidateCouponsResult } from '../../types';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import isValidAndNewCouponNotFailed from '../helpers/util';
 
 // TODO don't create addCustomLineItem action if the summary doesn't actually change
 function addCustomLineItemWithDiscountSummary(
@@ -81,9 +82,7 @@ export default function customLineItems(
 ): CartAction[] {
   const cartActions = [] as CartAction[];
 
-  const { valid, onlyNewCouponsFailed } = validateCouponsResult;
-
-  if (valid || !onlyNewCouponsFailed) {
+  if (isValidAndNewCouponNotFailed(validateCouponsResult)) {
     cartActions.push(
       ...addCustomLineItemWithDiscountSummary(cart, validateCouponsResult),
       ...removeDiscountedCustomLineItems(cart),

@@ -14,6 +14,7 @@ import {
   FREE_SHIPPING,
   FREE_SHIPPING_UNIT_TYPE,
 } from '../../../consts/voucherify';
+import isValidAndNewCouponNotFailed from '../helpers/util';
 
 function setSessionAsCustomField(
   cart: Cart,
@@ -168,13 +169,12 @@ export default function setCustomFields(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
 ): CartAction[] {
-  const { valid, onlyNewCouponsFailed } = validateCouponsResult;
   const cartActions = [] as CartAction[];
 
   cartActions.push(setSessionAsCustomField(cart, validateCouponsResult));
   cartActions.push(...updateDiscountsCodes(cart, validateCouponsResult));
 
-  if (valid || !onlyNewCouponsFailed) {
+  if (isValidAndNewCouponNotFailed(validateCouponsResult)) {
     cartActions.push(addShippingProductSourceIds(validateCouponsResult));
     cartActions.push(setCouponsLimit(validateCouponsResult));
   }
