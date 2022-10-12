@@ -170,32 +170,10 @@ export class CartService {
         ? this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT')
         : 5;
 
-    const promotions =
-      await this.voucherifyConnectorService.getAvailablePromotions(
-        cart,
-        this.productMapper.mapLineItems(cart.lineItems),
-      );
-
-    const availablePromotions = promotions
-      .filter((promo) => {
-        if (!uniqCoupons.length) {
-          return true;
-        }
-
-        const codes = uniqCoupons
-          .filter((coupon) => coupon.status !== 'DELETED')
-          .map((coupon) => coupon.code);
-        return !codes.includes(promo.id);
-      })
-      .map((promo) => {
-        return {
-          status: 'AVAILABLE',
-          value: promo.discount_amount,
-          banner: promo.banner,
-          code: promo.id,
-          type: promo.object,
-        };
-      });
+    const { promotions, availablePromotions } = await this.getPromotions(
+      cart,
+      uniqCoupons,
+    );
 
     if (!uniqCoupons.length) {
       this.logger.debug({
@@ -278,6 +256,10 @@ export class CartService {
         );
     }
 
+    if (promotions.length) {
+      this.setBannerOnValidatedPromotions(validatedCoupons, promotions);
+    }
+
     const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
       validatedCoupons.redeemables.filter(
         (redeemable) => redeemable.status === status,
@@ -335,6 +317,67 @@ export class CartService {
       taxCategory,
       couponsLimit,
     };
+  }
+
+  private async getPromotions(cart, uniqCoupons: Coupon[]) {
+    const disableCartPromotion =
+      this.configService.get<string>('DISABLE_CART_PROMOTION') ?? 'false';
+
+    if (disableCartPromotion.toLowerCase() === 'true') {
+      return { promotions: [], availablePromotions: [] };
+    }
+
+    const promotions =
+      await this.voucherifyConnectorService.getAvailablePromotions(
+        cart,
+        this.productMapper.mapLineItems(cart.lineItems),
+      );
+
+    const availablePromotions = promotions
+      .filter((promo) => {
+        if (!uniqCoupons.length) {
+          return true;
+        }
+
+        const codes = uniqCoupons
+          .filter((coupon) => coupon.status !== 'DELETED')
+          .map((coupon) => coupon.code);
+        return !codes.includes(promo.id);
+      })
+      .map((promo) => {
+        return {
+          status: 'AVAILABLE',
+          value: promo.discount_amount,
+          banner: promo.banner,
+          code: promo.id,
+          type: promo.object,
+        };
+      });
+
+    return { promotions, availablePromotions };
+  }
+
+  private setBannerOnValidatedPromotions(
+    validatedCoupons: ValidationValidateStackableResponse,
+    promotions,
+  ) {
+    const promotionTiersWithBanner = validatedCoupons.redeemables
+      .filter((redeemable) => redeemable.object === 'promotion_tier')
+      .map((redeemable) => {
+        const appliedPromotion = promotions.find(
+          (promotion) => promotion.id === redeemable.id,
+        );
+        redeemable['banner'] = appliedPromotion.banner;
+
+        return redeemable;
+      });
+
+    validatedCoupons.redeemables = [
+      ...validatedCoupons.redeemables.filter(
+        (element) => element.object !== 'promotion_tier',
+      ),
+      ...promotionTiersWithBanner,
+    ];
   }
 
   private async revalidateCouponsBecauseNewUnitTypeCouponHaveAppliedWithWrongPrice(
