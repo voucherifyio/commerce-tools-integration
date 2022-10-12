@@ -492,7 +492,10 @@ export class CartService {
         ? CartDiscountApplyMode.DirectDiscount
         : CartDiscountApplyMode.CustomLineItem;
 
-    const actions = getCartActionBuilders(validateCouponsResult,cartDiscountApplyMode)
+    const actions = getCartActionBuilders(
+      validateCouponsResult,
+      cartDiscountApplyMode,
+    )
       .flatMap((builder) => builder(cart, validateCouponsResult))
       .filter((e) => e);
 
