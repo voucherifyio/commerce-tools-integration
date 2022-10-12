@@ -170,19 +170,10 @@ export class CartService {
         ? this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT')
         : 5;
 
-    const disableCartPromotion =
-      this.configService.get<string>('DISABLE_CART_PROMOTION') ?? 'false';
-
-    let promotions = [];
-    let availablePromotions = [];
-
-    if (disableCartPromotion.toLowerCase() === 'false') {
-      promotions = await this.voucherifyConnectorService.getAvailablePromotions(
-        cart,
-        this.productMapper.mapLineItems(cart.lineItems),
-      );
-      availablePromotions = await this.getPromotions(promotions, uniqCoupons);
-    }
+    const { promotions, availablePromotions } = await this.getPromotions(
+      cart,
+      uniqCoupons,
+    );
 
     if (!uniqCoupons.length) {
       this.logger.debug({
@@ -331,7 +322,20 @@ export class CartService {
     };
   }
 
-  private async getPromotions(promotions, uniqCoupons: Coupon[]) {
+  private async getPromotions(cart, uniqCoupons: Coupon[]) {
+    const disableCartPromotion =
+      this.configService.get<string>('DISABLE_CART_PROMOTION') ?? 'false';
+
+    if (disableCartPromotion.toLowerCase() === 'true') {
+      return { promotions: [], availablePromotions: [] };
+    }
+
+    const promotions =
+      await this.voucherifyConnectorService.getAvailablePromotions(
+        cart,
+        this.productMapper.mapLineItems(cart.lineItems),
+      );
+
     const availablePromotions = promotions
       .filter((promo) => {
         if (!uniqCoupons.length) {
@@ -352,7 +356,8 @@ export class CartService {
           type: promo.object,
         };
       });
-    return availablePromotions;
+
+    return { promotions, availablePromotions };
   }
 
   private setBannerOnValidatedPromotions(
