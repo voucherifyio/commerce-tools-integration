@@ -278,10 +278,7 @@ export class CartService {
         );
     }
 
-    validatedCoupons = this.setBannerOnValidatedPromotions(
-      validatedCoupons,
-      promotions,
-    );
+    this.setBannerOnValidatedPromotions(validatedCoupons, promotions);
 
     const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
       validatedCoupons.redeemables.filter(
@@ -347,14 +344,14 @@ export class CartService {
     promotions,
   ) {
     const promotionTiersWithBanner = validatedCoupons.redeemables
-      .filter((element) => element.object === 'promotion_tier')
-      .map((element) => {
+      .filter((redeemable) => redeemable.object === 'promotion_tier')
+      .map((redeemable) => {
         const appliedPromotion = promotions.find(
-          (promotion) => promotion.id === element.id,
+          (promotion) => promotion.id === redeemable.id,
         );
-        element['banner'] = appliedPromotion.banner;
+        redeemable['banner'] = appliedPromotion.banner;
 
-        return element;
+        return redeemable;
       });
 
     validatedCoupons.redeemables = [
@@ -363,8 +360,6 @@ export class CartService {
       ),
       ...promotionTiersWithBanner,
     ];
-
-    return validatedCoupons;
   }
 
   private async revalidateCouponsBecauseNewUnitTypeCouponHaveAppliedWithWrongPrice(
