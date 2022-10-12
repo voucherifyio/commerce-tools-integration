@@ -13,7 +13,7 @@ export class ProductMapper {
 
   public mapLineItems(lineItems, metadataSchemaProperties = []): OrdersItem[] {
     return lineItems
-      .filter((item) => this.getQuantity(item))
+      .filter((item) => this.getQuantity(item) > 0)
       .map((item) => {
         return {
           source_id: item?.variant?.sku,
@@ -46,8 +46,12 @@ export class ProductMapper {
     if (custom) {
       custom
         .map((code) => JSON.parse(code))
-        .filter((code) => code.type === 'UNIT')
-        .forEach((code) => (itemQuantity = itemQuantity - code.quantity));
+        .filter(
+          (code) => code.type === 'UNIT' && code.effect !== 'ADD_MISSING_ITEMS',
+        )
+        .forEach(
+          (code) => (itemQuantity = itemQuantity - code.totalDiscountQuantity),
+        );
     }
     return itemQuantity;
   }

@@ -2,11 +2,7 @@ import { performance } from 'perf_hooks';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
-  RedemptionsRedeemStackableOrderResponse,
   RedemptionsRedeemStackableParams,
-  RedemptionsRedeemStackableRedemptionResult,
-  RedemptionsRedeemStackableResponse,
-  SimpleCustomer,
   ValidationsValidateStackableParams,
   VoucherifyServerSide,
 } from '@voucherify/sdk';
@@ -17,6 +13,7 @@ import {
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
 import { Coupon } from 'src/api-extension/coupon';
+import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;
@@ -63,7 +60,7 @@ export class VoucherifyConnectorService {
     });
     const request = {
       // options?: StackableOptions;
-      redeemables: redeemables,
+      redeemables,
       session: {
         type: 'LOCK',
         ...(sessionKey && { key: sessionKey }),
@@ -102,8 +99,8 @@ export class VoucherifyConnectorService {
   }
 
   async createOrder(
-    order: Order,
-    items: OrdersItem[],
+    order: Order, //CommerceTools Order
+    items: OrdersItem[], //V% OrderItems
     orderMetadata: Record<string, any>,
   ) {
     const orderCreate = {
@@ -113,6 +110,9 @@ export class VoucherifyConnectorService {
       items,
       metadata: orderMetadata,
       customer: this.getCustomerFromOrder(order),
+      status: (order.paymentState === 'Paid'
+        ? 'PAID'
+        : 'CREATED') as OrdersCreate['status'],
     };
 
     await this.getClient().orders.create(orderCreate);
@@ -197,6 +197,10 @@ export class VoucherifyConnectorService {
 
   async getAvailablePromotions(cart, items) {
     const promotions = await this.getClient().promotions.validate({
+      customer: {
+        id: cart.customerId || cart.anonymousId,
+        source_id: cart.customerId || cart.anonymousId,
+      },
       order: {
         source_id: cart.id,
         items: items,

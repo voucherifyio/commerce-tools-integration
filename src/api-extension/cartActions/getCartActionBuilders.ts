@@ -25,10 +25,10 @@ export default function getCartActionBuilders(
         CartDiscountApplyMode.CustomLineItem === cartDiscountApplyMode
           ? addCustomLineItemWithDiscountSummary
           : addDirectDiscountWithDiscountSummary,
+        setFixedPriceForLineItems,
         addFreeLineItems,
         removeFreeLineItemsForNonApplicableCoupon,
         addShippingProductSourceIds,
-        setFixedPriceForLineItems,
         setCouponsLimit,
       ],
     );

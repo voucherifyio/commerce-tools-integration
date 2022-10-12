@@ -1,10 +1,12 @@
 import { Cart, LineItem } from '@commercetools/platform-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import {
+  OrdersItem,
   StackableRedeemableResponse,
   StackableRedeemableResponseStatus,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
+import { uniqBy } from 'lodash';
 
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
 import { TypesService } from '../commerceTools/types/types.service';
@@ -20,15 +22,16 @@ import {
   CartDiscountApplyMode,
 } from './types';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
-import { OrdersCreateResponse } from '@voucherify/sdk/dist/types/Orders';
 import { ProductMapper } from './mappers/product';
 import {
   CartAction,
+  CartActionAddLineItem,
   CartActionRemoveLineItem,
   CartActionSetLineItemCustomType,
 } from './cartActions/CartAction';
 import { ConfigService } from '@nestjs/config';
 import sleep from './utils/sleep';
+import checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount from './utils/checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount';
 
 function getSession(cart: Cart): string | null {
   return cart.custom?.fields?.session ?? null;
@@ -100,6 +103,42 @@ function checkIfOnlyNewCouponsFailed(
   );
 }
 
+function calculateTotalDiscountAmount(
+  validatedCoupons: ValidationValidateStackableResponse,
+) {
+  let totalDiscountAmount = 0;
+  if (
+    validatedCoupons.redeemables.find(
+      (redeemable) => redeemable?.order?.items?.length,
+    )
+  ) {
+    //Voucherify "order.total_applied_discount_amount" is not always calculated correctly,
+    //so we need to iterate through the items to calculated discounted amount
+    validatedCoupons.redeemables.forEach((redeemable) => {
+      redeemable.order.items.forEach((item) => {
+        if ((item as any).total_applied_discount_amount) {
+          totalDiscountAmount += (item as any).total_applied_discount_amount;
+        } else if ((item as any).total_discount_amount) {
+          totalDiscountAmount += (item as any).total_discount_amount;
+        }
+      });
+    });
+  }
+
+  if (totalDiscountAmount === 0) {
+    return (
+      validatedCoupons.order?.total_applied_discount_amount ??
+      validatedCoupons.order?.total_discount_amount ??
+      0
+    );
+  }
+
+  if (totalDiscountAmount > (validatedCoupons?.order?.amount ?? 0)) {
+    return validatedCoupons.order.amount;
+  }
+  return totalDiscountAmount;
+}
+
 @Injectable()
 export class CartService {
   constructor(
@@ -117,7 +156,14 @@ export class CartService {
     sessionKey?: string | null,
   ): Promise<ValidateCouponsResult> {
     const { id, customerId, anonymousId } = cart;
-    let coupons: Coupon[] = getCouponsFromCart(cart);
+    const coupons: Coupon[] = getCouponsFromCart(cart);
+    let uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
+    if (coupons.length !== uniqCoupons.length) {
+      this.logger.debug({
+        msg: 'Duplicates found and deleted',
+      });
+    }
+
     const taxCategory = await this.checkCouponTaxCategoryWithCountries(cart);
 
     const couponsLimit =
@@ -133,11 +179,11 @@ export class CartService {
 
     const availablePromotions = promotions
       .filter((promo) => {
-        if (!coupons.length) {
+        if (!uniqCoupons.length) {
           return true;
         }
 
-        const codes = coupons
+        const codes = uniqCoupons
           .filter((coupon) => coupon.status !== 'DELETED')
           .map((coupon) => coupon.code);
         return !codes.includes(promo.id);
@@ -152,7 +198,7 @@ export class CartService {
         };
       });
 
-    if (!coupons.length) {
+    if (!uniqCoupons.length) {
       this.logger.debug({
         msg: 'No coupons applied, skipping voucherify call',
       });
@@ -170,13 +216,13 @@ export class CartService {
     }
     this.logger.debug({
       msg: 'Attempt to apply coupons',
-      coupons,
+      coupons: uniqCoupons,
       id,
       customerId,
       anonymousId,
     });
 
-    const deletedCoupons = coupons.filter(
+    const deletedCoupons = uniqCoupons.filter(
       (coupon) => coupon.status === 'DELETED',
     );
 
@@ -189,7 +235,7 @@ export class CartService {
         ),
       );
 
-    if (deletedCoupons.length === coupons.length) {
+    if (deletedCoupons.length === uniqCoupons.length) {
       return {
         valid: false,
         availablePromotions: availablePromotions,
@@ -202,23 +248,15 @@ export class CartService {
       };
     }
 
-    coupons = this.filterCouponsByLimit(coupons, couponsLimit);
+    uniqCoupons = this.filterCouponsByLimit(uniqCoupons, couponsLimit);
 
-    const validatedCoupons =
+    let validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
-        coupons.filter((coupon) => coupon.status != 'DELETED'),
+        uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
         cart,
         this.productMapper.mapLineItems(cart.lineItems),
         sessionKey,
       );
-
-    const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
-      validatedCoupons.redeemables.filter(
-        (redeemable) => redeemable.status === status,
-      );
-    const notApplicableCoupons = getCouponsByStatus('INAPPLICABLE');
-    const skippedCoupons = getCouponsByStatus('SKIPPED');
-    const applicableCoupons = getCouponsByStatus('APPLICABLE');
 
     const productsToAdd = await convertUnitTypeCouponsToFreeProducts(
       validatedCoupons,
@@ -226,19 +264,36 @@ export class CartService {
       this.getPriceSelectorFromCart(cart),
     );
 
-    this.handleCartDiscountDifferences(
-      productsToAdd,
-      validatedCoupons,
-      applicableCoupons,
+    const productsToChange = productsToAdd.filter(
+      (product) => product.discount_difference,
     );
+
+    if (productsToChange.length) {
+      validatedCoupons =
+        await this.revalidateCouponsBecauseNewUnitTypeCouponHaveAppliedWithWrongPrice(
+          validatedCoupons,
+          productsToChange,
+          uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
+          cart,
+          sessionKey,
+        );
+    }
+
+    const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
+      validatedCoupons.redeemables.filter(
+        (redeemable) => redeemable.status === status,
+      );
+
+    const notApplicableCoupons = getCouponsByStatus('INAPPLICABLE');
+    const skippedCoupons = getCouponsByStatus('SKIPPED');
+    const applicableCoupons = getCouponsByStatus('APPLICABLE');
 
     const sessionKeyResponse = validatedCoupons.session?.key;
     const { valid } = validatedCoupons;
-    const totalDiscountAmount =
-      validatedCoupons.order?.total_discount_amount ?? 0;
+    const totalDiscountAmount = calculateTotalDiscountAmount(validatedCoupons);
 
     const onlyNewCouponsFailed = checkIfOnlyNewCouponsFailed(
-      coupons,
+      uniqCoupons,
       applicableCoupons,
       notApplicableCoupons,
       skippedCoupons,
@@ -281,6 +336,66 @@ export class CartService {
       taxCategory,
       couponsLimit,
     };
+  }
+
+  private async revalidateCouponsBecauseNewUnitTypeCouponHaveAppliedWithWrongPrice(
+    validatedCoupons: ValidationValidateStackableResponse,
+    productsToChange: ProductToAdd[],
+    coupons: Coupon[],
+    cart: Cart,
+    sessionKey?: string | null,
+  ) {
+    type OrderItemSku = {
+      id?: string;
+      source_id?: string;
+      override?: boolean;
+      sku?: string;
+      price?: number;
+    };
+    const productsToChangeSKUs = productsToChange.map(
+      (productsToChange) => productsToChange.product,
+    );
+    const items = validatedCoupons.order.items.map((item: OrdersItem) => {
+      if (
+        !productsToChangeSKUs.includes((item.sku as OrderItemSku).source_id) ||
+        item.amount !== item.discount_amount
+      ) {
+        return item;
+      }
+      const currentProductToChange = productsToChange.find(
+        (productsToChange) =>
+          productsToChange.product === (item.sku as any).source_id,
+      );
+      return {
+        object: item?.object,
+        product_id: item?.product_id,
+        sku_id: item?.sku_id,
+        initial_quantity: item?.initial_quantity ?? 0,
+        amount:
+          currentProductToChange.applied_discount_amount *
+          (item.quantity ?? item.initial_quantity ?? 0),
+        price: currentProductToChange.applied_discount_amount,
+        product: {
+          id: item?.product?.id,
+          source_id: item?.product?.source_id,
+          name: item?.product?.name,
+          price: currentProductToChange.applied_discount_amount,
+        },
+        sku: {
+          id: item?.sku?.id,
+          source_id: item?.sku?.source_id,
+          sku: item?.sku?.sku,
+          price: currentProductToChange.applied_discount_amount,
+        },
+      };
+    });
+
+    return await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
+      coupons.filter((coupon) => coupon.status != 'DELETED'),
+      cart,
+      items,
+      sessionKey,
+    );
   }
 
   private filterCouponsByLimit(coupons: Coupon[], couponsLimit: number) {
@@ -348,7 +463,7 @@ export class CartService {
     };
   }
 
-  async checkCartAndMutate(cart: Cart): Promise<{
+  async validatePromotionsAndBuildCartActions(cart: Cart): Promise<{
     validateCouponsResult?: ValidateCouponsResult;
     actions: CartAction[];
     status: boolean;
@@ -356,6 +471,15 @@ export class CartService {
     if (cart.version === 1) {
       return this.setCustomTypeForInitializedCart();
     }
+
+    if (
+      checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount(
+        cart.lineItems,
+      )
+    ) {
+      return null;
+    }
+
     const validateCouponsResult = await this.validateCoupons(
       cart,
       getSession(cart),
@@ -368,10 +492,9 @@ export class CartService {
         ? CartDiscountApplyMode.DirectDiscount
         : CartDiscountApplyMode.CustomLineItem;
 
-    const actions = getCartActionBuilders(
-      validateCouponsResult,
-      cartDiscountApplyMode,
-    ).flatMap((builder) => builder(cart, validateCouponsResult));
+    const actions = getCartActionBuilders(validateCouponsResult,cartDiscountApplyMode)
+      .flatMap((builder) => builder(cart, validateCouponsResult))
+      .filter((e) => e);
 
     const normalizedCartActions = this.normalizeCartActions(
       actions,
@@ -385,7 +508,7 @@ export class CartService {
     };
   }
 
-  async checkCartMutateFallback(cart: Cart) {
+  async validatePromotionsAndBuildCartActionsFallback(cart: Cart) {
     let cartMutated = false;
     for (let i = 0; i < 2; i++) {
       await sleep(500);
@@ -409,9 +532,9 @@ export class CartService {
     actions: CartAction[],
     lineItems: LineItem[],
   ): CartAction[] {
-    let actionsSetLineItemCustomType = actions
-      .filter((action) => action?.action === 'setLineItemCustomType')
-      .reverse(); //Reverse is important according to order of card actions execution calls
+    const allActionsSetLineItemCustomType = actions.filter(
+      (action) => action?.action === 'setLineItemCustomType',
+    );
 
     const actionsRemoveLineItem = actions.filter(
       (action) => action?.action === 'removeLineItem',
@@ -427,47 +550,67 @@ export class CartService {
       },
     );
 
-    const processedLineItemIds = [];
-    actionsSetLineItemCustomType = actionsSetLineItemCustomType
-      .map((action: CartActionSetLineItemCustomType) => {
-        if (
-          !processedLineItemIds.includes(action.lineItemId) &&
-          // We need to decide if this case remove item from cart on only will change quantity to lower
-          removeLineItemIdsWithQuantity
-            .filter((element) => element.lineItemId === action.lineItemId)
-            .reduce((acc, element) => acc + element.quantity, 0) <
-            lineItems
-              .filter((lineItem) => lineItem.id === action.lineItemId)
-              .reduce((acc, lineItems) => acc + lineItems.quantity, 0)
-        ) {
-          processedLineItemIds.push(action.lineItemId);
-          return {
-            action: action.action,
-            lineItemId: action.lineItemId,
-            type: action.type,
-            fields: Object.assign(
-              {},
-              ...actionsSetLineItemCustomType
-                .filter(
-                  (innerAction: CartActionSetLineItemCustomType) =>
-                    innerAction.lineItemId === action.lineItemId,
-                )
-                .map((innerAction: CartActionSetLineItemCustomType) => {
-                  return innerAction.fields;
-                }),
-            ),
-          } as CartActionSetLineItemCustomType;
-        }
-      })
-      .filter(
-        (action: CartActionSetLineItemCustomType) => action !== undefined,
-      );
+    const processedSetLineItemIds = [];
+    const processedActionsSetLineItemCustomType =
+      allActionsSetLineItemCustomType
+        .map((action: CartActionSetLineItemCustomType) => {
+          if (
+            !processedSetLineItemIds.includes(action.lineItemId) &&
+            // We need to decide if this case remove item from cart or only will change quantity to lower
+            removeLineItemIdsWithQuantity
+              .filter((element) => element.lineItemId === action.lineItemId)
+              .reduce((acc, element) => acc + element.quantity, 0) <
+              lineItems
+                .filter((lineItem) => lineItem.id === action.lineItemId)
+                .reduce((acc, lineItems) => acc + lineItems.quantity, 0)
+          ) {
+            processedSetLineItemIds.push(action.lineItemId);
+            return {
+              action: action.action,
+              lineItemId: action.lineItemId,
+              type: action.type,
+              fields: Object.assign(
+                {},
+                ...allActionsSetLineItemCustomType
+                  .filter(
+                    (innerAction: CartActionSetLineItemCustomType) =>
+                      innerAction.lineItemId === action.lineItemId,
+                  )
+                  .map((innerAction: CartActionSetLineItemCustomType) => {
+                    return innerAction.fields;
+                  }),
+              ),
+            } as CartActionSetLineItemCustomType;
+          }
+        })
+        .filter(
+          (action: CartActionSetLineItemCustomType) => action !== undefined,
+        );
+
+    const allActionsAddLineItem = actions.filter(
+      (action) => action?.action === 'addLineItem',
+    );
+    const processedAddLineItemIds = [];
+    const processedAddLineItems = [];
+    for (const currentAction of allActionsAddLineItem as CartActionAddLineItem[]) {
+      //We delete duplicates
+      if (!processedAddLineItemIds.includes(currentAction.sku)) {
+        processedAddLineItemIds.push(currentAction.sku);
+        processedAddLineItems.push(currentAction);
+      }
+    }
 
     actions = actions.filter(
-      (action) => action?.action !== 'setLineItemCustomType',
+      (action) =>
+        action?.action !== 'setLineItemCustomType' &&
+        action?.action !== 'addLineItem',
     );
 
-    return [...actions, ...actionsSetLineItemCustomType];
+    return [
+      ...actions,
+      ...processedActionsSetLineItemCustomType,
+      ...processedAddLineItems,
+    ];
   }
 
   private getPriceSelectorFromCart(cart: Cart): PriceSelector {
@@ -483,39 +626,5 @@ export class CartService {
         ),
       ],
     };
-  }
-
-  private countOrderDiscountDifference(
-    order: OrdersCreateResponse,
-    discountDifference: number,
-  ) {
-    order.items_discount_amount -= discountDifference;
-    order.total_discount_amount -= discountDifference;
-    order.total_applied_discount_amount -= discountDifference;
-    order.items_applied_discount_amount -= discountDifference;
-  }
-
-  private handleCartDiscountDifferences(
-    productsToAdd: ProductToAdd[],
-    validatedCoupons: ValidationValidateStackableResponse,
-    applicableCoupons: StackableRedeemableResponse[],
-  ) {
-    productsToAdd.map((productToAdd) => {
-      this.countOrderDiscountDifference(
-        validatedCoupons.order,
-        productToAdd.discount_difference,
-      );
-    });
-
-    productsToAdd.map((productToAdd) => {
-      applicableCoupons
-        .filter((redeem) => redeem.id === productToAdd.code)
-        .map((redeem) => {
-          this.countOrderDiscountDifference(
-            redeem.order,
-            productToAdd.discount_difference,
-          );
-        });
-    });
   }
 }

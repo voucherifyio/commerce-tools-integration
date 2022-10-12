@@ -36,10 +36,15 @@ export default function updateDiscountsCodes(
         value =
           coupon.result.discount?.unit_type === FREE_SHIPPING_UNIT_TYPE
             ? FREE_SHIPPING
-            : coupon.order?.applied_discount_amount ||
+            : typeof (
+                coupon.order?.applied_discount_amount ||
+                coupon.order?.items_applied_discount_amount ||
+                coupon.order?.total_discount_amount
+              ) === 'number'
+            ? coupon.order?.applied_discount_amount ||
               coupon.order?.items_applied_discount_amount ||
-              coupon.result?.discount?.amount_off ||
-              0;
+              coupon.order?.total_discount_amount
+            : coupon.result?.discount?.amount_off || 0;
       } else {
         value = oldCouponsCodes.find(
           (oldCoupon) => coupon.id === oldCoupon.code,

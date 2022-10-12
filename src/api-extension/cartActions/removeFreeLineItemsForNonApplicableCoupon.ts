@@ -21,13 +21,16 @@ export default function removeFreeLineItemsForNonApplicableCoupon(
       return !isCouponWhichNoLongerExist;
     })
     .forEach((item) => {
-      const quantityFromCode = item.custom?.fields.applied_codes
-        .map((code) => JSON.parse(code))
-        .filter((code) => code.type === 'UNIT')
-        .find(
-          (code) =>
-            !productsToAdd.map((unitCode) => unitCode.code).includes(code.code),
-        ).quantity;
+      const quantityFromCode =
+        item.custom?.fields.applied_codes
+          .map((code) => JSON.parse(code))
+          .filter((code) => code.type === 'UNIT')
+          .find(
+            (code) =>
+              !productsToAdd
+                .map((unitCode) => unitCode.code)
+                .includes(code.code),
+          )?.quantity ?? 0;
 
       if (item.quantity > quantityFromCode) {
         cartActions.push({
