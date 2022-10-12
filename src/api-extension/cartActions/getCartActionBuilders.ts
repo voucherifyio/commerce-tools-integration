@@ -1,5 +1,6 @@
-import { ValidateCouponsResult } from '../types';
+import { ValidateCouponsResult, CartDiscountApplyMode } from '../types';
 import addCustomLineItemWithDiscountSummary from './addCustomLineItemWithDiscountSummary';
+import addDirectDiscountWithDiscountSummary from './addDirectDiscountWithDiscountSummary';
 import addFreeLineItems from './addFreeLineItems';
 import { CartActionsBuilder } from './CartAction';
 import removeDiscountedCustomLineItems from './removeDiscountedCustomLineItems';
@@ -12,6 +13,7 @@ import setCouponsLimit from './setCouponsLimit';
 
 export default function getCartActionBuilders(
   validateCouponsResult: ValidateCouponsResult,
+  cartDiscountApplyMode: CartDiscountApplyMode = CartDiscountApplyMode.CustomLineItem,
 ): CartActionsBuilder[] {
   const { valid, onlyNewCouponsFailed } = validateCouponsResult;
 
@@ -20,7 +22,9 @@ export default function getCartActionBuilders(
     cartActionBuilders.push(
       ...[
         removeDiscountedCustomLineItems,
-        addCustomLineItemWithDiscountSummary,
+        CartDiscountApplyMode.CustomLineItem === cartDiscountApplyMode
+          ? addCustomLineItemWithDiscountSummary
+          : addDirectDiscountWithDiscountSummary,
         setFixedPriceForLineItems,
         addFreeLineItems,
         removeFreeLineItemsForNonApplicableCoupon,

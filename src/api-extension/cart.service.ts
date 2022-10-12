@@ -19,6 +19,7 @@ import {
   PriceSelector,
   ProductToAdd,
   ValidateCouponsResult,
+  CartDiscountApplyMode,
 } from './types';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
 import { ProductMapper } from './mappers/product';
@@ -527,7 +528,17 @@ export class CartService {
       getSession(cart),
     );
 
-    const actions = getCartActionBuilders(validateCouponsResult)
+    const cartDiscountApplyMode =
+      this.configService.get<string>(
+        'APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT',
+      ) === 'true'
+        ? CartDiscountApplyMode.DirectDiscount
+        : CartDiscountApplyMode.CustomLineItem;
+
+    const actions = getCartActionBuilders(
+      validateCouponsResult,
+      cartDiscountApplyMode,
+    )
       .flatMap((builder) => builder(cart, validateCouponsResult))
       .filter((e) => e);
 
