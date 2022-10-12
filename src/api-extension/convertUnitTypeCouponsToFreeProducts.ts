@@ -4,6 +4,7 @@ import {
 } from '@voucherify/sdk';
 import { PriceSelector, ProductToAdd } from './types';
 import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
+import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 
 const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
 
@@ -18,12 +19,17 @@ interface ExtendedOrdersItem extends OrdersItem {
     name?: string;
     metadata?: Record<string, any>;
   };
+  sku?: {
+    id: string;
+    source_id: string;
+    sku: string;
+  };
 }
 
 async function getCtProducts(
   productSourceIds: string[],
   priceSelector: PriceSelector,
-  ctClient,
+  ctClient: ByProjectKeyRequestBuilder,
 ) {
   return await ctClient
     .products()
@@ -104,7 +110,7 @@ async function getCtVariantPrice(
 
 export default async function convertUnitTypeCouponsToFreeProducts(
   response: ValidationValidateStackableResponse,
-  ctClient,
+  ctClient: ByProjectKeyRequestBuilder,
   priceSelector: PriceSelector,
 ): Promise<ProductToAdd[]> {
   const discountTypeUnit = response.redeemables.filter(
@@ -115,12 +121,11 @@ export default async function convertUnitTypeCouponsToFreeProducts(
   const freeProductsToAdd = discountTypeUnit.flatMap(
     async (unitTypeRedeemable) => {
       const { effect: discountEffect } = unitTypeRedeemable.result?.discount;
-
       if (APPLICABLE_PRODUCT_EFFECT.includes(discountEffect)) {
         const freeItem = unitTypeRedeemable.order?.items?.find(
           (item: ExtendedOrdersItem) =>
-            item.product?.source_id ===
-            unitTypeRedeemable.result?.discount?.product?.source_id,
+            item.sku?.source_id ===
+            unitTypeRedeemable.result?.discount?.sku?.source_id,
         ) as ExtendedOrdersItem;
         const productSourceId =
           unitTypeRedeemable.result.discount.product.source_id;
@@ -151,7 +156,8 @@ export default async function convertUnitTypeCouponsToFreeProducts(
             discount_quantity: freeItem?.discount_quantity,
             discount_difference:
               freeItem?.applied_discount_amount -
-              currentPriceAmount * freeItem?.discount_quantity,
+                currentPriceAmount * freeItem?.discount_quantity !==
+              0,
             applied_discount_amount: currentPriceAmount,
             distributionChannel: priceSelector.distributionChannels[0],
           } as ProductToAdd,
@@ -171,10 +177,11 @@ export default async function convertUnitTypeCouponsToFreeProducts(
           priceSelector,
           ctClient,
         );
+
         const productsToAdd = filteredProducts.map(async (product) => {
           const freeItem = unitTypeRedeemable.order?.items?.find(
             (item: ExtendedOrdersItem) =>
-              item.product.source_id === product.product.source_id,
+              item.sku.source_id === product.sku.source_id,
           ) as ExtendedOrdersItem;
           const ctProduct = ctProducts.body.results.filter((ctProduct) => {
             return ctProduct.id === product.product.source_id;
@@ -197,7 +204,8 @@ export default async function convertUnitTypeCouponsToFreeProducts(
             discount_quantity: freeItem.discount_quantity,
             discount_difference:
               freeItem?.applied_discount_amount -
-              currentPriceAmount * freeItem?.discount_quantity,
+                currentPriceAmount * freeItem?.discount_quantity !==
+              0,
             applied_discount_amount: currentPriceAmount,
             distributionChannel: priceSelector.distributionChannels[0],
           } as ProductToAdd;

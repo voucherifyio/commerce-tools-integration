@@ -6,12 +6,16 @@ import { CartAction } from './CartAction';
 function getShippingProductSourceIds(
   applicableCoupons: StackableRedeemableResponse[],
 ): string[] {
-  return applicableCoupons
-    .filter((coupon) => coupon.result.discount?.type === 'UNIT')
-    .map((coupon) => {
-      return coupon.result.discount?.product?.source_id;
-    })
-    .filter((coupon) => coupon != undefined);
+  return [
+    ...new Set(
+      applicableCoupons
+        .filter((coupon) => coupon.result.discount?.type === 'UNIT')
+        .map((coupon) => {
+          return coupon.result.discount?.product?.source_id;
+        })
+        .filter((coupon) => coupon != undefined),
+    ),
+  ];
 }
 
 export default function addShippingProductSourceIds(

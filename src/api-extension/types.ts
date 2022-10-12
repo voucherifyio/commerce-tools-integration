@@ -22,7 +22,7 @@ export type ProductToAdd = {
   quantity?: number;
   discount_quantity?: number;
   initial_quantity: number;
-  discount_difference: number;
+  discount_difference: true;
   applied_discount_amount?: number;
   product: string; // sku source_id
   distributionChannel: ChannelReference;
@@ -49,3 +49,8 @@ export type ValidateCouponsResult = {
   taxCategory?: TaxCategory;
   couponsLimit: number;
 };
+
+export enum CartDiscountApplyMode {
+  CustomLineItem,
+  DirectDiscount,
+}

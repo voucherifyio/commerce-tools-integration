@@ -274,7 +274,9 @@ describe('CartService', () => {
     it('should add custom coupon type for initialized cart', async () => {
       const cart = defaultCart();
 
-      const result = await cartService.checkCartAndMutate(cart);
+      const result = await cartService.validatePromotionsAndBuildCartActions(
+        cart,
+      );
 
       expect(result).toEqual({
         status: true,
@@ -296,9 +298,9 @@ describe('CartService', () => {
       const cart = defaultCart();
       typesService.__simulateCouponTypeIsNotDefined();
 
-      expect(cartService.checkCartAndMutate(cart)).rejects.toThrowError(
-        new Error('CouponType not found'),
-      );
+      expect(
+        cartService.validatePromotionsAndBuildCartActions(cart),
+      ).rejects.toThrowError(new Error('CouponType not found'));
     });
 
     describe('tax categories', () => {
@@ -307,7 +309,9 @@ describe('CartService', () => {
         cart.version = 2;
         taxCategoriesService.__simulateCouponTaxCategoryIsNotDefined();
 
-        expect(cartService.checkCartAndMutate(cart)).rejects.toThrowError(
+        expect(
+          cartService.validatePromotionsAndBuildCartActions(cart),
+        ).rejects.toThrowError(
           new Error('Coupon tax category was not configured correctly'),
         );
       });
@@ -317,7 +321,7 @@ describe('CartService', () => {
         cart.version = 2;
         cart.country = 'CH';
 
-        await cartService.checkCartAndMutate(cart);
+        await cartService.validatePromotionsAndBuildCartActions(cart);
 
         expect(taxCategoriesService.getCouponTaxCategory).toBeCalledTimes(1);
         expect(
@@ -332,7 +336,7 @@ describe('CartService', () => {
         const cart = defaultCart();
         cart.version = 2;
 
-        await cartService.checkCartAndMutate(cart);
+        await cartService.validatePromotionsAndBuildCartActions(cart);
 
         expect(taxCategoriesService.getCouponTaxCategory).toBeCalledTimes(1);
         expect(
@@ -353,7 +357,9 @@ describe('CartService', () => {
       });
 
       it('should create "setCustomField" action with empty values and "setLineItemCustomType" with no fields for each lineItem', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         expect(result.actions).toEqual([
           {
@@ -388,7 +394,7 @@ describe('CartService', () => {
       });
 
       it('should NOT call voucherify', async () => {
-        await cartService.checkCartAndMutate(cart);
+        await cartService.validatePromotionsAndBuildCartActions(cart);
 
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
@@ -412,7 +418,9 @@ describe('CartService', () => {
           },
         ];
 
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         expect(result.actions.length).toBeGreaterThanOrEqual(2);
         const removeCustomLineItemAction = result.actions.find(
@@ -437,7 +445,9 @@ describe('CartService', () => {
           },
         ];
 
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const removeCustomLineItemActions = result.actions.filter(
           byActionType('removeCustomLineItem'),
@@ -469,7 +479,7 @@ describe('CartService', () => {
       });
 
       it('should call voucherify exactly once', async () => {
-        await cartService.checkCartAndMutate(cart);
+        await cartService.validatePromotionsAndBuildCartActions(cart);
 
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
@@ -490,7 +500,9 @@ describe('CartService', () => {
       });
 
       it('should assign new session with voucherify and store in cart', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const setSessionCustomFieldAction = result.actions.find(
           byCustomField('session'),
@@ -503,7 +515,9 @@ describe('CartService', () => {
       });
 
       it('should create "addCustomLineItem" action with coupons total value', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const addCustomLineItemActions = result.actions.filter(
           byActionType('addCustomLineItem'),
@@ -529,7 +543,9 @@ describe('CartService', () => {
       });
 
       it('should create "setCustomField" action with validated coupons', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const setDiscountCodesAction = result.actions.find(
           byCustomField('discount_codes'),
@@ -571,7 +587,7 @@ describe('CartService', () => {
       });
 
       it('should call voucherify exactly once using session identifier', async () => {
-        await cartService.checkCartAndMutate(cart);
+        await cartService.validatePromotionsAndBuildCartActions(cart);
 
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
@@ -592,7 +608,9 @@ describe('CartService', () => {
       });
 
       it('should return only one `setCustomField` action with information about failure', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         expect(result).toEqual({
           status: true,
@@ -906,7 +924,7 @@ describe('CartService', () => {
       });
 
       it('should call voucherify exactly once', async () => {
-        await cartService.checkCartAndMutate(cart);
+        await cartService.validatePromotionsAndBuildCartActions(cart);
 
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
@@ -927,7 +945,9 @@ describe('CartService', () => {
       });
 
       it('should return only one `setCustomField` action with information about failure', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
         expect(result).toEqual({
           status: true,
           actions: [
@@ -1254,7 +1274,7 @@ describe('CartService', () => {
       });
 
       it('should call voucherify once', async () => {
-        await cartService.checkCartAndMutate(cart);
+        await cartService.validatePromotionsAndBuildCartActions(cart);
 
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
@@ -1280,7 +1300,9 @@ describe('CartService', () => {
       });
 
       it('should create one `addCustomLineItem` action with all coupons value combined', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const addCustomLineItemActions = result.actions.filter(
           byActionType('addCustomLineItem'),
@@ -1306,7 +1328,9 @@ describe('CartService', () => {
       });
 
       it('should create one `setCustomField` action with all coupons applied', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
@@ -1369,7 +1393,7 @@ describe('CartService', () => {
       });
 
       it('should call voucherify to validate applied coupons again against updated cart', async () => {
-        await cartService.checkCartAndMutate(cart);
+        await cartService.validatePromotionsAndBuildCartActions(cart);
 
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
@@ -1396,7 +1420,9 @@ describe('CartService', () => {
       });
 
       it('should create one `addCustomLineItem` action with all coupons value combined', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const addCustomLineItemActions = result.actions.filter(
           byActionType('addCustomLineItem'),
@@ -1422,7 +1448,9 @@ describe('CartService', () => {
       });
 
       it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
@@ -1487,7 +1515,7 @@ describe('CartService', () => {
       });
 
       it('call voucherify once', async () => {
-        await cartService.checkCartAndMutate(cart);
+        await cartService.validatePromotionsAndBuildCartActions(cart);
 
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
@@ -1508,7 +1536,9 @@ describe('CartService', () => {
       });
 
       it('should create `addCustomLineItem` action with total coupons value applied', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const addCustomLineItemActions = result.actions.filter(
           byActionType('addCustomLineItem'),
@@ -1522,7 +1552,7 @@ describe('CartService', () => {
           },
           quantity: 1,
           money: {
-            centAmount: -3000,
+            centAmount: 0,
             type: 'centPrecision',
             currencyCode: 'EUR',
           },
@@ -1534,7 +1564,9 @@ describe('CartService', () => {
       });
 
       it('should create three `setCustomField` with default values and action with storing coupon details to the cart', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
@@ -1591,7 +1623,7 @@ describe('CartService', () => {
       });
 
       it('should call voucherify once', async () => {
-        await cartService.checkCartAndMutate(cart);
+        await cartService.validatePromotionsAndBuildCartActions(cart);
 
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
@@ -1612,7 +1644,9 @@ describe('CartService', () => {
       });
 
       it('should create `addLineItem` action with gift product', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const addLineItemActions = result.actions.filter(
           byActionType('addLineItem'),
@@ -1640,7 +1674,9 @@ describe('CartService', () => {
       });
 
       it('should create `addCustomLineItem` action with total coupons value applied', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const addCustomLineItemActions = result.actions.filter(
           byActionType('addCustomLineItem'),
@@ -1666,7 +1702,9 @@ describe('CartService', () => {
       });
 
       it('should create three `setCustomField` for default customFields settings and action storing coupon details to the cart', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
@@ -1743,7 +1781,7 @@ describe('CartService', () => {
       });
 
       it('should call voucherify once', async () => {
-        await cartService.checkCartAndMutate(cart);
+        await cartService.validatePromotionsAndBuildCartActions(cart);
 
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
@@ -1765,7 +1803,9 @@ describe('CartService', () => {
       });
 
       it('should create one `addCustomLineItem` action with summary of applied coupon', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const addCustomLineItemActions = result.actions.filter(
           byActionType('addCustomLineItem'),
@@ -1791,7 +1831,9 @@ describe('CartService', () => {
       });
 
       it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
@@ -1862,7 +1904,7 @@ describe('CartService', () => {
       });
 
       it('should call voucherify once', async () => {
-        await cartService.checkCartAndMutate(cart);
+        await cartService.validatePromotionsAndBuildCartActions(cart);
 
         expect(
           voucherifyConnectorService.validateStackableVouchersWithCTCart,
@@ -1883,7 +1925,9 @@ describe('CartService', () => {
       });
 
       it('should create one `addCustomLineItem` with applied coupon summary', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const addCustomLineItemActions = result.actions.filter(
           byActionType('addCustomLineItem'),
@@ -1909,7 +1953,9 @@ describe('CartService', () => {
       });
 
       it('should create one `changeLineItemQuantity` action with the id of the discounted product', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const changeLineItemQuantityActions = result.actions.filter(
           byActionType('changeLineItemQuantity'),
@@ -1923,14 +1969,16 @@ describe('CartService', () => {
       });
 
       it("should create one `setLineItemCustomType` action to apply items' applied_codes and one `setLineItemCustomType` to one remaining line item in cart to remove all customTypes from it", async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const setLineItemCustomTypeActions = result.actions.filter(
           byActionType('setLineItemCustomType'),
         );
 
         expect(setLineItemCustomTypeActions.length).toBe(2);
-        expect(setLineItemCustomTypeActions[0]).toEqual({
+        expect(setLineItemCustomTypeActions[1]).toEqual({
           action: 'setLineItemCustomType',
           lineItemId,
           type: {
@@ -1951,7 +1999,9 @@ describe('CartService', () => {
       });
 
       it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
-        const result = await cartService.checkCartAndMutate(cart);
+        const result = await cartService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
 
         const setCustomFieldActions = result.actions.filter(
           byActionType('setCustomField'),
