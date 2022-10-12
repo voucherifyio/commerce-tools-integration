@@ -155,7 +155,7 @@ Set environment variables with credentials to Voucherify and commercetools APIs.
     - (optional) `DEBUG_STORE_REQUESTS_IN_JSON` - `true` if you want to keep external requests / response in a JSON file.
     - (optional) `DEBUG_STORE_REQUESTS_DIR` - name of the directory where JSON files with request / responses are stored.
     - (optional) `COMMERCE_TOOLS_COUPONS_LIMIT` - maximum number of coupons that could be applied to cart. Default and maximum value is 5 related to [Voucherify Api](https://docs.voucherify.io/reference/redeem-stacked-discounts)
-    - (optional) `DISABLE_CART_PROMOTION` - allow to disable cart level promotion functionality 
+    - (optional) `DISABLE_CART_PROMOTION` - allow to disable [cart level promotion](https://support.voucherify.io/article/519-create-cart-level-promotions) functionality. It will reduce number of api calls because it's remove usage of [promotion validation request](https://docs.voucherify.io/reference/validate-promotions-1) from all cart related operation. 
 ### Installation
 
 Set up the configuration for the first run.
