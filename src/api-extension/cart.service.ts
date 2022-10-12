@@ -368,7 +368,9 @@ export class CartService {
         const appliedPromotion = promotions.find(
           (promotion) => promotion.id === redeemable.id,
         );
-        redeemable['banner'] = appliedPromotion.banner;
+        if (appliedPromotion) {
+          redeemable['banner'] = appliedPromotion?.banner;
+        }
 
         return redeemable;
       });
