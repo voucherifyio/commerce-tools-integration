@@ -73,8 +73,6 @@ export default function addDirectDiscountWithDiscountSummary(
     });
   });
 
-  console.log(discounts);
-
   return [
     {
       action: 'setDirectDiscounts',
