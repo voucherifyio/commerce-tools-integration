@@ -3,6 +3,7 @@ import { Order } from '@commercetools/platform-sdk';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { OrderMapper } from '../api-extension/mappers/order';
+import { OrderService } from '../api-extension/order.service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -16,6 +17,7 @@ export class OrderImportService {
     private readonly logger: Logger,
     private readonly voucherifyClient: VoucherifyConnectorService,
     private readonly orderMapper: OrderMapper,
+    private readonly orderService: OrderService,
   ) {}
 
   public async *getAllOrders(minDateTime?: string): AsyncGenerator<Order[]> {
@@ -56,23 +58,21 @@ export class OrderImportService {
       await this.voucherifyClient.getMetadataSchemaProperties('order');
 
     for await (const ordersBatch of this.getAllOrders(period)) {
-      ordersBatch.forEach((order) => {
+      for (const order of ordersBatch) {
         if (order.paymentState !== 'Paid') {
-          return;
+          continue;
         }
 
-        const metadata = this.orderMapper.getMetadata(
+        const metadata = await this.orderService.getMetadataForOrder(
           order,
           metadataSchemaProperties,
         );
         const orderObj = this.orderMapper.getOrderObject(order);
 
         orders.push(
-          Object.keys(metadata).length
-            ? { ...orderObj, metadata: Object.fromEntries(metadata) }
-            : orderObj,
+          Object.keys(metadata).length ? { ...orderObj, metadata } : orderObj,
         );
-      });
+      }
     }
 
     this.logger.debug(`Sending ${orders.length} orders to Voucherify`);

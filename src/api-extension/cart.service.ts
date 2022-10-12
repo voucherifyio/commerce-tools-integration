@@ -1,9 +1,12 @@
 import { Cart, LineItem } from '@commercetools/platform-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import {
+  OrdersItem,
   StackableRedeemableResponse,
   StackableRedeemableResponseStatus,
+  ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
+import { uniqBy } from 'lodash';
 
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
 import { TypesService } from '../commerceTools/types/types.service';
@@ -11,7 +14,13 @@ import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.s
 import getCartActionBuilders from './cartActions/getCartActionBuilders';
 import convertUnitTypeCouponsToFreeProducts from './convertUnitTypeCouponsToFreeProducts';
 import { desarializeCoupons, Coupon, CouponStatus } from './coupon';
-import { CartResponse, PriceSelector, ValidateCouponsResult } from './types';
+import {
+  CartResponse,
+  PriceSelector,
+  ProductToAdd,
+  ValidateCouponsResult,
+  CartDiscountApplyMode,
+} from './types';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
 import { ProductMapper } from './mappers/product';
 import {
@@ -22,6 +31,7 @@ import {
 } from './cartActions/CartAction';
 import { ConfigService } from '@nestjs/config';
 import sleep from './utils/sleep';
+import checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount from './utils/checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount';
 
 function getSession(cart: Cart): string | null {
   return cart.custom?.fields?.session ?? null;
@@ -93,6 +103,42 @@ function checkIfOnlyNewCouponsFailed(
   );
 }
 
+function calculateTotalDiscountAmount(
+  validatedCoupons: ValidationValidateStackableResponse,
+) {
+  let totalDiscountAmount = 0;
+  if (
+    validatedCoupons.redeemables.find(
+      (redeemable) => redeemable?.order?.items?.length,
+    )
+  ) {
+    //Voucherify "order.total_applied_discount_amount" is not always calculated correctly,
+    //so we need to iterate through the items to calculated discounted amount
+    validatedCoupons.redeemables.forEach((redeemable) => {
+      redeemable.order.items.forEach((item) => {
+        if ((item as any).total_applied_discount_amount) {
+          totalDiscountAmount += (item as any).total_applied_discount_amount;
+        } else if ((item as any).total_discount_amount) {
+          totalDiscountAmount += (item as any).total_discount_amount;
+        }
+      });
+    });
+  }
+
+  if (totalDiscountAmount === 0) {
+    return (
+      validatedCoupons.order?.total_applied_discount_amount ??
+      validatedCoupons.order?.total_discount_amount ??
+      0
+    );
+  }
+
+  if (totalDiscountAmount > (validatedCoupons?.order?.amount ?? 0)) {
+    return validatedCoupons.order.amount;
+  }
+  return totalDiscountAmount;
+}
+
 @Injectable()
 export class CartService {
   constructor(
@@ -105,35 +151,19 @@ export class CartService {
     private readonly configService: ConfigService,
   ) {}
 
-  public checkIfQuantityIsEqualOrHigherThanTotalQuantityDiscount(
-    lineItems: LineItem[],
-  ): boolean {
-    for (const item of lineItems) {
-      if (item.custom?.fields?.applied_codes) {
-        const quantity = item.quantity;
-        const codes = item.custom?.fields?.applied_codes
-          .map((code) => JSON.parse(code))
-          .filter((code) => code.type === 'UNIT');
-        let totalQuantityDiscount = 0;
-        for (const code of codes) {
-          if (code.quantity) {
-            totalQuantityDiscount += code.quantity;
-          }
-        }
-        if (totalQuantityDiscount > quantity) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
   private async validateCoupons(
     cart: Cart,
     sessionKey?: string | null,
   ): Promise<ValidateCouponsResult> {
     const { id, customerId, anonymousId } = cart;
-    let coupons: Coupon[] = getCouponsFromCart(cart);
+    const coupons: Coupon[] = getCouponsFromCart(cart);
+    let uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
+    if (coupons.length !== uniqCoupons.length) {
+      this.logger.debug({
+        msg: 'Duplicates found and deleted',
+      });
+    }
+
     const taxCategory = await this.checkCouponTaxCategoryWithCountries(cart);
 
     const couponsLimit =
@@ -141,34 +171,12 @@ export class CartService {
         ? this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT')
         : 5;
 
-    const promotions =
-      await this.voucherifyConnectorService.getAvailablePromotions(
-        cart,
-        this.productMapper.mapLineItems(cart.lineItems),
-      );
+    const { promotions, availablePromotions } = await this.getPromotions(
+      cart,
+      uniqCoupons,
+    );
 
-    const availablePromotions = promotions
-      .filter((promo) => {
-        if (!coupons.length) {
-          return true;
-        }
-
-        const codes = coupons
-          .filter((coupon) => coupon.status !== 'DELETED')
-          .map((coupon) => coupon.code);
-        return !codes.includes(promo.id);
-      })
-      .map((promo) => {
-        return {
-          status: 'AVAILABLE',
-          value: promo.discount_amount,
-          banner: promo.banner,
-          code: promo.id,
-          type: promo.object,
-        };
-      });
-
-    if (!coupons.length) {
+    if (!uniqCoupons.length) {
       this.logger.debug({
         msg: 'No coupons applied, skipping voucherify call',
       });
@@ -186,13 +194,13 @@ export class CartService {
     }
     this.logger.debug({
       msg: 'Attempt to apply coupons',
-      coupons,
+      coupons: uniqCoupons,
       id,
       customerId,
       anonymousId,
     });
 
-    const deletedCoupons = coupons.filter(
+    const deletedCoupons = uniqCoupons.filter(
       (coupon) => coupon.status === 'DELETED',
     );
 
@@ -205,7 +213,7 @@ export class CartService {
         ),
       );
 
-    if (deletedCoupons.length === coupons.length) {
+    if (deletedCoupons.length === uniqCoupons.length) {
       return {
         valid: false,
         availablePromotions: availablePromotions,
@@ -218,11 +226,11 @@ export class CartService {
       };
     }
 
-    coupons = this.filterCouponsByLimit(coupons, couponsLimit);
+    uniqCoupons = this.filterCouponsByLimit(uniqCoupons, couponsLimit);
 
     let validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
-        coupons.filter((coupon) => coupon.status != 'DELETED'),
+        uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
         cart,
         this.productMapper.mapLineItems(cart.lineItems),
         sessionKey,
@@ -239,59 +247,18 @@ export class CartService {
     );
 
     if (productsToChange.length) {
-      const productsToChangeSKUs = productsToChange.map(
-        (productsToChange) => productsToChange.product,
-      );
-      let items = validatedCoupons.order.items;
-      items = items.map((item: any) => {
-        if (
-          !productsToChangeSKUs.includes((item.sku as any).source_id) ||
-          item.amount !== item.discount_amount
-        ) {
-          return item;
-        }
-        const currentProductToChange = productsToChange.find(
-          (productsToChange) =>
-            productsToChange.product === (item.sku as any).source_id,
-        );
-
-        delete item.amount;
-        delete item.quantity;
-
-        item.price = currentProductToChange.applied_discount_amount;
-        item.amount = item.price * (item.quantity ?? item.initial_quantity);
-        item.sku = {
-          ...item.sku,
-          price: currentProductToChange.applied_discount_amount,
-        };
-        if (item.product) {
-          item.product = {
-            ...item.product,
-            price: currentProductToChange.applied_discount_amount,
-          };
-
-          return item;
-        }
-      });
-
-      items = items.map((item: any) => {
-        delete item.initial_amount;
-        delete item.discount_amount;
-        delete item.applied_discount_amount;
-        delete item.subtotal_amount;
-        delete item.quantity;
-        delete item.discount_quantity;
-
-        return item;
-      });
-
       validatedCoupons =
-        await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
-          coupons.filter((coupon) => coupon.status != 'DELETED'),
+        await this.revalidateCouponsBecauseNewUnitTypeCouponHaveAppliedWithWrongPrice(
+          validatedCoupons,
+          productsToChange,
+          uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
           cart,
-          items,
           sessionKey,
         );
+    }
+
+    if (promotions.length) {
+      this.setBannerOnValidatedPromotions(validatedCoupons, promotions);
     }
 
     const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
@@ -305,36 +272,10 @@ export class CartService {
 
     const sessionKeyResponse = validatedCoupons.session?.key;
     const { valid } = validatedCoupons;
-    let totalDiscountAmount = 0;
-    if (
-      validatedCoupons.redeemables.find(
-        (redeemable) => redeemable?.order?.items?.length,
-      )
-    ) {
-      for (const redeemable of validatedCoupons.redeemables) {
-        redeemable.order.items.forEach((item) => {
-          if ((item as any).total_applied_discount_amount) {
-            totalDiscountAmount += (item as any).total_applied_discount_amount;
-          } else if ((item as any).total_discount_amount) {
-            totalDiscountAmount += (item as any).total_discount_amount;
-          }
-        });
-      }
-    }
-
-    if (totalDiscountAmount === 0) {
-      totalDiscountAmount =
-        validatedCoupons.order?.total_applied_discount_amount ??
-        validatedCoupons.order?.total_discount_amount ??
-        0;
-    }
-
-    if (totalDiscountAmount > (validatedCoupons?.order?.amount ?? 0)) {
-      totalDiscountAmount = validatedCoupons.order.amount;
-    }
+    const totalDiscountAmount = calculateTotalDiscountAmount(validatedCoupons);
 
     const onlyNewCouponsFailed = checkIfOnlyNewCouponsFailed(
-      coupons,
+      uniqCoupons,
       applicableCoupons,
       notApplicableCoupons,
       skippedCoupons,
@@ -377,6 +318,127 @@ export class CartService {
       taxCategory,
       couponsLimit,
     };
+  }
+
+  private async getPromotions(cart, uniqCoupons: Coupon[]) {
+    const disableCartPromotion =
+      this.configService.get<string>('DISABLE_CART_PROMOTION') ?? 'false';
+
+    if (disableCartPromotion.toLowerCase() === 'true') {
+      return { promotions: [], availablePromotions: [] };
+    }
+
+    const promotions =
+      await this.voucherifyConnectorService.getAvailablePromotions(
+        cart,
+        this.productMapper.mapLineItems(cart.lineItems),
+      );
+
+    const availablePromotions = promotions
+      .filter((promo) => {
+        if (!uniqCoupons.length) {
+          return true;
+        }
+
+        const codes = uniqCoupons
+          .filter((coupon) => coupon.status !== 'DELETED')
+          .map((coupon) => coupon.code);
+        return !codes.includes(promo.id);
+      })
+      .map((promo) => {
+        return {
+          status: 'AVAILABLE',
+          value: promo.discount_amount,
+          banner: promo.banner,
+          code: promo.id,
+          type: promo.object,
+        };
+      });
+
+    return { promotions, availablePromotions };
+  }
+
+  private setBannerOnValidatedPromotions(
+    validatedCoupons: ValidationValidateStackableResponse,
+    promotions,
+  ) {
+    const promotionTiersWithBanner = validatedCoupons.redeemables
+      .filter((redeemable) => redeemable.object === 'promotion_tier')
+      .map((redeemable) => {
+        const appliedPromotion = promotions.find(
+          (promotion) => promotion.id === redeemable.id,
+        );
+        redeemable['banner'] = appliedPromotion.banner;
+
+        return redeemable;
+      });
+
+    validatedCoupons.redeemables = [
+      ...validatedCoupons.redeemables.filter(
+        (element) => element.object !== 'promotion_tier',
+      ),
+      ...promotionTiersWithBanner,
+    ];
+  }
+
+  private async revalidateCouponsBecauseNewUnitTypeCouponHaveAppliedWithWrongPrice(
+    validatedCoupons: ValidationValidateStackableResponse,
+    productsToChange: ProductToAdd[],
+    coupons: Coupon[],
+    cart: Cart,
+    sessionKey?: string | null,
+  ) {
+    type OrderItemSku = {
+      id?: string;
+      source_id?: string;
+      override?: boolean;
+      sku?: string;
+      price?: number;
+    };
+    const productsToChangeSKUs = productsToChange.map(
+      (productsToChange) => productsToChange.product,
+    );
+    const items = validatedCoupons.order.items.map((item: OrdersItem) => {
+      if (
+        !productsToChangeSKUs.includes((item.sku as OrderItemSku).source_id) ||
+        item.amount !== item.discount_amount
+      ) {
+        return item;
+      }
+      const currentProductToChange = productsToChange.find(
+        (productsToChange) =>
+          productsToChange.product === (item.sku as any).source_id,
+      );
+      return {
+        object: item?.object,
+        product_id: item?.product_id,
+        sku_id: item?.sku_id,
+        initial_quantity: item?.initial_quantity ?? 0,
+        amount:
+          currentProductToChange.applied_discount_amount *
+          (item.quantity ?? item.initial_quantity ?? 0),
+        price: currentProductToChange.applied_discount_amount,
+        product: {
+          id: item?.product?.id,
+          source_id: item?.product?.source_id,
+          name: item?.product?.name,
+          price: currentProductToChange.applied_discount_amount,
+        },
+        sku: {
+          id: item?.sku?.id,
+          source_id: item?.sku?.source_id,
+          sku: item?.sku?.sku,
+          price: currentProductToChange.applied_discount_amount,
+        },
+      };
+    });
+
+    return await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
+      coupons.filter((coupon) => coupon.status != 'DELETED'),
+      cart,
+      items,
+      sessionKey,
+    );
   }
 
   private filterCouponsByLimit(coupons: Coupon[], couponsLimit: number) {
@@ -444,7 +506,7 @@ export class CartService {
     };
   }
 
-  async checkCartAndMutate(cart: Cart): Promise<{
+  async validatePromotionsAndBuildCartActions(cart: Cart): Promise<{
     validateCouponsResult?: ValidateCouponsResult;
     actions: CartAction[];
     status: boolean;
@@ -452,19 +514,31 @@ export class CartService {
     if (cart.version === 1) {
       return this.setCustomTypeForInitializedCart();
     }
+
     if (
-      !this.checkIfQuantityIsEqualOrHigherThanTotalQuantityDiscount(
+      checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount(
         cart.lineItems,
       )
     ) {
       return null;
     }
+
     const validateCouponsResult = await this.validateCoupons(
       cart,
       getSession(cart),
     );
 
-    const actions = getCartActionBuilders(validateCouponsResult)
+    const cartDiscountApplyMode =
+      this.configService.get<string>(
+        'APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT',
+      ) === 'true'
+        ? CartDiscountApplyMode.DirectDiscount
+        : CartDiscountApplyMode.CustomLineItem;
+
+    const actions = getCartActionBuilders(
+      validateCouponsResult,
+      cartDiscountApplyMode,
+    )
       .flatMap((builder) => builder(cart, validateCouponsResult))
       .filter((e) => e);
 
@@ -480,7 +554,7 @@ export class CartService {
     };
   }
 
-  async checkCartMutateFallback(cart: Cart) {
+  async validatePromotionsAndBuildCartActionsFallback(cart: Cart) {
     let cartMutated = false;
     for (let i = 0; i < 2; i++) {
       await sleep(500);

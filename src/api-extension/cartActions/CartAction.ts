@@ -1,4 +1,10 @@
-import { Cart, TaxCategory, TypedMoney } from '@commercetools/platform-sdk';
+import {
+  Cart,
+  TaxCategory,
+  TypedMoney,
+  CartDiscountValueDraft,
+  CartDiscountTarget,
+} from '@commercetools/platform-sdk';
 import { ValidateCouponsResult } from '../types';
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 
@@ -52,6 +58,11 @@ export type CartActionAddCustomLineItem = {
   money: TypedMoney;
   slug: string;
   taxCategory: Pick<TaxCategory, 'id'>;
+};
+
+export type CartActionSetDirectDiscounts = {
+  action: 'setDirectDiscounts';
+  discounts: { value: CartDiscountValueDraft; target: CartDiscountTarget }[];
 };
 
 export type CartActionAddLineItem = {
@@ -112,6 +123,7 @@ export type CartAction =
   | CartActionSetCustomFieldWithSession
   | CartActionRemoveCustomLineItem
   | CartActionAddCustomLineItem
+  | CartActionSetDirectDiscounts
   | CartActionAddLineItem
   | CartActionRemoveLineItem
   | CartActionSetLineItemCustomField
