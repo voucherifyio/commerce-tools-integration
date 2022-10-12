@@ -384,8 +384,17 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
-- 2022-12-21 `v999`//change it
-    - metadata for order now uses `Properties` of Commercetools [Orders](https://docs.commercetools.com/api/projects/orders) for example: `shippingAddress` or `country` or `Custom Fields` when starts with `custom_filed_`
+- 2022-10-12 `v5.1.0`
+    - added support of [DirectDiscount](https://docs.commercetools.com/api/projects/carts#directdiscount). If you want to use DirectDiscounts please make sure you added 
+  `APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT=true` to your config file.
+    - metadata for order now uses `Properties` of Commercetools [Orders](https://docs.commercetools.com/api/projects/orders) for example: `shippingAddress` or `country` or `Custom Fields` when
+        starts with `custom_filed_`. Because of that, this version is not fully compatible with the previous one.
+    - improvement of displaying promotion banner
+    - adding option to disable by setting environment variable cart level promotion functionality (see section `Additional configuration` variables for more information).
+    - new orders migrated from commercetools will be set with correct status `PAID` or `CREATED`
+    - sometimes application was unstable, we fixed it by catching the errors better.
+    - in case of cart level promotion, information about a customer will be provided (for example for validations purposes)
+    - we fixed several minor bugs with unit type coupons
 - 2022-09-15 `v5.0.1`
     - fixes to unit type discount
 - 2022-09-14 `v5.0.0`
