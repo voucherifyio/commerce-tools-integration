@@ -1,6 +1,7 @@
 import { Cart } from '@commercetools/platform-sdk';
 import { ValidateCouponsResult } from '../types';
 import { CartActionSetDirectDiscounts } from './CartAction';
+import { FREE_SHIPPING_UNIT_TYPE } from '../../consts/voucherify';
 
 export default function addDirectDiscountWithDiscountSummary(
   cart: Cart,
@@ -34,7 +35,22 @@ export default function addDirectDiscountWithDiscountSummary(
       });
       return;
     }
+
     coupon.order.items.forEach((item) => {
+      if (item.product_id === FREE_SHIPPING_UNIT_TYPE) {
+        discounts.push({
+          target: {
+            type: 'shipping',
+            predicate: 'true',
+          },
+          value: {
+            type: 'relative',
+            permyriad: 10000,
+          },
+        });
+        return;
+      }
+
       if (item?.applied_discount_amount) {
         discounts.push({
           target: {
