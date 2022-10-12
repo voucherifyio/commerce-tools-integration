@@ -32,6 +32,7 @@ export default function addDirectDiscountWithDiscountSummary(
           ],
         },
       });
+      return;
     }
     coupon.order.items.forEach((item) => {
       if (item?.applied_discount_amount) {
