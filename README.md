@@ -16,6 +16,7 @@ Demo store https://sunrise-ct-voucherify.herokuapp.com
 ---
 
 * [How does the integration between Voucherify and commercetools work?](#how-does-the-integration-between-voucherify-and-commercetools-work)
+* [Commercetools API limits](#commercetools-api-limits)
 * [How to work with commercetools API Extensions?](#how-to-work-with-commercetools-api-extensions)
 * [Prerequisites](#prerequisites)
 * [Cart updates](#cart-updates)
@@ -74,6 +75,17 @@ If we want to allow customers to use coupons defined in Voucherify, the integrat
 
 In addition, we suggest synchronizing your customer, product, and order data between commercetools and Voucherify, so you can use that data to build more advanced promotion campaigns. 
 
+## Commercetools API limits
+To assure good performance for every project using commercetools Composable Commerce, the API imposes limits on certain parameters and objects.
+
+TaxCategories:
+* A maximum number of 100 TaxCategories can be created per Project. [Learn more about this limit.](https://docs.commercetools.com/api/limits#tax-categories)
+
+Product Types:
+* A maximum of 1 000 [Product Types](https://docs.commercetools.com/api/projects/productTypes#producttype) can be created.
+
+Extensions:
+* A maximum of 25 [Extensions](https://docs.commercetools.com/api/projects/api-extensions) can be created per project.
 
 ## How to work with commercetools API Extensions?
 
