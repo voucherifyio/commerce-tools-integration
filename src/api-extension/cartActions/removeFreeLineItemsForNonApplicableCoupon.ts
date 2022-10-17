@@ -10,16 +10,6 @@ export default function removeFreeLineItemsForNonApplicableCoupon(
   const { productsToAdd } = validateCouponsResult;
   cart.lineItems
     .filter((item) => item.custom?.fields?.applied_codes)
-    .filter((item) => {
-      const isCouponWhichNoLongerExist = item.custom?.fields?.applied_codes
-        .map((code) => JSON.parse(code))
-        .filter((code) => code.type === 'UNIT')
-        .find((code) =>
-          productsToAdd.map((product) => product.code).includes(code.code),
-        );
-
-      return !isCouponWhichNoLongerExist;
-    })
     .forEach((item) => {
       const quantityFromCode =
         item.custom?.fields.applied_codes
