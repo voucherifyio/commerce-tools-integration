@@ -1,14 +1,6 @@
 import { Order } from '@commercetools/platform-sdk';
 
 export class OrderMapper {
-  public getMetadata(order: Order, metadataSchemaProperties: string[]) {
-    return Object.keys(order.custom?.fields ? order.custom?.fields : {})
-      .filter((customField) => metadataSchemaProperties.includes(customField))
-      .map((customField) => {
-        return [[customField], order.custom?.fields[customField]];
-      });
-  }
-
   public getOrderObject(order: Order) {
     return {
       object: 'order',

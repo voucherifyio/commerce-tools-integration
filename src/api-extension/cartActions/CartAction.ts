@@ -1,4 +1,10 @@
-import { Cart, TaxCategory, TypedMoney } from '@commercetools/platform-sdk';
+import {
+  Cart,
+  TaxCategory,
+  TypedMoney,
+  CartDiscountValueDraft,
+  CartDiscountTarget,
+} from '@commercetools/platform-sdk';
 import { ValidateCouponsResult } from '../types';
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 
@@ -54,6 +60,11 @@ export type CartActionAddCustomLineItem = {
   taxCategory: Pick<TaxCategory, 'id'>;
 };
 
+export type CartActionSetDirectDiscounts = {
+  action: 'setDirectDiscounts';
+  discounts: { value: CartDiscountValueDraft; target: CartDiscountTarget }[];
+};
+
 export type CartActionAddLineItem = {
   action: 'addLineItem';
   sku: string;
@@ -102,12 +113,17 @@ export type CartActionChangeLineItemQuantity = {
   quantity: number;
 };
 
+export type CartActionRecalculate = {
+  action: 'recalculate';
+};
+
 export type CartAction =
   | CartActionSetCustomType
   | CartActionSetCustomFieldWithCoupons
   | CartActionSetCustomFieldWithSession
   | CartActionRemoveCustomLineItem
   | CartActionAddCustomLineItem
+  | CartActionSetDirectDiscounts
   | CartActionAddLineItem
   | CartActionRemoveLineItem
   | CartActionSetLineItemCustomField
@@ -115,7 +131,8 @@ export type CartAction =
   | CartActionSetLineItemCustomType
   | CartActionSetCustomFieldWithCouponsLimit
   | CartActionSetCustomFieldWithValidationFailed
-  | CartActionSetCustomFieldFreeShipping;
+  | CartActionSetCustomFieldFreeShipping
+  | CartActionRecalculate;
 
 export type CartActionsBuilder = (
   cart: Cart,

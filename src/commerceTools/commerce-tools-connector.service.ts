@@ -16,12 +16,14 @@ import {
   Cart,
   createApiBuilderFromCtpClient,
   Order,
+  Payment,
 } from '@commercetools/platform-sdk';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
+import client from '@commercetools/sdk-client-v2/dist/declarations/src/sdk-client/client';
 
 type MeasurementKey = '__start' | '__httpStart';
 type ExtendedRequest = ClientRequest & Record<MeasurementKey, number>;
@@ -96,6 +98,11 @@ export class CommerceToolsConnectorService {
 
       next(request, response);
     };
+  }
+
+  public async findPayment(id: string): Promise<Payment> {
+    const client = this.getClient();
+    return (await client.payments().withId({ ID: id }).get().execute())?.body;
   }
 
   public async findOrder(id: string): Promise<Order> {
