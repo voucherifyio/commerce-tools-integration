@@ -508,7 +508,10 @@ export class CartService {
     };
   }
 
-  async validatePromotionsAndBuildCartActions(cart: Cart): Promise<{
+  async validatePromotionsAndBuildCartActions(
+    cart: Cart,
+    useDirectDiscount = false,
+  ): Promise<{
     validateCouponsResult?: ValidateCouponsResult;
     actions: CartAction[];
     status: boolean;
@@ -531,6 +534,7 @@ export class CartService {
     );
 
     const cartDiscountApplyMode =
+      useDirectDiscount ??
       this.configService.get<string>(
         'APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT',
       ) === 'true'

@@ -98,6 +98,40 @@ describe('when applying discount code which adds free product to the cart', () =
     ).toHaveLength(1);
   });
 
+  it('should create `addLineItem` action with gift product', async () => {
+    const result = await cartService.validatePromotionsAndBuildCartActions(
+      cart,
+    );
+
+    expect(result.actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: 'addLineItem',
+          sku: SKU_ID,
+          quantity: 1,
+          custom: {
+            typeKey: 'lineItemCodesType',
+            fields: {
+              applied_codes: [
+                JSON.stringify({
+                  code: COUPON_CODE,
+                  type: 'UNIT',
+                  effect: 'ADD_NEW_ITEMS',
+                  quantity: 1,
+                  totalDiscountQuantity: 1,
+                }),
+              ],
+            },
+          },
+        }),
+      ]),
+    );
+
+    expect(
+      result.actions.filter((e) => e.action === 'addLineItem'),
+    ).toHaveLength(1);
+  });
+
   it('should create `addCustomLineItem` action with total coupons value applied', async () => {
     const result = await cartService.validatePromotionsAndBuildCartActions(
       cart,
