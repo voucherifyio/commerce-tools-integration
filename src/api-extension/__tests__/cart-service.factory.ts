@@ -5,6 +5,7 @@ import { TaxCategoriesService } from '../../commerceTools/tax-categories/tax-cat
 import { VoucherifyConnectorService } from '../../voucherify/voucherify-connector.service';
 import { CommerceToolsConnectorService } from '../../commerceTools/commerce-tools-connector.service';
 import { ProductMapper } from '../mappers/product';
+import { ConfigService } from '@nestjs/config';
 
 import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
 
@@ -15,6 +16,7 @@ export type BuildCartServiceWithMockedDependenciesProps = {
   taxCategoriesService: TaxCategoriesService;
   voucherifyConnectorService?: VoucherifyConnectorService;
   commerceToolsConnectorService?: CommerceToolsConnectorService;
+  configService?: ConfigService;
 };
 
 export async function buildCartServiceWithMockedDependencies({
@@ -22,6 +24,7 @@ export async function buildCartServiceWithMockedDependencies({
   taxCategoriesService,
   voucherifyConnectorService,
   commerceToolsConnectorService,
+  configService,
 }: BuildCartServiceWithMockedDependenciesProps) {
   const module = await Test.createTestingModule({
     controllers: [],
@@ -43,6 +46,10 @@ export async function buildCartServiceWithMockedDependencies({
       {
         provide: CommerceToolsConnectorService,
         useValue: commerceToolsConnectorService || {},
+      },
+      {
+        provide: ConfigService,
+        useValue: configService,
       },
     ],
   })
