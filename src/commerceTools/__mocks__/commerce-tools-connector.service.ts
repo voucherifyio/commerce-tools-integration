@@ -1,16 +1,11 @@
-import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 import { CommerceToolsConnectorService } from '../commerce-tools-connector.service';
-interface MockedCommerceToolsConectorService
-  extends CommerceToolsConnectorService {
-  __simulateGetClient: (props?: any) => MockedCommerceToolsConectorService;
-}
 
-const commerceToolsConnectoService = jest.createMockFromModule(
-  '../commerce-tools-connector.service',
-) as MockedCommerceToolsConectorService;
+export const getCommerceToolsConnectorServiceMockWithResponse = () => {
+  const commerceToolsConnectoService = jest.createMockFromModule(
+    '../commerce-tools-connector.service',
+  ) as CommerceToolsConnectorService;
 
-commerceToolsConnectoService.__simulateGetClient = (props: any = {}) => {
-  let products: any = {
+  const products: any = {
     body: {
       results: [
         {
@@ -55,55 +50,63 @@ commerceToolsConnectoService.__simulateGetClient = (props: any = {}) => {
     },
   };
 
-  if (Object.keys(props).length) {
-    products = {
-      body: {
-        results: [
-          {
-            id: props.id,
-            masterData: {
-              current: {
-                variants: [
-                  {
-                    sku: props.sku,
-                    prices: [
-                      {
-                        value: {
-                          centAmount: props.price,
-                          currencyCode: 'EUR',
-                        },
-                      },
-                    ],
-                  },
-                ],
-              },
-            },
-          },
-        ],
-      },
-    };
-  }
-
-  commerceToolsConnectoService.getClient = jest.fn(() => {
-    return {
-      products: jest.fn(() => {
-        return {
-          get: jest.fn(() => {
-            return {
-              execute: jest.fn(() => {
-                return products;
-              }),
-            };
-          }),
-        };
+  commerceToolsConnectoService.getClient = jest.fn().mockReturnValue({
+    products: jest.fn().mockReturnValue({
+      get: jest.fn().mockReturnValue({
+        execute: jest.fn().mockReturnValue(products),
       }),
-    } as unknown as ByProjectKeyRequestBuilder;
+    }),
   });
 
   return commerceToolsConnectoService;
 };
 
-export {
-  commerceToolsConnectoService as CommerceToolsConnectorService,
-  MockedCommerceToolsConectorService,
+type Product = {
+  sku: string;
+  price: number;
+  id: string;
+};
+export const getCommerceToolsConnectorServiceMockWithProductResponse = (
+  product: Product,
+) => {
+  const commerceToolsConnectoService = jest.createMockFromModule(
+    '../commerce-tools-connector.service',
+  ) as CommerceToolsConnectorService;
+
+  const products: any = {
+    body: {
+      results: [
+        {
+          id: product.id,
+          masterData: {
+            current: {
+              variants: [
+                {
+                  sku: product.sku,
+                  prices: [
+                    {
+                      value: {
+                        centAmount: product.price,
+                        currencyCode: 'EUR',
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ],
+    },
+  };
+
+  commerceToolsConnectoService.getClient = jest.fn().mockReturnValue({
+    products: jest.fn().mockReturnValue({
+      get: jest.fn().mockReturnValue({
+        execute: jest.fn().mockReturnValue(products),
+      }),
+    }),
+  });
+
+  return commerceToolsConnectoService;
 };
