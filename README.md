@@ -402,6 +402,11 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2022-10-19 `v5.1.1`
+   - refactoring/code quality
+   - added unit tests for [DirectDiscount](https://docs.commercetools.com/api/projects/carts#directdiscount)
+   - readme update, adding some descriptions
+   - minor fix for corner case for unit type discount
 - 2022-10-12 `v5.1.0`
     - added support of [DirectDiscount](https://docs.commercetools.com/api/projects/carts#directdiscount). If you want to use DirectDiscounts please make sure you added 
   `APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT=true` to your config file.
