@@ -358,7 +358,7 @@ Free shipping is one of our discount codes type. To handle this case You must de
    In this case You can clearly define coupon type by this ID because it's given by Voucherify and cannot be changed.
    **Make sure to change in V% dashboard product with source ID "5h1pp1ng" to 0$**
 
-   ![](readmeImages/Screenshot 2022-10-19 at 17.05.17.png)
+   ![Voucherify freeshipping configuration](public/voucherify-freeshipping-config.png)
 2. To create new or use existing product which will represent Your shipping method.
    If you have chosen your product now You can create new discount with unit type of this product.
 
@@ -367,7 +367,7 @@ Next step is to properly define shipping method in Your commercetools panel and 
 In `Shipping method -> Predicate` field You can define condition when a given shipping method will be available. To allow uses to use Your new free shipping method you need to define formula.
 
 `custom.shippingProductSourceIds contains any ("5h1pp1ng")` - this formula is used for default free shipping code with predefined `source id = 5h1pp1ng`
-![](readmeImages/Screenshot 2022-10-19 at 16.42.07.png)
+![CT shipping free method](public/ct-shipping-config.png)
 
 `custom.shippingProductSourceIds` contains any `("<your_source_id>")` - this formula should be used when you want to apply this shipping method with custom vourcherify shipping method.
 
