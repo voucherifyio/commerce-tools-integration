@@ -23,7 +23,6 @@ import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
-import client from '@commercetools/sdk-client-v2/dist/declarations/src/sdk-client/client';
 
 type MeasurementKey = '__start' | '__httpStart';
 type ExtendedRequest = ClientRequest & Record<MeasurementKey, number>;

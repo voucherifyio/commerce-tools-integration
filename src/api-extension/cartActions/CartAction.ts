@@ -5,7 +5,7 @@ import {
   CartDiscountValueDraft,
   CartDiscountTarget,
 } from '@commercetools/platform-sdk';
-import { ValidateCouponsResult } from '../types';
+import { CartDiscountApplyMode, ValidateCouponsResult } from '../types';
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 
 export type CartActionSetCustomType = {
@@ -137,6 +137,7 @@ export type CartAction =
 export type CartActionsBuilder = (
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
+  cartDiscountApplyMode: CartDiscountApplyMode,
 ) => CartAction[];
 
 export const COUPON_CUSTOM_LINE_SLUG = 'Voucher, ';

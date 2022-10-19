@@ -1,6 +1,6 @@
 import { Cart } from '@commercetools/platform-sdk';
-import { ValidateCouponsResult } from '../types';
-import { CartActionSetLineItemCustomType } from './CartAction';
+import { ValidateCouponsResult } from '../../types';
+import { CartActionSetLineItemCustomType } from '../CartAction';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
 
 type FixedCouponApplicableTo = {
@@ -114,7 +114,7 @@ function getLineItemCustomFieldActions(
   });
 }
 
-export default function setFixedPriceForLineItems(
+export default function mapValidateCouponsResultToLineProductsWithFixedAmount(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
 ): CartActionSetLineItemCustomType[] {
