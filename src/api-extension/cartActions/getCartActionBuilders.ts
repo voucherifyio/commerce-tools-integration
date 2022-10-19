@@ -1,40 +1,26 @@
 import { ValidateCouponsResult, CartDiscountApplyMode } from '../types';
-import addCustomLineItemWithDiscountSummary from './addCustomLineItemWithDiscountSummary';
-import addDirectDiscountWithDiscountSummary from './addDirectDiscountWithDiscountSummary';
-import addFreeLineItems from './addFreeLineItems';
 import { CartActionsBuilder } from './CartAction';
-import removeDiscountedCustomLineItems from './removeDiscountedCustomLineItems';
-import removeFreeLineItemsForNonApplicableCoupon from './removeFreeLineItemsForNonApplicableCoupon';
-import setSessionAsCustomField from './setSessionAsCustomField';
-import updateDiscountsCodes from './updateDiscountCodes';
-import addShippingProductSourceIds from './addShippingProductSourceIds';
-import setFixedPriceForLineItems from './setFixedPriceForLineItems';
-import setCouponsLimit from './setCouponsLimit';
+import setCustomFields from './builderActions/setCustomFields';
+import customLineItems from './builderActions/customLineItems';
+import addDirectDiscountWithDiscountSummary from './addDirectDiscountWithDiscountSummary';
+import lineItemsAndTheirCustomFields from './builderActions/lineItemsAndTheirCustomFields';
 
 export default function getCartActionBuilders(
   validateCouponsResult: ValidateCouponsResult,
   cartDiscountApplyMode: CartDiscountApplyMode = CartDiscountApplyMode.CustomLineItem,
 ): CartActionsBuilder[] {
-  const { valid, onlyNewCouponsFailed } = validateCouponsResult;
+  const cartActionBuilders = [] as CartActionsBuilder[];
 
-  const cartActionBuilders = [setSessionAsCustomField] as CartActionsBuilder[];
-  if (valid || !onlyNewCouponsFailed) {
-    cartActionBuilders.push(
-      ...[
-        removeDiscountedCustomLineItems,
-        CartDiscountApplyMode.CustomLineItem === cartDiscountApplyMode
-          ? addCustomLineItemWithDiscountSummary
-          : addDirectDiscountWithDiscountSummary,
-        setFixedPriceForLineItems,
-        addFreeLineItems,
-        removeFreeLineItemsForNonApplicableCoupon,
-        addShippingProductSourceIds,
-        setCouponsLimit,
-      ],
-    );
-  }
-
-  cartActionBuilders.push(updateDiscountsCodes);
+  cartActionBuilders.push(
+    ...[
+      customLineItems,
+      lineItemsAndTheirCustomFields,
+      setCustomFields,
+      // CartDiscountApplyMode.CustomLineItem === cartDiscountApplyMode
+      //   ? setCustomFields
+      //   : ,
+    ],
+  );
 
   return cartActionBuilders;
 }

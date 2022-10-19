@@ -1,16 +1,80 @@
 import { Cart } from '@commercetools/platform-sdk';
-import { Coupon, desarializeCoupons } from '../coupon';
-import { ValidateCouponsResult } from '../types';
+import { ValidateCouponsResult } from '../../types';
 import {
+  CartAction,
+  CartActionSetCustomFieldFreeShipping,
   CartActionSetCustomFieldWithCoupons,
+  CartActionSetCustomFieldWithCouponsLimit,
+  CartActionSetCustomFieldWithSession,
   CartActionSetCustomFieldWithValidationFailed,
-} from './CartAction';
+} from '../CartAction';
+import { StackableRedeemableResponse } from '@voucherify/sdk';
+import { Coupon, desarializeCoupons } from '../../coupon';
 import {
   FREE_SHIPPING,
   FREE_SHIPPING_UNIT_TYPE,
-} from '../../consts/voucherify';
+} from '../../../consts/voucherify';
+import isValidAndNewCouponNotFailed from '../helpers/utils';
 
-export default function updateDiscountsCodes(
+function setSessionAsCustomField(
+  cart: Cart,
+  validateCouponsResult: ValidateCouponsResult,
+): CartActionSetCustomFieldWithSession {
+  const { valid, newSessionKey } = validateCouponsResult;
+  const sessionKey = cart.custom?.fields?.session ?? null;
+  if (!valid || !newSessionKey || newSessionKey === sessionKey) {
+    return;
+  }
+
+  return {
+    action: 'setCustomField',
+    name: 'session',
+    value: newSessionKey,
+  } as CartActionSetCustomFieldWithSession;
+}
+
+function getShippingProductSourceIds(
+  applicableCoupons: StackableRedeemableResponse[],
+): string[] {
+  return [
+    ...new Set(
+      applicableCoupons
+        .filter((coupon) => coupon.result.discount?.type === 'UNIT')
+        .flatMap((coupon) => {
+          if (coupon.result.discount?.units) {
+            return coupon.result.discount.units.map((unit) => {
+              return unit?.product?.source_id;
+            });
+          } else {
+            return coupon.result.discount?.product?.source_id;
+          }
+        })
+        .filter((coupon) => coupon != undefined),
+    ),
+  ];
+}
+
+function addShippingProductSourceIds(
+  validateCouponsResult: ValidateCouponsResult,
+): CartActionSetCustomFieldFreeShipping {
+  return {
+    action: 'setCustomField',
+    name: 'shippingProductSourceIds',
+    value: getShippingProductSourceIds(validateCouponsResult.applicableCoupons),
+  };
+}
+
+function setCouponsLimit(
+  validateCouponsResult: ValidateCouponsResult,
+): CartActionSetCustomFieldWithCouponsLimit {
+  return {
+    action: 'setCustomField',
+    name: 'couponsLimit',
+    value: +validateCouponsResult.couponsLimit,
+  };
+}
+
+function updateDiscountsCodes(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
 ):
@@ -104,4 +168,21 @@ export default function updateDiscountsCodes(
     },
     ...validationFailedAction,
   ];
+}
+
+export default function setCustomFields(
+  cart: Cart,
+  validateCouponsResult: ValidateCouponsResult,
+): CartAction[] {
+  const cartActions = [] as CartAction[];
+
+  cartActions.push(setSessionAsCustomField(cart, validateCouponsResult));
+  cartActions.push(...updateDiscountsCodes(cart, validateCouponsResult));
+
+  if (isValidAndNewCouponNotFailed(validateCouponsResult)) {
+    cartActions.push(addShippingProductSourceIds(validateCouponsResult));
+    cartActions.push(setCouponsLimit(validateCouponsResult));
+  }
+
+  return cartActions;
 }

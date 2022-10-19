@@ -369,6 +369,8 @@ In `Shipping method -> Predicate` field You can define condition when a given sh
 
 To learn more about predicates You can see [here](https://docs.commercetools.com/api/predicates/query).
 
+To set new free shipping method by default after applying a code in our [Sunrise fork](https://github.com/voucherifyio/sunrise-for-commerce-tools-integration) set `key` field in the shipping configuration to `FREE_SHIPPING_DEFAULT`.
+
 #### Important
 1. Make sure that you `customField` definition is properly set. You can run `npm run config` to make this configuration.
 2. If you choose free shipping code with custom product make sure that this product is properly defined in commercetools and can be applied to cart.
