@@ -5,10 +5,11 @@ import {
   CartActionRemoveCustomLineItem,
   COUPON_CUSTOM_LINE_SLUG,
 } from '../CartAction';
-import { ValidateCouponsResult } from '../../types';
+import { CartDiscountApplyMode, ValidateCouponsResult } from '../../types';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import isValidAndNewCouponNotFailed from '../helpers/utils';
+import addDirectDiscountWithDiscountSummary from '../addDirectDiscountWithDiscountSummary';
 
 // TODO don't create addCustomLineItem action if the summary doesn't actually change
 function addCustomLineItemWithDiscountSummary(
@@ -79,14 +80,23 @@ function removeDiscountedCustomLineItems(
 export default function customLineItems(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
+  cartDiscountApplyMode?: CartDiscountApplyMode,
 ): CartAction[] {
   const cartActions = [] as CartAction[];
 
   if (isValidAndNewCouponNotFailed(validateCouponsResult)) {
-    cartActions.push(
-      ...addCustomLineItemWithDiscountSummary(cart, validateCouponsResult),
-      ...removeDiscountedCustomLineItems(cart),
-    );
+    if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
+      cartActions.push(
+        ...addCustomLineItemWithDiscountSummary(cart, validateCouponsResult),
+        ...removeDiscountedCustomLineItems(cart),
+      );
+    }
+    if (cartDiscountApplyMode === CartDiscountApplyMode.DirectDiscount) {
+      cartActions.push(
+        ...removeDiscountedCustomLineItems(cart),
+        ...addDirectDiscountWithDiscountSummary(cart, validateCouponsResult),
+      );
+    }
   }
 
   return cartActions;
