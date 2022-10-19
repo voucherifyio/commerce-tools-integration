@@ -541,8 +541,6 @@ export class CartService {
       )
       .filter((e) => e);
 
-    console.log(actions);
-
     this.logger.debug(actions);
     return {
       status: true,
