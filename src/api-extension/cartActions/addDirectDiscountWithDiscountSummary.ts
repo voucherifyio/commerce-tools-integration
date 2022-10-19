@@ -38,16 +38,6 @@ export default function addDirectDiscountWithDiscountSummary(
 
     coupon.order.items.forEach((item) => {
       if (item.product_id === FREE_SHIPPING_UNIT_TYPE) {
-        discounts.push({
-          target: {
-            type: 'shipping',
-            predicate: 'true',
-          },
-          value: {
-            type: 'relative',
-            permyriad: 10000,
-          },
-        });
         return;
       }
 
