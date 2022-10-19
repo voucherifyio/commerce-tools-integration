@@ -1,11 +1,6 @@
 import { Type } from '@commercetools/platform-sdk';
 import { TypesService } from '../types.service';
 
-interface MockedTypesService extends TypesService {
-  __simulateDefaultFindCouponType: () => void;
-  __simulateCouponTypeIsNotDefined: () => void;
-}
-
 export const defaultTypeId = '5aa76235-9d61-41c7-9d57-278b2bcc2f75';
 
 const defaultGetTypeResponse = {
@@ -76,20 +71,24 @@ const defaultGetTypeResponse = {
   ],
 } as Type;
 
-const typesService = jest.createMockFromModule(
-  '../types.service',
-) as MockedTypesService;
+export const getTypesServiceMockWithConfiguredCouponTypeResponse = () => {
+  const typesService = jest.createMockFromModule(
+    '../types.service',
+  ) as TypesService;
 
-typesService.__simulateDefaultFindCouponType = () => {
-  typesService.findCouponType = jest.fn(() =>
-    Promise.resolve(defaultGetTypeResponse),
-  );
+  typesService.findCouponType = jest
+    .fn()
+    .mockResolvedValue(defaultGetTypeResponse);
+
+  return typesService;
 };
 
-typesService.__simulateCouponTypeIsNotDefined = () => {
-  typesService.findCouponType = jest.fn(() => Promise.resolve(null));
+export const getTypesServiceMockWithNotDefinedCouponTypeResponse = () => {
+  const typesService = jest.createMockFromModule(
+    '../types.service',
+  ) as TypesService;
+
+  typesService.findCouponType = jest.fn().mockResolvedValue(null);
+
+  return typesService;
 };
-
-typesService.__simulateDefaultFindCouponType();
-
-export { typesService as TypesService, MockedTypesService };
