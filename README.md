@@ -360,7 +360,7 @@ Free shipping is one of our discount codes type. To handle this case You must de
 
    ![Voucherify freeshipping configuration](public/voucherify-freeshipping-config.png)
 2. To create new or use existing product which will represent Your shipping method.
-   If you have chosen your product now You can create new discount with unit type of this product.
+   If you have chosen your product now You can create new discount with unit type of this product. **Make sure to set price of this product to 0$**
 
 When you apply whichever of this discount code, the connected `product id` it will be set to commercetools cart custom field named shippingProductSourceIds.
 Next step is to properly define shipping method in Your commercetools panel and configure [Predicates](https://docs.commercetools.com/tutorials/shipping-method-with-predicate). Go to `Settings -> Project settings -> Shipping methods`. Use existed or create new shipping method which will be applied if one of codes will be used.
