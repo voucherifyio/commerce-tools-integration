@@ -536,8 +536,12 @@ export class CartService {
       validateCouponsResult,
       cartDiscountApplyMode,
     )
-      .flatMap((builder) => builder(cart, validateCouponsResult))
+      .flatMap((builder) =>
+        builder(cart, validateCouponsResult, cartDiscountApplyMode),
+      )
       .filter((e) => e);
+
+    console.log(actions);
 
     this.logger.debug(actions);
     return {

@@ -15,9 +15,10 @@ export default function getCartActionBuilders(
     ...[
       customLineItems,
       lineItemsAndTheirCustomFields,
-      CartDiscountApplyMode.CustomLineItem === cartDiscountApplyMode
-        ? setCustomFields
-        : addDirectDiscountWithDiscountSummary,
+      setCustomFields,
+      // CartDiscountApplyMode.CustomLineItem === cartDiscountApplyMode
+      //   ? setCustomFields
+      //   : ,
     ],
   );
 
