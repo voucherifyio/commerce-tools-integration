@@ -30,33 +30,15 @@ describe('When no coupon codes provided and have no previous voucherify session,
 
     expect(result.actions).toEqual([
       {
-        action: 'setCustomField',
-        name: 'shippingProductSourceIds',
-        value: [],
-      },
-      {
-        action: 'setCustomField',
-        name: 'couponsLimit',
-        value: 5,
-      },
-      {
-        action: 'setCustomField',
-        name: 'discount_codes',
-        value: [],
-      },
-      {
-        action: 'setCustomField',
-        name: 'isValidationFailed',
-        value: false,
-      },
-      {
         action: 'setLineItemCustomType',
+        lineItemId: 'line-item-id-1',
+        type: { key: 'lineItemCodesType' },
         fields: {},
-        lineItemId: `line-item-id-1`,
-        type: {
-          key: 'lineItemCodesType',
-        },
       },
+      { action: 'setCustomField', name: 'discount_codes', value: [] },
+      { action: 'setCustomField', name: 'isValidationFailed', value: false },
+      { action: 'setCustomField', name: 'shippingProductSourceIds', value: [] },
+      { action: 'setCustomField', name: 'couponsLimit', value: 5 },
     ]);
   });
   it('Should NOT call voucherify', async () => {

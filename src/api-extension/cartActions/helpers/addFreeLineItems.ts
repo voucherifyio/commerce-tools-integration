@@ -1,11 +1,11 @@
 import { Cart, LineItem } from '@commercetools/platform-sdk';
-import { ProductToAdd, ValidateCouponsResult } from '../types';
+import { ProductToAdd, ValidateCouponsResult } from '../../types';
 import {
   CartAction,
   CartActionAddLineItem,
   CartActionChangeLineItemQuantity,
   CartActionSetLineItemCustomType,
-} from './CartAction';
+} from '../CartAction';
 import { uniqBy } from 'lodash';
 
 function toAppliedCode(

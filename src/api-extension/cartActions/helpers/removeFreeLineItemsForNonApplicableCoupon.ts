@@ -1,6 +1,6 @@
 import { Cart } from '@commercetools/platform-sdk';
-import { ValidateCouponsResult } from '../types';
-import { CartAction } from './CartAction';
+import { ValidateCouponsResult } from '../../types';
+import { CartAction } from '../CartAction';
 
 export default function removeFreeLineItemsForNonApplicableCoupon(
   cart: Cart,

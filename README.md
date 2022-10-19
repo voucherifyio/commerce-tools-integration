@@ -16,6 +16,7 @@ Demo store https://sunrise-ct-voucherify.herokuapp.com
 ---
 
 * [How does the integration between Voucherify and commercetools work?](#how-does-the-integration-between-voucherify-and-commercetools-work)
+* [Commercetools API limits](#commercetools-api-limits)
 * [How to work with commercetools API Extensions?](#how-to-work-with-commercetools-api-extensions)
 * [Prerequisites](#prerequisites)
 * [Cart updates](#cart-updates)
@@ -74,6 +75,17 @@ If we want to allow customers to use coupons defined in Voucherify, the integrat
 
 In addition, we suggest synchronizing your customer, product, and order data between commercetools and Voucherify, so you can use that data to build more advanced promotion campaigns. 
 
+## Commercetools API limits
+To assure good performance for every project using commercetools Composable Commerce, the API imposes limits on certain parameters and objects.
+
+TaxCategories:
+* A maximum number of 100 TaxCategories can be created per Project. [Learn more about this limit.](https://docs.commercetools.com/api/limits#tax-categories)
+
+Product Types:
+* A maximum of 1 000 [Product Types](https://docs.commercetools.com/api/projects/productTypes#producttype) can be created.
+
+Extensions:
+* A maximum of 25 [Extensions](https://docs.commercetools.com/api/projects/api-extensions) can be created per project.
 
 ## How to work with commercetools API Extensions?
 
@@ -384,8 +396,17 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
-- 2022-12-21 `v999`//change it
-    - metadata for order now uses `Properties` of Commercetools [Orders](https://docs.commercetools.com/api/projects/orders) for example: `shippingAddress` or `country` or `Custom Fields` when starts with `custom_filed_`
+- 2022-10-12 `v5.1.0`
+    - added support of [DirectDiscount](https://docs.commercetools.com/api/projects/carts#directdiscount). If you want to use DirectDiscounts please make sure you added 
+  `APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT=true` to your config file.
+    - metadata for order now uses `Properties` of Commercetools [Orders](https://docs.commercetools.com/api/projects/orders) for example: `shippingAddress` or `country` or `Custom Fields` when
+        starts with `custom_filed_`. Because of that, this version is not fully compatible with the previous one.
+    - improvement of displaying promotion banner
+    - adding option to disable by setting environment variable cart level promotion functionality (see section `Additional configuration` variables for more information).
+    - new orders migrated from commercetools will be set with correct status `PAID` or `CREATED`
+    - sometimes application was unstable, we fixed it by catching the errors better.
+    - in case of cart level promotion, information about a customer will be provided (for example for validations purposes)
+    - we fixed several minor bugs with unit type coupons
 - 2022-09-15 `v5.0.1`
     - fixes to unit type discount
 - 2022-09-14 `v5.0.0`
