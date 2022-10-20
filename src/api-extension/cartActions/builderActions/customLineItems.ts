@@ -16,9 +16,9 @@ function addCustomLineItemWithDiscountSummary(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
 ): CartActionAddCustomLineItem[] {
-  const voucherCustomLineItem = cart.customLineItems.find(
-    (customLineItem) => customLineItem?.slug === COUPON_CUSTOM_LINE_SLUG,
-  );
+  const voucherCustomLineItem = cart.customLineItems
+    .filter((lineItem) => !lineItem.slug.startsWith(COUPON_CUSTOM_LINE_SLUG))
+    .find((customLineItem) => customLineItem?.slug === COUPON_CUSTOM_LINE_SLUG);
   if (voucherCustomLineItem) return [];
 
   const { totalDiscountAmount, applicableCoupons, taxCategory } =
@@ -68,13 +68,12 @@ function removeDiscountedCustomLineItems(
 ): CartActionRemoveCustomLineItem[] {
   return (cart.customLineItems || [])
     .filter((lineItem) => lineItem.slug.startsWith(COUPON_CUSTOM_LINE_SLUG))
-    .map(
-      (lineItem) =>
-        ({
-          action: 'removeCustomLineItem',
-          customLineItemId: lineItem.id,
-        } as CartActionRemoveCustomLineItem),
-    );
+    .map((lineItem) => {
+      return {
+        action: 'removeCustomLineItem',
+        customLineItemId: lineItem.id,
+      } as CartActionRemoveCustomLineItem;
+    });
 }
 
 export default function customLineItems(
@@ -87,8 +86,8 @@ export default function customLineItems(
   if (isValidAndNewCouponNotFailed(validateCouponsResult)) {
     if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
       cartActions.push(
-        ...addCustomLineItemWithDiscountSummary(cart, validateCouponsResult),
         ...removeDiscountedCustomLineItems(cart),
+        ...addCustomLineItemWithDiscountSummary(cart, validateCouponsResult),
       );
     }
     if (cartDiscountApplyMode === CartDiscountApplyMode.DirectDiscount) {
