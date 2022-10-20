@@ -9,11 +9,11 @@ export class TaxCategoriesService {
     private readonly logger: Logger,
   ) {}
 
-  private taxCategory: TaxCategory = null;
+  private couponTaxCategory: TaxCategory = null;
 
   async getCouponTaxCategory(): Promise<TaxCategory> {
-    if (this.taxCategory) {
-      return this.taxCategory;
+    if (this.couponTaxCategory) {
+      return this.couponTaxCategory;
     }
     const ctClient = this.commerceToolsConnectorService.getClient();
     const { statusCode, body } = await ctClient
@@ -22,12 +22,12 @@ export class TaxCategoriesService {
       .execute();
 
     if ([200, 201].includes(statusCode) && body.count === 1) {
-      this.taxCategory = body.results[0];
+      this.couponTaxCategory = body.results[0];
       this.logger.debug({
         msg: 'Found existing coupon tax category',
-        taxCategoryId: this.taxCategory.id,
+        taxCategoryId: this.couponTaxCategory.id,
       });
-      return this.taxCategory;
+      return this.couponTaxCategory;
     }
 
     const response = await ctClient
@@ -43,12 +43,12 @@ export class TaxCategoriesService {
     if (![200, 201].includes(response.statusCode)) {
       return null;
     }
-    this.taxCategory = response.body;
+    this.couponTaxCategory = response.body;
     this.logger.debug({
       msg: 'Found existing coupon tax category',
-      taxCategoryId: this.taxCategory.id,
+      taxCategoryId: this.couponTaxCategory.id,
     });
-    return this.taxCategory;
+    return this.couponTaxCategory;
   }
 
   async configureCouponTaxCategory({
@@ -185,7 +185,7 @@ export class TaxCategoriesService {
       .execute();
     const success = [200, 201].includes(response.statusCode);
     if (success) {
-      this.taxCategory = null;
+      this.couponTaxCategory = null;
       this.logger.debug({ msg: 'Added country to coupon tax category' });
       this.getCouponTaxCategory(); //don't wait
     } else {
