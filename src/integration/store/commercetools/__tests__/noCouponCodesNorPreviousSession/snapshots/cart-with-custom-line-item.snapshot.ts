@@ -7,6 +7,8 @@ import {
   TaxCalculationMode,
   TaxMode,
   TypedMoney,
+  CustomLineItem,
+  LocalizedString,
   Cart,
 } from '@commercetools/platform-sdk';
 
@@ -14,7 +16,7 @@ export const cart = {
   id: 'cart-id',
   type: 'Cart',
   createdAt: new Date().toISOString(),
-  version: 1,
+  version: 2,
   lastModifiedAt: new Date().toISOString(),
   country: 'DE',
   lineItems: [
@@ -90,7 +92,24 @@ export const cart = {
       lineItemMode: 'Standard',
     },
   ] as LineItem[],
-  customLineItems: [],
+  customLineItems: [
+    {
+      id: 'custom-line-item-1',
+      name: {
+        de: 'Gutscheincodes rabatt',
+        en: 'Coupon codes discount',
+      } as LocalizedString,
+      quantity: 1,
+      money: {
+        type: 'centPrecision',
+        currencyCode: 'EUR',
+        centAmount: 2000,
+        fractionDigits: 2,
+      },
+      slug: 'Voucher, ',
+      taxCategory: { id: '64a3b50d-245c-465a-bb5e-faf59d729031' },
+    },
+  ] as CustomLineItem[],
   totalPrice: {
     type: 'centPrecision',
     currencyCode: 'EUR',
@@ -105,6 +124,6 @@ export const cart = {
   origin: <CartOrigin>{},
   custom: {
     type: { typeId: 'type', id: '5aa76235-9d61-41c7-9d57-278b2bcc2f75' },
-    fields: {},
+    fields: { discount_codes: [] },
   },
 } as Cart;

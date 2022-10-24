@@ -14,7 +14,7 @@ export const cart = {
   id: 'cart-id',
   type: 'Cart',
   createdAt: new Date().toISOString(),
-  version: 1,
+  version: 2,
   lastModifiedAt: new Date().toISOString(),
   country: 'DE',
   lineItems: [
@@ -105,6 +105,6 @@ export const cart = {
   origin: <CartOrigin>{},
   custom: {
     type: { typeId: 'type', id: '5aa76235-9d61-41c7-9d57-278b2bcc2f75' },
-    fields: {},
+    fields: { discount_codes: [] },
   },
 } as Cart;

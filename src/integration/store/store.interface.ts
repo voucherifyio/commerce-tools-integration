@@ -1,3 +1,4 @@
+import {OrdersItem} from '@voucherify/sdk'
 export interface CartActionsInterface {
   setAvailablePromotions: () => Promise<boolean>;
   setFreeShipping: () => Promise<boolean>;
@@ -5,15 +6,25 @@ export interface CartActionsInterface {
   getCoupons: () => Promise<boolean>;
   updateCoupon: () => Promise<boolean>;
   removeCoupon: () => Promise<boolean>;
-  setCartDiscount: () => Promise<boolean>;
+  setCartDiscount: (amount: number) => Promise<boolean>;
 }
 
-export type Item = {
-  id: string;
+export type CouponStatus = 'NEW' | 'APPLIED' | 'NOT_APPLIED' | 'DELETED';
+export type CouponType = 'promotion_tier' | 'voucher';
+
+export type Coupon = {
+  code: string;
+  status: CouponStatus;
+  type?: CouponType;
+  errMsg?: string;
+  value?: number;
 };
 
 export type Cart = {
-  items: Item[];
+  items: OrdersItem[];
+  session?: string,
+  coupons: Coupon[],
+  metadata?: Record<string, any>,
 };
 
 export type CartUpdateHandler = (

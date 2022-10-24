@@ -1,12 +1,10 @@
 import {
   CartOrigin,
   CartState,
-  CustomFields,
   LineItem,
   RoundingMode,
   TaxCalculationMode,
   TaxMode,
-  TypedMoney,
   Cart,
 } from '@commercetools/platform-sdk';
 
@@ -14,7 +12,7 @@ export const cart = {
   id: 'cart-id',
   type: 'Cart',
   createdAt: new Date().toISOString(),
-  version: 1,
+  version: 2,
   lastModifiedAt: new Date().toISOString(),
   country: 'DE',
   lineItems: [

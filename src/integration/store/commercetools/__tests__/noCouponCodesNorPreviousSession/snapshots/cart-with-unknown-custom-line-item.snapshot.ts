@@ -7,14 +7,16 @@ import {
   TaxCalculationMode,
   TaxMode,
   TypedMoney,
+  CustomLineItem,
   Cart,
+  LocalizedString,
 } from '@commercetools/platform-sdk';
 
 export const cart = {
   id: 'cart-id',
   type: 'Cart',
   createdAt: new Date().toISOString(),
-  version: 1,
+  version: 2,
   lastModifiedAt: new Date().toISOString(),
   country: 'DE',
   lineItems: [
@@ -90,7 +92,20 @@ export const cart = {
       lineItemMode: 'Standard',
     },
   ] as LineItem[],
-  customLineItems: [],
+  customLineItems: [
+    {
+      id: 'custom-unknown-line-item-1',
+      name: { en: 'Custom unknown line' } as LocalizedString,
+      quantity: 1,
+      money: {
+        type: 'centPrecision',
+        currencyCode: 'EUR',
+        centAmount: 10000,
+        fractionDigits: 2,
+      },
+      slug: 'custom-unknown-line-item',
+    } as CustomLineItem,
+  ],
   totalPrice: {
     type: 'centPrecision',
     currencyCode: 'EUR',
@@ -105,6 +120,6 @@ export const cart = {
   origin: <CartOrigin>{},
   custom: {
     type: { typeId: 'type', id: '5aa76235-9d61-41c7-9d57-278b2bcc2f75' },
-    fields: {},
+    fields: { discount_codes: [] },
   },
 } as Cart;

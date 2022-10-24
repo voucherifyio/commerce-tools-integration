@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CommerceToolsConnectorService } from '../commerce-tools-connector.service';
+import { CommerceToolsConnectorService } from './commerce-tools-connector.service';
 import { Type, TypeUpdateAction } from '@commercetools/platform-sdk';
 
 @Injectable()
