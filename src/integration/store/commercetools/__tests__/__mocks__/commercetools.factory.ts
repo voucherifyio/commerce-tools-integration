@@ -3,17 +3,18 @@ import { ConfigService } from '@nestjs/config';
 import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
 import { CommercetoolsService } from '../../commercetools.service';
 import { TypesService } from '../../types.service';
-import { TaxCategoriesService } from '../../tax-categories.service'
+import { TaxCategoriesService } from '../../tax-categories.service';
 
 const moduleMocker = new ModuleMocker(global);
 export type BuildCommercettoolsServiceWithMockedDependenciesProps = {
   typesService: TypesService;
-  taxCategoriesService?: TaxCategoriesService
+  taxCategoriesService?: TaxCategoriesService;
 };
 
-
-
-export async function buildCommercetoolsServiceWithMockedDependencies({typesService, taxCategoriesService}:BuildCommercettoolsServiceWithMockedDependenciesProps) {
+export async function buildCommercetoolsServiceWithMockedDependencies({
+  typesService,
+  taxCategoriesService,
+}: BuildCommercettoolsServiceWithMockedDependenciesProps) {
   const module = await Test.createTestingModule({
     controllers: [],
     providers: [
@@ -25,7 +26,7 @@ export async function buildCommercetoolsServiceWithMockedDependencies({typesServ
       {
         provide: TaxCategoriesService,
         useValue: taxCategoriesService,
-      }
+      },
     ],
   })
     .useMocker((token) => {
@@ -38,10 +39,10 @@ export async function buildCommercetoolsServiceWithMockedDependencies({typesServ
       }
     })
     .compile();
-  const commerceToolsService = module.get<CommercetoolsService>(CommercetoolsService);
-  const cartHandlerMock = jest.fn()
-  commerceToolsService.onCartUpdate(cartHandlerMock)
-  
+  const commerceToolsService =
+    module.get<CommercetoolsService>(CommercetoolsService);
+  const cartHandlerMock = jest.fn();
+  commerceToolsService.onCartUpdate(cartHandlerMock);
 
   return { commerceToolsService, cartHandlerMock };
 }

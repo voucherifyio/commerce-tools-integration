@@ -4,19 +4,28 @@ import {
   CartActionsInterface,
   CartUpdateHandler,
   Cart,
-  Coupon
+  Coupon,
 } from '../store.interface';
-import { Cart as CartCT, Order as OrderCT, TaxCategory } from '@commercetools/platform-sdk';
-import { CartAction, CartActionSetCustomType, CartActionAddCustomLineItem, CartActionRemoveCustomLineItem } from './cart-actions.dto';
+import {
+  Cart as CartCT,
+  Order as OrderCT,
+  TaxCategory,
+} from '@commercetools/platform-sdk';
+import {
+  CartAction,
+  CartActionSetCustomType,
+  CartActionAddCustomLineItem,
+  CartActionRemoveCustomLineItem,
+} from './cart-actions.dto';
 import { TypesService } from './types.service';
-import { TaxCategoriesService } from './tax-categories.service'
+import { TaxCategoriesService } from './tax-categories.service';
 import { ProductMapper } from './product';
 import { uniqBy } from 'lodash';
 export const COUPON_CUSTOM_LINE_SLUG = 'Voucher, ';
 
 @Injectable()
 export class CartActions implements CartActionsInterface {
-  constructor(private taxCategory: TaxCategory, private cart: CartCT) { }
+  constructor(private taxCategory: TaxCategory, private cart: CartCT) {}
   private cartActions: CartAction[] = [];
   public setAvailablePromotions: () => Promise<boolean>;
   public setFreeShipping: () => Promise<boolean>;
@@ -27,17 +36,19 @@ export class CartActions implements CartActionsInterface {
   public async setCartDiscount(amount: number) {
     // todo direct discount
 
-    if(!amount){
-      return true
+    if (!amount) {
+      return true;
     }
 
-    const removeOldCustomLineItems = (this.cart.customLineItems || []).filter((lineItem) => lineItem.slug.startsWith(COUPON_CUSTOM_LINE_SLUG)).map(
-      (lineItem) =>
-      ({
-        action: 'removeCustomLineItem',
-        customLineItemId: lineItem.id,
-      } as CartActionRemoveCustomLineItem),
-    );
+    const removeOldCustomLineItems = (this.cart.customLineItems || [])
+      .filter((lineItem) => lineItem.slug.startsWith(COUPON_CUSTOM_LINE_SLUG))
+      .map(
+        (lineItem) =>
+          ({
+            action: 'removeCustomLineItem',
+            customLineItemId: lineItem.id,
+          } as CartActionRemoveCustomLineItem),
+      );
 
     const newCustomLineItem: CartActionAddCustomLineItem = {
       action: 'addCustomLineItem',
@@ -58,11 +69,10 @@ export class CartActions implements CartActionsInterface {
       },
     };
 
-    this.cartActions.push(...removeOldCustomLineItems, newCustomLineItem)
+    this.cartActions.push(...removeOldCustomLineItems, newCustomLineItem);
     return true;
-  };
+  }
 
-  
   public getCartActions() {
     return this.cartActions;
   }
@@ -75,10 +85,7 @@ export class CommercetoolsService implements StoreInterface {
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly logger: Logger,
     private readonly productMapper: ProductMapper,
-
-  ) {
-
-  }
+  ) {}
   private cartUpdateHandler: CartUpdateHandler;
   public onCartUpdate(handler: CartUpdateHandler) {
     this.cartUpdateHandler = handler;
@@ -89,7 +96,7 @@ export class CommercetoolsService implements StoreInterface {
       throw new Error('API Extension Handler not configured');
     }
     if (cartCt.version === 1) {
-      return await this.setCustomTypeForInitializedCart()
+      return await this.setCustomTypeForInitializedCart();
     }
 
     const taxCategory = await this.checkCouponTaxCategoryWithCountries(cartCt);
@@ -112,23 +119,24 @@ export class CommercetoolsService implements StoreInterface {
     };
   }
 
-
-
   private mapCtCartToCart(cartCt: CartCT): Cart {
     return {
       items: this.productMapper.mapLineItems(cartCt.lineItems),
       session: cartCt.custom?.fields?.session ?? null,
-      coupons: uniqBy((cartCt.custom?.fields?.discount_codes ?? [])
-        .map(this.desarializeCoupons)
-        .filter(
-          (coupon) =>
-            coupon.status !== 'NOT_APPLIED' && coupon.status !== 'AVAILABLE',
-        ), 'code'),
+      coupons: uniqBy(
+        (cartCt.custom?.fields?.discount_codes ?? [])
+          .map(this.desarializeCoupons)
+          .filter(
+            (coupon) =>
+              coupon.status !== 'NOT_APPLIED' && coupon.status !== 'AVAILABLE',
+          ),
+        'code',
+      ),
       metadata: {
         id: cartCt.id,
         customerId: cartCt.customerId,
-        anonymousId: cartCt.anonymousId
-      }
+        anonymousId: cartCt.anonymousId,
+      },
     };
   }
 
@@ -187,7 +195,6 @@ export class CommercetoolsService implements StoreInterface {
       phone: order.shippingAddress?.phone,
     };
   }
-
 
   // onOrderUpdate: (cart: CartActionsInterface) => Promise<boolean>;
   // onCustomerUpdate: (customer) => Promise<boolean>;

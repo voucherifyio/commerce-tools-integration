@@ -1,7 +1,7 @@
 import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../__mocks__/tax-categories.service';
 import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../__mocks__/voucherify-connector.service';
-import {buildIntegrationServiceWithMockedDependencies} from '../__mocks__/integration.factory'
+import { buildIntegrationServiceWithMockedDependencies } from '../__mocks__/integration.factory';
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../__mocks__/commerce-tools-connector.service';
 // import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
@@ -17,13 +17,18 @@ describe('When no coupon codes provided and have no previous voucherify session,
     const voucherifyConnectorService =
       getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
 
-      const commerceToolsConnectorService =
-        getCommerceToolsConnectorServiceMockWithResponse();
+    const commerceToolsConnectorService =
+      getCommerceToolsConnectorServiceMockWithResponse();
 
-      const {commerceToolsService, integrationService}  = await buildIntegrationServiceWithMockedDependencies({typesService, taxCategoriesService, voucherifyConnectorService, commerceToolsConnectorService})
+    const { commerceToolsService, integrationService } =
+      await buildIntegrationServiceWithMockedDependencies({
+        typesService,
+        taxCategoriesService,
+        voucherifyConnectorService,
+        commerceToolsConnectorService,
+      });
 
-     const cartActions =  await commerceToolsService.handleApiExtension(cart)
-
+    const cartActions = await commerceToolsService.handleApiExtension(cart);
 
     expect(cartActions).toEqual([
       {

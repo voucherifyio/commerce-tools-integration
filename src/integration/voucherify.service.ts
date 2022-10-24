@@ -16,7 +16,6 @@ import { Coupon } from './store/store.interface';
 import { OrdersCreate } from '@voucherify/sdk';
 import { Order, PaymentState } from '@commercetools/platform-sdk';
 
-
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;
 }
@@ -49,16 +48,16 @@ export class VoucherifyConnectorService {
   }
 
   async validateStackableVouchersWithCTCart(cart: Cart) {
-    const redeemables = cart.coupons.filter(
-        (coupon) => coupon.status !== 'DELETED',
-      ).map((code) => {
-      return {
-        object: code.type ? code.type : 'voucher',
-        id: code.code,
-      };
-    });
+    const redeemables = cart.coupons
+      .filter((coupon) => coupon.status !== 'DELETED')
+      .map((code) => {
+        return {
+          object: code.type ? code.type : 'voucher',
+          id: code.code,
+        };
+      });
 
-    const sourceId =  cart?.metadata?.customerId || cart?.metadata?.anonymousId
+    const sourceId = cart?.metadata?.customerId || cart?.metadata?.anonymousId;
 
     const request = {
       // options?: StackableOptions;

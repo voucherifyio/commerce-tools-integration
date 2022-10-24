@@ -1,4 +1,4 @@
-import {OrdersItem} from '@voucherify/sdk'
+import { OrdersItem } from '@voucherify/sdk';
 export interface CartActionsInterface {
   setAvailablePromotions: () => Promise<boolean>;
   setFreeShipping: () => Promise<boolean>;
@@ -22,9 +22,9 @@ export type Coupon = {
 
 export type Cart = {
   items: OrdersItem[];
-  session?: string,
-  coupons: Coupon[],
-  metadata?: Record<string, any>,
+  session?: string;
+  coupons: Coupon[];
+  metadata?: Record<string, any>;
 };
 
 export type CartUpdateHandler = (
