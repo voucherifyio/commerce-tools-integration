@@ -28,12 +28,14 @@ import { ProductMapper } from './api-extension/mappers/product';
 import { ValidationSchema } from './configs/validationSchema';
 import { AppValidationPipe } from './configs/appValidationPipe';
 import { RequestJsonLogger } from './configs/requestJsonLogger';
+import { IntegrationModule } from './integration/integration.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       validationSchema: ValidationSchema,
     }),
+    IntegrationModule,
   ],
   controllers: [
     AppController,
