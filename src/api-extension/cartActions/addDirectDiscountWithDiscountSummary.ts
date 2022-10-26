@@ -8,7 +8,13 @@ export default function addDirectDiscountWithDiscountSummary(
   validateCouponsResult: ValidateCouponsResult,
 ): CartActionSetDirectDiscounts[] {
   const { applicableCoupons } = validateCouponsResult;
-  if (applicableCoupons.length === 0) return [];
+  if (applicableCoupons.length === 0)
+    return [
+      {
+        action: 'setDirectDiscounts',
+        discounts: [],
+      },
+    ];
   const { currencyCode } = cart.totalPrice;
 
   const discounts = [];
