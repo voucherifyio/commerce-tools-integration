@@ -402,6 +402,8 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2022-10-26 `v5.1.2`
+  - cashing coupons tax category
 - 2022-10-19 `v5.1.1`
    - refactoring/code quality
    - added unit tests for [DirectDiscount](https://docs.commercetools.com/api/projects/carts#directdiscount)

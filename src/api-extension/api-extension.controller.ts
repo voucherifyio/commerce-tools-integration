@@ -1,22 +1,14 @@
-import {
-  Controller,
-  Post,
-  Body,
-  UseGuards,
-  UseInterceptors,
-  Logger,
-  Res,
-} from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Logger, Res } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { OrderService } from './order.service';
-import { TimeLoggingInterceptor } from 'src/misc/time-logging.interceptor';
 import { CartOrderDto } from 'src/api-extension/CartOrder.dto';
 import { ApiExtensionGuard } from './api-extension.guard';
 import { Cart, Order } from '@commercetools/platform-sdk';
 import { Response } from 'express';
 import { actionsForAPIExtensionTypeOrder } from '../misc/actionsForAPIExtensionTypeOrder';
+import { performance } from 'perf_hooks';
+import { elapsedTime } from '../misc/elapsedTime';
 
-@UseInterceptors(TimeLoggingInterceptor)
 @Controller('api-extension')
 @UseGuards(ApiExtensionGuard)
 export class ApiExtensionController {
@@ -29,10 +21,18 @@ export class ApiExtensionController {
   async handleRequestCart(cart: Cart, responseExpress: Response) {
     let response;
     try {
+      const start = performance.now();
       response =
         await this.apiExtensionService.validatePromotionsAndBuildCartActions(
           cart,
         );
+      const end = performance.now();
+      this.logger.debug(
+        `handleRequestCart->validatePromotionsAndBuildCartActions: ${elapsedTime(
+          start,
+          end,
+        )}`,
+      );
     } catch (e) {
       console.log(e);
       this.logger.error({

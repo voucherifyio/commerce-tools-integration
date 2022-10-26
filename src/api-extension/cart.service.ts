@@ -27,6 +27,8 @@ import { CartAction } from './cartActions/CartAction';
 import { ConfigService } from '@nestjs/config';
 import sleep from './utils/sleep';
 import checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount from './utils/checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount';
+import { performance } from 'perf_hooks';
+import { elapsedTime } from '../misc/elapsedTime';
 
 function getSession(cart: Cart): string | null {
   return cart.custom?.fields?.session ?? null;
@@ -538,7 +540,7 @@ export class CartService {
       )
       .filter((e) => e);
 
-    this.logger.debug(actions);
+    this.logger.debug({ msg: 'actions', actions });
     return {
       status: true,
       actions: actions,
