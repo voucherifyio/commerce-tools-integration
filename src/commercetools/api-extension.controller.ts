@@ -8,6 +8,7 @@ import { Response } from 'express';
 import { actionsForAPIExtensionTypeOrder } from '../misc/actionsForAPIExtensionTypeOrder';
 import { performance } from 'perf_hooks';
 import { elapsedTime } from '../misc/elapsedTime';
+import { CommercetoolsService } from './commercetools.service';
 
 @Controller('api-extension')
 @UseGuards(ApiExtensionGuard)
@@ -16,6 +17,7 @@ export class ApiExtensionController {
     private readonly cartService: CartService,
     private readonly orderService: OrderService,
     private readonly logger: Logger,
+    private readonly commercetoolsService: CommercetoolsService,
   ) {}
 
   async handleRequestCart(cart: Cart, responseExpress: Response) {
@@ -64,15 +66,9 @@ export class ApiExtensionController {
     responseExpress.status(200).json({
       actions: actionsForAPIExtensionTypeOrder(paymentState),
     });
-    try {
-      await this.orderService.redeemVoucherifyCoupons(order);
-    } catch (e) {
-      console.log(e);
-      this.logger.error({
-        msg: `Error while redeemVoucherifyCoupons function`,
-      });
-    }
-    return;
+    return await this.commercetoolsService.checkIfCartWasUpdatedWithStatusPaidAndRedeem(
+      order,
+    );
   }
 
   @Post()

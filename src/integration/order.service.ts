@@ -99,29 +99,8 @@ export class OrderService {
     return metadata;
   }
 
-  public async redeemVoucherifyCoupons(orderFromRequest: Order): Promise<{
-    redemptionsRedeemStackableResponse?: RedemptionsRedeemStackableResponse;
-    actions: { name: string; action: string; value: string[] }[];
-    status: boolean;
-  }> {
-    await sleep(650);
-    const order = await this.commerceToolsConnectorService.findOrder(
-      orderFromRequest.id,
-    );
-    if (order.version <= orderFromRequest.version) {
-      return;
-    }
-
+  public async redeemVoucherifyCoupons(order: Order) {
     const { id, customerId } = order;
-
-    if (order.paymentState !== 'Paid') {
-      this.logger.debug({
-        msg: 'Order is not paid',
-        id,
-        customerId,
-      });
-      return;
-    }
 
     const orderMetadataSchemaProperties =
       await this.voucherifyConnectorService.getMetadataSchemaProperties(
