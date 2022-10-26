@@ -3,8 +3,8 @@ import { OrderService } from '../integration/order.service';
 import { Cart, Order, Product } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../integration/utils/sleep';
-import { PriceSelector } from '../integration/types';
-import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
+import { CartResponse, PriceSelector } from '../integration/types';
+import { TypesService } from './types/types.service';
 
 @Injectable()
 export class CommercetoolsService {
@@ -12,7 +12,30 @@ export class CommercetoolsService {
     private readonly orderService: OrderService,
     private readonly logger: Logger,
     private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
+    private readonly typesService: TypesService,
   ) {}
+
+  public async setCustomTypeForInitializedCart(): Promise<CartResponse> {
+    const couponType = await this.typesService.findCouponType('couponCodes');
+    if (!couponType) {
+      const msg = 'CouponType not found';
+      this.logger.error({ msg });
+      throw new Error(msg);
+    }
+
+    return {
+      status: true,
+      actions: [
+        {
+          action: 'setCustomType',
+          type: {
+            id: couponType.id,
+          },
+          name: 'couponCodes',
+        },
+      ],
+    };
+  }
 
   public async checkIfCartWasUpdatedWithStatusPaidAndRedeem(
     orderFromRequest: Order,

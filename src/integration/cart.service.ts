@@ -485,37 +485,11 @@ export class CartService {
     return taxCategory;
   }
 
-  private async setCustomTypeForInitializedCart(): Promise<CartResponse> {
-    const couponType = await this.typesService.findCouponType('couponCodes');
-    if (!couponType) {
-      const msg = 'CouponType not found';
-      this.logger.error({ msg });
-      throw new Error(msg);
-    }
-
-    return {
-      status: true,
-      actions: [
-        {
-          action: 'setCustomType',
-          type: {
-            id: couponType.id,
-          },
-          name: 'couponCodes',
-        },
-      ],
-    };
-  }
-
   async validatePromotionsAndBuildCartActions(cart: Cart): Promise<{
     validateCouponsResult?: ValidateCouponsResult;
     actions: CartAction[];
     status: boolean;
   }> {
-    if (cart.version === 1) {
-      return this.setCustomTypeForInitializedCart();
-    }
-
     if (
       checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount(
         cart.lineItems,
