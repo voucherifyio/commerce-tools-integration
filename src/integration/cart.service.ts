@@ -12,7 +12,6 @@ import { TaxCategoriesService } from '../commercetools/tax-categories/tax-catego
 import { TypesService } from '../commercetools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import getCartActionBuilders from '../commercetools/cartActions/getCartActionBuilders';
-import convertUnitTypeCouponsToFreeProducts from './convertUnitTypeCouponsToFreeProducts';
 import { desarializeCoupons, Coupon, CouponStatus } from './coupon';
 import {
   CartResponse,
@@ -27,8 +26,10 @@ import { CartAction } from '../commercetools/cartActions/CartAction';
 import { ConfigService } from '@nestjs/config';
 import sleep from './utils/sleep';
 import checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount from './utils/checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount';
-import { performance } from 'perf_hooks';
-import { elapsedTime } from '../misc/elapsedTime';
+import { CommercetoolsService } from '../commercetools/commercetools.service';
+import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
+
+const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
 
 function getSession(cart: Cart): string | null {
   return cart.custom?.fields?.session ?? null;
@@ -146,6 +147,7 @@ export class CartService {
     private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly productMapper: ProductMapper,
     private readonly configService: ConfigService,
+    private readonly commercetoolsService: CommercetoolsService,
   ) {}
 
   private async validateCoupons(
@@ -233,10 +235,9 @@ export class CartService {
         sessionKey,
       );
 
-    const productsToAdd = await convertUnitTypeCouponsToFreeProducts(
+    const productsToAdd = await this.convertUnitTypeCouponsToFreeProducts(
       validatedCoupons,
-      this.commerceToolsConnectorService.getClient(),
-      this.getPriceSelectorFromCart(cart),
+      this.commercetoolsService.getPriceSelectorFromCart(cart),
     );
 
     const productsToChange = productsToAdd.filter(
@@ -567,18 +568,119 @@ export class CartService {
     return this.logger.debug('Coupons changes were rolled back successfully');
   }
 
-  private getPriceSelectorFromCart(cart: Cart): PriceSelector {
-    return {
-      country: cart.country,
-      currencyCode: cart.totalPrice.currencyCode,
-      customerGroup: cart.customerGroup,
-      distributionChannels: [
-        ...new Set(
-          cart.lineItems
-            .map((item) => item.distributionChannel)
-            .filter((item) => item != undefined),
-        ),
-      ],
-    };
+  public async convertUnitTypeCouponsToFreeProducts(
+    response: ValidationValidateStackableResponse,
+    priceSelector: PriceSelector,
+  ): Promise<ProductToAdd[]> {
+    const discountTypeUnit = response.redeemables.filter(
+      (redeemable) =>
+        redeemable.result?.discount?.type === 'UNIT' &&
+        redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE,
+    );
+    const freeProductsToAdd = discountTypeUnit.flatMap(
+      async (unitTypeRedeemable) => {
+        const { effect: discountEffect } = unitTypeRedeemable.result?.discount;
+        if (APPLICABLE_PRODUCT_EFFECT.includes(discountEffect)) {
+          const freeItem = unitTypeRedeemable.order?.items?.find(
+            (item: OrdersItem) =>
+              item.sku?.source_id ===
+              unitTypeRedeemable.result?.discount?.sku?.source_id,
+          ) as OrdersItem;
+          const productSourceId =
+            unitTypeRedeemable.result.discount.product.source_id;
+          const productSkuSourceId =
+            unitTypeRedeemable.result.discount.sku.source_id;
+          const ctProducts =
+            await this.commerceToolsConnectorService.getCtProducts(
+              [productSourceId],
+              priceSelector,
+            );
+          const prices = await this.commercetoolsService.getCtVariantPrice(
+            ctProducts.body.results[0],
+            productSkuSourceId,
+            priceSelector,
+          );
+          const currentPrice = prices[0];
+          const currentPriceAmount = currentPrice
+            ? currentPrice.value.centAmount
+            : 0;
+
+          return [
+            {
+              code: unitTypeRedeemable.id,
+              effect: unitTypeRedeemable.result?.discount?.effect,
+              quantity: unitTypeRedeemable.result?.discount?.unit_off,
+              product: unitTypeRedeemable.result?.discount.sku.source_id,
+              initial_quantity: freeItem?.initial_quantity,
+              discount_quantity: freeItem?.discount_quantity,
+              discount_difference:
+                freeItem?.applied_discount_amount -
+                  currentPriceAmount * freeItem?.discount_quantity !==
+                0,
+              applied_discount_amount: currentPriceAmount,
+              distributionChannel: priceSelector.distributionChannels[0],
+            } as ProductToAdd,
+          ] as ProductToAdd[];
+        }
+
+        if (discountEffect === 'ADD_MANY_ITEMS') {
+          const filteredProducts =
+            unitTypeRedeemable.result.discount.units.filter((product) =>
+              APPLICABLE_PRODUCT_EFFECT.includes(product.effect),
+            );
+          const productSourceIds = filteredProducts.map((product) => {
+            return product.product.source_id;
+          });
+          const ctProducts =
+            await this.commerceToolsConnectorService.getCtProducts(
+              productSourceIds,
+              priceSelector,
+            );
+
+          const productsToAdd = filteredProducts.map(async (product) => {
+            const freeItem = unitTypeRedeemable.order?.items?.find(
+              (item: OrdersItem) =>
+                item.sku.source_id === product.sku.source_id,
+            ) as OrdersItem;
+            const ctProduct = ctProducts.body.results.filter((ctProduct) => {
+              return ctProduct.id === product.product.source_id;
+            })[0];
+            const prices = await this.commercetoolsService.getCtVariantPrice(
+              ctProduct,
+              product.sku.source_id,
+              priceSelector,
+            );
+            const currentPrice = prices[0];
+            const currentPriceAmount = currentPrice
+              ? currentPrice.value.centAmount
+              : 0;
+            return {
+              code: unitTypeRedeemable.id,
+              effect: product.effect,
+              quantity: product.unit_off,
+              product: product.sku.source_id,
+              initial_quantity: freeItem.initial_quantity,
+              discount_quantity: freeItem.discount_quantity,
+              discount_difference:
+                freeItem?.applied_discount_amount -
+                  currentPriceAmount * freeItem?.discount_quantity !==
+                0,
+              applied_discount_amount: currentPriceAmount,
+              distributionChannel: priceSelector.distributionChannels[0],
+            } as ProductToAdd;
+          });
+
+          return Promise.all(productsToAdd);
+        }
+
+        return [] as ProductToAdd[];
+      },
+    );
+
+    return Promise.all(freeProductsToAdd).then((response) => {
+      return response.flatMap((element) => {
+        return element;
+      });
+    });
   }
 }

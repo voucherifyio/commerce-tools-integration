@@ -23,6 +23,7 @@ import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
+import { PriceSelector } from '../integration/types';
 
 type MeasurementKey = '__start' | '__httpStart';
 type ExtendedRequest = ClientRequest & Record<MeasurementKey, number>;
@@ -83,6 +84,24 @@ export class CommercetoolsConnectorService {
       request[key] = performance.now();
       next(request, response);
     };
+  }
+
+  public async getCtProducts(
+    productSourceIds: string[],
+    priceSelector: PriceSelector,
+  ) {
+    const client = this.getClient();
+    return client
+      .products()
+      .get({
+        queryArgs: {
+          total: false,
+          priceCurrency: priceSelector.currencyCode,
+          priceCountry: priceSelector.country,
+          where: `id in ("${productSourceIds.join('","')}") `,
+        },
+      })
+      .execute();
   }
 
   private get performanceMeasurent(): Middleware {

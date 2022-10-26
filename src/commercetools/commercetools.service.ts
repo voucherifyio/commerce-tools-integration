@@ -1,8 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OrderService } from '../integration/order.service';
-import { Order } from '@commercetools/platform-sdk';
+import { Cart, Order, Product } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../integration/utils/sleep';
+import { PriceSelector } from '../integration/types';
+import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 
 @Injectable()
 export class CommercetoolsService {
@@ -44,5 +46,84 @@ export class CommercetoolsService {
         msg: `Error while redeemVoucherifyCoupons function`,
       });
     }
+  }
+
+  public getPriceSelectorFromCart(cart: Cart): PriceSelector {
+    return {
+      country: cart.country,
+      currencyCode: cart.totalPrice.currencyCode,
+      customerGroup: cart.customerGroup,
+      distributionChannels: [
+        ...new Set(
+          cart.lineItems
+            .map((item) => item.distributionChannel)
+            .filter((item) => item != undefined),
+        ),
+      ],
+    };
+  }
+
+  public async getCtVariantPrice(
+    ctProduct: Product,
+    productSkuSourceId: string,
+    priceSelector: PriceSelector,
+  ) {
+    let ctVariants =
+      ctProduct.masterData.current.variants.length > 0
+        ? ctProduct.masterData.current.variants
+        : [ctProduct.masterData.current.masterVariant];
+
+    ctVariants = ctVariants.filter(
+      (variant) => variant.sku === productSkuSourceId,
+    );
+
+    const prices = [];
+    // price.country and price.customerGroup could be set to 'any' we don't to
+    // remove these elements from prices
+    // The priority order for the selection of the price is customer group > channel > country
+    // https://docs.commercetools.com/api/projects/carts#lineitem-price-selection
+    ctVariants.map((variant) => {
+      let filteredPrices = variant.prices;
+
+      if (priceSelector.customerGroup) {
+        const customerGroupPrices = filteredPrices.filter(
+          (price) =>
+            price.customerGroup &&
+            price.customerGroup.typeId === priceSelector.customerGroup.typeId &&
+            price.customerGroup.id === priceSelector.customerGroup.id,
+        );
+
+        if (customerGroupPrices.length) {
+          filteredPrices = customerGroupPrices;
+        }
+      }
+
+      if (priceSelector.distributionChannels.length) {
+        const channel = priceSelector.distributionChannels[0];
+        const channelsPrices = filteredPrices.filter(
+          (price) =>
+            price.channel &&
+            price.channel.typeId === channel.typeId &&
+            price.channel.id === channel.id,
+        );
+
+        if (channelsPrices.length) {
+          filteredPrices = channelsPrices;
+        }
+      }
+
+      filteredPrices = filteredPrices.filter(
+        (price) =>
+          price.value.currencyCode === priceSelector.currencyCode &&
+          (!price.country || price.country === priceSelector.country),
+      );
+
+      prices.push(
+        ...filteredPrices.filter((price) => price.country),
+        ...filteredPrices.filter((price) => !price.country),
+      );
+    });
+
+    return prices;
   }
 }
