@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
+import { CommerceToolsConnectorService } from './commerce-tools-connector.service';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 import { Extension } from '@commercetools/platform-sdk';
 import { ConfigService } from '@nestjs/config';

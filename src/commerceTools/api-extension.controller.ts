@@ -1,7 +1,7 @@
 import { Controller, Post, Body, UseGuards, Logger, Res } from '@nestjs/common';
-import { CartService } from './cart.service';
-import { OrderService } from './order.service';
-import { CartOrderDto } from 'src/api-extension/CartOrder.dto';
+import { CartService } from '../integration/cart.service';
+import { OrderService } from '../integration/order.service';
+import { CartOrderDto } from 'src/integration/CartOrder.dto';
 import { ApiExtensionGuard } from './api-extension.guard';
 import { Cart, Order } from '@commercetools/platform-sdk';
 import { Response } from 'express';
@@ -13,7 +13,7 @@ import { elapsedTime } from '../misc/elapsedTime';
 @UseGuards(ApiExtensionGuard)
 export class ApiExtensionController {
   constructor(
-    private readonly apiExtensionService: CartService,
+    private readonly cartService: CartService,
     private readonly orderService: OrderService,
     private readonly logger: Logger,
   ) {}
@@ -22,10 +22,9 @@ export class ApiExtensionController {
     let response;
     try {
       const start = performance.now();
-      response =
-        await this.apiExtensionService.validatePromotionsAndBuildCartActions(
-          cart,
-        );
+      response = await this.cartService.validatePromotionsAndBuildCartActions(
+        cart,
+      );
       const end = performance.now();
       this.logger.debug(
         `handleRequestCart->validatePromotionsAndBuildCartActions: ${elapsedTime(
@@ -48,7 +47,7 @@ export class ApiExtensionController {
     }
     responseExpress.status(200).json({ actions: response.actions });
     try {
-      return await this.apiExtensionService.validatePromotionsAndBuildCartActionsFallback(
+      return await this.cartService.validatePromotionsAndBuildCartActionsFallback(
         cart,
       );
     } catch (e) {

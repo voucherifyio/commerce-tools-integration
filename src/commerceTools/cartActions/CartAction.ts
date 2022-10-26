@@ -5,7 +5,10 @@ import {
   CartDiscountValueDraft,
   CartDiscountTarget,
 } from '@commercetools/platform-sdk';
-import { CartDiscountApplyMode, ValidateCouponsResult } from '../types';
+import {
+  CartDiscountApplyMode,
+  ValidateCouponsResult,
+} from '../../integration/types';
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 
 export type CartActionSetCustomType = {

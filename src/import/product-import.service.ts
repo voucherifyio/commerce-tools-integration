@@ -9,7 +9,7 @@ import ObjectsToCsv from 'objects-to-csv';
 
 import crypto = require('crypto');
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
-import { ProductMapper } from '../api-extension/mappers/product';
+import { ProductMapper } from '../integration/mappers/product';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {

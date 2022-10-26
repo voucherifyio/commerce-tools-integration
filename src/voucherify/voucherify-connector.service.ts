@@ -12,7 +12,7 @@ import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
-import { Coupon } from 'src/api-extension/coupon';
+import { Coupon } from 'src/integration/coupon';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 
 function elapsedTime(start: number, end: number): string {

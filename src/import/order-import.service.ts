@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Order } from '@commercetools/platform-sdk';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
-import { OrderMapper } from '../api-extension/mappers/order';
-import { OrderService } from '../api-extension/order.service';
+import { OrderMapper } from '../integration/mappers/order';
+import { OrderService } from '../integration/order.service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {

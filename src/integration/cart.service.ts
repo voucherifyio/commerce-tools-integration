@@ -11,7 +11,7 @@ import { uniqBy } from 'lodash';
 import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
 import { TypesService } from '../commerceTools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
-import getCartActionBuilders from './cartActions/getCartActionBuilders';
+import getCartActionBuilders from '../commerceTools/cartActions/getCartActionBuilders';
 import convertUnitTypeCouponsToFreeProducts from './convertUnitTypeCouponsToFreeProducts';
 import { desarializeCoupons, Coupon, CouponStatus } from './coupon';
 import {
@@ -23,7 +23,7 @@ import {
 } from './types';
 import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
 import { ProductMapper } from './mappers/product';
-import { CartAction } from './cartActions/CartAction';
+import { CartAction } from '../commerceTools/cartActions/CartAction';
 import { ConfigService } from '@nestjs/config';
 import sleep from './utils/sleep';
 import checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount from './utils/checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount';

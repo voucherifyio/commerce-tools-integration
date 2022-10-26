@@ -202,7 +202,7 @@ npm run register
 
 `npm run test`
 
-We have created integration tests to cover the most important scenarios connected with handling validation process and operations on cart. We mocked requests from commercetools and Voucherify to check behaviour of our application. You can examine tests [here](src/api-extension/__tests__) and mocks here: [1](src/commerceTools/__mocks__/commerce-tools-connector.service.ts), [2](src/commerceTools/tax-categories/__mocks__/tax-categories.service.ts), [3](src/commerceTools/types/__mocks__/types.service.ts), [4](src/voucherify/__mocks__/voucherify-connector.service.ts). Currently, we cover the following scenarios:
+We have created integration tests to cover the most important scenarios connected with handling validation process and operations on cart. We mocked requests from commercetools and Voucherify to check behaviour of our application. You can examine tests [here](src/integration/__tests__) and mocks here: [1](src/commerceTools/__mocks__/commerce-tools-connector.service.ts), [2](src/commerceTools/tax-categories/__mocks__/tax-categories.service.ts), [3](src/commerceTools/types/__mocks__/types.service.ts), [4](src/voucherify/__mocks__/voucherify-connector.service.ts). Currently, we cover the following scenarios:
 - creating a new cart (cart.version = 1)
 - running API extension without any applied coupons (testing integration between V% and CT)
 - running API extension when removing currently applied coupons

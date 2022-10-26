@@ -1,5 +1,5 @@
 import { Cart } from '@commercetools/platform-sdk';
-import { ValidateCouponsResult } from '../../types';
+import { ValidateCouponsResult } from '../../../integration/types';
 import {
   CartAction,
   CartActionSetCustomFieldFreeShipping,
@@ -9,7 +9,7 @@ import {
   CartActionSetCustomFieldWithValidationFailed,
 } from '../CartAction';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
-import { Coupon, desarializeCoupons } from '../../coupon';
+import { Coupon, desarializeCoupons } from '../../../integration/coupon';
 import {
   FREE_SHIPPING,
   FREE_SHIPPING_UNIT_TYPE,

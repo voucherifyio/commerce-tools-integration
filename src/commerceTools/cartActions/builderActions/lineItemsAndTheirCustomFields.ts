@@ -1,5 +1,5 @@
 import { Cart, LineItem } from '@commercetools/platform-sdk';
-import { ValidateCouponsResult } from '../../types';
+import { ValidateCouponsResult } from '../../../integration/types';
 import {
   CartAction,
   CartActionAddLineItem,

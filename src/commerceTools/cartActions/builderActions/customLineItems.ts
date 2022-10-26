@@ -5,7 +5,10 @@ import {
   CartActionRemoveCustomLineItem,
   COUPON_CUSTOM_LINE_SLUG,
 } from '../CartAction';
-import { CartDiscountApplyMode, ValidateCouponsResult } from '../../types';
+import {
+  CartDiscountApplyMode,
+  ValidateCouponsResult,
+} from '../../../integration/types';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import isValidAndNewCouponNotFailed from '../helpers/utils';

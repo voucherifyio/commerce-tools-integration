@@ -1,4 +1,4 @@
-import { ValidateCouponsResult } from '../../types';
+import { ValidateCouponsResult } from '../../../integration/types';
 
 export default function isValidAndNewCouponNotFailed(
   validateCouponsResult: ValidateCouponsResult,

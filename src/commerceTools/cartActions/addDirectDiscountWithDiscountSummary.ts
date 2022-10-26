@@ -1,5 +1,5 @@
 import { Cart } from '@commercetools/platform-sdk';
-import { ValidateCouponsResult } from '../types';
+import { ValidateCouponsResult } from '../../integration/types';
 import { CartActionSetDirectDiscounts } from './CartAction';
 import { FREE_SHIPPING_UNIT_TYPE } from '../../consts/voucherify';
 
