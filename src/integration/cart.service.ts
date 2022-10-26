@@ -4,6 +4,7 @@ import {
   OrdersItem,
   StackableRedeemableResponse,
   StackableRedeemableResponseStatus,
+  StackableRedeemableResultDiscountUnit,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 import { uniqBy } from 'lodash';
@@ -577,103 +578,60 @@ export class CartService {
         redeemable.result?.discount?.type === 'UNIT' &&
         redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE,
     );
+
     const freeProductsToAdd = discountTypeUnit.flatMap(
       async (unitTypeRedeemable) => {
-        const { effect: discountEffect } = unitTypeRedeemable.result?.discount;
-        if (APPLICABLE_PRODUCT_EFFECT.includes(discountEffect)) {
-          const freeItem = unitTypeRedeemable.order?.items?.find(
-            (item: OrdersItem) =>
-              item.sku?.source_id ===
-              unitTypeRedeemable.result?.discount?.sku?.source_id,
-          ) as OrdersItem;
-          const productSourceId =
-            unitTypeRedeemable.result.discount.product.source_id;
-          const productSkuSourceId =
-            unitTypeRedeemable.result.discount.sku.source_id;
-          const ctProducts =
-            await this.commerceToolsConnectorService.getCtProducts(
-              [productSourceId],
-              priceSelector,
-            );
-          const prices = await this.commercetoolsService.getCtVariantPrice(
-            ctProducts.body.results[0],
-            productSkuSourceId,
+        const discount = unitTypeRedeemable.result?.discount;
+        if (!discount) {
+          return [];
+        }
+        const freeUnits = (
+          discount.units
+            ? discount.units
+            : [{ ...discount } as StackableRedeemableResultDiscountUnit]
+        ).filter((unit) => APPLICABLE_PRODUCT_EFFECT.includes(unit.effect));
+        if (!freeUnits.length) {
+          return [];
+        }
+        const productSourceIds = freeUnits.map((unit) => {
+          return unit.product.source_id;
+        });
+        const ctProducts =
+          await this.commerceToolsConnectorService.getCtProducts(
+            productSourceIds,
             priceSelector,
           );
-          const currentPrice = prices[0];
-          const currentPriceAmount = currentPrice
-            ? currentPrice.value.centAmount
-            : 0;
 
-          return [
-            {
-              code: unitTypeRedeemable.id,
-              effect: unitTypeRedeemable.result?.discount?.effect,
-              quantity: unitTypeRedeemable.result?.discount?.unit_off,
-              product: unitTypeRedeemable.result?.discount.sku.source_id,
-              initial_quantity: freeItem?.initial_quantity,
-              discount_quantity: freeItem?.discount_quantity,
-              discount_difference:
-                freeItem?.applied_discount_amount -
-                  currentPriceAmount * freeItem?.discount_quantity !==
-                0,
-              applied_discount_amount: currentPriceAmount,
-              distributionChannel: priceSelector.distributionChannels[0],
-            } as ProductToAdd,
-          ] as ProductToAdd[];
-        }
-
-        if (discountEffect === 'ADD_MANY_ITEMS') {
-          const filteredProducts =
-            unitTypeRedeemable.result.discount.units.filter((product) =>
-              APPLICABLE_PRODUCT_EFFECT.includes(product.effect),
-            );
-          const productSourceIds = filteredProducts.map((product) => {
-            return product.product.source_id;
-          });
-          const ctProducts =
-            await this.commerceToolsConnectorService.getCtProducts(
-              productSourceIds,
-              priceSelector,
-            );
-
-          const productsToAdd = filteredProducts.map(async (product) => {
-            const freeItem = unitTypeRedeemable.order?.items?.find(
-              (item: OrdersItem) =>
-                item.sku.source_id === product.sku.source_id,
-            ) as OrdersItem;
-            const ctProduct = ctProducts.body.results.filter((ctProduct) => {
-              return ctProduct.id === product.product.source_id;
-            })[0];
-            const prices = await this.commercetoolsService.getCtVariantPrice(
+        const productsToAdd = freeUnits.map(async (unit) => {
+          const freeItem = unitTypeRedeemable.order?.items?.find(
+            (item: OrdersItem) => item.sku.source_id === unit.sku.source_id,
+          ) as OrdersItem;
+          const ctProduct = ctProducts.body.results.filter((ctProduct) => {
+            return ctProduct.id === unit.product.source_id;
+          })[0];
+          const currentPriceAmount =
+            await this.commercetoolsService.getCommercetoolstCurrentPrice(
               ctProduct,
-              product.sku.source_id,
+              unit.sku.source_id,
               priceSelector,
             );
-            const currentPrice = prices[0];
-            const currentPriceAmount = currentPrice
-              ? currentPrice.value.centAmount
-              : 0;
-            return {
-              code: unitTypeRedeemable.id,
-              effect: product.effect,
-              quantity: product.unit_off,
-              product: product.sku.source_id,
-              initial_quantity: freeItem.initial_quantity,
-              discount_quantity: freeItem.discount_quantity,
-              discount_difference:
-                freeItem?.applied_discount_amount -
-                  currentPriceAmount * freeItem?.discount_quantity !==
-                0,
-              applied_discount_amount: currentPriceAmount,
-              distributionChannel: priceSelector.distributionChannels[0],
-            } as ProductToAdd;
-          });
+          return {
+            code: unitTypeRedeemable.id,
+            effect: unit.effect,
+            quantity: unit.unit_off,
+            product: unit.sku.source_id,
+            initial_quantity: freeItem.initial_quantity,
+            discount_quantity: freeItem.discount_quantity,
+            discount_difference:
+              freeItem?.applied_discount_amount -
+                currentPriceAmount * freeItem?.discount_quantity !==
+              0,
+            applied_discount_amount: currentPriceAmount,
+            distributionChannel: priceSelector.distributionChannels[0],
+          } as ProductToAdd;
+        });
 
-          return Promise.all(productsToAdd);
-        }
-
-        return [] as ProductToAdd[];
+        return Promise.all(productsToAdd);
       },
     );
 

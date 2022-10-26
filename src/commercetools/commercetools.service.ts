@@ -63,7 +63,7 @@ export class CommercetoolsService {
     };
   }
 
-  public async getCtVariantPrice(
+  public async getCommercetoolstCurrentPrice(
     ctProduct: Product,
     productSkuSourceId: string,
     priceSelector: PriceSelector,
@@ -124,6 +124,8 @@ export class CommercetoolsService {
       );
     });
 
-    return prices;
+    const currentPrice = prices[0];
+
+    return currentPrice?.value?.centAmount ? currentPrice.value.centAmount : 0;
   }
 }
