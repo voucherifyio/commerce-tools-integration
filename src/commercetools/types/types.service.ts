@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CommerceToolsConnectorService } from '../commerce-tools-connector.service';
+import { CommercetoolsConnectorService } from '../commercetools-connector.service';
 import { Type, TypeUpdateAction } from '@commercetools/platform-sdk';
 
 @Injectable()
 export class TypesService {
   constructor(
-    private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
+    private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly logger: Logger,
   ) {}
 

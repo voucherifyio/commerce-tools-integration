@@ -5,7 +5,7 @@ import { desarializeCoupons, Coupon } from './coupon';
 import { OrderMapper } from './mappers/order';
 import { ProductMapper } from './mappers/product';
 import { RedemptionsRedeemStackableResponse } from '@voucherify/sdk';
-import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
+import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import sleep from './utils/sleep';
 import flatten from 'flat';
 import { deleteObjectsFromObject } from './utils/deleteObjectsFromObject';
@@ -20,7 +20,7 @@ const CUSTOM_FIELD_PREFIX = 'custom_filed_';
 @Injectable()
 export class OrderService {
   constructor(
-    private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
+    private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
     private readonly logger: Logger,
     private readonly orderMapper: OrderMapper,

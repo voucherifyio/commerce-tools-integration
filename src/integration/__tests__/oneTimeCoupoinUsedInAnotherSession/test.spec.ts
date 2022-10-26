@@ -1,7 +1,7 @@
-import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
-import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commerceTools/types/__mocks__/types.service';
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../commercetools/tax-categories/__mocks__/tax-categories.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
-import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commerceTools/__mocks__/commerce-tools-connector.service';
+import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 import { CartService } from '../../cart.service';
 import { ProductMapper } from '../../mappers/product';

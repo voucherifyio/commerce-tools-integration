@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Order } from '@commercetools/platform-sdk';
-import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
+import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { OrderMapper } from '../integration/mappers/order';
 import { OrderService } from '../integration/order.service';
@@ -13,7 +13,7 @@ const sleep = (time: number) => {
 @Injectable()
 export class OrderImportService {
   constructor(
-    private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
+    private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly logger: Logger,
     private readonly voucherifyClient: VoucherifyConnectorService,
     private readonly orderMapper: OrderMapper,

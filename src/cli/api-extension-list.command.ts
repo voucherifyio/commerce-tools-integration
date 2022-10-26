@@ -1,5 +1,5 @@
 import { Command, CommandRunner } from 'nest-commander';
-import { ApiExtensionService } from '../commerceTools/api-extension.service';
+import { ApiExtensionService } from '../commercetools/api-extension.service';
 import loadingCli from 'loading-cli';
 import Table from 'cli-table';
 

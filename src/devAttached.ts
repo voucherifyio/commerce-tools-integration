@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ApiExtensionService } from './commerceTools/api-extension.service';
+import { ApiExtensionService } from './commercetools/api-extension.service';
 import * as ngrok from 'ngrok';
 import { join } from 'path';
 import { WinstonModule } from 'nest-winston';

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createReadStream, unlink } from 'fs';
 import FormData from 'form-data';
 import fetch from 'node-fetch2';
-import { CommerceToolsConnectorService } from 'src/commerceTools/commerce-tools-connector.service';
+import { CommercetoolsConnectorService } from 'src/commercetools/commercetools-connector.service';
 import { Product } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
 
@@ -21,7 +21,7 @@ const sleep = (time: number) => {
 @Injectable()
 export class ProductImportService {
   constructor(
-    private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
+    private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly logger: Logger,
     private readonly configService: ConfigService,
     private readonly voucherifyClient: VoucherifyConnectorService,

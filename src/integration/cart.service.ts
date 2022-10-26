@@ -8,10 +8,10 @@ import {
 } from '@voucherify/sdk';
 import { uniqBy } from 'lodash';
 
-import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
-import { TypesService } from '../commerceTools/types/types.service';
+import { TaxCategoriesService } from '../commercetools/tax-categories/tax-categories.service';
+import { TypesService } from '../commercetools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
-import getCartActionBuilders from '../commerceTools/cartActions/getCartActionBuilders';
+import getCartActionBuilders from '../commercetools/cartActions/getCartActionBuilders';
 import convertUnitTypeCouponsToFreeProducts from './convertUnitTypeCouponsToFreeProducts';
 import { desarializeCoupons, Coupon, CouponStatus } from './coupon';
 import {
@@ -21,9 +21,9 @@ import {
   ValidateCouponsResult,
   CartDiscountApplyMode,
 } from './types';
-import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
+import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import { ProductMapper } from './mappers/product';
-import { CartAction } from '../commerceTools/cartActions/CartAction';
+import { CartAction } from '../commercetools/cartActions/CartAction';
 import { ConfigService } from '@nestjs/config';
 import sleep from './utils/sleep';
 import checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount from './utils/checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount';
@@ -143,7 +143,7 @@ export class CartService {
     private readonly typesService: TypesService,
     private readonly logger: Logger,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
-    private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
+    private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly productMapper: ProductMapper,
     private readonly configService: ConfigService,
   ) {}

@@ -1,9 +1,9 @@
-import { CommerceToolsConnectorService } from '../commerce-tools-connector.service';
+import { CommercetoolsConnectorService } from '../commercetools-connector.service';
 
 export const getCommerceToolsConnectorServiceMockWithResponse = () => {
   const commerceToolsConnectoService = jest.createMockFromModule(
-    '../commerce-tools-connector.service',
-  ) as CommerceToolsConnectorService;
+    '../commercetools-connector.service',
+  ) as CommercetoolsConnectorService;
 
   const products: any = {
     body: {
@@ -70,8 +70,8 @@ export const getCommerceToolsConnectorServiceMockWithProductResponse = (
   product: Product,
 ) => {
   const commerceToolsConnectoService = jest.createMockFromModule(
-    '../commerce-tools-connector.service',
-  ) as CommerceToolsConnectorService;
+    '../commercetools-connector.service',
+  ) as CommercetoolsConnectorService;
 
   const products: any = {
     body: {

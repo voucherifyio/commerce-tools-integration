@@ -4,14 +4,14 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { VoucherifyConnectorService } from './voucherify/voucherify-connector.service';
-import { CommerceToolsConnectorService } from './commerceTools/commerce-tools-connector.service';
-import { ApiExtensionController } from './commerceTools/api-extension.controller';
+import { CommercetoolsConnectorService } from './commercetools/commercetools-connector.service';
+import { ApiExtensionController } from './commercetools/api-extension.controller';
 import { CartService } from './integration/cart.service';
-import { ApiExtensionService } from './commerceTools/api-extension.service';
-import { TaxCategoriesService } from './commerceTools/tax-categories/tax-categories.service';
-import { TaxCategoriesController } from './commerceTools/tax-categories/tax-categories.controller';
-import { TypesController } from './commerceTools/types/types.controller';
-import { TypesService } from './commerceTools/types/types.service';
+import { ApiExtensionService } from './commercetools/api-extension.service';
+import { TaxCategoriesService } from './commercetools/tax-categories/tax-categories.service';
+import { TaxCategoriesController } from './commercetools/tax-categories/tax-categories.controller';
+import { TypesController } from './commercetools/types/types.controller';
+import { TypesService } from './commercetools/types/types.service';
 import { OrderService } from './integration/order.service';
 import { ProductImportService } from './import/product-import.service';
 import { ImportController } from './import/import.controller';
@@ -28,6 +28,8 @@ import { ProductMapper } from './integration/mappers/product';
 import { ValidationSchema } from './configs/validationSchema';
 import { AppValidationPipe } from './configs/appValidationPipe';
 import { RequestJsonLogger } from './configs/requestJsonLogger';
+import { IntegrationService } from './integration/integration.service';
+import { CommercetoolsService } from './commercetools/commercetools.service';
 
 @Module({
   imports: [
@@ -48,7 +50,7 @@ import { RequestJsonLogger } from './configs/requestJsonLogger';
     CartService,
     ApiExtensionService,
     VoucherifyConnectorService,
-    CommerceToolsConnectorService,
+    CommercetoolsConnectorService,
     TaxCategoriesService,
     TypesService,
     OrderService,
@@ -65,6 +67,8 @@ import { RequestJsonLogger } from './configs/requestJsonLogger';
     ProductMapper,
     AppValidationPipe,
     RequestJsonLogger,
+    IntegrationService,
+    CommercetoolsService,
   ],
 })
 export class AppModule {}

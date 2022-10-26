@@ -1,8 +1,8 @@
-import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../commercetools/tax-categories/__mocks__/tax-categories.service';
 import {
   getTypesServiceMockWithConfiguredCouponTypeResponse,
   getTypesServiceMockWithNotDefinedCouponTypeResponse,
-} from '../../../commerceTools/types/__mocks__/types.service';
+} from '../../../commercetools/types/__mocks__/types.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 import { cart } from './snapshots/cart.snapshot';
 describe('Cart custom types', () => {

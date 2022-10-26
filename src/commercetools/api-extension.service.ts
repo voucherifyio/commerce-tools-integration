@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CommerceToolsConnectorService } from './commerce-tools-connector.service';
+import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 import { Extension } from '@commercetools/platform-sdk';
 import { ConfigService } from '@nestjs/config';
@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 export class ApiExtensionService {
   private client: ByProjectKeyRequestBuilder;
   constructor(
-    private readonly ctConnector: CommerceToolsConnectorService,
+    private readonly ctConnector: CommercetoolsConnectorService,
     private readonly configService: ConfigService,
   ) {
     this.client = this.ctConnector.getClient();

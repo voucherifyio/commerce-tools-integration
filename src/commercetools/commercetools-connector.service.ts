@@ -28,7 +28,7 @@ type MeasurementKey = '__start' | '__httpStart';
 type ExtendedRequest = ClientRequest & Record<MeasurementKey, number>;
 
 @Injectable()
-export class CommerceToolsConnectorService {
+export class CommercetoolsConnectorService {
   constructor(
     private configService: ConfigService,
     private logger: Logger,

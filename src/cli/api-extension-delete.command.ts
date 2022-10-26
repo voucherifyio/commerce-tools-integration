@@ -1,5 +1,5 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { ApiExtensionService } from '../commerceTools/api-extension.service';
+import { ApiExtensionService } from '../commercetools/api-extension.service';
 import loadingCli from 'loading-cli';
 import { ConfigService } from '@nestjs/config';
 import { Extension } from '@commercetools/platform-sdk';

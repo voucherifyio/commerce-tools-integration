@@ -1,7 +1,7 @@
 import { Command, CommandRunner } from 'nest-commander';
 import loadingCli from 'loading-cli';
-import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
-import { TypesService } from '../commerceTools/types/types.service';
+import { TaxCategoriesService } from '../commercetools/tax-categories/tax-categories.service';
+import { TypesService } from '../commercetools/types/types.service';
 
 @Command({
   name: 'config',
