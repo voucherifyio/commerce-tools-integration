@@ -17,6 +17,7 @@ import {
   createApiBuilderFromCtpClient,
   Order,
   Payment,
+  Product,
 } from '@commercetools/platform-sdk';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 import {
@@ -24,6 +25,11 @@ import {
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
 import { PriceSelector } from '../integration/types';
+import {
+  OrdersItem,
+  StackableRedeemableResultDiscountUnit,
+} from '@voucherify/sdk';
+import { getCommercetoolstCurrentPriceAmount } from './utils/getCommercetoolstCurrentPriceAmount';
 
 type MeasurementKey = '__start' | '__httpStart';
 type ExtendedRequest = ClientRequest & Record<MeasurementKey, number>;
@@ -87,21 +93,23 @@ export class CommercetoolsConnectorService {
   }
 
   public async getCtProducts(
-    productSourceIds: string[],
     priceSelector: PriceSelector,
-  ) {
+    productSourceIds: string[],
+  ): Promise<Product[]> {
     const client = this.getClient();
-    return client
-      .products()
-      .get({
-        queryArgs: {
-          total: false,
-          priceCurrency: priceSelector.currencyCode,
-          priceCountry: priceSelector.country,
-          where: `id in ("${productSourceIds.join('","')}") `,
-        },
-      })
-      .execute();
+    return (
+      await client
+        .products()
+        .get({
+          queryArgs: {
+            total: false,
+            priceCurrency: priceSelector.currencyCode,
+            priceCountry: priceSelector.country,
+            where: `id in ("${productSourceIds.join('","')}") `,
+          },
+        })
+        .execute()
+    ).body.results;
   }
 
   private get performanceMeasurent(): Middleware {

@@ -3,8 +3,25 @@ import { OrderService } from '../integration/order.service';
 import { Cart, Order, Product } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../integration/utils/sleep';
-import { CartResponse, PriceSelector } from '../integration/types';
+import {
+  CartResponse,
+  PriceSelector,
+  ProductToAdd,
+} from '../integration/types';
 import { TypesService } from './types/types.service';
+import {
+  OrdersItem,
+  StackableRedeemableResultDiscountUnit,
+  ValidationValidateStackableResponse,
+} from '@voucherify/sdk';
+import { getCommercetoolstCurrentPriceAmount } from './utils/getCommercetoolstCurrentPriceAmount';
+import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
+
+interface ProductWithCurrentPriceAmount extends Product {
+  currentPriceAmount: number;
+  unit: StackableRedeemableResultDiscountUnit;
+  item: OrdersItem;
+}
 
 @Injectable()
 export class CommercetoolsService {
@@ -14,6 +31,96 @@ export class CommercetoolsService {
     private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly typesService: TypesService,
   ) {}
+
+  public async getProductsToAdd(
+    response: ValidationValidateStackableResponse,
+    priceSelector: PriceSelector,
+  ): Promise<ProductToAdd[]> {
+    const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
+
+    const discountTypeUnit = response.redeemables.filter(
+      (redeemable) =>
+        redeemable.result?.discount?.type === 'UNIT' &&
+        redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE,
+    );
+
+    const freeProductsToAdd = discountTypeUnit.flatMap(
+      async (unitTypeRedeemable) => {
+        const discount = unitTypeRedeemable.result?.discount;
+        if (!discount) {
+          return [];
+        }
+        const freeUnits = (
+          discount.units
+            ? discount.units
+            : [{ ...discount } as StackableRedeemableResultDiscountUnit]
+        ).filter((unit) => APPLICABLE_PRODUCT_EFFECT.includes(unit.effect));
+        if (!freeUnits.length) {
+          return [];
+        }
+        const productsToAdd = (
+          await this.getCtProductsWithCurrentPriceAmount(
+            priceSelector,
+            freeUnits,
+            unitTypeRedeemable.order.items,
+          )
+        ).map((productToAdd) => {
+          return {
+            code: unitTypeRedeemable.id,
+            effect: productToAdd.unit.effect,
+            quantity: productToAdd.unit.unit_off,
+            product: productToAdd.unit.sku.source_id,
+            initial_quantity: productToAdd.item.initial_quantity,
+            discount_quantity: productToAdd.item.discount_quantity,
+            discount_difference:
+              productToAdd.item?.applied_discount_amount -
+                productToAdd.currentPriceAmount *
+                  productToAdd.item?.discount_quantity !==
+              0,
+            applied_discount_amount: productToAdd.currentPriceAmount,
+            distributionChannel: priceSelector.distributionChannels[0],
+          } as ProductToAdd;
+        });
+
+        return Promise.all(productsToAdd);
+      },
+    );
+
+    return Promise.all(freeProductsToAdd).then((response) => {
+      return response.flatMap((element) => {
+        return element;
+      });
+    });
+  }
+
+  public async getCtProductsWithCurrentPriceAmount(
+    priceSelector: PriceSelector,
+    freeUnits: StackableRedeemableResultDiscountUnit[],
+    orderItems: OrdersItem[],
+  ): Promise<ProductWithCurrentPriceAmount[]> {
+    const productSourceIds = freeUnits.map((unit) => {
+      return unit.product.source_id;
+    });
+    const ctProducts = await this.commerceToolsConnectorService.getCtProducts(
+      priceSelector,
+      productSourceIds,
+    );
+
+    return ctProducts.map((ctProduct) => {
+      const unit = freeUnits.find(
+        (unit) => unit.product.source_id === ctProduct.id,
+      );
+      const currentPriceAmount = getCommercetoolstCurrentPriceAmount(
+        ctProduct,
+        unit.sku.source_id,
+        priceSelector,
+      );
+      const item = orderItems?.find(
+        (item) => item.sku.source_id === unit.sku.source_id,
+      ) as OrdersItem;
+      return { ...ctProduct, currentPriceAmount, unit, item };
+    });
+  }
 
   public async setCustomTypeForInitializedCart(): Promise<CartResponse> {
     const couponType = await this.typesService.findCouponType('couponCodes');
@@ -84,71 +191,5 @@ export class CommercetoolsService {
         ),
       ],
     };
-  }
-
-  public async getCommercetoolstCurrentPrice(
-    ctProduct: Product,
-    productSkuSourceId: string,
-    priceSelector: PriceSelector,
-  ) {
-    let ctVariants =
-      ctProduct.masterData.current.variants.length > 0
-        ? ctProduct.masterData.current.variants
-        : [ctProduct.masterData.current.masterVariant];
-
-    ctVariants = ctVariants.filter(
-      (variant) => variant.sku === productSkuSourceId,
-    );
-
-    const prices = [];
-    // price.country and price.customerGroup could be set to 'any' we don't to
-    // remove these elements from prices
-    // The priority order for the selection of the price is customer group > channel > country
-    // https://docs.commercetools.com/api/projects/carts#lineitem-price-selection
-    ctVariants.map((variant) => {
-      let filteredPrices = variant.prices;
-
-      if (priceSelector.customerGroup) {
-        const customerGroupPrices = filteredPrices.filter(
-          (price) =>
-            price.customerGroup &&
-            price.customerGroup.typeId === priceSelector.customerGroup.typeId &&
-            price.customerGroup.id === priceSelector.customerGroup.id,
-        );
-
-        if (customerGroupPrices.length) {
-          filteredPrices = customerGroupPrices;
-        }
-      }
-
-      if (priceSelector.distributionChannels.length) {
-        const channel = priceSelector.distributionChannels[0];
-        const channelsPrices = filteredPrices.filter(
-          (price) =>
-            price.channel &&
-            price.channel.typeId === channel.typeId &&
-            price.channel.id === channel.id,
-        );
-
-        if (channelsPrices.length) {
-          filteredPrices = channelsPrices;
-        }
-      }
-
-      filteredPrices = filteredPrices.filter(
-        (price) =>
-          price.value.currencyCode === priceSelector.currencyCode &&
-          (!price.country || price.country === priceSelector.country),
-      );
-
-      prices.push(
-        ...filteredPrices.filter((price) => price.country),
-        ...filteredPrices.filter((price) => !price.country),
-      );
-    });
-
-    const currentPrice = prices[0];
-
-    return currentPrice?.value?.centAmount ? currentPrice.value.centAmount : 0;
   }
 }

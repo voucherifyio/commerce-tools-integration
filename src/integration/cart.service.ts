@@ -1,4 +1,4 @@
-import { Cart } from '@commercetools/platform-sdk';
+import { Cart, Product } from '@commercetools/platform-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
@@ -29,8 +29,7 @@ import sleep from './utils/sleep';
 import checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount from './utils/checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
 import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
-
-const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
+import { getCommercetoolstCurrentPriceAmount } from '../commercetools/utils/getCommercetoolstCurrentPriceAmount';
 
 function getSession(cart: Cart): string | null {
   return cart.custom?.fields?.session ?? null;
@@ -164,7 +163,8 @@ export class CartService {
       });
     }
 
-    const taxCategory = await this.checkCouponTaxCategoryWithCountries(cart);
+    const taxCategory =
+      await this.taxCategoriesService.checkCouponTaxCategoryWithCountries(cart);
 
     const couponsLimit =
       (this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT') ?? 5) < 5
@@ -236,7 +236,7 @@ export class CartService {
         sessionKey,
       );
 
-    const productsToAdd = await this.convertUnitTypeCouponsToFreeProducts(
+    const productsToAdd = await this.commercetoolsService.getProductsToAdd(
       validatedCoupons,
       this.commercetoolsService.getPriceSelectorFromCart(cart),
     );
@@ -463,28 +463,6 @@ export class CartService {
     return coupons;
   }
 
-  private async checkCouponTaxCategoryWithCountries(cart: Cart) {
-    const { country } = cart;
-    const taxCategory = await this.taxCategoriesService.getCouponTaxCategory();
-    if (!taxCategory) {
-      const msg = 'Coupon tax category was not configured correctly';
-      this.logger.error({ msg });
-      throw new Error(msg);
-    }
-
-    if (
-      country &&
-      !taxCategory?.rates?.find((rate) => rate.country === country)
-    ) {
-      await this.taxCategoriesService.addCountryToCouponTaxCategory(
-        taxCategory,
-        country,
-      );
-    }
-
-    return taxCategory;
-  }
-
   async validatePromotionsAndBuildCartActions(cart: Cart): Promise<{
     validateCouponsResult?: ValidateCouponsResult;
     actions: CartAction[];
@@ -541,78 +519,5 @@ export class CartService {
     }
     await this.validateCoupons(cart, getSession(cart));
     return this.logger.debug('Coupons changes were rolled back successfully');
-  }
-
-  public async convertUnitTypeCouponsToFreeProducts(
-    response: ValidationValidateStackableResponse,
-    priceSelector: PriceSelector,
-  ): Promise<ProductToAdd[]> {
-    const discountTypeUnit = response.redeemables.filter(
-      (redeemable) =>
-        redeemable.result?.discount?.type === 'UNIT' &&
-        redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE,
-    );
-
-    const freeProductsToAdd = discountTypeUnit.flatMap(
-      async (unitTypeRedeemable) => {
-        const discount = unitTypeRedeemable.result?.discount;
-        if (!discount) {
-          return [];
-        }
-        const freeUnits = (
-          discount.units
-            ? discount.units
-            : [{ ...discount } as StackableRedeemableResultDiscountUnit]
-        ).filter((unit) => APPLICABLE_PRODUCT_EFFECT.includes(unit.effect));
-        if (!freeUnits.length) {
-          return [];
-        }
-        const productSourceIds = freeUnits.map((unit) => {
-          return unit.product.source_id;
-        });
-        const ctProducts =
-          await this.commerceToolsConnectorService.getCtProducts(
-            productSourceIds,
-            priceSelector,
-          );
-
-        const productsToAdd = freeUnits.map(async (unit) => {
-          const freeItem = unitTypeRedeemable.order?.items?.find(
-            (item: OrdersItem) => item.sku.source_id === unit.sku.source_id,
-          ) as OrdersItem;
-          const ctProduct = ctProducts.body.results.filter((ctProduct) => {
-            return ctProduct.id === unit.product.source_id;
-          })[0];
-          const currentPriceAmount =
-            await this.commercetoolsService.getCommercetoolstCurrentPrice(
-              ctProduct,
-              unit.sku.source_id,
-              priceSelector,
-            );
-          return {
-            code: unitTypeRedeemable.id,
-            effect: unit.effect,
-            quantity: unit.unit_off,
-            product: unit.sku.source_id,
-            initial_quantity: freeItem.initial_quantity,
-            discount_quantity: freeItem.discount_quantity,
-            discount_difference:
-              freeItem?.applied_discount_amount -
-                currentPriceAmount * freeItem?.discount_quantity !==
-              0,
-            applied_discount_amount: currentPriceAmount,
-            distributionChannel: priceSelector.distributionChannels[0],
-          } as ProductToAdd;
-        });
-
-        return Promise.all(productsToAdd);
-      },
-    );
-
-    return Promise.all(freeProductsToAdd).then((response) => {
-      return response.flatMap((element) => {
-        return element;
-      });
-    });
   }
 }
