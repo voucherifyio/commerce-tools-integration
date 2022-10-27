@@ -23,17 +23,9 @@ import {
 } from './types';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import { ProductMapper } from './mappers/product';
-import { CartAction } from '../commercetools/cartActions/CartAction';
 import { ConfigService } from '@nestjs/config';
 import sleep from './utils/sleep';
-import checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount from './utils/checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
-import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
-import { getCommercetoolstCurrentPriceAmount } from '../commercetools/utils/getCommercetoolstCurrentPriceAmount';
-
-function getSession(cart: Cart): string | null {
-  return cart.custom?.fields?.session ?? null;
-}
 
 function getCouponsFromCart(cart: Cart): Coupon[] {
   return (cart.custom?.fields?.discount_codes ?? [])
@@ -150,7 +142,7 @@ export class CartService {
     private readonly commercetoolsService: CommercetoolsService,
   ) {}
 
-  private async validateCoupons(
+  public async validateCoupons(
     cart: Cart,
     sessionKey?: string | null,
   ): Promise<ValidateCouponsResult> {
@@ -461,63 +453,5 @@ export class CartService {
       }
     }
     return coupons;
-  }
-
-  async validatePromotionsAndBuildCartActions(cart: Cart): Promise<{
-    validateCouponsResult?: ValidateCouponsResult;
-    actions: CartAction[];
-    status: boolean;
-  }> {
-    if (
-      checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount(
-        cart.lineItems,
-      )
-    ) {
-      return null;
-    }
-
-    const validateCouponsResult = await this.validateCoupons(
-      cart,
-      getSession(cart),
-    );
-
-    const cartDiscountApplyMode =
-      this.configService.get<string>(
-        'APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT',
-      ) === 'true'
-        ? CartDiscountApplyMode.DirectDiscount
-        : CartDiscountApplyMode.CustomLineItem;
-
-    const actions = getCartActionBuilders()
-      .flatMap((builder) =>
-        builder(cart, validateCouponsResult, cartDiscountApplyMode),
-      )
-      .filter((e) => e);
-
-    this.logger.debug({ msg: 'actions', actions });
-    return {
-      status: true,
-      actions: actions,
-      validateCouponsResult,
-    };
-  }
-
-  async validatePromotionsAndBuildCartActionsFallback(cart: Cart) {
-    let cartMutated = false;
-    for (let i = 0; i < 2; i++) {
-      await sleep(500);
-      const updatedCart = await this.commerceToolsConnectorService.findCart(
-        cart.id,
-      );
-      if (updatedCart.version !== cart.version) {
-        cartMutated = true;
-        break;
-      }
-    }
-    if (cartMutated) {
-      return;
-    }
-    await this.validateCoupons(cart, getSession(cart));
-    return this.logger.debug('Coupons changes were rolled back successfully');
   }
 }

@@ -1,12 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { OrderService } from '../integration/order.service';
-import { Cart, Order, Product } from '@commercetools/platform-sdk';
+import { Cart, LineItem, Order, Product } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../integration/utils/sleep';
 import {
+  CartDiscountApplyMode,
   CartResponse,
   PriceSelector,
   ProductToAdd,
+  ValidateCouponsResult,
 } from '../integration/types';
 import { TypesService } from './types/types.service';
 import {
@@ -16,11 +18,40 @@ import {
 } from '@voucherify/sdk';
 import { getCommercetoolstCurrentPriceAmount } from './utils/getCommercetoolstCurrentPriceAmount';
 import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
+import { CartAction } from './cartActions/CartAction';
+import getCartActionBuilders from './cartActions/getCartActionBuilders';
+import { ConfigService } from '@nestjs/config';
+import { CartService } from '../integration/cart.service';
 
 interface ProductWithCurrentPriceAmount extends Product {
   currentPriceAmount: number;
   unit: StackableRedeemableResultDiscountUnit;
   item: OrdersItem;
+}
+
+function getSession(cart: Cart): string | null {
+  return cart.custom?.fields?.session ?? null;
+}
+
+function checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount(
+  lineItems: LineItem[],
+): boolean {
+  return !!lineItems?.find((lineItem) => {
+    if (!lineItem.custom?.fields?.applied_codes?.length) {
+      return false;
+    }
+    const { quantity: itemQuantity } = lineItem;
+    const totalQuantityDiscount = lineItem.custom?.fields?.applied_codes
+      .map((code) => JSON.parse(code))
+      .filter((code) => code.type === 'UNIT')
+      .reduce((sum, codeObject) => {
+        if (codeObject.quantity) {
+          sum += codeObject.quantity;
+        }
+        return sum;
+      }, 0);
+    return totalQuantityDiscount > itemQuantity;
+  });
 }
 
 @Injectable()
@@ -30,6 +61,9 @@ export class CommercetoolsService {
     private readonly logger: Logger,
     private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly typesService: TypesService,
+    private readonly configService: ConfigService,
+    @Inject(forwardRef(() => CartService))
+    private readonly cartService: CartService,
   ) {}
 
   public async getProductsToAdd(
@@ -142,6 +176,64 @@ export class CommercetoolsService {
         },
       ],
     };
+  }
+
+  async validatePromotionsAndBuildCartActions(cart: Cart): Promise<{
+    validateCouponsResult?: ValidateCouponsResult;
+    actions: CartAction[];
+    status: boolean;
+  }> {
+    if (
+      checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount(
+        cart.lineItems,
+      )
+    ) {
+      return null;
+    }
+
+    const validateCouponsResult = await this.cartService.validateCoupons(
+      cart,
+      getSession(cart),
+    );
+
+    const cartDiscountApplyMode =
+      this.configService.get<string>(
+        'APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT',
+      ) === 'true'
+        ? CartDiscountApplyMode.DirectDiscount
+        : CartDiscountApplyMode.CustomLineItem;
+
+    const actions = getCartActionBuilders()
+      .flatMap((builder) =>
+        builder(cart, validateCouponsResult, cartDiscountApplyMode),
+      )
+      .filter((e) => e);
+
+    this.logger.debug({ msg: 'actions', actions });
+    return {
+      status: true,
+      actions: actions,
+      validateCouponsResult,
+    };
+  }
+
+  async validatePromotionsAndBuildCartActionsFallback(cart: Cart) {
+    let cartMutated = false;
+    for (let i = 0; i < 2; i++) {
+      await sleep(500);
+      const updatedCart = await this.commerceToolsConnectorService.findCart(
+        cart.id,
+      );
+      if (updatedCart.version !== cart.version) {
+        cartMutated = true;
+        break;
+      }
+    }
+    if (cartMutated) {
+      return;
+    }
+    await this.cartService.validateCoupons(cart, getSession(cart));
+    return this.logger.debug('Coupons changes were rolled back successfully');
   }
 
   public async checkIfCartWasUpdatedWithStatusPaidAndRedeem(

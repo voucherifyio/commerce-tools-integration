@@ -6,7 +6,6 @@ import { OrderMapper } from './mappers/order';
 import { ProductMapper } from './mappers/product';
 import { RedemptionsRedeemStackableResponse } from '@voucherify/sdk';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
-import sleep from './utils/sleep';
 import flatten from 'flat';
 import { deleteObjectsFromObject } from './utils/deleteObjectsFromObject';
 
@@ -220,16 +219,5 @@ export class OrderService {
       actions: actions,
       redemptionsRedeemStackableResponse: response,
     };
-  }
-
-  public assignCouponsToOrderMetadata(
-    order: Order,
-    usedCoupons,
-    notUsedCoupons,
-  ) {
-    order.custom.fields['used_codes'] = usedCoupons;
-    order.custom.fields['discount_codes'] = notUsedCoupons;
-
-    return order;
   }
 }

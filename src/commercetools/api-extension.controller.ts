@@ -29,9 +29,10 @@ export class ApiExtensionController {
     let response;
     try {
       const start = performance.now();
-      response = await this.cartService.validatePromotionsAndBuildCartActions(
-        cart,
-      );
+      response =
+        await this.commercetoolsService.validatePromotionsAndBuildCartActions(
+          cart,
+        );
       const end = performance.now();
       this.logger.debug(
         `handleRequestCart->validatePromotionsAndBuildCartActions: ${elapsedTime(
@@ -54,7 +55,7 @@ export class ApiExtensionController {
     }
     responseExpress.status(200).json({ actions: response.actions });
     try {
-      return await this.cartService.validatePromotionsAndBuildCartActionsFallback(
+      return await this.commercetoolsService.validatePromotionsAndBuildCartActionsFallback(
         cart,
       );
     } catch (e) {
