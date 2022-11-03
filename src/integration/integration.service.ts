@@ -1,5 +1,5 @@
 import { Cart, Order } from '@commercetools/platform-sdk';
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
   RedemptionsRedeemStackableResponse,
@@ -20,7 +20,11 @@ import {
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import { ProductMapper } from './mappers/product';
 import { ConfigService } from '@nestjs/config';
-import { CommercetoolsService } from '../commercetools/commercetools.service';
+import {
+  buildRedeemStackableRequestForVoucherify,
+  buildValidationsValidateStackableForVoucherify,
+  CommercetoolsService,
+} from '../commercetools/commercetools.service';
 import { VoucherifyService } from '../voucherify/voucherify.service';
 import {
   calculateTotalDiscountAmount,
@@ -30,9 +34,6 @@ import {
   filterCouponsByLimit,
   getCouponsFromCart,
 } from './helperFunctions';
-import { deleteObjectsFromObject } from '../misc/deleteObjectsFromObject';
-import flatten from 'flat';
-import { CUSTOM_FIELD_PREFIX } from '../consts/voucherify';
 
 @Injectable()
 export class IntegrationService {
@@ -40,10 +41,12 @@ export class IntegrationService {
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly typesService: TypesService,
     private readonly logger: Logger,
+    @Inject(forwardRef(() => VoucherifyConnectorService))
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
     private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly productMapper: ProductMapper,
     private readonly configService: ConfigService,
+    @Inject(forwardRef(() => CommercetoolsService))
     private readonly commercetoolsService: CommercetoolsService,
     private readonly voucherifyService: VoucherifyService,
   ) {}
@@ -125,11 +128,13 @@ export class IntegrationService {
     uniqCoupons = filterCouponsByLimit(uniqCoupons, couponsLimit);
 
     let validatedCoupons =
-      await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
-        uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
-        cart,
-        this.productMapper.mapLineItems(cart.lineItems),
-        sessionKey,
+      await this.voucherifyConnectorService.validateStackableVouchers(
+        buildValidationsValidateStackableForVoucherify(
+          uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
+          cart,
+          this.productMapper.mapLineItems(cart.lineItems),
+          sessionKey,
+        ),
       );
 
     const productsToAdd = await this.commercetoolsService.getProductsToAdd(
@@ -142,13 +147,18 @@ export class IntegrationService {
     );
 
     if (productsToChange.length) {
+      const items = await this.getItemsWithCorrectedPrices(
+        validatedCoupons,
+        productsToChange,
+      );
       validatedCoupons =
-        await this.revalidateCouponsBecauseNewUnitTypeCouponHaveAppliedWithWrongPrice(
-          validatedCoupons,
-          productsToChange,
-          uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
-          cart,
-          sessionKey,
+        await this.voucherifyConnectorService.validateStackableVouchers(
+          buildValidationsValidateStackableForVoucherify(
+            uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
+            cart,
+            items,
+            sessionKey,
+          ),
         );
     }
 
@@ -218,12 +228,9 @@ export class IntegrationService {
     };
   }
 
-  private async revalidateCouponsBecauseNewUnitTypeCouponHaveAppliedWithWrongPrice(
+  private async getItemsWithCorrectedPrices(
     validatedCoupons: ValidationValidateStackableResponse,
     productsToChange: ProductToAdd[],
-    coupons: Coupon[],
-    cart: Cart,
-    sessionKey?: string | null,
   ) {
     type OrderItemSku = {
       id?: string;
@@ -235,7 +242,7 @@ export class IntegrationService {
     const productsToChangeSKUs = productsToChange.map(
       (productsToChange) => productsToChange.product,
     );
-    const items = validatedCoupons.order.items.map((item: OrdersItem) => {
+    return validatedCoupons.order.items.map((item: OrdersItem) => {
       if (
         !productsToChangeSKUs.includes((item.sku as OrderItemSku).source_id) ||
         item.amount !== item.discount_amount
@@ -274,13 +281,6 @@ export class IntegrationService {
         },
       };
     });
-
-    return await this.voucherifyConnectorService.validateStackableVouchersWithCTCart(
-      coupons.filter((coupon) => coupon.status != 'DELETED'),
-      cart,
-      items,
-      sessionKey,
-    );
   }
 
   public async redeemVoucherifyCoupons(order: Order) {
@@ -342,11 +342,13 @@ export class IntegrationService {
     let response: RedemptionsRedeemStackableResponse;
     try {
       response = await this.voucherifyConnectorService.redeemStackableVouchers(
-        coupons,
-        sessionKey,
-        order,
-        items,
-        orderMetadata,
+        buildRedeemStackableRequestForVoucherify(
+          coupons,
+          sessionKey,
+          order,
+          items,
+          orderMetadata,
+        ),
       );
     } catch (e) {
       this.logger.debug({ msg: 'Redeem operation failed', error: e.details });

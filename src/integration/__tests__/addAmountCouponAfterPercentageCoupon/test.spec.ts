@@ -40,11 +40,9 @@ describe('When another -20€ amount voucher is provided after -10% coupon in on
   it('Should call voucherify once', async () => {
     await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
     expect(
-      voucherifyConnectorService.validateStackableVouchersWithCTCart,
+      voucherifyConnectorService.validateStackableVouchers,
     ).toBeCalledTimes(1);
-    expect(
-      voucherifyConnectorService.validateStackableVouchersWithCTCart,
-    ).toBeCalledWith(
+    expect(voucherifyConnectorService.validateStackableVouchers).toBeCalledWith(
       [
         {
           code: 'PERC10',

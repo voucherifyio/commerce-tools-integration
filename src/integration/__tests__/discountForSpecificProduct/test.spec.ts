@@ -39,11 +39,9 @@ describe('when applying discount code on a specific product in the cart', () => 
     await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
-      voucherifyConnectorService.validateStackableVouchersWithCTCart,
+      voucherifyConnectorService.validateStackableVouchers,
     ).toBeCalledTimes(1);
-    expect(
-      voucherifyConnectorService.validateStackableVouchersWithCTCart,
-    ).toBeCalledWith(
+    expect(voucherifyConnectorService.validateStackableVouchers).toBeCalledWith(
       [
         {
           code: 'SNEAKERS30',

@@ -47,11 +47,9 @@ describe('when adding new product to the cart with free product already applied 
     await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
-      voucherifyConnectorService.validateStackableVouchersWithCTCart,
+      voucherifyConnectorService.validateStackableVouchers,
     ).toBeCalledTimes(1);
-    expect(
-      voucherifyConnectorService.validateStackableVouchersWithCTCart,
-    ).toBeCalledWith(
+    expect(voucherifyConnectorService.validateStackableVouchers).toBeCalledWith(
       [
         {
           code: 'ADD_GIFT',

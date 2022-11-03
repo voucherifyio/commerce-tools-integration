@@ -61,7 +61,7 @@ describe('When no coupon codes provided and have no previous voucherify session,
     await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
-      voucherifyConnectorService.validateStackableVouchersWithCTCart,
+      voucherifyConnectorService.validateStackableVouchers,
     ).not.toBeCalled();
   });
   it('Should create "removeCustomLineItem" action if had customLineItems previously', async () => {

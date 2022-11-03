@@ -40,11 +40,9 @@ describe('When one -20€ amount voucher is provided in new session', () => {
     await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
-      voucherifyConnectorService.validateStackableVouchersWithCTCart,
+      voucherifyConnectorService.validateStackableVouchers,
     ).toBeCalledTimes(1);
-    expect(
-      voucherifyConnectorService.validateStackableVouchersWithCTCart,
-    ).toBeCalledWith(
+    expect(voucherifyConnectorService.validateStackableVouchers).toBeCalledWith(
       [
         {
           code: 'AMOUNT20',

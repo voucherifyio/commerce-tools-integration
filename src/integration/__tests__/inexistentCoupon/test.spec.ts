@@ -36,11 +36,9 @@ describe('When trying to apply inexistent coupon code', () => {
     await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
-      voucherifyConnectorService.validateStackableVouchersWithCTCart,
+      voucherifyConnectorService.validateStackableVouchers,
     ).toBeCalledTimes(1);
-    expect(
-      voucherifyConnectorService.validateStackableVouchersWithCTCart,
-    ).toBeCalledWith(
+    expect(voucherifyConnectorService.validateStackableVouchers).toBeCalledWith(
       [
         {
           code: 'NOT EXIST',

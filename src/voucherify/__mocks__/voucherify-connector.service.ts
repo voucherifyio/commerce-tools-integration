@@ -11,7 +11,7 @@ export const getVoucherifyConnectorServiceMockWithDefinedResponse = (
     .fn()
     .mockResolvedValue([]);
 
-  voucherifyConnectorService.validateStackableVouchersWithCTCart = jest
+  voucherifyConnectorService.validateStackableVouchers = jest
     .fn()
     .mockResolvedValue(response);
 

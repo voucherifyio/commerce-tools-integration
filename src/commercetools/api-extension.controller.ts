@@ -22,7 +22,9 @@ export class ApiExtensionController {
     if (cart.version === 1) {
       return responseExpress
         .status(200)
-        .json(this.commercetoolsService.setCustomTypeForInitializedCart());
+        .json(
+          await this.commercetoolsService.setCustomTypeForInitializedCart(),
+        );
     }
     let response;
     try {

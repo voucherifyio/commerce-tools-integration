@@ -5,6 +5,7 @@ import sleep from '../misc/sleep';
 import {
   CartDiscountApplyMode,
   CartResponse,
+  Coupon,
   PriceSelector,
   ProductToAdd,
   ValidateCouponsResult,
@@ -12,7 +13,9 @@ import {
 import { TypesService } from './types/types.service';
 import {
   OrdersItem,
+  RedemptionsRedeemStackableParams,
   StackableRedeemableResultDiscountUnit,
+  ValidationsValidateStackableParams,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 import { getCommercetoolstCurrentPriceAmount } from './utils/getCommercetoolstCurrentPriceAmount';
@@ -59,6 +62,83 @@ export function checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount
   });
 }
 
+export function getCustomerFromOrder(order: Order) {
+  return {
+    source_id: order.customerId || order.anonymousId,
+    name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
+    email: order.shippingAddress?.email,
+    address: {
+      city: order.shippingAddress?.city,
+      country: order.shippingAddress?.country,
+      postal_code: order.shippingAddress?.postalCode,
+      line_1: order.shippingAddress?.streetName,
+    },
+    phone: order.shippingAddress?.phone,
+  };
+}
+
+export function buildRedeemStackableRequestForVoucherify(
+  coupons: Coupon[],
+  sessionKey: string,
+  order: Order,
+  items: OrdersItem[],
+  orderMetadata: Record<string, any>,
+): RedemptionsRedeemStackableParams {
+  return {
+    session: {
+      type: 'LOCK',
+      key: sessionKey,
+    },
+    redeemables: coupons.map((code) => {
+      return {
+        object: code.type ? code.type : 'voucher',
+        id: code.code,
+      };
+    }),
+    order: {
+      source_id: order.id,
+      amount: items.reduce((acc, item) => acc + item.amount, 0),
+      status: 'PAID',
+      items,
+      metadata: orderMetadata,
+    },
+    customer: this.getCustomerFromOrder(order),
+  } as RedemptionsRedeemStackableParams;
+}
+
+export function buildValidationsValidateStackableForVoucherify(
+  coupons: Coupon[],
+  cart: Cart,
+  items,
+  sessionKey?: string | null,
+) {
+  return {
+    // options?: StackableOptions;
+    redeemables: coupons.map((code) => {
+      return {
+        object: code.type ? code.type : 'voucher',
+        id: code.code,
+      };
+    }),
+    session: {
+      type: 'LOCK',
+      ...(sessionKey && { key: sessionKey }),
+    },
+    order: {
+      source_id: cart.id,
+      customer: {
+        source_id: cart.customerId || cart.anonymousId,
+      },
+      amount: items.reduce((acc, item) => acc + item.amount, 0),
+      discount_amount: 0,
+      items,
+    },
+    customer: {
+      source_id: cart.customerId || cart.anonymousId,
+    },
+  } as ValidationsValidateStackableParams;
+}
+
 @Injectable()
 export class CommercetoolsService {
   constructor(
@@ -67,7 +147,6 @@ export class CommercetoolsService {
     private readonly typesService: TypesService,
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly configService: ConfigService,
-    @Inject(forwardRef(() => IntegrationService))
     private readonly integrationService: IntegrationService,
   ) {}
 

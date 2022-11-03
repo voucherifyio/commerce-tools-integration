@@ -14,6 +14,10 @@ import {
 } from '../misc/request-json-logger';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { Coupon } from '../integration/types';
+import {
+  CommercetoolsService,
+  getCustomerFromOrder,
+} from '../commercetools/commercetools.service';
 
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;
@@ -24,6 +28,7 @@ export class VoucherifyConnectorService {
   constructor(
     private configService: ConfigService,
     private logger: Logger,
+    private commercetoolsService: CommercetoolsService,
     @Inject(REQUEST_JSON_LOGGER)
     private readonly requestJsonLogger: RequestJsonLogger,
   ) {}
@@ -46,39 +51,7 @@ export class VoucherifyConnectorService {
     return voucherify;
   }
 
-  async validateStackableVouchersWithCTCart(
-    coupons: Coupon[],
-    cart: Cart,
-    items,
-    sessionKey?: string | null,
-  ) {
-    const redeemables = coupons.map((code) => {
-      return {
-        object: code.type ? code.type : 'voucher',
-        id: code.code,
-      };
-    });
-    const request = {
-      // options?: StackableOptions;
-      redeemables,
-      session: {
-        type: 'LOCK',
-        ...(sessionKey && { key: sessionKey }),
-      },
-      order: {
-        source_id: cart.id,
-        customer: {
-          source_id: cart.customerId || cart.anonymousId,
-        },
-        amount: items.reduce((acc, item) => acc + item.amount, 0),
-        discount_amount: 0,
-        items,
-      },
-      customer: {
-        source_id: cart.customerId || cart.anonymousId,
-      },
-    } as ValidationsValidateStackableParams;
-
+  async validateStackableVouchers(request) {
     const start = performance.now();
     const response = await this.getClient().validations.validateStackable(
       request,
@@ -109,7 +82,7 @@ export class VoucherifyConnectorService {
       discount_amount: 0,
       items,
       metadata: orderMetadata,
-      customer: this.getCustomerFromOrder(order),
+      customer: getCustomerFromOrder(order),
       status: (order.paymentState === 'Paid'
         ? 'PAID'
         : 'CREATED') as OrdersCreate['status'],
@@ -118,36 +91,7 @@ export class VoucherifyConnectorService {
     await this.getClient().orders.create(orderCreate);
   }
 
-  async redeemStackableVouchers(
-    coupons: Coupon[],
-    sessionKey: string,
-    order: Order,
-    items: OrdersItem[],
-    orderMetadata: Record<string, any>,
-  ) {
-    const redeemables = coupons.map((code) => {
-      return {
-        object: code.type ? code.type : 'voucher',
-        id: code.code,
-      };
-    });
-
-    const request = {
-      session: {
-        type: 'LOCK',
-        key: sessionKey,
-      },
-      redeemables: redeemables,
-      order: {
-        source_id: order.id,
-        amount: items.reduce((acc, item) => acc + item.amount, 0),
-        status: 'PAID',
-        items,
-        metadata: orderMetadata,
-      },
-      customer: this.getCustomerFromOrder(order),
-    } as RedemptionsRedeemStackableParams;
-
+  async redeemStackableVouchers(request: RedemptionsRedeemStackableParams) {
     const start = performance.now();
 
     const response = await this.getClient().redemptions.redeemStackable(
@@ -166,21 +110,6 @@ export class VoucherifyConnectorService {
     );
 
     return response;
-  }
-
-  private getCustomerFromOrder(order: Order) {
-    return {
-      source_id: order.customerId || order.anonymousId,
-      name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
-      email: order.shippingAddress?.email,
-      address: {
-        city: order.shippingAddress?.city,
-        country: order.shippingAddress?.country,
-        postal_code: order.shippingAddress?.postalCode,
-        line_1: order.shippingAddress?.streetName,
-      },
-      phone: order.shippingAddress?.phone,
-    };
   }
 
   async releaseValidationSession(code: string, sessionKey: string) {

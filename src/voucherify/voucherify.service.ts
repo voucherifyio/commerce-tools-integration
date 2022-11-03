@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { VoucherifyConnectorService } from './voucherify-connector.service';
 import { ProductMapper } from '../integration/mappers/product';
 import { ConfigService } from '@nestjs/config';
@@ -8,6 +8,7 @@ import { Coupon } from '../integration/types';
 @Injectable()
 export class VoucherifyService {
   constructor(
+    @Inject(forwardRef(() => VoucherifyConnectorService))
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
     private readonly productMapper: ProductMapper,
     private readonly configService: ConfigService,
