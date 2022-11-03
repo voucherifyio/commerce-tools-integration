@@ -9,10 +9,7 @@ import { ApiExtensionController } from './commercetools/api-extension.controller
 import { IntegrationService } from './integration/integration.service';
 import { ApiExtensionService } from './commercetools/api-extension.service';
 import { TaxCategoriesService } from './commercetools/tax-categories/tax-categories.service';
-import { TaxCategoriesController } from './commercetools/tax-categories/tax-categories.controller';
-import { TypesController } from './commercetools/types/types.controller';
 import { TypesService } from './commercetools/types/types.service';
-import { OrderService } from './integration/order.service';
 import { ProductImportService } from './import/product-import.service';
 import { ImportController } from './import/import.controller';
 import { OrderImportService } from './import/order-import.service';
@@ -37,13 +34,7 @@ import { VoucherifyService } from './voucherify/voucherify.service';
       validationSchema: ValidationSchema,
     }),
   ],
-  controllers: [
-    AppController,
-    ApiExtensionController,
-    TaxCategoriesController,
-    TypesController,
-    ImportController,
-  ],
+  controllers: [AppController, ApiExtensionController, ImportController],
   providers: [
     Logger,
     AppService,
@@ -53,7 +44,6 @@ import { VoucherifyService } from './voucherify/voucherify.service';
     CommercetoolsConnectorService,
     TaxCategoriesService,
     TypesService,
-    OrderService,
     ProductImportService,
     OrderImportService,
     CustomerImportService,

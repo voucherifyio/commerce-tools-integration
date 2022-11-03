@@ -3,7 +3,7 @@ import { Order } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { OrderMapper } from '../integration/mappers/order';
-import { OrderService } from '../integration/order.service';
+import { IntegrationService } from '../integration/integration.service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -17,7 +17,7 @@ export class OrderImportService {
     private readonly logger: Logger,
     private readonly voucherifyClient: VoucherifyConnectorService,
     private readonly orderMapper: OrderMapper,
-    private readonly orderService: OrderService,
+    private readonly integrationService: IntegrationService,
   ) {}
 
   public async *getAllOrders(minDateTime?: string): AsyncGenerator<Order[]> {
@@ -63,7 +63,7 @@ export class OrderImportService {
           continue;
         }
 
-        const metadata = await this.orderService.getMetadataForOrder(
+        const metadata = await this.integrationService.getMetadataForOrder(
           order,
           metadataSchemaProperties,
         );

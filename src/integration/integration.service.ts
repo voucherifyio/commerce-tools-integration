@@ -11,7 +11,12 @@ import { uniqBy } from 'lodash';
 import { TaxCategoriesService } from '../commercetools/tax-categories/tax-categories.service';
 import { TypesService } from '../commercetools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
-import { Coupon, ProductToAdd, ValidateCouponsResult } from './types';
+import {
+  Coupon,
+  ProductToAdd,
+  SentCoupons,
+  ValidateCouponsResult,
+} from './types';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import { ProductMapper } from './mappers/product';
 import { ConfigService } from '@nestjs/config';
@@ -27,13 +32,7 @@ import {
 } from './helperFunctions';
 import { deleteObjectsFromObject } from '../misc/deleteObjectsFromObject';
 import flatten from 'flat';
-
-type SentCoupons = {
-  result: string;
-  coupon: string;
-};
-
-const CUSTOM_FIELD_PREFIX = 'custom_filed_';
+import { CUSTOM_FIELD_PREFIX } from '../consts/voucherify';
 
 @Injectable()
 export class IntegrationService {
@@ -63,7 +62,7 @@ export class IntegrationService {
     }
 
     const taxCategory =
-      await this.taxCategoriesService.checkCouponTaxCategoryWithCountries(cart);
+      await this.commercetoolsService.checkCouponTaxCategoryWithCountries(cart);
 
     const couponsLimit =
       (this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT') ?? 5) < 5

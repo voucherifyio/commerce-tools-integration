@@ -12,8 +12,8 @@ import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
-import { Coupon } from 'src/integration/coupon';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
+import { Coupon } from '../integration/types';
 
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;

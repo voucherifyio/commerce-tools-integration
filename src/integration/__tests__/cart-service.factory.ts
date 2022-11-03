@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
 import { CommercetoolsService } from '../../commercetools/commercetools.service';
 import { ApiExtensionController } from '../../commercetools/api-extension.controller';
+import { VoucherifyService } from '../../voucherify/voucherify.service';
 
 const moduleMocker = new ModuleMocker(global);
 
@@ -32,6 +33,7 @@ export async function buildCartServiceWithMockedDependencies({
     controllers: [],
     providers: [
       CommercetoolsService,
+      VoucherifyService,
       IntegrationService,
       ProductMapper,
       {

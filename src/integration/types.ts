@@ -63,5 +63,10 @@ export type Coupon = {
   value?: number;
 };
 
+export type SentCoupons = {
+  result: string;
+  coupon: string;
+};
+
 export type CouponStatus = 'NEW' | 'APPLIED' | 'NOT_APPLIED' | 'DELETED';
 export type CouponType = 'promotion_tier' | 'voucher';

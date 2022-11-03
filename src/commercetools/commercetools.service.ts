@@ -21,6 +21,7 @@ import { CartAction } from './cartActions/CartAction';
 import getCartActionBuilders from './cartActions/getCartActionBuilders';
 import { ConfigService } from '@nestjs/config';
 import { IntegrationService } from '../integration/integration.service';
+import { TaxCategoriesService } from './tax-categories/tax-categories.service';
 
 interface ProductWithCurrentPriceAmount extends Product {
   currentPriceAmount: number;
@@ -59,10 +60,33 @@ export class CommercetoolsService {
     private readonly logger: Logger,
     private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly typesService: TypesService,
+    private readonly taxCategoriesService: TaxCategoriesService,
     private readonly configService: ConfigService,
     @Inject(forwardRef(() => IntegrationService))
     private readonly integrationService: IntegrationService,
   ) {}
+
+  async checkCouponTaxCategoryWithCountries(cart: Cart) {
+    const { country } = cart;
+    const taxCategory = await this.taxCategoriesService.getCouponTaxCategory();
+    if (!taxCategory) {
+      const msg = 'Coupon tax category was not configured correctly';
+      this.logger.error({ msg });
+      throw new Error(msg);
+    }
+
+    if (
+      country &&
+      !taxCategory?.rates?.find((rate) => rate.country === country)
+    ) {
+      await this.taxCategoriesService.addCountryToCouponTaxCategory(
+        taxCategory,
+        country,
+      );
+    }
+
+    return taxCategory;
+  }
 
   public async getProductsToAdd(
     response: ValidationValidateStackableResponse,

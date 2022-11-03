@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommercetoolsConnectorService } from '../commercetools-connector.service';
-import { Cart, TaxCategory } from '@commercetools/platform-sdk';
+import { TaxCategory } from '@commercetools/platform-sdk';
 
 @Injectable()
 export class TaxCategoriesService {
@@ -10,25 +10,6 @@ export class TaxCategoriesService {
   ) {}
 
   private couponTaxCategory: TaxCategory = null;
-
-  async checkCouponTaxCategoryWithCountries(cart: Cart) {
-    const { country } = cart;
-    const taxCategory = await this.getCouponTaxCategory();
-    if (!taxCategory) {
-      const msg = 'Coupon tax category was not configured correctly';
-      this.logger.error({ msg });
-      throw new Error(msg);
-    }
-
-    if (
-      country &&
-      !taxCategory?.rates?.find((rate) => rate.country === country)
-    ) {
-      await this.addCountryToCouponTaxCategory(taxCategory, country);
-    }
-
-    return taxCategory;
-  }
 
   async getCouponTaxCategory(): Promise<TaxCategory> {
     if (this.couponTaxCategory) {

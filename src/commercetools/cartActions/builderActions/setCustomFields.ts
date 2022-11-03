@@ -1,5 +1,5 @@
 import { Cart } from '@commercetools/platform-sdk';
-import { ValidateCouponsResult } from '../../../integration/types';
+import { Coupon, ValidateCouponsResult } from '../../../integration/types';
 import {
   CartAction,
   CartActionSetCustomFieldFreeShipping,
@@ -9,12 +9,12 @@ import {
   CartActionSetCustomFieldWithValidationFailed,
 } from '../CartAction';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
-import { Coupon, desarializeCoupons } from '../../../integration/coupon';
 import {
   FREE_SHIPPING,
   FREE_SHIPPING_UNIT_TYPE,
 } from '../../../consts/voucherify';
 import isValidAndNewCouponNotFailed from '../helpers/utils';
+import { deserializeCoupons } from '../../../integration/helperFunctions';
 
 function setSessionAsCustomField(
   cart: Cart,
@@ -91,7 +91,7 @@ function updateDiscountsCodes(
   const validationFailedAction = [];
   const oldCouponsCodes: Coupon[] = (
     cart.custom?.fields?.discount_codes ?? []
-  ).map(desarializeCoupons);
+  ).map(deserializeCoupons);
   const coupons = [
     ...availablePromotions,
     ...applicableCoupons.map((coupon) => {

@@ -8,7 +8,7 @@ import {
   Cart,
 } from '@commercetools/platform-sdk';
 
-export const cart = {
+export const cartCh = {
   id: 'cart-id',
   type: 'Cart',
   createdAt: new Date().toISOString(),
