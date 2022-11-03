@@ -187,7 +187,7 @@ export class TaxCategoriesService {
     if (success) {
       this.couponTaxCategory = null;
       this.logger.debug({ msg: 'Added country to coupon tax category' });
-      this.getCouponTaxCategory(); //don't wait
+      await this.getCouponTaxCategory();
     } else {
       this.logger.error({
         msg: 'Could not add country to coupon tax category',

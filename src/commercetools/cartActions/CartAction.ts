@@ -141,6 +141,7 @@ export type CartActionsBuilder = (
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
   cartDiscountApplyMode: CartDiscountApplyMode,
+  taxCategory?: TaxCategory,
 ) => CartAction[];
 
 export const COUPON_CUSTOM_LINE_SLUG = 'Voucher, ';

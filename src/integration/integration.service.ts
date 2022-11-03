@@ -223,7 +223,6 @@ export class IntegrationService {
       productsToAdd,
       onlyNewCouponsFailed,
       allInapplicableCouponsArePromotionTier,
-      taxCategory,
       couponsLimit,
     };
   }

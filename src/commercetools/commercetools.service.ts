@@ -150,7 +150,7 @@ export class CommercetoolsService {
     private readonly integrationService: IntegrationService,
   ) {}
 
-  async checkCouponTaxCategoryWithCountries(cart: Cart) {
+  public async checkCouponTaxCategoryWithCountries(cart: Cart) {
     const { country } = cart;
     const taxCategory = await this.taxCategoriesService.getCouponTaxCategory();
     if (!taxCategory) {
@@ -168,8 +168,6 @@ export class CommercetoolsService {
         country,
       );
     }
-
-    return taxCategory;
   }
 
   public async getProductsToAdd(
@@ -301,9 +299,20 @@ export class CommercetoolsService {
         ? CartDiscountApplyMode.DirectDiscount
         : CartDiscountApplyMode.CustomLineItem;
 
+    let taxCategory;
+    if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
+      await this.checkCouponTaxCategoryWithCountries(cart);
+      taxCategory = await this.taxCategoriesService.getCouponTaxCategory();
+    }
+
     const actions = getCartActionBuilders()
       .flatMap((builder) =>
-        builder(cart, validateCouponsResult, cartDiscountApplyMode),
+        builder(
+          cart,
+          validateCouponsResult,
+          cartDiscountApplyMode,
+          taxCategory,
+        ),
       )
       .filter((e) => e);
 

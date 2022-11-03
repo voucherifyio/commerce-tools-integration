@@ -1,4 +1,4 @@
-import { Cart } from '@commercetools/platform-sdk';
+import { Cart, TaxCategory } from '@commercetools/platform-sdk';
 import {
   CartAction,
   CartActionAddCustomLineItem,
@@ -18,14 +18,14 @@ import addDirectDiscountWithDiscountSummary from '../addDirectDiscountWithDiscou
 function addCustomLineItemWithDiscountSummary(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
+  taxCategory: TaxCategory,
 ): CartActionAddCustomLineItem[] {
   const voucherCustomLineItem = cart.customLineItems
     .filter((lineItem) => !lineItem.slug.startsWith(COUPON_CUSTOM_LINE_SLUG))
     .find((customLineItem) => customLineItem?.slug === COUPON_CUSTOM_LINE_SLUG);
   if (voucherCustomLineItem) return [];
 
-  const { totalDiscountAmount, applicableCoupons, taxCategory } =
-    validateCouponsResult;
+  const { totalDiscountAmount, applicableCoupons } = validateCouponsResult;
 
   if (applicableCoupons.length === 0) return [];
 
@@ -82,7 +82,8 @@ function removeDiscountedCustomLineItems(
 export default function customLineItems(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
-  cartDiscountApplyMode?: CartDiscountApplyMode,
+  cartDiscountApplyMode: CartDiscountApplyMode,
+  taxCategory?: TaxCategory,
 ): CartAction[] {
   const cartActions = [] as CartAction[];
 
@@ -90,7 +91,11 @@ export default function customLineItems(
     if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
       cartActions.push(
         ...removeDiscountedCustomLineItems(cart),
-        ...addCustomLineItemWithDiscountSummary(cart, validateCouponsResult),
+        ...addCustomLineItemWithDiscountSummary(
+          cart,
+          validateCouponsResult,
+          taxCategory,
+        ),
       );
     }
     if (cartDiscountApplyMode === CartDiscountApplyMode.DirectDiscount) {
