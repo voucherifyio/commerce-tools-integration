@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { Cart, LineItem, Order, Product } from '@commercetools/platform-sdk';
+import { Cart, Order, Product } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../misc/sleep';
 import {
@@ -39,27 +39,6 @@ interface ProductWithCurrentPriceAmount extends Product {
 
 function getSession(cart: Cart): string | null {
   return cart.custom?.fields?.session ?? null;
-}
-
-export function checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount(
-  lineItems: LineItem[],
-): boolean {
-  return !!lineItems?.find((lineItem) => {
-    if (!lineItem.custom?.fields?.applied_codes?.length) {
-      return false;
-    }
-    const { quantity: itemQuantity } = lineItem;
-    const totalQuantityDiscount = lineItem.custom?.fields?.applied_codes
-      .map((code) => JSON.parse(code))
-      .filter((code) => code.type === 'UNIT')
-      .reduce((sum, codeObject) => {
-        if (codeObject.quantity) {
-          sum += codeObject.quantity;
-        }
-        return sum;
-      }, 0);
-    return totalQuantityDiscount > itemQuantity;
-  });
 }
 
 export function getCustomerFromOrder(order: Order) {
@@ -147,10 +126,11 @@ export class CommercetoolsService {
     private readonly typesService: TypesService,
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly configService: ConfigService,
+    @Inject(forwardRef(() => IntegrationService))
     private readonly integrationService: IntegrationService,
   ) {}
 
-  public async checkCouponTaxCategoryWithCountries(cart: Cart) {
+  public async checkCouponTaxCategoryIfConfiguredCorrectly(cart: Cart) {
     const { country } = cart;
     const taxCategory = await this.taxCategoriesService.getCouponTaxCategory();
     if (!taxCategory) {
@@ -301,7 +281,7 @@ export class CommercetoolsService {
 
     let taxCategory;
     if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
-      await this.checkCouponTaxCategoryWithCountries(cart);
+      await this.checkCouponTaxCategoryIfConfiguredCorrectly(cart);
       taxCategory = await this.taxCategoriesService.getCouponTaxCategory();
     }
 
