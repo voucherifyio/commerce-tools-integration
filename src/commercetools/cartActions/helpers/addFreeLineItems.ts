@@ -78,6 +78,8 @@ export default function addFreeLineItems(
   cart: Cart,
   validateCouponsResult: ValidateCouponsResult,
 ): CartAction[] {
+  const { productsToAdd } = validateCouponsResult;
+
   const applicableCouponsIds = validateCouponsResult.applicableCoupons.map(
     (couponData) => couponData.id,
   );
@@ -144,7 +146,8 @@ export default function addFreeLineItems(
         productToAddQuantities[product.product] ?? product.quantity,
       );
       if (item && isCouponAppliedToItem(item, product.code)) {
-        return { action: 'recalculate' }; // it is equivalent to "do nothing" action - we don't need to execute any action in this case, but we need to return an action so thats the reason why it is here
+        return { action: 'recalculate' }; // it is equivalent to "do nothing" action - we don't need to execute any action in this case,
+        // but we need to return an action so that's the reason why it is here
       }
       if (item) {
         return [

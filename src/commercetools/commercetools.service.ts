@@ -16,12 +16,17 @@ import {
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 import { getCommercetoolstCurrentPriceAmount } from './utils/getCommercetoolstCurrentPriceAmount';
-import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
+import {
+  CUSTOM_FIELD_PREFIX,
+  FREE_SHIPPING_UNIT_TYPE,
+} from '../consts/voucherify';
 import { CartAction } from './cartActions/CartAction';
 import getCartActionBuilders from './cartActions/getCartActionBuilders';
 import { ConfigService } from '@nestjs/config';
 import { IntegrationService } from '../integration/integration.service';
 import { TaxCategoriesService } from './tax-categories/tax-categories.service';
+import { deleteObjectsFromObject } from '../misc/deleteObjectsFromObject';
+import flatten from 'flat';
 
 interface ProductWithCurrentPriceAmount extends Product {
   currentPriceAmount: number;
@@ -231,7 +236,9 @@ export class CommercetoolsService {
     };
   }
 
-  async validatePromotionsAndBuildCartActionsFallback(cart: Cart) {
+  async checkIfAPIExtensionRespondedOnTimeAndRevalidateCouponsIfNot(
+    cart: Cart,
+  ) {
     let cartMutated = false;
     for (let i = 0; i < 2; i++) {
       await sleep(500);
@@ -297,5 +304,77 @@ export class CommercetoolsService {
         ),
       ],
     };
+  }
+
+  public async getMetadataForOrder(
+    order: Order,
+    allMetadataSchemaProperties: string[],
+  ) {
+    const standardMetaProperties = allMetadataSchemaProperties.filter(
+      (key) => !key.includes(CUSTOM_FIELD_PREFIX),
+    );
+    const customMetaProperties = allMetadataSchemaProperties.filter(
+      (key) =>
+        key.length > CUSTOM_FIELD_PREFIX.length &&
+        key.slice(0, CUSTOM_FIELD_PREFIX.length) === CUSTOM_FIELD_PREFIX,
+    );
+
+    const metadata = {};
+
+    const addToMataData = (variable: any, name: string) => {
+      if (typeof variable !== 'object') {
+        return (metadata[name] = variable);
+      }
+      if (Array.isArray(variable)) {
+        const newArray = [];
+        variable.forEach((element) => {
+          if (typeof variable !== 'object') {
+            newArray.push(element);
+          }
+          if (!Array.isArray(variable)) {
+            newArray.push(deleteObjectsFromObject(flatten(element)));
+          }
+        });
+        return (metadata[name] = newArray);
+      }
+      if (typeof variable === 'object') {
+        return (metadata[name] = deleteObjectsFromObject(flatten(variable)));
+      }
+      return;
+    };
+
+    standardMetaProperties.forEach((key) => {
+      if (order[key]) {
+        addToMataData(order[key], key);
+      }
+    });
+
+    if (order?.custom?.fields && customMetaProperties.length) {
+      customMetaProperties.forEach((key) => {
+        if (order.custom.fields?.[key.slice(CUSTOM_FIELD_PREFIX.length)]) {
+          addToMataData(
+            order.custom.fields[key.slice(CUSTOM_FIELD_PREFIX.length)],
+            key,
+          );
+        }
+      });
+    }
+
+    if (standardMetaProperties.find((key) => key === 'payments')) {
+      const payments = [];
+      const paymentReferences = order?.paymentInfo?.payments ?? [];
+      for await (const paymentReference of paymentReferences) {
+        payments.push(
+          await this.commerceToolsConnectorService.findPayment(
+            paymentReference.id,
+          ),
+        );
+      }
+      metadata['payments'] = payments
+        .filter((payment) => payment?.id)
+        .map((payment) => deleteObjectsFromObject(flatten(payment)));
+    }
+
+    return metadata;
   }
 }

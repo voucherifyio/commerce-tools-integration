@@ -4,6 +4,7 @@ import { CommercetoolsConnectorService } from '../commercetools/commercetools-co
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { OrderMapper } from '../integration/mappers/order';
 import { IntegrationService } from '../integration/integration.service';
+import { CommercetoolsService } from '../commercetools/commercetools.service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -17,7 +18,7 @@ export class OrderImportService {
     private readonly logger: Logger,
     private readonly voucherifyClient: VoucherifyConnectorService,
     private readonly orderMapper: OrderMapper,
-    private readonly integrationService: IntegrationService,
+    private readonly commercetoolsService: CommercetoolsService,
   ) {}
 
   public async *getAllOrders(minDateTime?: string): AsyncGenerator<Order[]> {
@@ -63,7 +64,7 @@ export class OrderImportService {
           continue;
         }
 
-        const metadata = await this.integrationService.getMetadataForOrder(
+        const metadata = await this.commercetoolsService.getMetadataForOrder(
           order,
           metadataSchemaProperties,
         );

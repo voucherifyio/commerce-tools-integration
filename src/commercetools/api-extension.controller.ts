@@ -6,10 +6,7 @@ import { Cart, Order } from '@commercetools/platform-sdk';
 import { Response } from 'express';
 import { performance } from 'perf_hooks';
 import { elapsedTime } from '../misc/elapsedTime';
-import {
-  checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount,
-  CommercetoolsService,
-} from './commercetools.service';
+import { CommercetoolsService } from './commercetools.service';
 import { getActionsForAPIExtensionTypeOrder } from './utils/getActionsForAPIExtensionTypeOrder';
 
 @Controller('api-extension')
@@ -26,13 +23,6 @@ export class ApiExtensionController {
       return responseExpress
         .status(200)
         .json(this.commercetoolsService.setCustomTypeForInitializedCart());
-    }
-    if (
-      checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount(
-        cart.lineItems,
-      )
-    ) {
-      return responseExpress.status(400).json({});
     }
     let response;
     try {
@@ -51,7 +41,7 @@ export class ApiExtensionController {
     } catch (e) {
       console.log(e);
       this.logger.error({
-        msg: `Error while validatingPromotionsAndBuildingCartActions function`,
+        msg: `Error while commercetoolsService.validatePromotionsAndBuildCartActions function`,
       });
       return responseExpress.status(200).json({ actions: [] });
     }
@@ -63,13 +53,13 @@ export class ApiExtensionController {
     }
     responseExpress.status(200).json({ actions: response.actions });
     try {
-      return await this.commercetoolsService.validatePromotionsAndBuildCartActionsFallback(
+      return await this.commercetoolsService.checkIfAPIExtensionRespondedOnTimeAndRevalidateCouponsIfNot(
         cart,
       );
     } catch (e) {
       console.log(e);
       this.logger.error({
-        msg: `Error while validatePromotionsAndBuildCartActionsFallback function`,
+        msg: `Error while commercetoolsService.checkIfAPIExtensionRespondedOnTimeAndRevalidateCouponsIfNot function`,
       });
     }
     return;

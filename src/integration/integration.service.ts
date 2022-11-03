@@ -240,7 +240,11 @@ export class IntegrationService {
         !productsToChangeSKUs.includes((item.sku as OrderItemSku).source_id) ||
         item.amount !== item.discount_amount
       ) {
-        return item;
+        return {
+          ...item,
+          initial_quantity:
+            item?.initial_quantity > 0 ? item.initial_quantity : undefined,
+        };
       }
       const currentProductToChange = productsToChange.find(
         (productsToChange) =>
@@ -250,7 +254,8 @@ export class IntegrationService {
         object: item?.object,
         product_id: item?.product_id,
         sku_id: item?.sku_id,
-        initial_quantity: item?.initial_quantity ?? 0,
+        initial_quantity:
+          item?.initial_quantity > 0 ? item.initial_quantity : undefined,
         amount:
           currentProductToChange.applied_discount_amount *
           (item.quantity ?? item.initial_quantity ?? 0),
@@ -278,78 +283,6 @@ export class IntegrationService {
     );
   }
 
-  public async getMetadataForOrder(
-    order: Order,
-    allMetadataSchemaProperties: string[],
-  ) {
-    const standardMetaProperties = allMetadataSchemaProperties.filter(
-      (key) => !key.includes(CUSTOM_FIELD_PREFIX),
-    );
-    const customMetaProperties = allMetadataSchemaProperties.filter(
-      (key) =>
-        key.length > CUSTOM_FIELD_PREFIX.length &&
-        key.slice(0, CUSTOM_FIELD_PREFIX.length) === CUSTOM_FIELD_PREFIX,
-    );
-
-    const metadata = {};
-
-    const addToMataData = (variable: any, name: string) => {
-      if (typeof variable !== 'object') {
-        return (metadata[name] = variable);
-      }
-      if (Array.isArray(variable)) {
-        const newArray = [];
-        variable.forEach((element) => {
-          if (typeof variable !== 'object') {
-            newArray.push(element);
-          }
-          if (!Array.isArray(variable)) {
-            newArray.push(deleteObjectsFromObject(flatten(element)));
-          }
-        });
-        return (metadata[name] = newArray);
-      }
-      if (typeof variable === 'object') {
-        return (metadata[name] = deleteObjectsFromObject(flatten(variable)));
-      }
-      return;
-    };
-
-    standardMetaProperties.forEach((key) => {
-      if (order[key]) {
-        addToMataData(order[key], key);
-      }
-    });
-
-    if (order?.custom?.fields && customMetaProperties.length) {
-      customMetaProperties.forEach((key) => {
-        if (order.custom.fields?.[key.slice(CUSTOM_FIELD_PREFIX.length)]) {
-          addToMataData(
-            order.custom.fields[key.slice(CUSTOM_FIELD_PREFIX.length)],
-            key,
-          );
-        }
-      });
-    }
-
-    if (standardMetaProperties.find((key) => key === 'payments')) {
-      const payments = [];
-      const paymentReferences = order?.paymentInfo?.payments ?? [];
-      for await (const paymentReference of paymentReferences) {
-        payments.push(
-          await this.commerceToolsConnectorService.findPayment(
-            paymentReference.id,
-          ),
-        );
-      }
-      metadata['payments'] = payments
-        .filter((payment) => payment?.id)
-        .map((payment) => deleteObjectsFromObject(flatten(payment)));
-    }
-
-    return metadata;
-  }
-
   public async redeemVoucherifyCoupons(order: Order) {
     const { id, customerId } = order;
 
@@ -362,7 +295,7 @@ export class IntegrationService {
       await this.voucherifyConnectorService.getMetadataSchemaProperties(
         'product',
       );
-    const orderMetadata = await this.getMetadataForOrder(
+    const orderMetadata = await this.commercetoolsService.getMetadataForOrder(
       order,
       orderMetadataSchemaProperties,
     );
