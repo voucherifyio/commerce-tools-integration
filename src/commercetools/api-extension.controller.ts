@@ -1,7 +1,7 @@
 import { Controller, Post, Body, UseGuards, Logger, Res } from '@nestjs/common';
 import { CartService } from '../integration/cart.service';
 import { OrderService } from '../integration/order.service';
-import { CartOrderDto } from 'src/integration/CartOrder.dto';
+import { CartOrderDto } from './CartOrder.dto';
 import { ApiExtensionGuard } from './api-extension.guard';
 import { Cart, Order } from '@commercetools/platform-sdk';
 import { Response } from 'express';

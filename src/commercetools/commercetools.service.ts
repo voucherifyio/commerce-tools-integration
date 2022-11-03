@@ -1,6 +1,12 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { OrderService } from '../integration/order.service';
-import { Cart, LineItem, Order, Product } from '@commercetools/platform-sdk';
+import {
+  Cart,
+  LineItem,
+  Order,
+  Product,
+  TaxCategory,
+} from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../integration/utils/sleep';
 import {
@@ -150,7 +156,7 @@ export class CommercetoolsService {
         priceSelector,
       );
       const item = orderItems?.find(
-        (item) => item.sku.source_id === unit.sku.source_id,
+        (item) => item?.sku?.source_id === unit.sku.source_id,
       ) as OrdersItem;
       return { ...ctProduct, currentPriceAmount, unit, item };
     });

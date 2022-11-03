@@ -6,13 +6,13 @@ import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../co
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
-import { CartService } from '../../cart.service';
 import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
+import { CommercetoolsService } from '../../../commercetools/commercetools.service';
 describe('When another -20€ amount voucher is provided after -10% coupon in one session', () => {
-  let cartService: CartService;
+  let commercetoolsService: CommercetoolsService;
   let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
   const FIRST_COUPON_CODE = 'PERC10';
@@ -28,7 +28,7 @@ describe('When another -20€ amount voucher is provided after -10% coupon in on
     const commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithResponse();
 
-    ({ cartService, productMapper } =
+    ({ commercetoolsService, productMapper } =
       await buildCartServiceWithMockedDependencies({
         typesService,
         taxCategoriesService,
@@ -38,7 +38,7 @@ describe('When another -20€ amount voucher is provided after -10% coupon in on
   });
 
   it('Should call voucherify once', async () => {
-    await cartService.validatePromotionsAndBuildCartActions(cart);
+    await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
     expect(
       voucherifyConnectorService.validateStackableVouchersWithCTCart,
     ).toBeCalledTimes(1);
@@ -62,9 +62,8 @@ describe('When another -20€ amount voucher is provided after -10% coupon in on
     );
   });
   it('Should create one `addCustomLineItem` action with all coupons value combined', async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
+    const result =
+      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([
@@ -90,9 +89,8 @@ describe('When another -20€ amount voucher is provided after -10% coupon in on
   });
 
   it('Should create one `setCustomField` action with all coupons applied', async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
+    const result =
+      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([

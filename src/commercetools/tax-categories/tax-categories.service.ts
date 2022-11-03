@@ -11,7 +11,7 @@ export class TaxCategoriesService {
 
   private couponTaxCategory: TaxCategory = null;
 
-  public async checkCouponTaxCategoryWithCountries(cart: Cart) {
+  async checkCouponTaxCategoryWithCountries(cart: Cart) {
     const { country } = cart;
     const taxCategory = await this.getCouponTaxCategory();
     if (!taxCategory) {

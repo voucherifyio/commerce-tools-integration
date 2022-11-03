@@ -1,5 +1,5 @@
 import { Cart, Product } from '@commercetools/platform-sdk';
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
   StackableRedeemableResponse,

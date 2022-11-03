@@ -17,16 +17,16 @@ describe('When no coupon codes provided and have no previous voucherify session,
     const commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithResponse();
 
-    const { cartService } = await buildCartServiceWithMockedDependencies({
-      typesService,
-      taxCategoriesService,
-      voucherifyConnectorService,
-      commerceToolsConnectorService,
-    });
+    const { commercetoolsService } =
+      await buildCartServiceWithMockedDependencies({
+        typesService,
+        taxCategoriesService,
+        voucherifyConnectorService,
+        commerceToolsConnectorService,
+      });
 
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
+    const result =
+      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(result.actions).toEqual([
       {
@@ -50,14 +50,15 @@ describe('When no coupon codes provided and have no previous voucherify session,
     const commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithResponse();
 
-    const { cartService } = await buildCartServiceWithMockedDependencies({
-      typesService,
-      taxCategoriesService,
-      voucherifyConnectorService,
-      commerceToolsConnectorService,
-    });
+    const { commercetoolsService } =
+      await buildCartServiceWithMockedDependencies({
+        typesService,
+        taxCategoriesService,
+        voucherifyConnectorService,
+        commerceToolsConnectorService,
+      });
 
-    await cartService.validatePromotionsAndBuildCartActions(cart);
+    await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
       voucherifyConnectorService.validateStackableVouchersWithCTCart,
@@ -72,16 +73,18 @@ describe('When no coupon codes provided and have no previous voucherify session,
     const commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithResponse();
 
-    const { cartService } = await buildCartServiceWithMockedDependencies({
-      typesService,
-      taxCategoriesService,
-      voucherifyConnectorService,
-      commerceToolsConnectorService,
-    });
+    const { commercetoolsService } =
+      await buildCartServiceWithMockedDependencies({
+        typesService,
+        taxCategoriesService,
+        voucherifyConnectorService,
+        commerceToolsConnectorService,
+      });
 
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cartWithCustomLineItem,
-    );
+    const result =
+      await commercetoolsService.validatePromotionsAndBuildCartActions(
+        cartWithCustomLineItem,
+      );
 
     expect(result.actions.length).toBeGreaterThanOrEqual(2);
     expect(result.actions).toEqual(
@@ -102,16 +105,18 @@ describe('When no coupon codes provided and have no previous voucherify session,
     const commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithResponse();
 
-    const { cartService } = await buildCartServiceWithMockedDependencies({
-      typesService,
-      taxCategoriesService,
-      voucherifyConnectorService,
-      commerceToolsConnectorService,
-    });
+    const { commercetoolsService } =
+      await buildCartServiceWithMockedDependencies({
+        typesService,
+        taxCategoriesService,
+        voucherifyConnectorService,
+        commerceToolsConnectorService,
+      });
 
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cartWithUnknownCustomLineItem,
-    );
+    const result =
+      await commercetoolsService.validatePromotionsAndBuildCartActions(
+        cartWithUnknownCustomLineItem,
+      );
     expect(result.actions).toEqual(
       expect.not.arrayContaining([
         expect.objectContaining({

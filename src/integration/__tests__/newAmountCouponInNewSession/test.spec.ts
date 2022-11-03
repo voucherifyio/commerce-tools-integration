@@ -6,13 +6,13 @@ import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../co
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
-import { CartService } from '../../cart.service';
+import { CommercetoolsService } from '../../../commercetools/commercetools.service';
 import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 describe('When one -20€ amount voucher is provided in new session', () => {
-  let cartService: CartService;
+  let commercetoolsService: CommercetoolsService;
   let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
   const COUPON_CODE = 'AMOUNT20';
@@ -27,7 +27,7 @@ describe('When one -20€ amount voucher is provided in new session', () => {
     const commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithResponse();
 
-    ({ cartService, productMapper } =
+    ({ commercetoolsService, productMapper } =
       await buildCartServiceWithMockedDependencies({
         typesService,
         taxCategoriesService,
@@ -37,7 +37,7 @@ describe('When one -20€ amount voucher is provided in new session', () => {
   });
 
   it('Should call voucherify exactly once', async () => {
-    await cartService.validatePromotionsAndBuildCartActions(cart);
+    await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
       voucherifyConnectorService.validateStackableVouchersWithCTCart,
@@ -58,9 +58,8 @@ describe('When one -20€ amount voucher is provided in new session', () => {
   });
 
   it('Should assign new session with voucherify and store in cart', async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
+    const result =
+      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([
@@ -74,9 +73,8 @@ describe('When one -20€ amount voucher is provided in new session', () => {
   });
 
   it('Should create "addCustomLineItem" action with coupons total value', async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
+    const result =
+      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([
@@ -101,9 +99,8 @@ describe('When one -20€ amount voucher is provided in new session', () => {
     );
   });
   it('Should create "setCustomField" action with validated coupons', async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
+    const result =
+      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([

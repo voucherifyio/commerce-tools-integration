@@ -6,13 +6,13 @@ import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../co
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
-import { CartService } from '../../cart.service';
 import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
+import { CommercetoolsService } from '../../../commercetools/commercetools.service';
 describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` effect and having that product already in cart', () => {
-  let cartService: CartService;
+  let commercetoolsService: CommercetoolsService;
   let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
   const COUPON_CODE = 'ADD_GIFT';
@@ -35,7 +35,7 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
         id: PRODUCT_ID,
       });
 
-    ({ cartService, productMapper } =
+    ({ commercetoolsService, productMapper } =
       await buildCartServiceWithMockedDependencies({
         typesService,
         taxCategoriesService,
@@ -44,7 +44,7 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
       }));
   });
   it('should call voucherify once', async () => {
-    await cartService.validatePromotionsAndBuildCartActions(cart);
+    await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
       voucherifyConnectorService.validateStackableVouchersWithCTCart,
@@ -65,9 +65,8 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
   });
 
   it('should create one `addCustomLineItem` with applied coupon summary', async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
+    const result =
+      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
       result.actions.filter((e) => e.action === 'addCustomLineItem'),
@@ -97,9 +96,8 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
   });
 
   it('should create one `changeLineItemQuantity` action with the id of the discounted product', async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
+    const result =
+      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
       result.actions.filter((e) => e.action === 'changeLineItemQuantity'),
@@ -117,9 +115,8 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
   });
 
   it("should create one `setLineItemCustomType` action to apply items' applied_codes and one `setLineItemCustomType` to one remaining line item in cart to remove all customTypes from it", async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
+    const result =
+      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
       result.actions.filter((e) => e.action === 'setLineItemCustomType'),
@@ -150,9 +147,8 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
   });
 
   it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
+    const result =
+      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
       result.actions.filter((e) => e.action === 'setCustomField'),

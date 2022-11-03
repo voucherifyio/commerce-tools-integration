@@ -8,6 +8,8 @@ import { ProductMapper } from '../mappers/product';
 import { ConfigService } from '@nestjs/config';
 
 import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
+import { CommercetoolsService } from '../../commercetools/commercetools.service';
+import { ApiExtensionController } from '../../commercetools/api-extension.controller';
 
 const moduleMocker = new ModuleMocker(global);
 
@@ -29,15 +31,16 @@ export async function buildCartServiceWithMockedDependencies({
   const module = await Test.createTestingModule({
     controllers: [],
     providers: [
+      CommercetoolsService,
       CartService,
       ProductMapper,
       {
-        provide: TypesService,
-        useValue: typesService,
-      },
-      {
         provide: TaxCategoriesService,
         useValue: taxCategoriesService,
+      },
+      {
+        provide: TypesService,
+        useValue: typesService,
       },
       {
         provide: VoucherifyConnectorService,
@@ -63,8 +66,15 @@ export async function buildCartServiceWithMockedDependencies({
       }
     })
     .compile();
-  const cartService = module.get<CartService>(CartService);
+  const commercetoolsService =
+    module.get<CommercetoolsService>(CommercetoolsService);
   const productMapper = module.get<ProductMapper>(ProductMapper);
+  const taxCategoriesService_ =
+    module.get<TaxCategoriesService>(TaxCategoriesService);
 
-  return { cartService, productMapper };
+  return {
+    commercetoolsService,
+    productMapper,
+    taxCategoriesService: taxCategoriesService_,
+  };
 }

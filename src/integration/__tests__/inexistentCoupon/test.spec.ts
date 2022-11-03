@@ -4,13 +4,13 @@ import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../v
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 
-import { CartService } from '../../cart.service';
+import { CommercetoolsService } from '../../../commercetools/commercetools.service';
 import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 describe('When trying to apply inexistent coupon code', () => {
-  let cartService: CartService;
+  let commercetoolsService: CommercetoolsService;
   let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
 
@@ -23,7 +23,7 @@ describe('When trying to apply inexistent coupon code', () => {
     const commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithResponse();
 
-    ({ cartService, productMapper } =
+    ({ commercetoolsService, productMapper } =
       await buildCartServiceWithMockedDependencies({
         typesService,
         taxCategoriesService,
@@ -33,7 +33,7 @@ describe('When trying to apply inexistent coupon code', () => {
   });
 
   it('Should call voucherify exactly once', async () => {
-    await cartService.validatePromotionsAndBuildCartActions(cart);
+    await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
     expect(
       voucherifyConnectorService.validateStackableVouchersWithCTCart,
@@ -54,9 +54,8 @@ describe('When trying to apply inexistent coupon code', () => {
   });
 
   it('Should return only one `setCustomField` action with information about failure', async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
+    const result =
+      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
     expect(result).toEqual({
       status: true,
       actions: [

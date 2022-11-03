@@ -11,14 +11,13 @@ describe('Cart custom types', () => {
     const taxCategoriesService =
       getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();
 
-    const { cartService } = await buildCartServiceWithMockedDependencies({
-      typesService,
-      taxCategoriesService,
-    });
+    const { commercetoolsService } =
+      await buildCartServiceWithMockedDependencies({
+        typesService,
+        taxCategoriesService,
+      });
 
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
+    const result = await commercetoolsService.setCustomTypeForInitializedCart();
 
     expect(result).toEqual({
       status: true,
@@ -41,13 +40,14 @@ describe('Cart custom types', () => {
     const taxCategoriesService =
       getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();
 
-    const { cartService } = await buildCartServiceWithMockedDependencies({
-      typesService,
-      taxCategoriesService,
-    });
+    const { commercetoolsService } =
+      await buildCartServiceWithMockedDependencies({
+        typesService,
+        taxCategoriesService,
+      });
 
     expect(
-      cartService.validatePromotionsAndBuildCartActions(cart),
+      commercetoolsService.setCustomTypeForInitializedCart(),
     ).rejects.toThrowError(new Error('CouponType not found'));
   });
 });
