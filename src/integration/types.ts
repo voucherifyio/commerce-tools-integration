@@ -54,3 +54,14 @@ export enum CartDiscountApplyMode {
   CustomLineItem,
   DirectDiscount,
 }
+
+export type Coupon = {
+  code: string;
+  status: CouponStatus;
+  type?: CouponType;
+  errMsg?: string;
+  value?: number;
+};
+
+export type CouponStatus = 'NEW' | 'APPLIED' | 'NOT_APPLIED' | 'DELETED';
+export type CouponType = 'promotion_tier' | 'voucher';

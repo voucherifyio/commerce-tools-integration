@@ -1,6 +1,8 @@
 import { PaymentState } from '@commercetools/platform-sdk';
 
-export const actionsForAPIExtensionTypeOrder = (paymentState: PaymentState) => {
+export const getActionsForAPIExtensionTypeOrder = (
+  paymentState: PaymentState,
+) => {
   return paymentState
     ? [
         {

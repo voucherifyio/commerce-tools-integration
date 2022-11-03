@@ -1,10 +1,9 @@
-import { Cart, Product } from '@commercetools/platform-sdk';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Cart, Order } from '@commercetools/platform-sdk';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
-  StackableRedeemableResponse,
+  RedemptionsRedeemStackableResponse,
   StackableRedeemableResponseStatus,
-  StackableRedeemableResultDiscountUnit,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 import { uniqBy } from 'lodash';
@@ -12,145 +11,29 @@ import { uniqBy } from 'lodash';
 import { TaxCategoriesService } from '../commercetools/tax-categories/tax-categories.service';
 import { TypesService } from '../commercetools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
-import getCartActionBuilders from '../commercetools/cartActions/getCartActionBuilders';
-import { desarializeCoupons, Coupon, CouponStatus } from './coupon';
-import {
-  CartResponse,
-  PriceSelector,
-  ProductToAdd,
-  ValidateCouponsResult,
-  CartDiscountApplyMode,
-} from './types';
+import { Coupon, ProductToAdd, ValidateCouponsResult } from './types';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import { ProductMapper } from './mappers/product';
 import { ConfigService } from '@nestjs/config';
-import sleep from '../misc/sleep';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
-import { func } from 'joi';
 import { VoucherifyService } from '../voucherify/voucherify.service';
+import {
+  calculateTotalDiscountAmount,
+  checkIfAllInapplicableCouponsArePromotionTier,
+  checkIfOnlyNewCouponsFailed,
+  deserializeCoupons,
+  filterCouponsByLimit,
+  getCouponsFromCart,
+} from './helperFunctions';
+import { deleteObjectsFromObject } from '../misc/deleteObjectsFromObject';
+import flatten from 'flat';
 
-function getCouponsFromCart(cart: Cart): Coupon[] {
-  return (cart.custom?.fields?.discount_codes ?? [])
-    .map(desarializeCoupons)
-    .filter(
-      (coupon) =>
-        coupon.status !== 'NOT_APPLIED' && coupon.status !== 'AVAILABLE',
-    ); // we already declined them, will be removed by frontend
-}
+type SentCoupons = {
+  result: string;
+  coupon: string;
+};
 
-function checkCouponsValidatedAsState(
-  coupons: Coupon[],
-  validatedCoupons: StackableRedeemableResponse[],
-  status: CouponStatus,
-): boolean {
-  return (
-    validatedCoupons.length === 0 ||
-    coupons
-      .filter((coupon) => coupon.status === status)
-      .every((coupon) =>
-        validatedCoupons.find((element) => element.id === coupon.code),
-      )
-  );
-}
-
-function checkIfAllInapplicableCouponsArePromotionTier(
-  notApplicableCoupons: StackableRedeemableResponse[],
-) {
-  const inapplicableCouponsPromitonTier = notApplicableCoupons.filter(
-    (notApplicableCoupon) => notApplicableCoupon.object === 'promotion_tier',
-  );
-
-  return notApplicableCoupons.length === inapplicableCouponsPromitonTier.length;
-}
-
-function checkIfOnlyNewCouponsFailed(
-  coupons: Coupon[],
-  applicableCoupons: StackableRedeemableResponse[],
-  notApplicableCoupons: StackableRedeemableResponse[],
-  skippedCoupons: StackableRedeemableResponse[],
-): boolean {
-  const areAllNewCouponsNotApplicable = checkCouponsValidatedAsState(
-    coupons,
-    notApplicableCoupons,
-    'NEW',
-  );
-
-  const areAllAppliedCouponsApplicable = checkCouponsValidatedAsState(
-    coupons,
-    applicableCoupons,
-    'APPLIED',
-  );
-
-  const areAllAppliedCouponsSkipped = checkCouponsValidatedAsState(
-    coupons,
-    skippedCoupons,
-    'APPLIED',
-  );
-
-  return (
-    notApplicableCoupons.length !== 0 &&
-    areAllNewCouponsNotApplicable &&
-    areAllAppliedCouponsSkipped &&
-    areAllAppliedCouponsApplicable
-  );
-}
-
-function filterCouponsByLimit(coupons: Coupon[], couponsLimit: number) {
-  if (coupons.length > couponsLimit) {
-    const couponsToRemove = coupons.length - couponsLimit;
-    const newCouponsCodes = coupons
-      .filter((coupon) => coupon.status === 'NEW')
-      .map((coupon) => coupon.code);
-
-    coupons = coupons.filter(
-      (coupon) => !newCouponsCodes.includes(coupon.code),
-    );
-
-    if (newCouponsCodes.length < couponsToRemove) {
-      coupons = coupons.splice(
-        0,
-        coupons.length - (couponsToRemove - newCouponsCodes.length),
-      );
-    }
-  }
-  return coupons;
-}
-
-function calculateTotalDiscountAmount(
-  validatedCoupons: ValidationValidateStackableResponse,
-) {
-  let totalDiscountAmount = 0;
-  if (
-    validatedCoupons.redeemables.find(
-      (redeemable) => redeemable?.order?.items?.length,
-    )
-  ) {
-    //Voucherify "order.total_applied_discount_amount" is not always calculated correctly,
-    //so we need to iterate through the items to calculated discounted amount
-    validatedCoupons.redeemables.forEach((redeemable) => {
-      redeemable.order.items.forEach((item) => {
-        if ((item as any).total_applied_discount_amount) {
-          totalDiscountAmount += (item as any).total_applied_discount_amount;
-        } else if ((item as any).total_discount_amount) {
-          totalDiscountAmount += (item as any).total_discount_amount;
-        }
-      });
-    });
-  }
-
-  if (totalDiscountAmount === 0) {
-    return (
-      validatedCoupons.order?.total_applied_discount_amount ??
-      validatedCoupons.order?.total_discount_amount ??
-      0
-    );
-  }
-
-  if (totalDiscountAmount > (validatedCoupons?.order?.amount ?? 0)) {
-    return validatedCoupons.order.amount;
-  }
-  return totalDiscountAmount;
-}
+const CUSTOM_FIELD_PREFIX = 'custom_filed_';
 
 @Injectable()
 export class IntegrationService {
@@ -271,7 +154,10 @@ export class IntegrationService {
     }
 
     if (promotions.length) {
-      this.setBannerOnValidatedPromotions(validatedCoupons, promotions);
+      this.voucherifyService.setBannerOnValidatedPromotions(
+        validatedCoupons,
+        promotions,
+      );
     }
 
     const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
@@ -391,5 +277,200 @@ export class IntegrationService {
       items,
       sessionKey,
     );
+  }
+
+  public async getMetadataForOrder(
+    order: Order,
+    allMetadataSchemaProperties: string[],
+  ) {
+    const standardMetaProperties = allMetadataSchemaProperties.filter(
+      (key) => !key.includes(CUSTOM_FIELD_PREFIX),
+    );
+    const customMetaProperties = allMetadataSchemaProperties.filter(
+      (key) =>
+        key.length > CUSTOM_FIELD_PREFIX.length &&
+        key.slice(0, CUSTOM_FIELD_PREFIX.length) === CUSTOM_FIELD_PREFIX,
+    );
+
+    const metadata = {};
+
+    const addToMataData = (variable: any, name: string) => {
+      if (typeof variable !== 'object') {
+        return (metadata[name] = variable);
+      }
+      if (Array.isArray(variable)) {
+        const newArray = [];
+        variable.forEach((element) => {
+          if (typeof variable !== 'object') {
+            newArray.push(element);
+          }
+          if (!Array.isArray(variable)) {
+            newArray.push(deleteObjectsFromObject(flatten(element)));
+          }
+        });
+        return (metadata[name] = newArray);
+      }
+      if (typeof variable === 'object') {
+        return (metadata[name] = deleteObjectsFromObject(flatten(variable)));
+      }
+      return;
+    };
+
+    standardMetaProperties.forEach((key) => {
+      if (order[key]) {
+        addToMataData(order[key], key);
+      }
+    });
+
+    if (order?.custom?.fields && customMetaProperties.length) {
+      customMetaProperties.forEach((key) => {
+        if (order.custom.fields?.[key.slice(CUSTOM_FIELD_PREFIX.length)]) {
+          addToMataData(
+            order.custom.fields[key.slice(CUSTOM_FIELD_PREFIX.length)],
+            key,
+          );
+        }
+      });
+    }
+
+    if (standardMetaProperties.find((key) => key === 'payments')) {
+      const payments = [];
+      const paymentReferences = order?.paymentInfo?.payments ?? [];
+      for await (const paymentReference of paymentReferences) {
+        payments.push(
+          await this.commerceToolsConnectorService.findPayment(
+            paymentReference.id,
+          ),
+        );
+      }
+      metadata['payments'] = payments
+        .filter((payment) => payment?.id)
+        .map((payment) => deleteObjectsFromObject(flatten(payment)));
+    }
+
+    return metadata;
+  }
+
+  public async redeemVoucherifyCoupons(order: Order) {
+    const { id, customerId } = order;
+
+    const orderMetadataSchemaProperties =
+      await this.voucherifyConnectorService.getMetadataSchemaProperties(
+        'order',
+      );
+
+    const productMetadataSchemaProperties =
+      await this.voucherifyConnectorService.getMetadataSchemaProperties(
+        'product',
+      );
+    const orderMetadata = await this.getMetadataForOrder(
+      order,
+      orderMetadataSchemaProperties,
+    );
+
+    const items = this.productMapper.mapLineItems(
+      order.lineItems,
+      productMetadataSchemaProperties,
+    );
+
+    const coupons: Coupon[] = (order.custom?.fields?.discount_codes ?? [])
+      .map(deserializeCoupons)
+      .filter(
+        (coupon) =>
+          coupon.status !== 'NOT_APPLIED' && coupon.status !== 'AVAILABLE',
+      );
+
+    if (!coupons.length) {
+      this.logger.debug({
+        msg: 'Attempt to add order without coupons',
+        id,
+        customerId,
+      });
+
+      await this.voucherifyConnectorService.createOrder(
+        order,
+        items,
+        orderMetadata,
+      );
+
+      return { status: true, actions: [] };
+    }
+
+    this.logger.debug({
+      msg: 'Attempt to redeem vouchers',
+      coupons,
+      id,
+      customerId,
+    });
+    const sentCoupons: SentCoupons[] = [];
+    const usedCoupons: string[] = [];
+    const notUsedCoupons: string[] = [];
+
+    const sessionKey = order.custom?.fields.session;
+    let response: RedemptionsRedeemStackableResponse;
+    try {
+      response = await this.voucherifyConnectorService.redeemStackableVouchers(
+        coupons,
+        sessionKey,
+        order,
+        items,
+        orderMetadata,
+      );
+    } catch (e) {
+      this.logger.debug({ msg: 'Redeem operation failed', error: e.details });
+      return { status: true, actions: [] };
+    }
+
+    sentCoupons.push(
+      ...response.redemptions.map((redeem) => {
+        return {
+          result: redeem.result,
+          coupon: redeem.voucher?.code
+            ? redeem.voucher.code
+            : redeem['promotion_tier']['id'],
+        };
+      }),
+    );
+
+    this.logger.debug({
+      msg: 'Voucherify redeem response',
+      id,
+      customerId,
+      redemptions: response?.redemptions,
+    });
+
+    sentCoupons.forEach((sendedCoupon) => {
+      if (sendedCoupon.result === 'SUCCESS') {
+        usedCoupons.push(sendedCoupon.coupon);
+      } else {
+        notUsedCoupons.push(sendedCoupon.coupon);
+      }
+    });
+
+    this.logger.debug({
+      msg: 'Realized coupons',
+      id,
+      customerId,
+      usedCoupons,
+      notUsedCoupons,
+    });
+    const actions = [
+      {
+        action: 'setCustomField',
+        name: 'discount_codes',
+        value: notUsedCoupons,
+      },
+      {
+        action: 'setCustomField',
+        name: 'used_codes',
+        value: usedCoupons,
+      },
+    ];
+
+    return {
+      status: true,
+      actions: actions,
+      redemptionsRedeemStackableResponse: response,
+    };
   }
 }

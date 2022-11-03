@@ -1,12 +1,5 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { OrderService } from '../integration/order.service';
-import {
-  Cart,
-  LineItem,
-  Order,
-  Product,
-  TaxCategory,
-} from '@commercetools/platform-sdk';
+import { Cart, LineItem, Order, Product } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../misc/sleep';
 import {
@@ -63,13 +56,12 @@ export function checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount
 @Injectable()
 export class CommercetoolsService {
   constructor(
-    private readonly orderService: OrderService,
     private readonly logger: Logger,
     private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly typesService: TypesService,
     private readonly configService: ConfigService,
     @Inject(forwardRef(() => IntegrationService))
-    private readonly cartService: IntegrationService,
+    private readonly integrationService: IntegrationService,
   ) {}
 
   public async getProductsToAdd(
@@ -189,7 +181,7 @@ export class CommercetoolsService {
     actions: CartAction[];
     status: boolean;
   }> {
-    const validateCouponsResult = await this.cartService.validateCoupons(
+    const validateCouponsResult = await this.integrationService.validateCoupons(
       cart,
       getSession(cart),
     );
@@ -230,7 +222,7 @@ export class CommercetoolsService {
     if (cartMutated) {
       return;
     }
-    await this.cartService.validateCoupons(cart, getSession(cart));
+    await this.integrationService.validateCoupons(cart, getSession(cart));
     return this.logger.debug('Coupons changes were rolled back successfully');
   }
 
@@ -259,7 +251,7 @@ export class CommercetoolsService {
       });
     }
     try {
-      return await this.orderService.redeemVoucherifyCoupons(order);
+      return await this.integrationService.redeemVoucherifyCoupons(order);
     } catch (e) {
       console.log(e);
       this.logger.error({

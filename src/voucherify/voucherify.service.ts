@@ -1,13 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Coupon } from '../integration/coupon';
-import { TaxCategoriesService } from '../commercetools/tax-categories/tax-categories.service';
-import { TypesService } from '../commercetools/types/types.service';
+import { Injectable } from '@nestjs/common';
 import { VoucherifyConnectorService } from './voucherify-connector.service';
-import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import { ProductMapper } from '../integration/mappers/product';
 import { ConfigService } from '@nestjs/config';
-import { CommercetoolsService } from '../commercetools/commercetools.service';
 import { ValidationValidateStackableResponse } from '@voucherify/sdk';
+import { Coupon } from '../integration/types';
 
 @Injectable()
 export class VoucherifyService {

@@ -1,24 +1,22 @@
 import { Controller, Post, Body, UseGuards, Logger, Res } from '@nestjs/common';
 import { IntegrationService } from '../integration/integration.service';
-import { OrderService } from '../integration/order.service';
-import { CartOrderDto } from './CartOrder.dto';
+import { CartOrderDto } from './dto/CartOrder.dto';
 import { ApiExtensionGuard } from './api-extension.guard';
 import { Cart, Order } from '@commercetools/platform-sdk';
 import { Response } from 'express';
-import { actionsForAPIExtensionTypeOrder } from '../misc/actionsForAPIExtensionTypeOrder';
 import { performance } from 'perf_hooks';
 import { elapsedTime } from '../misc/elapsedTime';
 import {
   checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount,
   CommercetoolsService,
 } from './commercetools.service';
+import { getActionsForAPIExtensionTypeOrder } from './utils/getActionsForAPIExtensionTypeOrder';
 
 @Controller('api-extension')
 @UseGuards(ApiExtensionGuard)
 export class ApiExtensionController {
   constructor(
     private readonly cartService: IntegrationService,
-    private readonly orderService: OrderService,
     private readonly logger: Logger,
     private readonly commercetoolsService: CommercetoolsService,
   ) {}
@@ -80,7 +78,7 @@ export class ApiExtensionController {
   async handleRequestOrder(order: Order, responseExpress: Response) {
     const { paymentState } = order;
     responseExpress.status(200).json({
-      actions: actionsForAPIExtensionTypeOrder(paymentState),
+      actions: getActionsForAPIExtensionTypeOrder(paymentState),
     });
     return await this.commercetoolsService.checkIfCartWasUpdatedWithStatusPaidAndRedeem(
       order,
