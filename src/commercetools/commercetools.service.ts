@@ -8,7 +8,7 @@ import {
   TaxCategory,
 } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
-import sleep from '../integration/utils/sleep';
+import sleep from '../misc/sleep';
 import {
   CartDiscountApplyMode,
   CartResponse,
@@ -27,7 +27,7 @@ import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
 import { CartAction } from './cartActions/CartAction';
 import getCartActionBuilders from './cartActions/getCartActionBuilders';
 import { ConfigService } from '@nestjs/config';
-import { CartService } from '../integration/cart.service';
+import { IntegrationService } from '../integration/integration.service';
 
 interface ProductWithCurrentPriceAmount extends Product {
   currentPriceAmount: number;
@@ -39,7 +39,7 @@ function getSession(cart: Cart): string | null {
   return cart.custom?.fields?.session ?? null;
 }
 
-function checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount(
+export function checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount(
   lineItems: LineItem[],
 ): boolean {
   return !!lineItems?.find((lineItem) => {
@@ -68,8 +68,8 @@ export class CommercetoolsService {
     private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly typesService: TypesService,
     private readonly configService: ConfigService,
-    @Inject(forwardRef(() => CartService))
-    private readonly cartService: CartService,
+    @Inject(forwardRef(() => IntegrationService))
+    private readonly cartService: IntegrationService,
   ) {}
 
   public async getProductsToAdd(
@@ -189,14 +189,6 @@ export class CommercetoolsService {
     actions: CartAction[];
     status: boolean;
   }> {
-    if (
-      checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount(
-        cart.lineItems,
-      )
-    ) {
-      return null;
-    }
-
     const validateCouponsResult = await this.cartService.validateCoupons(
       cart,
       getSession(cart),

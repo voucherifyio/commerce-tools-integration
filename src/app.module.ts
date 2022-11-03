@@ -6,7 +6,7 @@ import { AppService } from './app.service';
 import { VoucherifyConnectorService } from './voucherify/voucherify-connector.service';
 import { CommercetoolsConnectorService } from './commercetools/commercetools-connector.service';
 import { ApiExtensionController } from './commercetools/api-extension.controller';
-import { CartService } from './integration/cart.service';
+import { IntegrationService } from './integration/integration.service';
 import { ApiExtensionService } from './commercetools/api-extension.service';
 import { TaxCategoriesService } from './commercetools/tax-categories/tax-categories.service';
 import { TaxCategoriesController } from './commercetools/tax-categories/tax-categories.controller';
@@ -28,8 +28,8 @@ import { ProductMapper } from './integration/mappers/product';
 import { ValidationSchema } from './configs/validationSchema';
 import { AppValidationPipe } from './configs/appValidationPipe';
 import { RequestJsonLogger } from './configs/requestJsonLogger';
-import { IntegrationService } from './integration/integration.service';
 import { CommercetoolsService } from './commercetools/commercetools.service';
+import { VoucherifyService } from './voucherify/voucherify.service';
 
 @Module({
   imports: [
@@ -47,7 +47,7 @@ import { CommercetoolsService } from './commercetools/commercetools.service';
   providers: [
     Logger,
     AppService,
-    CartService,
+    IntegrationService,
     ApiExtensionService,
     VoucherifyConnectorService,
     CommercetoolsConnectorService,
@@ -67,8 +67,8 @@ import { CommercetoolsService } from './commercetools/commercetools.service';
     ProductMapper,
     AppValidationPipe,
     RequestJsonLogger,
-    IntegrationService,
     CommercetoolsService,
+    VoucherifyService,
   ],
 })
 export class AppModule {}

@@ -1,5 +1,5 @@
 import { Controller, Post, Body, UseGuards, Logger, Res } from '@nestjs/common';
-import { CartService } from '../integration/cart.service';
+import { IntegrationService } from '../integration/integration.service';
 import { OrderService } from '../integration/order.service';
 import { CartOrderDto } from './CartOrder.dto';
 import { ApiExtensionGuard } from './api-extension.guard';
@@ -8,13 +8,16 @@ import { Response } from 'express';
 import { actionsForAPIExtensionTypeOrder } from '../misc/actionsForAPIExtensionTypeOrder';
 import { performance } from 'perf_hooks';
 import { elapsedTime } from '../misc/elapsedTime';
-import { CommercetoolsService } from './commercetools.service';
+import {
+  checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount,
+  CommercetoolsService,
+} from './commercetools.service';
 
 @Controller('api-extension')
 @UseGuards(ApiExtensionGuard)
 export class ApiExtensionController {
   constructor(
-    private readonly cartService: CartService,
+    private readonly cartService: IntegrationService,
     private readonly orderService: OrderService,
     private readonly logger: Logger,
     private readonly commercetoolsService: CommercetoolsService,
@@ -25,6 +28,13 @@ export class ApiExtensionController {
       return responseExpress
         .status(200)
         .json(this.commercetoolsService.setCustomTypeForInitializedCart());
+    }
+    if (
+      checkIfItemsQuantityIsEqualOrHigherThanItemTotalQuantityDiscount(
+        cart.lineItems,
+      )
+    ) {
+      return responseExpress.status(400).json({});
     }
     let response;
     try {

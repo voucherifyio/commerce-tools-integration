@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { CartService } from '../cart.service';
+import { IntegrationService } from '../integration.service';
 import { TypesService } from '../../commercetools/types/types.service';
 import { TaxCategoriesService } from '../../commercetools/tax-categories/tax-categories.service';
 import { VoucherifyConnectorService } from '../../voucherify/voucherify-connector.service';
@@ -32,7 +32,7 @@ export async function buildCartServiceWithMockedDependencies({
     controllers: [],
     providers: [
       CommercetoolsService,
-      CartService,
+      IntegrationService,
       ProductMapper,
       {
         provide: TaxCategoriesService,

@@ -7,7 +7,7 @@ import { ProductMapper } from './mappers/product';
 import { RedemptionsRedeemStackableResponse } from '@voucherify/sdk';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import flatten from 'flat';
-import { deleteObjectsFromObject } from './utils/deleteObjectsFromObject';
+import { deleteObjectsFromObject } from '../misc/deleteObjectsFromObject';
 
 type SentCoupons = {
   result: string;
