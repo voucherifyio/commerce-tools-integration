@@ -22,7 +22,7 @@ import { ProductMapper } from './mappers/product';
 import { ConfigService } from '@nestjs/config';
 import {
   buildRedeemStackableRequestForVoucherify,
-  buildValidationsValidateStackableForVoucherify,
+  buildValidationsValidateStackableParamsForVoucherify,
   CommercetoolsService,
 } from '../commercetools/commercetools.service';
 import { VoucherifyService } from '../voucherify/voucherify.service';
@@ -131,7 +131,7 @@ export class IntegrationService {
 
     let validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchers(
-        buildValidationsValidateStackableForVoucherify(
+        buildValidationsValidateStackableParamsForVoucherify(
           uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
           cart,
           this.productMapper.mapLineItems(cart.lineItems),
@@ -155,7 +155,7 @@ export class IntegrationService {
       );
       validatedCoupons =
         await this.voucherifyConnectorService.validateStackableVouchers(
-          buildValidationsValidateStackableForVoucherify(
+          buildValidationsValidateStackableParamsForVoucherify(
             uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
             cart,
             items,

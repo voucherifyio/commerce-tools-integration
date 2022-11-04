@@ -85,7 +85,7 @@ export function buildRedeemStackableRequestForVoucherify(
   } as RedemptionsRedeemStackableParams;
 }
 
-export function buildValidationsValidateStackableForVoucherify(
+export function buildValidationsValidateStackableParamsForVoucherify(
   coupons: Coupon[],
   cart: Cart,
   items,

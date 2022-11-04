@@ -51,7 +51,7 @@ export class VoucherifyConnectorService {
     return voucherify;
   }
 
-  async validateStackableVouchers(request) {
+  async validateStackableVouchers(request: ValidationsValidateStackableParams) {
     const start = performance.now();
     const response = await this.getClient().validations.validateStackable(
       request,
