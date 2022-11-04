@@ -130,9 +130,10 @@ export class CommercetoolsService {
     private readonly integrationService: IntegrationService,
   ) {}
 
-  public async checkCouponTaxCategoryIfConfiguredCorrectly(cart: Cart) {
+  public async getCouponTaxCategory(cart: Cart) {
     const { country } = cart;
-    const taxCategory = await this.taxCategoriesService.getCouponTaxCategory();
+    const taxCategory =
+      await this.taxCategoriesService.getCouponTaxCategoryFromResponse();
     if (!taxCategory) {
       const msg = 'Coupon tax category was not configured correctly';
       this.logger.error({ msg });
@@ -147,7 +148,9 @@ export class CommercetoolsService {
         taxCategory,
         country,
       );
+      return await this.taxCategoriesService.getCouponTaxCategoryFromResponse();
     }
+    return taxCategory;
   }
 
   public async getProductsToAdd(
@@ -281,8 +284,7 @@ export class CommercetoolsService {
 
     let taxCategory;
     if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
-      await this.checkCouponTaxCategoryIfConfiguredCorrectly(cart);
-      taxCategory = await this.taxCategoriesService.getCouponTaxCategory();
+      taxCategory = await this.getCouponTaxCategory(cart);
     }
 
     const actions = getCartActionBuilders()

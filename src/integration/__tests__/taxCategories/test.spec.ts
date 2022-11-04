@@ -14,11 +14,14 @@ describe('Tax categories', () => {
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
     const taxCategoriesService =
       getTaxCategoryServiceMockWithNotDefinedTaxCategoryResponse();
+    const voucherifyConnectorService =
+      getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
 
     const { commercetoolsService } =
       await buildCartServiceWithMockedDependencies({
         typesService,
         taxCategoriesService,
+        voucherifyConnectorService,
       });
 
     await expect(
@@ -43,9 +46,11 @@ describe('Tax categories', () => {
 
     await commercetoolsService.validatePromotionsAndBuildCartActions(cartCh);
 
-    expect(taxCategoriesService.getCouponTaxCategory).toBeCalledTimes(3);
+    expect(
+      taxCategoriesService.getCouponTaxCategoryFromResponse,
+    ).toBeCalledTimes(2);
     expect(taxCategoriesService.addCountryToCouponTaxCategory).toBeCalledTimes(
-      2,
+      1,
     );
     expect(taxCategoriesService.addCountryToCouponTaxCategory).toBeCalledWith(
       defaultGetCouponTaxCategoryResponse,
@@ -69,7 +74,9 @@ describe('Tax categories', () => {
 
     await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
-    expect(taxCategoriesService.getCouponTaxCategory).toBeCalledTimes(3);
+    expect(
+      taxCategoriesService.getCouponTaxCategoryFromResponse,
+    ).toBeCalledTimes(1);
     expect(taxCategoriesService.addCountryToCouponTaxCategory).not.toBeCalled();
   });
 });

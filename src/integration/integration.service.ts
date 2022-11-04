@@ -64,11 +64,6 @@ export class IntegrationService {
       });
     }
 
-    const taxCategory =
-      await this.commercetoolsService.checkCouponTaxCategoryIfConfiguredCorrectly(
-        cart,
-      );
-
     const couponsLimit =
       (this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT') ?? 5) < 5
         ? this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT')
@@ -209,7 +204,6 @@ export class IntegrationService {
       productsToAdd,
       onlyNewCouponsFailed,
       allInapplicableCouponsArePromotionTier,
-      taxCategory,
       couponsLimit,
     });
     const newSessionKey = !sessionKey || valid ? sessionKeyResponse : null;

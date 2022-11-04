@@ -65,7 +65,7 @@ export const getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse =
       '../tax-categories.service',
     ) as TaxCategoriesService;
 
-    taxCategoriesService.getCouponTaxCategory = jest
+    taxCategoriesService.getCouponTaxCategoryFromResponse = jest
       .fn()
       .mockResolvedValue(defaultGetCouponTaxCategoryResponse);
 
@@ -80,7 +80,7 @@ export const getTaxCategoryServiceMockWithNotDefinedTaxCategoryResponse =
       '../tax-categories.service',
     ) as TaxCategoriesService;
 
-    taxCategoriesService.getCouponTaxCategory = jest
+    taxCategoriesService.getCouponTaxCategoryFromResponse = jest
       .fn()
       .mockResolvedValue(null);
 
