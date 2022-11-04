@@ -43,9 +43,9 @@ describe('Tax categories', () => {
 
     await commercetoolsService.validatePromotionsAndBuildCartActions(cartCh);
 
-    expect(taxCategoriesService.getCouponTaxCategory).toBeCalledTimes(1);
+    expect(taxCategoriesService.getCouponTaxCategory).toBeCalledTimes(3);
     expect(taxCategoriesService.addCountryToCouponTaxCategory).toBeCalledTimes(
-      1,
+      2,
     );
     expect(taxCategoriesService.addCountryToCouponTaxCategory).toBeCalledWith(
       defaultGetCouponTaxCategoryResponse,
@@ -69,7 +69,7 @@ describe('Tax categories', () => {
 
     await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
-    expect(taxCategoriesService.getCouponTaxCategory).toBeCalledTimes(1);
+    expect(taxCategoriesService.getCouponTaxCategory).toBeCalledTimes(3);
     expect(taxCategoriesService.addCountryToCouponTaxCategory).not.toBeCalled();
   });
 });

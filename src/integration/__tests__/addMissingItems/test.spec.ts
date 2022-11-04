@@ -50,15 +50,37 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
       voucherifyConnectorService.validateStackableVouchers,
     ).toBeCalledTimes(1);
     expect(voucherifyConnectorService.validateStackableVouchers).toBeCalledWith(
-      [
-        {
-          code: 'ADD_GIFT',
-          status: 'NEW',
+      {
+        customer: { source_id: undefined },
+        order: {
+          amount: 33000,
+          customer: { source_id: undefined },
+          discount_amount: 0,
+          items: [
+            {
+              amount: 26500,
+              price: 26500,
+              product: { name: 'Some product', override: true },
+              quantity: 1,
+              related_object: 'sku',
+              sku: { metadata: {}, override: true, sku: 'Some product' },
+              source_id: 'product-sku1',
+            },
+            {
+              amount: 6500,
+              price: 6500,
+              product: { name: 'Free product', override: true },
+              quantity: 1,
+              related_object: 'sku',
+              sku: { metadata: {}, override: true, sku: 'Free product' },
+              source_id: 'gift-sku-id',
+            },
+          ],
+          source_id: 'cart-id',
         },
-      ],
-      cart,
-      productMapper.mapLineItems(cart.lineItems),
-      SESSION_KEY,
+        redeemables: [{ id: 'ADD_GIFT', object: 'voucher' }],
+        session: { key: 'existing-session-id', type: 'LOCK' },
+      },
     );
   });
 

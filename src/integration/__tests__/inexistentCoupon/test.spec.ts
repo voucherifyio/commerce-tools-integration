@@ -39,24 +39,35 @@ describe('When trying to apply inexistent coupon code', () => {
       voucherifyConnectorService.validateStackableVouchers,
     ).toBeCalledTimes(1);
     expect(voucherifyConnectorService.validateStackableVouchers).toBeCalledWith(
-      [
-        {
-          code: 'NOT EXIST',
-          status: 'NEW',
+      {
+        customer: { source_id: undefined },
+        order: {
+          amount: 26500,
+          customer: { source_id: undefined },
+          discount_amount: 0,
+          items: [
+            {
+              amount: 26500,
+              price: 26500,
+              product: { name: 'Some product', override: true },
+              quantity: 1,
+              related_object: 'sku',
+              sku: { metadata: {}, override: true, sku: 'Some product' },
+              source_id: 'product-sku1',
+            },
+          ],
+          source_id: 'cart-id',
         },
-      ],
-      cart,
-      productMapper.mapLineItems(cart.lineItems),
-      null,
+        redeemables: [{ id: 'NOT EXIST', object: 'voucher' }],
+        session: { type: 'LOCK' },
+      },
     );
   });
 
   it('Should return only one `setCustomField` action with information about failure', async () => {
-    console.log(111);
     const result =
       await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
 
-    console.log(result);
     expect(result).toEqual({
       status: true,
       actions: [
@@ -69,11 +80,8 @@ describe('When trying to apply inexistent coupon code', () => {
         },
       ],
       validateCouponsResult: {
-        allInapplicableCouponsArePromotionTier: false,
         availablePromotions: [],
         applicableCoupons: [],
-        couponsLimit: 5,
-        newSessionKey: 'ssn_HFTS1dgkRTrJikmCfKAUbDEmGrXpScuw',
         notApplicableCoupons: [
           {
             status: 'INAPPLICABLE',
@@ -91,10 +99,13 @@ describe('When trying to apply inexistent coupon code', () => {
           },
         ],
         skippedCoupons: [],
+        newSessionKey: 'ssn_HFTS1dgkRTrJikmCfKAUbDEmGrXpScuw',
         valid: false,
         totalDiscountAmount: 0,
         productsToAdd: [],
         onlyNewCouponsFailed: true,
+        allInapplicableCouponsArePromotionTier: false,
+        couponsLimit: 5,
       },
     });
   });

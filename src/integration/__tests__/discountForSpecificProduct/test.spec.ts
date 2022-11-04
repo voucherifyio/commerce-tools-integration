@@ -42,15 +42,28 @@ describe('when applying discount code on a specific product in the cart', () => 
       voucherifyConnectorService.validateStackableVouchers,
     ).toBeCalledTimes(1);
     expect(voucherifyConnectorService.validateStackableVouchers).toBeCalledWith(
-      [
-        {
-          code: 'SNEAKERS30',
-          status: 'NEW',
+      {
+        customer: { source_id: undefined },
+        order: {
+          amount: 20000,
+          customer: { source_id: undefined },
+          discount_amount: 0,
+          items: [
+            {
+              amount: 20000,
+              price: 20000,
+              product: { name: 'Sneakers', override: true },
+              quantity: 1,
+              related_object: 'sku',
+              sku: { metadata: {}, override: true, sku: 'Sneakers' },
+              source_id: 'skudiscounted-sneakers',
+            },
+          ],
+          source_id: 'cart-id',
         },
-      ],
-      cart,
-      productMapper.mapLineItems(cart.lineItems),
-      SESSION_KEY,
+        redeemables: [{ id: 'SNEAKERS30', object: 'voucher' }],
+        session: { key: 'existing-session-id', type: 'LOCK' },
+      },
     );
   });
   it('should create `addCustomLineItem` action with total coupons value applied', async () => {

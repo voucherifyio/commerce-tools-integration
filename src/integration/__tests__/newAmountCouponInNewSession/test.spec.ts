@@ -43,15 +43,28 @@ describe('When one -20€ amount voucher is provided in new session', () => {
       voucherifyConnectorService.validateStackableVouchers,
     ).toBeCalledTimes(1);
     expect(voucherifyConnectorService.validateStackableVouchers).toBeCalledWith(
-      [
-        {
-          code: 'AMOUNT20',
-          status: 'NEW',
+      {
+        customer: { source_id: undefined },
+        order: {
+          amount: 26500,
+          customer: { source_id: undefined },
+          discount_amount: 0,
+          items: [
+            {
+              amount: 26500,
+              price: 26500,
+              product: { name: 'Some product', override: true },
+              quantity: 1,
+              related_object: 'sku',
+              sku: { metadata: {}, override: true, sku: 'Some product' },
+              source_id: 'product-sku1',
+            },
+          ],
+          source_id: 'cart-id',
         },
-      ],
-      cart,
-      productMapper.mapLineItems(cart.lineItems),
-      null,
+        redeemables: [{ id: 'AMOUNT20', object: 'voucher' }],
+        session: { type: 'LOCK' },
+      },
     );
   });
 
