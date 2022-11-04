@@ -3,7 +3,6 @@ import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
   RedemptionsRedeemStackableResponse,
-  StackableRedeemableResponseStatus,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 import { uniqBy } from 'lodash';
@@ -30,14 +29,10 @@ import {
   VoucherifyService,
 } from '../voucherify/voucherify.service';
 import {
-  calculateTotalDiscountAmount,
-  checkIfAllInapplicableCouponsArePromotionTier,
-  checkIfOnlyNewCouponsFailed,
   deserializeCoupons,
   filterCouponsByLimit,
   getCouponsFromCart,
 } from './helperFunctions';
-import { getCouponsByStatus } from '../commercetools/utils/getCouponsByStatus';
 
 @Injectable()
 export class IntegrationService {
@@ -55,12 +50,12 @@ export class IntegrationService {
     private readonly voucherifyService: VoucherifyService,
   ) {}
 
-  public async validateCouponsWithAvailablePromotions(
+  public async validateCouponsAndGetAvailablePromotions(
     cart: Cart,
     sessionKey?: string | null,
   ): Promise<ValidateCouponsResult> {
     const { id, customerId, anonymousId } = cart;
-    const coupons: Coupon[] = getCouponsFromCart(cart); //to trzeba
+    const coupons: Coupon[] = getCouponsFromCart(cart);
     let uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
     if (coupons.length !== uniqCoupons.length) {
       this.logger.debug({
@@ -95,6 +90,10 @@ export class IntegrationService {
       );
 
     if (deletedCoupons.length === uniqCoupons.length) {
+      this.logger.debug({
+        msg: 'Deleting coupons only, skipping voucherify call',
+      });
+
       return {
         availablePromotions,
       };
@@ -156,6 +155,13 @@ export class IntegrationService {
         promotions,
       );
     }
+
+    this.logger.debug({
+      msg: 'Validated coupons',
+      validatedCoupons,
+      availablePromotions,
+      productsToAdd,
+    });
 
     return {
       validatedCoupons,

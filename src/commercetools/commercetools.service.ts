@@ -333,7 +333,7 @@ export class CommercetoolsService {
     status: boolean;
   }> {
     const validateCouponsResult =
-      await this.integrationService.validateCouponsWithAvailablePromotions(
+      await this.integrationService.validateCouponsAndGetAvailablePromotions(
         cart,
         getSession(cart),
       );
@@ -389,7 +389,7 @@ export class CommercetoolsService {
     if (cartMutated) {
       return;
     }
-    await this.integrationService.validateCouponsWithAvailablePromotions(
+    await this.integrationService.validateCouponsAndGetAvailablePromotions(
       cart,
       getSession(cart),
     );
