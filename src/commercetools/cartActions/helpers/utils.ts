@@ -1,9 +1,9 @@
-import { ValidateCouponsResult } from '../../../integration/types';
+import { ExtendedValidateCouponsResult } from '../../../integration/types';
 
 export default function isValidAndNewCouponNotFailed(
-  validateCouponsResult: ValidateCouponsResult,
+  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
 ) {
-  const { valid, onlyNewCouponsFailed } = validateCouponsResult;
+  const { valid, onlyNewCouponsFailed } = extendedValidateCouponsResult;
 
   return valid || !onlyNewCouponsFailed;
 }

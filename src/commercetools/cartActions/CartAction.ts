@@ -7,7 +7,7 @@ import {
 } from '@commercetools/platform-sdk';
 import {
   CartDiscountApplyMode,
-  ValidateCouponsResult,
+  ExtendedValidateCouponsResult,
 } from '../../integration/types';
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 
@@ -139,7 +139,7 @@ export type CartAction =
 
 export type CartActionsBuilder = (
   cart: Cart,
-  validateCouponsResult: ValidateCouponsResult,
+  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
   cartDiscountApplyMode: CartDiscountApplyMode,
   taxCategory?: TaxCategory,
 ) => CartAction[];

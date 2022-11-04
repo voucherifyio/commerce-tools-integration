@@ -2,6 +2,7 @@ import { TaxCategory } from '@commercetools/platform-sdk';
 import {
   DiscountVouchersEffectTypes,
   StackableRedeemableResponse,
+  ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 import { CartAction } from '../commercetools/cartActions/CartAction';
 import { CustomerGroupReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/customer-group';
@@ -36,6 +37,12 @@ export type availablePromotion = {
 };
 
 export type ValidateCouponsResult = {
+  availablePromotions: availablePromotion[];
+  validatedCoupons?: ValidationValidateStackableResponse;
+  productsToAdd?: ProductToAdd[];
+};
+
+export type ExtendedValidateCouponsResult = {
   availablePromotions: availablePromotion[];
   applicableCoupons: StackableRedeemableResponse[];
   notApplicableCoupons: StackableRedeemableResponse[];

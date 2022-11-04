@@ -7,7 +7,7 @@ import {
 } from '../CartAction';
 import {
   CartDiscountApplyMode,
-  ValidateCouponsResult,
+  ExtendedValidateCouponsResult,
 } from '../../../integration/types';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -17,7 +17,7 @@ import addDirectDiscountWithDiscountSummary from '../addDirectDiscountWithDiscou
 // TODO don't create addCustomLineItem action if the summary doesn't actually change
 function addCustomLineItemWithDiscountSummary(
   cart: Cart,
-  validateCouponsResult: ValidateCouponsResult,
+  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
   taxCategory: TaxCategory,
 ): CartActionAddCustomLineItem[] {
   const voucherCustomLineItem = cart.customLineItems
@@ -25,7 +25,8 @@ function addCustomLineItemWithDiscountSummary(
     .find((customLineItem) => customLineItem?.slug === COUPON_CUSTOM_LINE_SLUG);
   if (voucherCustomLineItem) return [];
 
-  const { totalDiscountAmount, applicableCoupons } = validateCouponsResult;
+  const { totalDiscountAmount, applicableCoupons } =
+    extendedValidateCouponsResult;
 
   if (applicableCoupons.length === 0) return [];
 
@@ -81,19 +82,19 @@ function removeDiscountedCustomLineItems(
 
 export default function customLineItems(
   cart: Cart,
-  validateCouponsResult: ValidateCouponsResult,
+  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
   cartDiscountApplyMode: CartDiscountApplyMode,
   taxCategory?: TaxCategory,
 ): CartAction[] {
   const cartActions = [] as CartAction[];
 
-  if (isValidAndNewCouponNotFailed(validateCouponsResult)) {
+  if (isValidAndNewCouponNotFailed(extendedValidateCouponsResult)) {
     if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
       cartActions.push(
         ...removeDiscountedCustomLineItems(cart),
         ...addCustomLineItemWithDiscountSummary(
           cart,
-          validateCouponsResult,
+          extendedValidateCouponsResult,
           taxCategory,
         ),
       );
@@ -101,7 +102,10 @@ export default function customLineItems(
     if (cartDiscountApplyMode === CartDiscountApplyMode.DirectDiscount) {
       cartActions.push(
         ...removeDiscountedCustomLineItems(cart),
-        ...addDirectDiscountWithDiscountSummary(cart, validateCouponsResult),
+        ...addDirectDiscountWithDiscountSummary(
+          cart,
+          extendedValidateCouponsResult,
+        ),
       );
     }
   }

@@ -25,7 +25,10 @@ import {
   buildValidationsValidateStackableParamsForVoucherify,
   CommercetoolsService,
 } from '../commercetools/commercetools.service';
-import { VoucherifyService } from '../voucherify/voucherify.service';
+import {
+  getCouponsLimit,
+  VoucherifyService,
+} from '../voucherify/voucherify.service';
 import {
   calculateTotalDiscountAmount,
   checkIfAllInapplicableCouponsArePromotionTier,
@@ -34,6 +37,7 @@ import {
   filterCouponsByLimit,
   getCouponsFromCart,
 } from './helperFunctions';
+import { getCouponsByStatus } from '../commercetools/utils/getCouponsByStatus';
 
 @Injectable()
 export class IntegrationService {
@@ -51,23 +55,18 @@ export class IntegrationService {
     private readonly voucherifyService: VoucherifyService,
   ) {}
 
-  public async validateCoupons(
+  public async validateCouponsWithAvailablePromotions(
     cart: Cart,
     sessionKey?: string | null,
   ): Promise<ValidateCouponsResult> {
     const { id, customerId, anonymousId } = cart;
-    const coupons: Coupon[] = getCouponsFromCart(cart);
+    const coupons: Coupon[] = getCouponsFromCart(cart); //to trzeba
     let uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
     if (coupons.length !== uniqCoupons.length) {
       this.logger.debug({
         msg: 'Duplicates found and deleted',
       });
     }
-
-    const couponsLimit =
-      (this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT') ?? 5) < 5
-        ? this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT')
-        : 5;
 
     const { promotions, availablePromotions } =
       await this.voucherifyService.getPromotions(cart, uniqCoupons);
@@ -78,23 +77,9 @@ export class IntegrationService {
       });
 
       return {
-        valid: false,
-        availablePromotions: availablePromotions,
-        applicableCoupons: [],
-        notApplicableCoupons: [],
-        skippedCoupons: [],
-        productsToAdd: [],
-        totalDiscountAmount: 0,
-        couponsLimit,
+        availablePromotions,
       };
     }
-    this.logger.debug({
-      msg: 'Attempt to apply coupons',
-      coupons: uniqCoupons,
-      id,
-      customerId,
-      anonymousId,
-    });
 
     const deletedCoupons = uniqCoupons.filter(
       (coupon) => coupon.status === 'DELETED',
@@ -111,20 +96,26 @@ export class IntegrationService {
 
     if (deletedCoupons.length === uniqCoupons.length) {
       return {
-        valid: false,
-        availablePromotions: availablePromotions,
-        applicableCoupons: [],
-        notApplicableCoupons: [],
-        skippedCoupons: [],
-        productsToAdd: [],
-        totalDiscountAmount: 0,
-        couponsLimit,
+        availablePromotions,
       };
     }
 
-    uniqCoupons = filterCouponsByLimit(uniqCoupons, couponsLimit);
+    this.logger.debug({
+      msg: 'Attempt to apply coupons',
+      coupons: uniqCoupons,
+      id,
+      customerId,
+      anonymousId,
+    });
 
-    let validatedCoupons =
+    uniqCoupons = filterCouponsByLimit(
+      uniqCoupons,
+      getCouponsLimit(
+        this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT'),
+      ),
+    );
+
+    let validatedCoupons: ValidationValidateStackableResponse =
       await this.voucherifyConnectorService.validateStackableVouchers(
         buildValidationsValidateStackableParamsForVoucherify(
           uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
@@ -139,14 +130,14 @@ export class IntegrationService {
       this.commercetoolsService.getPriceSelectorFromCart(cart),
     );
 
-    const productsToChange = productsToAdd.filter(
+    const productsToAddWithIncorrectPrice = productsToAdd.filter(
       (product) => product.discount_difference,
     );
 
-    if (productsToChange.length) {
+    if (productsToAddWithIncorrectPrice.length) {
       const items = await this.getItemsWithCorrectedPrices(
         validatedCoupons,
-        productsToChange,
+        productsToAddWithIncorrectPrice,
       );
       validatedCoupons =
         await this.voucherifyConnectorService.validateStackableVouchers(
@@ -166,60 +157,10 @@ export class IntegrationService {
       );
     }
 
-    const getCouponsByStatus = (status: StackableRedeemableResponseStatus) =>
-      validatedCoupons.redeemables.filter(
-        (redeemable) => redeemable.status === status,
-      );
-
-    const notApplicableCoupons = getCouponsByStatus('INAPPLICABLE');
-    const skippedCoupons = getCouponsByStatus('SKIPPED');
-    const applicableCoupons = getCouponsByStatus('APPLICABLE');
-
-    const sessionKeyResponse = validatedCoupons.session?.key;
-    const { valid } = validatedCoupons;
-    const totalDiscountAmount = calculateTotalDiscountAmount(validatedCoupons);
-
-    const onlyNewCouponsFailed = checkIfOnlyNewCouponsFailed(
-      uniqCoupons,
-      applicableCoupons,
-      notApplicableCoupons,
-      skippedCoupons,
-    );
-
-    const allInapplicableCouponsArePromotionTier =
-      checkIfAllInapplicableCouponsArePromotionTier(notApplicableCoupons);
-
-    this.logger.debug({
-      msg: 'Validated coupons',
-      availablePromotions,
-      applicableCoupons,
-      notApplicableCoupons,
-      skippedCoupons,
-      id,
-      valid,
-      customerId,
-      sessionKey,
-      sessionKeyResponse,
-      totalDiscountAmount,
-      productsToAdd,
-      onlyNewCouponsFailed,
-      allInapplicableCouponsArePromotionTier,
-      couponsLimit,
-    });
-    const newSessionKey = !sessionKey || valid ? sessionKeyResponse : null;
-
     return {
+      validatedCoupons,
       availablePromotions,
-      applicableCoupons,
-      notApplicableCoupons,
-      skippedCoupons,
-      newSessionKey,
-      valid,
-      totalDiscountAmount,
       productsToAdd,
-      onlyNewCouponsFailed,
-      allInapplicableCouponsArePromotionTier,
-      couponsLimit,
     };
   }
 

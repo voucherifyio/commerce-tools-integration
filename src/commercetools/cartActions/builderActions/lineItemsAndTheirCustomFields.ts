@@ -1,5 +1,5 @@
 import { Cart, LineItem } from '@commercetools/platform-sdk';
-import { ValidateCouponsResult } from '../../../integration/types';
+import { ExtendedValidateCouponsResult } from '../../../integration/types';
 import {
   CartAction,
   CartActionAddLineItem,
@@ -83,19 +83,22 @@ function mergeUniqueSetLineItemCustomTypeActions(
 
 export default function lineItemsAndTheirCustomFields(
   cart: Cart,
-  validateCouponsResult: ValidateCouponsResult,
+  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
 ): CartAction[] {
-  if (!isValidAndNewCouponNotFailed(validateCouponsResult)) {
+  if (!isValidAndNewCouponNotFailed(extendedValidateCouponsResult)) {
     return [];
   }
 
   const lineProductsWithFixedAmount =
     mapValidateCouponsResultToLineProductsWithFixedAmount(
       cart,
-      validateCouponsResult,
+      extendedValidateCouponsResult,
     );
 
-  const freeLineItemsActions = addFreeLineItems(cart, validateCouponsResult);
+  const freeLineItemsActions = addFreeLineItems(
+    cart,
+    extendedValidateCouponsResult,
+  );
 
   const allActionsSetLineItemCustomType = [
     ...lineProductsWithFixedAmount,
@@ -104,7 +107,7 @@ export default function lineItemsAndTheirCustomFields(
 
   const removeActions = removeFreeLineItemsForNonApplicableCoupon(
     cart,
-    validateCouponsResult,
+    extendedValidateCouponsResult,
   );
 
   const removeLineItemActions = removeActions.filter(

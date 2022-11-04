@@ -3,6 +3,7 @@ import { Cart, Order, Product } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../misc/sleep';
 import {
+  availablePromotion,
   CartDiscountApplyMode,
   CartResponse,
   Coupon,
@@ -14,6 +15,7 @@ import { TypesService } from './types/types.service';
 import {
   OrdersItem,
   RedemptionsRedeemStackableParams,
+  StackableRedeemableResponse,
   StackableRedeemableResultDiscountUnit,
   ValidationsValidateStackableParams,
   ValidationValidateStackableResponse,
@@ -30,6 +32,15 @@ import { IntegrationService } from '../integration/integration.service';
 import { TaxCategoriesService } from './tax-categories/tax-categories.service';
 import { deleteObjectsFromObject } from '../misc/deleteObjectsFromObject';
 import flatten from 'flat';
+import { getCouponsByStatus } from './utils/getCouponsByStatus';
+import {
+  calculateTotalDiscountAmount,
+  checkIfAllInapplicableCouponsArePromotionTier,
+  checkIfOnlyNewCouponsFailed,
+  getCouponsFromCart,
+} from '../integration/helperFunctions';
+import { uniqBy } from 'lodash';
+import { getCouponsLimit } from '../voucherify/voucherify.service';
 
 interface ProductWithCurrentPriceAmount extends Product {
   currentPriceAmount: number;
@@ -265,15 +276,67 @@ export class CommercetoolsService {
     };
   }
 
+  extendValidateCouponsResultForCartActionBuilder(
+    validateCouponsResult: ValidateCouponsResult,
+    cart: Cart,
+  ) {
+    const coupons: Coupon[] = getCouponsFromCart(cart);
+    const uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
+    const validatedCoupons = validateCouponsResult?.validatedCoupons;
+    const { valid } = validatedCoupons ?? { valid: false };
+    const totalDiscountAmount = validatedCoupons
+      ? calculateTotalDiscountAmount(validatedCoupons)
+      : 0;
+
+    const notApplicableCoupons = getCouponsByStatus(
+      validatedCoupons,
+      'INAPPLICABLE',
+    );
+    const skippedCoupons = getCouponsByStatus(validatedCoupons, 'SKIPPED');
+    const applicableCoupons = getCouponsByStatus(
+      validatedCoupons,
+      'APPLICABLE',
+    );
+
+    const sessionKeyResponse = validatedCoupons?.session?.key;
+
+    return {
+      availablePromotions: validateCouponsResult.availablePromotions,
+      applicableCoupons,
+      notApplicableCoupons,
+      skippedCoupons,
+      newSessionKey: !getSession(cart) || valid ? sessionKeyResponse : null,
+      valid,
+      totalDiscountAmount,
+      productsToAdd: validateCouponsResult.productsToAdd ?? [],
+      onlyNewCouponsFailed: validateCouponsResult?.validatedCoupons
+        ? checkIfOnlyNewCouponsFailed(
+            uniqCoupons,
+            applicableCoupons,
+            notApplicableCoupons,
+            skippedCoupons,
+          )
+        : undefined,
+      allInapplicableCouponsArePromotionTier:
+        validateCouponsResult?.validatedCoupons
+          ? checkIfAllInapplicableCouponsArePromotionTier(notApplicableCoupons)
+          : undefined,
+      couponsLimit: getCouponsLimit(
+        this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT'),
+      ),
+    };
+  }
+
   async validatePromotionsAndBuildCartActions(cart: Cart): Promise<{
     validateCouponsResult?: ValidateCouponsResult;
     actions: CartAction[];
     status: boolean;
   }> {
-    const validateCouponsResult = await this.integrationService.validateCoupons(
-      cart,
-      getSession(cart),
-    );
+    const validateCouponsResult =
+      await this.integrationService.validateCouponsWithAvailablePromotions(
+        cart,
+        getSession(cart),
+      );
 
     const cartDiscountApplyMode =
       this.configService.get<string>(
@@ -291,7 +354,10 @@ export class CommercetoolsService {
       .flatMap((builder) =>
         builder(
           cart,
-          validateCouponsResult,
+          this.extendValidateCouponsResultForCartActionBuilder(
+            validateCouponsResult,
+            cart,
+          ),
           cartDiscountApplyMode,
           taxCategory,
         ),
@@ -323,7 +389,10 @@ export class CommercetoolsService {
     if (cartMutated) {
       return;
     }
-    await this.integrationService.validateCoupons(cart, getSession(cart));
+    await this.integrationService.validateCouponsWithAvailablePromotions(
+      cart,
+      getSession(cart),
+    );
     return this.logger.debug('Coupons changes were rolled back successfully');
   }
 

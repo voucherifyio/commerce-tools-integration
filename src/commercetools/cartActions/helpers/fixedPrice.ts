@@ -1,7 +1,14 @@
 import { Cart } from '@commercetools/platform-sdk';
-import { ValidateCouponsResult } from '../../../integration/types';
+import {
+  ExtendedValidateCouponsResult,
+  ValidateCouponsResult,
+} from '../../../integration/types';
 import { CartActionSetLineItemCustomType } from '../CartAction';
-import { StackableRedeemableResponse } from '@voucherify/sdk';
+import {
+  StackableRedeemableResponse,
+  StackableRedeemableResponseStatus,
+} from '@voucherify/sdk';
+import { getCouponsByStatus } from '../../utils/getCouponsByStatus';
 
 type FixedCouponApplicableTo = {
   id: string;
@@ -116,15 +123,16 @@ function getLineItemCustomFieldActions(
 
 export default function mapValidateCouponsResultToLineProductsWithFixedAmount(
   cart: Cart,
-  validateCouponsResult: ValidateCouponsResult,
+  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
 ): CartActionSetLineItemCustomType[] {
-  const fixedTypeCoupons = validateCouponsResult.applicableCoupons.filter(
+  const { applicableCoupons } = extendedValidateCouponsResult;
+
+  const fixedTypeCoupons = applicableCoupons.filter(
     (coupon) => coupon.result.discount?.type === 'FIXED',
   );
 
   const fixedCouponApplicableTo = getFixedCouponApplicableTo(fixedTypeCoupons);
   const couponLineItems = getLineItemsFromApplicableCoupons(fixedTypeCoupons);
-  const applicableCoupons = validateCouponsResult.applicableCoupons;
 
   const lineProductsWithFixedAmount = getLineItemsWithFixedAmount(
     fixedCouponApplicableTo,

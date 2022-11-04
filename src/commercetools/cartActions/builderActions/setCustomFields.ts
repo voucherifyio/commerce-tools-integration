@@ -1,5 +1,8 @@
 import { Cart } from '@commercetools/platform-sdk';
-import { Coupon, ValidateCouponsResult } from '../../../integration/types';
+import {
+  Coupon,
+  ExtendedValidateCouponsResult,
+} from '../../../integration/types';
 import {
   CartAction,
   CartActionSetCustomFieldFreeShipping,
@@ -14,13 +17,20 @@ import {
   FREE_SHIPPING_UNIT_TYPE,
 } from '../../../consts/voucherify';
 import isValidAndNewCouponNotFailed from '../helpers/utils';
-import { deserializeCoupons } from '../../../integration/helperFunctions';
+import {
+  checkIfAllInapplicableCouponsArePromotionTier,
+  checkIfOnlyNewCouponsFailed,
+  deserializeCoupons,
+  getCouponsFromCart,
+} from '../../../integration/helperFunctions';
+import { getCouponsByStatus } from '../../utils/getCouponsByStatus';
+import { uniqBy } from 'lodash';
 
 function setSessionAsCustomField(
   cart: Cart,
-  validateCouponsResult: ValidateCouponsResult,
+  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
 ): CartActionSetCustomFieldWithSession {
-  const { valid, newSessionKey } = validateCouponsResult;
+  const { valid, newSessionKey } = extendedValidateCouponsResult;
   const sessionKey = cart.custom?.fields?.session ?? null;
   if (!valid || !newSessionKey || newSessionKey === sessionKey) {
     return;
@@ -55,28 +65,30 @@ function getShippingProductSourceIds(
 }
 
 function addShippingProductSourceIds(
-  validateCouponsResult: ValidateCouponsResult,
+  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
 ): CartActionSetCustomFieldFreeShipping {
   return {
     action: 'setCustomField',
     name: 'shippingProductSourceIds',
-    value: getShippingProductSourceIds(validateCouponsResult.applicableCoupons),
+    value: getShippingProductSourceIds(
+      extendedValidateCouponsResult.applicableCoupons,
+    ),
   };
 }
 
 function setCouponsLimit(
-  validateCouponsResult: ValidateCouponsResult,
+  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
 ): CartActionSetCustomFieldWithCouponsLimit {
   return {
     action: 'setCustomField',
     name: 'couponsLimit',
-    value: +validateCouponsResult.couponsLimit,
+    value: +extendedValidateCouponsResult.couponsLimit,
   };
 }
 
 function updateDiscountsCodes(
   cart: Cart,
-  validateCouponsResult: ValidateCouponsResult,
+  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
 ):
   | CartActionSetCustomFieldWithCoupons[]
   | CartActionSetCustomFieldWithValidationFailed[] {
@@ -84,10 +96,10 @@ function updateDiscountsCodes(
     availablePromotions,
     applicableCoupons,
     notApplicableCoupons,
-    skippedCoupons,
     onlyNewCouponsFailed,
     allInapplicableCouponsArePromotionTier,
-  } = validateCouponsResult;
+    skippedCoupons,
+  } = extendedValidateCouponsResult;
   const validationFailedAction = [];
   const oldCouponsCodes: Coupon[] = (
     cart.custom?.fields?.discount_codes ?? []
@@ -147,6 +159,7 @@ function updateDiscountsCodes(
       ),
     );
   } else if (skippedCoupons.length) {
+    console.log(2);
     validationFailedAction.push({
       action: 'setCustomField',
       name: 'isValidationFailed',
@@ -172,16 +185,22 @@ function updateDiscountsCodes(
 
 export default function setCustomFields(
   cart: Cart,
-  validateCouponsResult: ValidateCouponsResult,
+  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
 ): CartAction[] {
   const cartActions = [] as CartAction[];
 
-  cartActions.push(setSessionAsCustomField(cart, validateCouponsResult));
-  cartActions.push(...updateDiscountsCodes(cart, validateCouponsResult));
+  cartActions.push(
+    setSessionAsCustomField(cart, extendedValidateCouponsResult),
+  );
+  cartActions.push(
+    ...updateDiscountsCodes(cart, extendedValidateCouponsResult),
+  );
 
-  if (isValidAndNewCouponNotFailed(validateCouponsResult)) {
-    cartActions.push(addShippingProductSourceIds(validateCouponsResult));
-    cartActions.push(setCouponsLimit(validateCouponsResult));
+  if (isValidAndNewCouponNotFailed(extendedValidateCouponsResult)) {
+    cartActions.push(
+      addShippingProductSourceIds(extendedValidateCouponsResult),
+    );
+    cartActions.push(setCouponsLimit(extendedValidateCouponsResult));
   }
 
   return cartActions;

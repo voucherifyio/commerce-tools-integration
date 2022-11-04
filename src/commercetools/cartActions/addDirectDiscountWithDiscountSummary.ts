@@ -1,13 +1,13 @@
 import { Cart } from '@commercetools/platform-sdk';
-import { ValidateCouponsResult } from '../../integration/types';
+import { ExtendedValidateCouponsResult } from '../../integration/types';
 import { CartActionSetDirectDiscounts } from './CartAction';
 import { FREE_SHIPPING_UNIT_TYPE } from '../../consts/voucherify';
 
 export default function addDirectDiscountWithDiscountSummary(
   cart: Cart,
-  validateCouponsResult: ValidateCouponsResult,
+  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
 ): CartActionSetDirectDiscounts[] {
-  const { applicableCoupons } = validateCouponsResult;
+  const { applicableCoupons } = extendedValidateCouponsResult;
   if (applicableCoupons.length === 0)
     return [
       {

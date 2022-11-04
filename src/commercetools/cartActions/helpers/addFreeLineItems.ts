@@ -1,7 +1,7 @@
 import { Cart, LineItem } from '@commercetools/platform-sdk';
 import {
+  ExtendedValidateCouponsResult,
   ProductToAdd,
-  ValidateCouponsResult,
 } from '../../../integration/types';
 import {
   CartAction,
@@ -76,13 +76,12 @@ function addLineItem(
 
 export default function addFreeLineItems(
   cart: Cart,
-  validateCouponsResult: ValidateCouponsResult,
+  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
 ): CartAction[] {
-  const { productsToAdd } = validateCouponsResult;
-
-  const applicableCouponsIds = validateCouponsResult.applicableCoupons.map(
-    (couponData) => couponData.id,
-  );
+  const applicableCouponsIds =
+    extendedValidateCouponsResult.applicableCoupons.map(
+      (couponData) => couponData.id,
+    );
 
   const findLineItemBySku = (sku: string) =>
     cart.lineItems.find((item) => item.variant.sku === sku);
@@ -128,7 +127,7 @@ export default function addFreeLineItems(
 
   const productToAddQuantities = {} as Record<string, number>;
 
-  validateCouponsResult.productsToAdd.map((product) => {
+  extendedValidateCouponsResult.productsToAdd.map((product) => {
     if (productToAddQuantities[product.product]) {
       productToAddQuantities[product.product] += product.quantity;
     } else {
@@ -136,7 +135,7 @@ export default function addFreeLineItems(
     }
   });
 
-  return validateCouponsResult.productsToAdd.flatMap((product) => {
+  return extendedValidateCouponsResult.productsToAdd.flatMap((product) => {
     const item = findLineItemBySku(product.product);
 
     if (product.effect === 'ADD_NEW_ITEMS') {
