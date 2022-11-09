@@ -135,7 +135,7 @@ export class IntegrationService {
 
     if (productsToAddWithIncorrectPrice.length) {
       const items = await this.getItemsWithCorrectedPrices(
-        validatedCoupons,
+        validatedCoupons.order.items,
         productsToAddWithIncorrectPrice,
       );
       validatedCoupons =
@@ -171,7 +171,7 @@ export class IntegrationService {
   }
 
   private async getItemsWithCorrectedPrices(
-    validatedCoupons: ValidationValidateStackableResponse,
+    OrdersItems: OrdersItem[],
     productsToChange: ProductToAdd[],
   ) {
     type OrderItemSku = {
@@ -184,7 +184,7 @@ export class IntegrationService {
     const productsToChangeSKUs = productsToChange.map(
       (productsToChange) => productsToChange.product,
     );
-    return validatedCoupons.order.items.map((item: OrdersItem) => {
+    return OrdersItems.map((item: OrdersItem) => {
       if (
         !productsToChangeSKUs.includes((item.sku as OrderItemSku).source_id) ||
         item.amount !== item.discount_amount
