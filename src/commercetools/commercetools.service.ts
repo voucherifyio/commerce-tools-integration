@@ -92,7 +92,7 @@ export function buildRedeemStackableRequestForVoucherify(
       items,
       metadata: orderMetadata,
     },
-    customer: this.getCustomerFromOrder(order),
+    customer: getCustomerFromOrder(order),
   } as RedemptionsRedeemStackableParams;
 }
 
