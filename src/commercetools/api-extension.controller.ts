@@ -30,7 +30,7 @@ export class ApiExtensionController {
     try {
       const start = performance.now();
       response =
-        await this.commercetoolsService.validatePromotionsAndBuildCartActions(
+        await this.commercetoolsService.validateCouponsAndPromotionsAndBuildCartActions(
           cart,
         );
       const end = performance.now();
@@ -55,9 +55,9 @@ export class ApiExtensionController {
     }
     responseExpress.status(200).json({ actions: response.actions });
     try {
-      return await this.commercetoolsService.checkIfAPIExtensionRespondedOnTimeAndRevalidateCouponsIfNot(
+      this.commercetoolsService.checkIfAPIExtensionRespondedOnTimeAndRevalidateCouponsIfNot(
         cart,
-      );
+      ); //don't wait
     } catch (e) {
       console.log(e);
       this.logger.error({

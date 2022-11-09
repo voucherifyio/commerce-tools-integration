@@ -24,10 +24,7 @@ export class VoucherifyService {
     }
 
     const promotions =
-      await this.voucherifyConnectorService.getAvailablePromotions(
-        cart,
-        this.productMapper.mapLineItems(cart.lineItems),
-      );
+      await this.voucherifyConnectorService.getAvailablePromotions(cart);
 
     const availablePromotions = promotions
       .filter((promo) => {

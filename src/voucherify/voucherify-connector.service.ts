@@ -18,6 +18,7 @@ import {
   CommercetoolsService,
   getCustomerFromOrder,
 } from '../commercetools/commercetools.service';
+import { mapItems } from '../integration/mappers/product';
 
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;
@@ -124,7 +125,8 @@ export class VoucherifyConnectorService {
     return Object.keys(metadataSchema?.properties ?? {});
   }
 
-  async getAvailablePromotions(cart, items) {
+  async getAvailablePromotions(cart) {
+    const items = mapItems(cart.items);
     const promotions = await this.getClient().promotions.validate({
       customer: {
         id: cart.customerId || cart.anonymousId,
@@ -132,7 +134,7 @@ export class VoucherifyConnectorService {
       },
       order: {
         source_id: cart.id,
-        items: items,
+        items,
         amount: items.reduce((acc, item) => acc + item.amount, 0),
       },
     });

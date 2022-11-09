@@ -1,4 +1,4 @@
-import { Cart, Order } from '@commercetools/platform-sdk';
+import { Order } from '@commercetools/platform-sdk';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
@@ -11,18 +11,20 @@ import { TaxCategoriesService } from '../commercetools/tax-categories/tax-catego
 import { TypesService } from '../commercetools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import {
+  Cart,
   Coupon,
   ProductToAdd,
   SentCoupons,
   ValidateCouponsResult,
 } from './types';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
-import { ProductMapper } from './mappers/product';
+import { mapItems, ProductMapper } from './mappers/product';
 import { ConfigService } from '@nestjs/config';
 import {
   buildRedeemStackableRequestForVoucherify,
   buildValidationsValidateStackableParamsForVoucherify,
   CommercetoolsService,
+  mapLineItemsToGenericType,
 } from '../commercetools/commercetools.service';
 import {
   getCouponsLimit,
@@ -52,10 +54,10 @@ export class IntegrationService {
 
   public async validateCouponsAndGetAvailablePromotions(
     cart: Cart,
-    sessionKey?: string | null,
+    priceSelector: any,
   ): Promise<ValidateCouponsResult> {
-    const { id, customerId, anonymousId } = cart;
-    const coupons: Coupon[] = getCouponsFromCart(cart);
+    const { id, customerId, anonymousId, sessionKey, coupons, items } = cart;
+    console.log('111');
     let uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
     if (coupons.length !== uniqCoupons.length) {
       this.logger.debug({
@@ -114,19 +116,19 @@ export class IntegrationService {
       ),
     );
 
+    console.log(121, items);
     let validatedCoupons: ValidationValidateStackableResponse =
       await this.voucherifyConnectorService.validateStackableVouchers(
         buildValidationsValidateStackableParamsForVoucherify(
           uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
           cart,
-          this.productMapper.mapLineItems(cart.lineItems),
-          sessionKey,
+          mapItems(items),
         ),
       );
 
     const productsToAdd = await this.commercetoolsService.getProductsToAdd(
       validatedCoupons,
-      this.commercetoolsService.getPriceSelectorFromCart(cart),
+      priceSelector,
     );
 
     const productsToAddWithIncorrectPrice = productsToAdd.filter(
@@ -134,7 +136,7 @@ export class IntegrationService {
     );
 
     if (productsToAddWithIncorrectPrice.length) {
-      const items = await this.getItemsWithCorrectedPrices(
+      const itemsWithPricesCorrected = await this.getItemsWithCorrectedPrices(
         validatedCoupons.order.items,
         productsToAddWithIncorrectPrice,
       );
@@ -143,8 +145,7 @@ export class IntegrationService {
           buildValidationsValidateStackableParamsForVoucherify(
             uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
             cart,
-            items,
-            sessionKey,
+            itemsWithPricesCorrected,
           ),
         );
     }
@@ -242,8 +243,8 @@ export class IntegrationService {
       orderMetadataSchemaProperties,
     );
 
-    const items = this.productMapper.mapLineItems(
-      order.lineItems,
+    const items = mapItems(
+      mapLineItemsToGenericType(order.lineItems),
       productMetadataSchemaProperties,
     );
 

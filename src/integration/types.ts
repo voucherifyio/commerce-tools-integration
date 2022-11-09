@@ -1,4 +1,3 @@
-import { TaxCategory } from '@commercetools/platform-sdk';
 import {
   DiscountVouchersEffectTypes,
   StackableRedeemableResponse,
@@ -72,6 +71,25 @@ export type Coupon = {
 export type SentCoupons = {
   result: string;
   coupon: string;
+};
+
+export type Item = {
+  source_id: string;
+  quantity: number;
+  price: number;
+  amount: number;
+  name: string;
+  sku: string;
+  attributes?: { name: string; value: any }[];
+};
+
+export type Cart = {
+  id: string;
+  customerId?: string;
+  anonymousId?: string;
+  sessionKey?: string;
+  coupons: Coupon[];
+  items: Item[];
 };
 
 export type CouponStatus = 'NEW' | 'APPLIED' | 'NOT_APPLIED' | 'DELETED';

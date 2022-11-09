@@ -9,7 +9,7 @@ import ObjectsToCsv from 'objects-to-csv';
 
 import crypto = require('crypto');
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
-import { ProductMapper } from '../integration/mappers/product';
+import { getMetadata, ProductMapper } from '../integration/mappers/product';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -86,7 +86,7 @@ export class ProductImportService {
         products.push({
           name: product.masterData.current.name.en,
           source_id: product.id,
-          ...this.productMapper.getMetadata(
+          ...getMetadata(
             product.masterData.current.masterVariant.attributes,
             metadataSchemaProperties,
           ),
