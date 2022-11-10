@@ -11,6 +11,7 @@ import { TaxCategoriesService } from '../commercetools/tax-categories/tax-catego
 import { TypesService } from '../commercetools/types/types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import {
+  availablePromotion,
   Cart,
   Coupon,
   ProductToAdd,
@@ -34,6 +35,15 @@ import {
   VoucherifyService,
 } from '../voucherify/voucherify.service';
 import { deserializeCoupons, filterCouponsByLimit } from './helperFunctions';
+import { ActionBuilder } from '../commercetools/cartActionsBuilder';
+
+interface StoreActions {
+  setAvailablePromotions(promotions: availablePromotion[]);
+  setValidateCouponsResult(
+    validateCouponsResult: ValidationValidateStackableResponse,
+  );
+  setProductsToAdd(productsToAdd: ProductToAdd[]);
+}
 
 @Injectable()
 export class IntegrationService {
@@ -53,6 +63,7 @@ export class IntegrationService {
 
   public async validateCouponsAndGetAvailablePromotions(
     cart: Cart,
+    storeActions?: StoreActions,
     helperToGetProductsFromStore?: any,
   ): Promise<ValidateCouponsResult> {
     const { id, customerId, anonymousId, sessionKey, coupons, items } = cart;
@@ -71,6 +82,9 @@ export class IntegrationService {
         msg: 'No coupons applied, skipping voucherify call',
       });
 
+      if (typeof storeActions === 'object') {
+        storeActions.setAvailablePromotions(availablePromotions);
+      }
       return {
         availablePromotions,
       };
@@ -94,6 +108,9 @@ export class IntegrationService {
         msg: 'Deleting coupons only, skipping voucherify call',
       });
 
+      if (typeof storeActions === 'object') {
+        storeActions.setAvailablePromotions(availablePromotions);
+      }
       return {
         availablePromotions,
       };
@@ -123,10 +140,13 @@ export class IntegrationService {
         ),
       );
 
-    const productsToAdd = await this.commercetoolsService.getProductsToAdd(
-      validatedCoupons,
-      helperToGetProductsFromStore,
-    );
+    let productsToAdd = [];
+    if (typeof storeActions === 'object') {
+      productsToAdd = await this.commercetoolsService.getProductsToAdd(
+        validatedCoupons,
+        helperToGetProductsFromStore,
+      );
+    }
 
     const productsToAddWithIncorrectPrice = productsToAdd.filter(
       (product) => product.discount_difference,
@@ -161,6 +181,11 @@ export class IntegrationService {
       productsToAdd,
     });
 
+    if (typeof storeActions === 'object') {
+      storeActions.setAvailablePromotions(availablePromotions);
+      storeActions.setProductsToAdd(productsToAdd);
+      storeActions.setValidateCouponsResult(validatedCoupons);
+    }
     return {
       validatedCoupons,
       availablePromotions,

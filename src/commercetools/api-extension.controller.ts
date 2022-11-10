@@ -50,9 +50,6 @@ export class ApiExtensionController {
     if (!response?.status) {
       return responseExpress.status(400).json({});
     }
-    if (!response.validateCouponsResult || !response.actions.length) {
-      return responseExpress.status(200).json({ actions: response.actions });
-    }
     responseExpress.status(200).json({ actions: response.actions });
     try {
       this.commercetoolsService.checkIfAPIExtensionRespondedOnTimeAndRevalidateCouponsIfNot(

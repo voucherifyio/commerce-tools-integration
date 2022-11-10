@@ -50,6 +50,7 @@ import {
 import { uniqBy } from 'lodash';
 import { getCouponsLimit } from '../voucherify/voucherify.service';
 import { getQuantity } from '../integration/mappers/product';
+import { ActionBuilder } from './cartActionsBuilder';
 
 interface ProductWithCurrentPriceAmount extends Product {
   currentPriceAmount: number;
@@ -57,7 +58,7 @@ interface ProductWithCurrentPriceAmount extends Product {
   item: OrdersItem;
 }
 
-function getSession(cart: CommerceToolsCart): string | undefined {
+export function getSession(cart: CommerceToolsCart): string | undefined {
   return cart.custom?.fields?.session ?? undefined;
 }
 
@@ -198,11 +199,13 @@ export class CommercetoolsService {
     actions: CartAction[];
     status: boolean;
   }> {
-    const validateCouponsResult =
-      await this.integrationService.validateCouponsAndGetAvailablePromotions(
-        translateCtCartToCart(cart),
-        getPriceSelectorFromCart(cart),
-      );
+    const actionBuilder = new ActionBuilder();
+    actionBuilder.setCart(cart);
+    actionBuilder.setCouponsLimit(
+      getCouponsLimit(
+        this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT'),
+      ),
+    );
 
     const cartDiscountApplyMode =
       this.configService.get<string>(
@@ -210,31 +213,26 @@ export class CommercetoolsService {
       ) === 'true'
         ? CartDiscountApplyMode.DirectDiscount
         : CartDiscountApplyMode.CustomLineItem;
+    actionBuilder.setCartDiscountApplyMode(cartDiscountApplyMode);
 
     let taxCategory;
     if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
       taxCategory = await this.getCouponTaxCategory(cart);
     }
+    actionBuilder.setTaxCategory(taxCategory);
 
-    const actions = getCartActionBuilders()
-      .flatMap((builder) =>
-        builder(
-          cart,
-          this.extendValidateCouponsResultForCartActionBuilder(
-            validateCouponsResult,
-            cart,
-          ),
-          cartDiscountApplyMode,
-          taxCategory,
-        ),
-      )
-      .filter((e) => e);
+    await this.integrationService.validateCouponsAndGetAvailablePromotions(
+      translateCtCartToCart(cart),
+      actionBuilder,
+      getPriceSelectorFromCart(cart),
+    );
+
+    const actions = actionBuilder.buildActions();
 
     this.logger.debug({ msg: 'actions', actions });
     return {
       status: true,
       actions: actions,
-      validateCouponsResult,
     };
   }
 
@@ -445,6 +443,7 @@ export class CommercetoolsService {
     }
     await this.integrationService.validateCouponsAndGetAvailablePromotions(
       translateCtCartToCart(cart),
+      null,
       getPriceSelectorFromCart(cart),
     );
     return this.logger.debug('Coupons changes were rolled back successfully');
