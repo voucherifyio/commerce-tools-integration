@@ -20,9 +20,6 @@ import { uniqBy } from 'lodash';
 import { getSession } from './commercetools.service';
 
 export class ActionBuilder {
-  // constructor(x) {
-  //   console.log(x);
-  // }
   private taxCategory: TaxCategory;
   public setTaxCategory(value: TaxCategory) {
     this.taxCategory = value;

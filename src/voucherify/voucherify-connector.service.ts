@@ -7,17 +7,13 @@ import {
   VoucherifyServerSide,
 } from '@voucherify/sdk';
 import { ConfigService } from '@nestjs/config';
-import { Cart, Order } from '@commercetools/platform-sdk';
+import { Order } from '@commercetools/platform-sdk';
 import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
-import { Coupon } from '../integration/types';
-import {
-  CommercetoolsService,
-  getCustomerFromOrder,
-} from '../commercetools/commercetools.service';
+import { getCustomerFromOrder } from '../commercetools/commercetools.service';
 import { mapItemsToVoucherifyOrdersItems } from '../integration/mappers/product';
 
 function elapsedTime(start: number, end: number): string {
@@ -29,7 +25,6 @@ export class VoucherifyConnectorService {
   constructor(
     private configService: ConfigService,
     private logger: Logger,
-    private commercetoolsService: CommercetoolsService,
     @Inject(REQUEST_JSON_LOGGER)
     private readonly requestJsonLogger: RequestJsonLogger,
   ) {}

@@ -23,6 +23,7 @@ import { TypesService } from './types/types.service';
 import {
   OrdersItem,
   RedemptionsRedeemStackableParams,
+  RedemptionsRedeemStackableResponse,
   StackableRedeemableResponse,
   StackableRedeemableResultDiscountUnit,
   ValidationsValidateStackableParams,
@@ -36,7 +37,10 @@ import {
 import { CartAction } from './cartActions/CartAction';
 import getCartActionBuilders from './cartActions/getCartActionBuilders';
 import { ConfigService } from '@nestjs/config';
-import { IntegrationService } from '../integration/integration.service';
+import {
+  IntegrationService,
+  StoreActions,
+} from '../integration/integration.service';
 import { TaxCategoriesService } from './tax-categories/tax-categories.service';
 import { deleteObjectsFromObject } from '../misc/deleteObjectsFromObject';
 import flatten from 'flat';
@@ -180,6 +184,25 @@ function translateCtCartToCart(cart: CommerceToolsCart): Cart {
   };
 }
 
+type handlerCartUpdate = (
+  cart: Cart,
+  storeActions?: StoreActions,
+  helperToGetProductsFromStore?: any,
+) => Promise<ValidateCouponsResult>;
+
+type handlerOrderRedeem = (order: Order) => Promise<
+  | { actions: any[]; status: boolean }
+  | { actions: any[]; status: boolean }
+  | {
+      redemptionsRedeemStackableResponse: RedemptionsRedeemStackableResponse;
+      actions: (
+        | { name: string; action: string; value: string[] }
+        | { name: string; action: string; value: string[] }
+      )[];
+      status: boolean;
+    }
+>;
+
 @Injectable()
 export class CommercetoolsService {
   constructor(
@@ -188,9 +211,15 @@ export class CommercetoolsService {
     private readonly typesService: TypesService,
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly configService: ConfigService,
-    @Inject(forwardRef(() => IntegrationService))
-    private readonly integrationService: IntegrationService,
   ) {}
+  private handlerCartUpdate: handlerCartUpdate;
+  public setCartUpdateListener(handler: handlerCartUpdate) {
+    this.handlerCartUpdate = handler;
+  }
+  private handlerOrderRedeem: handlerOrderRedeem;
+  public setOrderRedeemListener(handler: handlerOrderRedeem) {
+    this.handlerOrderRedeem = handler;
+  }
 
   async validateCouponsAndPromotionsAndBuildCartActions(
     cart: CommerceToolsCart,
@@ -221,7 +250,16 @@ export class CommercetoolsService {
     }
     actionBuilder.setTaxCategory(taxCategory);
 
-    await this.integrationService.validateCouponsAndGetAvailablePromotions(
+    if (typeof this.handlerCartUpdate !== 'function') {
+      this.logger.error({
+        msg: `Error while commercetoolsService.validateCouponsAndPromotionsAndBuildCartActions handlerCartUpdate not configured`,
+      });
+      return {
+        status: false,
+        actions: [],
+      };
+    }
+    await this.handlerCartUpdate(
       translateCtCartToCart(cart),
       actionBuilder,
       getPriceSelectorFromCart(cart),
@@ -234,6 +272,71 @@ export class CommercetoolsService {
       status: true,
       actions: actions,
     };
+  }
+
+  async checkIfAPIExtensionRespondedOnTimeAndRevalidateCouponsIfNot(
+    cart: CommerceToolsCart,
+  ) {
+    let cartMutated = false;
+    for (let i = 0; i < 2; i++) {
+      await sleep(500);
+      const updatedCart = await this.commerceToolsConnectorService.findCart(
+        cart.id,
+      );
+      if (updatedCart.version > cart.version) {
+        cartMutated = true;
+        break;
+      }
+    }
+    if (cartMutated) {
+      return;
+    }
+    if (typeof this.handlerCartUpdate !== 'function') {
+      return this.logger.error({
+        msg: `Error while commercetoolsService.validateCouponsAndPromotionsAndBuildCartActions handlerCartUpdate not configured`,
+      });
+    }
+    await this.handlerCartUpdate(translateCtCartToCart(cart), null, null);
+    return this.logger.debug('Coupons changes were rolled back successfully');
+  }
+
+  public async checkIfCartWasUpdatedWithStatusPaidAndRedeem(
+    orderFromRequest: Order,
+  ) {
+    if (orderFromRequest.paymentState !== 'Paid') {
+      return this.logger.debug({
+        msg: 'Order is not paid',
+        id: orderFromRequest.id,
+        customerId: orderFromRequest.customerId,
+      });
+    }
+    await sleep(650);
+    const order = await this.commerceToolsConnectorService.findOrder(
+      orderFromRequest.id,
+    );
+    if (
+      order.version <= orderFromRequest.version ||
+      order.paymentState !== 'Paid'
+    ) {
+      return this.logger.debug({
+        msg: `Order was not modified, payment state: ${order.paymentState}`,
+        id: orderFromRequest.id,
+        customerId: orderFromRequest.customerId,
+      });
+    }
+    try {
+      if (typeof this.handlerOrderRedeem !== 'function') {
+        return this.logger.error({
+          msg: `Error while commercetoolsService.checkIfCartWasUpdatedWithStatusPaidAndRedeem handlerOrderRedeem not configured`,
+        });
+      }
+      return await this.handlerOrderRedeem(order);
+    } catch (e) {
+      console.log(e);
+      this.logger.error({
+        msg: `Error while redeemVoucherifyCoupons function`,
+      });
+    }
   }
 
   public async getCouponTaxCategory(
@@ -371,116 +474,6 @@ export class CommercetoolsService {
         },
       ],
     };
-  }
-
-  extendValidateCouponsResultForCartActionBuilder(
-    validateCouponsResult: ValidateCouponsResult,
-    cart: CommerceToolsCart,
-  ) {
-    const coupons: Coupon[] = getCouponsFromCart(cart);
-    const uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
-    const validatedCoupons = validateCouponsResult?.validatedCoupons;
-    const { valid } = validatedCoupons ?? { valid: false };
-    const totalDiscountAmount = validatedCoupons
-      ? calculateTotalDiscountAmount(validatedCoupons)
-      : 0;
-
-    const notApplicableCoupons = getCouponsByStatus(
-      validatedCoupons,
-      'INAPPLICABLE',
-    );
-    const skippedCoupons = getCouponsByStatus(validatedCoupons, 'SKIPPED');
-    const applicableCoupons = getCouponsByStatus(
-      validatedCoupons,
-      'APPLICABLE',
-    );
-
-    const sessionKeyResponse = validatedCoupons?.session?.key;
-
-    return {
-      availablePromotions: validateCouponsResult.availablePromotions,
-      applicableCoupons,
-      notApplicableCoupons,
-      skippedCoupons,
-      newSessionKey: !getSession(cart) || valid ? sessionKeyResponse : null,
-      valid,
-      totalDiscountAmount,
-      productsToAdd: validateCouponsResult.productsToAdd ?? [],
-      onlyNewCouponsFailed: validateCouponsResult?.validatedCoupons
-        ? checkIfOnlyNewCouponsFailed(
-            uniqCoupons,
-            applicableCoupons,
-            notApplicableCoupons,
-            skippedCoupons,
-          )
-        : undefined,
-      allInapplicableCouponsArePromotionTier:
-        validateCouponsResult?.validatedCoupons
-          ? checkIfAllInapplicableCouponsArePromotionTier(notApplicableCoupons)
-          : undefined,
-      couponsLimit: getCouponsLimit(
-        this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT'),
-      ),
-    };
-  }
-
-  async checkIfAPIExtensionRespondedOnTimeAndRevalidateCouponsIfNot(
-    cart: CommerceToolsCart,
-  ) {
-    let cartMutated = false;
-    for (let i = 0; i < 2; i++) {
-      await sleep(500);
-      const updatedCart = await this.commerceToolsConnectorService.findCart(
-        cart.id,
-      );
-      if (updatedCart.version !== cart.version) {
-        cartMutated = true;
-        break;
-      }
-    }
-    if (cartMutated) {
-      return;
-    }
-    await this.integrationService.validateCouponsAndGetAvailablePromotions(
-      translateCtCartToCart(cart),
-      null,
-      getPriceSelectorFromCart(cart),
-    );
-    return this.logger.debug('Coupons changes were rolled back successfully');
-  }
-
-  public async checkIfCartWasUpdatedWithStatusPaidAndRedeem(
-    orderFromRequest: Order,
-  ) {
-    if (orderFromRequest.paymentState !== 'Paid') {
-      return this.logger.debug({
-        msg: 'Order is not paid',
-        id: orderFromRequest.id,
-        customerId: orderFromRequest.customerId,
-      });
-    }
-    await sleep(650);
-    const order = await this.commerceToolsConnectorService.findOrder(
-      orderFromRequest.id,
-    );
-    if (
-      order.version <= orderFromRequest.version ||
-      order.paymentState !== 'Paid'
-    ) {
-      return this.logger.debug({
-        msg: `Order was not modified, payment state: ${order.paymentState}`,
-        id: orderFromRequest.id,
-        customerId: orderFromRequest.customerId,
-      });
-    }
-    try {
-      return await this.integrationService.redeemVoucherifyCoupons(order);
-    } catch (e) {
-      console.log(e);
-      this.logger.error({
-        msg: `Error while redeemVoucherifyCoupons function`,
-      });
-    }
   }
 
   public async getMetadataForOrder(

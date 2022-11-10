@@ -18,11 +18,7 @@ import {
   SentCoupons,
   ValidateCouponsResult,
 } from './types';
-import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
-import {
-  mapItemsToVoucherifyOrdersItems,
-  ProductMapper,
-} from './mappers/product';
+import { mapItemsToVoucherifyOrdersItems } from './mappers/product';
 import { ConfigService } from '@nestjs/config';
 import {
   buildRedeemStackableRequestForVoucherify,
@@ -35,9 +31,8 @@ import {
   VoucherifyService,
 } from '../voucherify/voucherify.service';
 import { deserializeCoupons, filterCouponsByLimit } from './helperFunctions';
-import { ActionBuilder } from '../commercetools/cartActionsBuilder';
 
-interface StoreActions {
+export interface StoreActions {
   setAvailablePromotions(promotions: availablePromotion[]);
   setValidateCouponsResult(
     validateCouponsResult: ValidationValidateStackableResponse,
@@ -51,15 +46,23 @@ export class IntegrationService {
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly typesService: TypesService,
     private readonly logger: Logger,
-    @Inject(forwardRef(() => VoucherifyConnectorService))
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
-    private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
-    private readonly productMapper: ProductMapper,
     private readonly configService: ConfigService,
-    @Inject(forwardRef(() => CommercetoolsService))
     private readonly commercetoolsService: CommercetoolsService,
     private readonly voucherifyService: VoucherifyService,
-  ) {}
+  ) {
+    this.commercetoolsService.setCartUpdateListener(
+      (cart, storeActions, helperToGetProductsFromStore) =>
+        this.validateCouponsAndGetAvailablePromotions(
+          cart,
+          storeActions,
+          helperToGetProductsFromStore,
+        ),
+    );
+    this.commercetoolsService.setOrderRedeemListener((order) =>
+      this.redeemVoucherifyCoupons(order),
+    );
+  }
 
   public async validateCouponsAndGetAvailablePromotions(
     cart: Cart,
@@ -82,7 +85,7 @@ export class IntegrationService {
         msg: 'No coupons applied, skipping voucherify call',
       });
 
-      if (typeof storeActions === 'object') {
+      if (typeof storeActions?.setAvailablePromotions === 'function') {
         storeActions.setAvailablePromotions(availablePromotions);
       }
       return {
@@ -108,7 +111,7 @@ export class IntegrationService {
         msg: 'Deleting coupons only, skipping voucherify call',
       });
 
-      if (typeof storeActions === 'object') {
+      if (typeof storeActions?.setAvailablePromotions === 'function') {
         storeActions.setAvailablePromotions(availablePromotions);
       }
       return {
@@ -141,7 +144,7 @@ export class IntegrationService {
       );
 
     let productsToAdd = [];
-    if (typeof storeActions === 'object') {
+    if (typeof storeActions?.setProductsToAdd === 'function') {
       productsToAdd = await this.commercetoolsService.getProductsToAdd(
         validatedCoupons,
         helperToGetProductsFromStore,
@@ -181,16 +184,12 @@ export class IntegrationService {
       productsToAdd,
     });
 
-    if (typeof storeActions === 'object') {
+    if (typeof storeActions?.setAvailablePromotions === 'function') {
       storeActions.setAvailablePromotions(availablePromotions);
       storeActions.setProductsToAdd(productsToAdd);
       storeActions.setValidateCouponsResult(validatedCoupons);
     }
-    return {
-      validatedCoupons,
-      availablePromotions,
-      productsToAdd,
-    };
+    return;
   }
 
   private async getItemsWithCorrectedPrices(
