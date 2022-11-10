@@ -17,14 +17,7 @@ import {
   FREE_SHIPPING_UNIT_TYPE,
 } from '../../../consts/voucherify';
 import isValidAndNewCouponNotFailed from '../helpers/utils';
-import {
-  checkIfAllInapplicableCouponsArePromotionTier,
-  checkIfOnlyNewCouponsFailed,
-  deserializeCoupons,
-  getCouponsFromCart,
-} from '../../../integration/helperFunctions';
-import { getCouponsByStatus } from '../../utils/getCouponsByStatus';
-import { uniqBy } from 'lodash';
+import { deserializeCoupons } from '../../../integration/helperFunctions';
 
 function setSessionAsCustomField(
   cart: Cart,
@@ -159,7 +152,6 @@ function updateDiscountsCodes(
       ),
     );
   } else if (skippedCoupons.length) {
-    console.log(2);
     validationFailedAction.push({
       action: 'setCustomField',
       name: 'isValidationFailed',

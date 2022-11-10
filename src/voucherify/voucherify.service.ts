@@ -67,11 +67,11 @@ export class VoucherifyService {
         return redeemable;
       });
 
-    validatedCoupons.redeemables = [
+    return (validatedCoupons.redeemables = [
       ...validatedCoupons.redeemables.filter(
         (element) => element.object !== 'promotion_tier',
       ),
       ...promotionTiersWithBanner,
-    ];
+    ]);
   }
 }

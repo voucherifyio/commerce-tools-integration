@@ -6,7 +6,10 @@ import {
   ProductToAdd,
   ValidateCouponsResult,
 } from '../integration/types';
-import { ValidationValidateStackableResponse } from '@voucherify/sdk';
+import {
+  StackableRedeemableResponse,
+  ValidationValidateStackableResponse,
+} from '@voucherify/sdk';
 import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/cart';
 import getCartActionBuilders from './cartActions/getCartActionBuilders';
 import {
@@ -15,7 +18,7 @@ import {
   checkIfOnlyNewCouponsFailed,
   getCouponsFromCart,
 } from '../integration/helperFunctions';
-import { getCouponsByStatus } from './utils/getCouponsByStatus';
+import { oldGetCouponsByStatus } from './utils/oldGetCouponsByStatus';
 import { uniqBy } from 'lodash';
 import { getSession } from './commercetools.service';
 
@@ -40,13 +43,33 @@ export class ActionBuilder {
   public setAvailablePromotions(value: availablePromotion[]) {
     this.availablePromotions = value;
   }
-  private validateCouponsResult: ValidationValidateStackableResponse;
-  public setValidateCouponsResult(value: ValidationValidateStackableResponse) {
-    this.validateCouponsResult = value;
+  private totalDiscountAmount = 0;
+  public setTotalDiscountAmount(value: number) {
+    this.totalDiscountAmount = value;
   }
   private productsToAdd: ProductToAdd[];
   public setProductsToAdd(value: ProductToAdd[]) {
     this.productsToAdd = value;
+  }
+  private applicableCoupons: StackableRedeemableResponse[];
+  public setApplicableCoupons(value: StackableRedeemableResponse[]) {
+    this.applicableCoupons = value;
+  }
+  private inapplicableCoupons: StackableRedeemableResponse[];
+  public setInapplicableCoupons(value: StackableRedeemableResponse[]) {
+    this.inapplicableCoupons = value;
+  }
+  private skippedCoupons: StackableRedeemableResponse[];
+  public setSkippedCoupons(value: StackableRedeemableResponse[]) {
+    this.skippedCoupons = value;
+  }
+  private isValid = false;
+  public setIsValid(value: boolean) {
+    this.isValid = value;
+  }
+  private sessionKey: string;
+  public setSessionKey(value: string) {
+    this.sessionKey = value;
   }
 
   public buildActions() {
@@ -54,14 +77,7 @@ export class ActionBuilder {
       .flatMap((builder) =>
         builder(
           this.commerceToolsCart,
-          this.extendValidateCouponsResultForCartActionBuilder(
-            {
-              validatedCoupons: this.validateCouponsResult,
-              availablePromotions: this.availablePromotions,
-              productsToAdd: this.productsToAdd,
-            },
-            this.commerceToolsCart,
-          ),
+          this.gatherAllInformationsNeededToRunTheBuild(),
           this.cartDiscountApplyMode,
           this.taxCategory,
         ),
@@ -69,40 +85,29 @@ export class ActionBuilder {
       .filter((e) => e);
   }
 
-  private extendValidateCouponsResultForCartActionBuilder(
-    validateCouponsResult: ValidateCouponsResult,
-    cart: CommerceToolsCart,
-  ) {
-    const coupons: Coupon[] = getCouponsFromCart(cart);
+  private gatherAllInformationsNeededToRunTheBuild() {
+    const coupons: Coupon[] = getCouponsFromCart(this.commerceToolsCart);
     const uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
-    const validatedCoupons = validateCouponsResult?.validatedCoupons;
-    const { valid } = validatedCoupons ?? { valid: false };
-    const totalDiscountAmount = validatedCoupons
-      ? calculateTotalDiscountAmount(validatedCoupons)
-      : 0;
+    const valid = this.isValid;
+    const totalDiscountAmount = this.totalDiscountAmount;
 
-    const inapplicableCoupons = getCouponsByStatus(
-      validatedCoupons,
-      'INAPPLICABLE',
-    );
-    const skippedCoupons = getCouponsByStatus(validatedCoupons, 'SKIPPED');
-    const applicableCoupons = getCouponsByStatus(
-      validatedCoupons,
-      'APPLICABLE',
-    );
+    const applicableCoupons = this.applicableCoupons ?? [];
+    const inapplicableCoupons = this.inapplicableCoupons ?? [];
+    const skippedCoupons = this.skippedCoupons ?? [];
 
-    const sessionKeyResponse = validatedCoupons?.session?.key;
+    const sessionKey = this.sessionKey;
 
     return {
-      availablePromotions: validateCouponsResult.availablePromotions,
+      availablePromotions: this.availablePromotions,
       applicableCoupons,
       notApplicableCoupons: inapplicableCoupons,
       skippedCoupons,
-      newSessionKey: !getSession(cart) || valid ? sessionKeyResponse : null,
+      newSessionKey:
+        !getSession(this.commerceToolsCart) || valid ? sessionKey : null,
       valid,
       totalDiscountAmount,
-      productsToAdd: validateCouponsResult.productsToAdd ?? [],
-      onlyNewCouponsFailed: validateCouponsResult?.validatedCoupons
+      productsToAdd: this.productsToAdd ?? [],
+      onlyNewCouponsFailed: this?.applicableCoupons
         ? checkIfOnlyNewCouponsFailed(
             uniqCoupons,
             applicableCoupons,
@@ -110,11 +115,13 @@ export class ActionBuilder {
             skippedCoupons,
           )
         : undefined,
-      allInapplicableCouponsArePromotionTier:
-        validateCouponsResult?.validatedCoupons
-          ? checkIfAllInapplicableCouponsArePromotionTier(inapplicableCoupons)
-          : undefined,
+      allInapplicableCouponsArePromotionTier: this?.applicableCoupons
+        ? checkIfAllInapplicableCouponsArePromotionTier(inapplicableCoupons)
+        : undefined,
       couponsLimit: this.couponsLimit,
+      cartDiscountApplyMode: this.cartDiscountApplyMode,
+      commerceToolsCart: this.commerceToolsCart,
+      taxCategory: this.taxCategory,
     };
   }
 }

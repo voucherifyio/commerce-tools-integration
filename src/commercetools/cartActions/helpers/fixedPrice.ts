@@ -8,7 +8,7 @@ import {
   StackableRedeemableResponse,
   StackableRedeemableResponseStatus,
 } from '@voucherify/sdk';
-import { getCouponsByStatus } from '../../utils/getCouponsByStatus';
+import { oldGetCouponsByStatus } from '../../utils/oldGetCouponsByStatus';
 
 type FixedCouponApplicableTo = {
   id: string;

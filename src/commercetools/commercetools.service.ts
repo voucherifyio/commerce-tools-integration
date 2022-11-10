@@ -44,7 +44,7 @@ import {
 import { TaxCategoriesService } from './tax-categories/tax-categories.service';
 import { deleteObjectsFromObject } from '../misc/deleteObjectsFromObject';
 import flatten from 'flat';
-import { getCouponsByStatus } from './utils/getCouponsByStatus';
+import { oldGetCouponsByStatus } from './utils/oldGetCouponsByStatus';
 import {
   calculateTotalDiscountAmount,
   checkIfAllInapplicableCouponsArePromotionTier,
@@ -188,7 +188,7 @@ type handlerCartUpdate = (
   cart: Cart,
   storeActions?: StoreActions,
   helperToGetProductsFromStore?: any,
-) => Promise<ValidateCouponsResult>;
+) => void;
 
 type handlerOrderRedeem = (order: Order) => Promise<
   | { actions: any[]; status: boolean }
@@ -365,16 +365,10 @@ export class CommercetoolsService {
   }
 
   public async getProductsToAdd(
-    response: ValidationValidateStackableResponse,
+    discountTypeUnit: StackableRedeemableResponse[],
     priceSelector: PriceSelector,
   ): Promise<ProductToAdd[]> {
     const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
-
-    const discountTypeUnit = response.redeemables.filter(
-      (redeemable) =>
-        redeemable.result?.discount?.type === 'UNIT' &&
-        redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE,
-    );
 
     const freeProductsToAdd = discountTypeUnit.flatMap(
       async (unitTypeRedeemable) => {

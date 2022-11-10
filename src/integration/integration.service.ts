@@ -3,6 +3,7 @@ import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
   RedemptionsRedeemStackableResponse,
+  StackableRedeemableResponse,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 import { uniqBy } from 'lodash';
@@ -30,15 +31,24 @@ import {
   getCouponsLimit,
   VoucherifyService,
 } from '../voucherify/voucherify.service';
-import { deserializeCoupons, filterCouponsByLimit } from './helperFunctions';
+import {
+  calculateTotalDiscountAmount,
+  deserializeCoupons,
+  filterCouponsByLimit,
+} from './helperFunctions';
 import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
+import { getCouponsByStatus } from '../commercetools/utils/oldGetCouponsByStatus';
+import { isClass } from '../misc/isClass';
 
 export interface StoreActions {
   setAvailablePromotions(promotions: availablePromotion[]);
-  setValidateCouponsResult(
-    validateCouponsResult: ValidationValidateStackableResponse,
-  );
   setProductsToAdd(productsToAdd: ProductToAdd[]);
+  setTotalDiscountAmount(totalDiscountAmount: number);
+  setApplicableCoupons(applicableCoupons: StackableRedeemableResponse[]);
+  setInapplicableCoupons(inapplicableCoupons: StackableRedeemableResponse[]);
+  setSkippedCoupons(skippedCoupons: StackableRedeemableResponse[]);
+  setIsValid(isValid: boolean);
+  setSessionKey(sessionKey: string);
 }
 
 @Injectable()
@@ -49,10 +59,10 @@ export class IntegrationService {
     private readonly logger: Logger,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
     private readonly configService: ConfigService,
-    private readonly commercetoolsService: CommercetoolsService,
+    private readonly storeService: CommercetoolsService,
     private readonly voucherifyService: VoucherifyService,
   ) {
-    this.commercetoolsService.setCartUpdateListener(
+    this.storeService.setCartUpdateListener(
       (cart, storeActions, helperToGetProductsFromStore) =>
         this.validateCouponsAndGetAvailablePromotions(
           cart,
@@ -60,7 +70,7 @@ export class IntegrationService {
           helperToGetProductsFromStore,
         ),
     );
-    this.commercetoolsService.setOrderRedeemListener((order) =>
+    this.storeService.setOrderRedeemListener((order) =>
       this.redeemVoucherifyCoupons(order),
     );
   }
@@ -69,7 +79,7 @@ export class IntegrationService {
     cart: Cart,
     storeActions?: StoreActions,
     helperToGetProductsFromStore?: any,
-  ): Promise<ValidateCouponsResult> {
+  ): Promise<undefined> {
     const { id, customerId, anonymousId, sessionKey, coupons, items } = cart;
     let uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
     if (coupons.length !== uniqCoupons.length) {
@@ -86,12 +96,10 @@ export class IntegrationService {
         msg: 'No coupons applied, skipping voucherify call',
       });
 
-      if (typeof storeActions?.setAvailablePromotions === 'function') {
+      if (isClass(storeActions)) {
         storeActions.setAvailablePromotions(availablePromotions);
       }
-      return {
-        availablePromotions,
-      };
+      return;
     }
 
     const deletedCoupons = uniqCoupons.filter(
@@ -115,9 +123,7 @@ export class IntegrationService {
       if (typeof storeActions?.setAvailablePromotions === 'function') {
         storeActions.setAvailablePromotions(availablePromotions);
       }
-      return {
-        availablePromotions,
-      };
+      return;
     }
 
     this.logger.debug({
@@ -145,13 +151,16 @@ export class IntegrationService {
       );
 
     let productsToAdd = [];
-    if (typeof storeActions?.setProductsToAdd === 'function') {
-      productsToAdd = await this.commercetoolsService.getProductsToAdd(
-        validatedCoupons,
+    if (isClass(storeActions)) {
+      productsToAdd = await this.storeService.getProductsToAdd(
+        validatedCoupons.redeemables.filter(
+          (redeemable) =>
+            redeemable.result?.discount?.type === 'UNIT' &&
+            redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE,
+        ),
         helperToGetProductsFromStore,
       );
     }
-    console.log(productsToAdd);
 
     const productsToAddWithIncorrectPrice = productsToAdd.filter(
       (product) => product.discount_difference,
@@ -172,10 +181,9 @@ export class IntegrationService {
         );
     }
 
-    console.log(111, JSON.stringify(validatedCoupons));
-
+    let redeemables = validatedCoupons?.redeemables;
     if (promotions.length) {
-      this.voucherifyService.setBannerOnValidatedPromotions(
+      redeemables = this.voucherifyService.setBannerOnValidatedPromotions(
         validatedCoupons,
         promotions,
       );
@@ -188,10 +196,23 @@ export class IntegrationService {
       productsToAdd,
     });
 
-    if (typeof storeActions?.setAvailablePromotions === 'function') {
+    if (isClass(storeActions)) {
+      storeActions.setSessionKey(validatedCoupons?.session?.key);
+      storeActions.setIsValid(validatedCoupons?.valid ?? false);
+      storeActions.setTotalDiscountAmount(
+        calculateTotalDiscountAmount(validatedCoupons),
+      );
+      storeActions.setApplicableCoupons(
+        getCouponsByStatus(redeemables, 'APPLICABLE'),
+      );
+      storeActions.setInapplicableCoupons(
+        getCouponsByStatus(redeemables, 'INAPPLICABLE'),
+      );
+      storeActions.setSkippedCoupons(
+        getCouponsByStatus(redeemables, 'SKIPPED'),
+      );
       storeActions.setAvailablePromotions(availablePromotions);
       storeActions.setProductsToAdd(productsToAdd);
-      storeActions.setValidateCouponsResult(validatedCoupons);
     }
     return;
   }
@@ -265,7 +286,7 @@ export class IntegrationService {
       await this.voucherifyConnectorService.getMetadataSchemaProperties(
         'product',
       );
-    const orderMetadata = await this.commercetoolsService.getMetadataForOrder(
+    const orderMetadata = await this.storeService.getMetadataForOrder(
       order,
       orderMetadataSchemaProperties,
     );
