@@ -6,10 +6,13 @@ import {
   CartDiscountTarget,
 } from '@commercetools/platform-sdk';
 import {
+  availablePromotion,
   CartDiscountApplyMode,
-  ExtendedValidateCouponsResult,
+  ProductToAdd,
 } from '../../integration/types';
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
+import { StackableRedeemableResponse } from '@voucherify/sdk';
+import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/cart';
 
 export type CartActionSetCustomType = {
   action: 'setCustomType';
@@ -137,11 +140,25 @@ export type CartAction =
   | CartActionSetCustomFieldFreeShipping
   | CartActionRecalculate;
 
+export type DataToRunCartActionsBuilder = {
+  availablePromotions: availablePromotion[];
+  applicableCoupons: StackableRedeemableResponse[];
+  inapplicableCoupons: StackableRedeemableResponse[];
+  skippedCoupons: StackableRedeemableResponse[];
+  newSessionKey?: string;
+  valid: boolean;
+  totalDiscountAmount: number;
+  productsToAdd: ProductToAdd[];
+  onlyNewCouponsFailed?: boolean;
+  allInapplicableCouponsArePromotionTier?: boolean;
+  couponsLimit: number;
+  commerceToolsCart: CommerceToolsCart;
+  cartDiscountApplyMode: CartDiscountApplyMode;
+  taxCategory: TaxCategory;
+};
+
 export type CartActionsBuilder = (
-  cart: Cart,
-  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
-  cartDiscountApplyMode: CartDiscountApplyMode,
-  taxCategory?: TaxCategory,
+  dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
 ) => CartAction[];
 
 export const COUPON_CUSTOM_LINE_SLUG = 'Voucher, ';

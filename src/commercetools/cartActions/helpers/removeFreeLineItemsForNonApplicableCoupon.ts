@@ -1,14 +1,11 @@
-import { Cart } from '@commercetools/platform-sdk';
-import { ExtendedValidateCouponsResult } from '../../../integration/types';
-import { CartAction } from '../CartAction';
+import { CartAction, DataToRunCartActionsBuilder } from '../CartAction';
 
 export default function removeFreeLineItemsForNonApplicableCoupon(
-  cart: Cart,
-  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
+  dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
 ): CartAction[] {
   const cartActions: CartAction[] = [];
-  const { productsToAdd } = extendedValidateCouponsResult;
-  cart.lineItems
+  const { productsToAdd } = dataToRunCartActionsBuilder;
+  dataToRunCartActionsBuilder.commerceToolsCart.lineItems
     .filter((item) => item.custom?.fields?.applied_codes)
     .forEach((item) => {
       const quantityFromCode =

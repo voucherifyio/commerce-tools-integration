@@ -1,9 +1,9 @@
-import { ExtendedValidateCouponsResult } from '../../../integration/types';
+import { DataToRunCartActionsBuilder } from '../CartAction';
 
 export default function isValidAndNewCouponNotFailed(
-  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
+  dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
 ) {
-  const { valid, onlyNewCouponsFailed } = extendedValidateCouponsResult;
+  const { valid, onlyNewCouponsFailed } = dataToRunCartActionsBuilder;
 
   return valid || !onlyNewCouponsFailed;
 }

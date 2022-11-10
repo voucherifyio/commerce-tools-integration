@@ -6,6 +6,8 @@ import {
 import { CartAction } from '../commercetools/cartActions/CartAction';
 import { CustomerGroupReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/customer-group';
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
+import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/cart';
+import { TaxCategory } from '@commercetools/platform-sdk';
 
 export type CartResponse = { status: boolean; actions: CartAction[] };
 
@@ -39,20 +41,6 @@ export type ValidateCouponsResult = {
   availablePromotions: availablePromotion[];
   validatedCoupons?: ValidationValidateStackableResponse;
   productsToAdd?: ProductToAdd[];
-};
-
-export type ExtendedValidateCouponsResult = {
-  availablePromotions: availablePromotion[];
-  applicableCoupons: StackableRedeemableResponse[];
-  notApplicableCoupons: StackableRedeemableResponse[];
-  skippedCoupons: StackableRedeemableResponse[];
-  newSessionKey?: string;
-  valid: boolean;
-  totalDiscountAmount: number;
-  productsToAdd: ProductToAdd[];
-  onlyNewCouponsFailed?: boolean;
-  allInapplicableCouponsArePromotionTier?: boolean;
-  couponsLimit: number;
 };
 
 export enum CartDiscountApplyMode {

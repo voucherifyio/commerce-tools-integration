@@ -27,31 +27,16 @@ import {
   StackableRedeemableResponse,
   StackableRedeemableResultDiscountUnit,
   ValidationsValidateStackableParams,
-  ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 import { getCommercetoolstCurrentPriceAmount } from './utils/getCommercetoolstCurrentPriceAmount';
-import {
-  CUSTOM_FIELD_PREFIX,
-  FREE_SHIPPING_UNIT_TYPE,
-} from '../consts/voucherify';
+import { CUSTOM_FIELD_PREFIX } from '../consts/voucherify';
 import { CartAction } from './cartActions/CartAction';
-import getCartActionBuilders from './cartActions/getCartActionBuilders';
 import { ConfigService } from '@nestjs/config';
-import {
-  IntegrationService,
-  StoreActions,
-} from '../integration/integration.service';
+import { StoreActions } from '../integration/integration.service';
 import { TaxCategoriesService } from './tax-categories/tax-categories.service';
 import { deleteObjectsFromObject } from '../misc/deleteObjectsFromObject';
 import flatten from 'flat';
-import { oldGetCouponsByStatus } from './utils/oldGetCouponsByStatus';
-import {
-  calculateTotalDiscountAmount,
-  checkIfAllInapplicableCouponsArePromotionTier,
-  checkIfOnlyNewCouponsFailed,
-  getCouponsFromCart,
-} from '../integration/helperFunctions';
-import { uniqBy } from 'lodash';
+import { getCouponsFromCart } from '../integration/helperFunctions';
 import { getCouponsLimit } from '../voucherify/voucherify.service';
 import { getQuantity } from '../integration/mappers/product';
 import { ActionBuilder } from './cartActionsBuilder';
@@ -157,7 +142,7 @@ export function buildValidationsValidateStackableParamsForVoucherify(
   } as ValidationsValidateStackableParams;
 }
 
-export function mapLineItemsToGenericType(lineItems: LineItem[]): Item[] {
+export function mapLineItemsToIntegrationType(lineItems: LineItem[]): Item[] {
   return lineItems
     .filter((item) => getQuantity(item) > 0)
     .map((item) => {
@@ -180,7 +165,7 @@ function translateCtCartToCart(cart: CommerceToolsCart): Cart {
     anonymousId: cart?.anonymousId,
     sessionKey: getSession(cart as CommerceToolsCart),
     coupons: getCouponsFromCart(cart),
-    items: mapLineItemsToGenericType(cart.lineItems),
+    items: mapLineItemsToIntegrationType(cart.lineItems),
   };
 }
 
@@ -190,18 +175,11 @@ type handlerCartUpdate = (
   helperToGetProductsFromStore?: any,
 ) => void;
 
-type handlerOrderRedeem = (order: Order) => Promise<
-  | { actions: any[]; status: boolean }
-  | { actions: any[]; status: boolean }
-  | {
-      redemptionsRedeemStackableResponse: RedemptionsRedeemStackableResponse;
-      actions: (
-        | { name: string; action: string; value: string[] }
-        | { name: string; action: string; value: string[] }
-      )[];
-      status: boolean;
-    }
->;
+type handlerOrderRedeem = (order: Order) => Promise<{
+  actions: { name: string; action: string; value: string[] }[];
+  status: boolean;
+  redemptionsRedeemStackableResponse?: RedemptionsRedeemStackableResponse;
+}>;
 
 @Injectable()
 export class CommercetoolsService {

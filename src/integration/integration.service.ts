@@ -25,7 +25,7 @@ import {
   buildRedeemStackableRequestForVoucherify,
   buildValidationsValidateStackableParamsForVoucherify,
   CommercetoolsService,
-  mapLineItemsToGenericType,
+  mapLineItemsToIntegrationType,
 } from '../commercetools/commercetools.service';
 import {
   getCouponsLimit,
@@ -292,7 +292,7 @@ export class IntegrationService {
     );
 
     const items = mapItemsToVoucherifyOrdersItems(
-      mapLineItemsToGenericType(order.lineItems),
+      mapLineItemsToIntegrationType(order.lineItems),
       productMetadataSchemaProperties,
     );
 

@@ -4,23 +4,18 @@ import {
   CartDiscountApplyMode,
   Coupon,
   ProductToAdd,
-  ValidateCouponsResult,
 } from '../integration/types';
-import {
-  StackableRedeemableResponse,
-  ValidationValidateStackableResponse,
-} from '@voucherify/sdk';
+import { StackableRedeemableResponse } from '@voucherify/sdk';
 import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/cart';
 import getCartActionBuilders from './cartActions/getCartActionBuilders';
 import {
-  calculateTotalDiscountAmount,
   checkIfAllInapplicableCouponsArePromotionTier,
   checkIfOnlyNewCouponsFailed,
   getCouponsFromCart,
 } from '../integration/helperFunctions';
-import { oldGetCouponsByStatus } from './utils/oldGetCouponsByStatus';
 import { uniqBy } from 'lodash';
 import { getSession } from './commercetools.service';
+import { DataToRunCartActionsBuilder } from './cartActions/CartAction';
 
 export class ActionBuilder {
   private taxCategory: TaxCategory;
@@ -74,50 +69,45 @@ export class ActionBuilder {
 
   public buildActions() {
     return getCartActionBuilders()
-      .flatMap((builder) =>
-        builder(
-          this.commerceToolsCart,
-          this.gatherAllInformationsNeededToRunTheBuild(),
-          this.cartDiscountApplyMode,
-          this.taxCategory,
-        ),
-      )
+      .flatMap((builder) => builder(this.gatherDataToRunCartActionsBuilder()))
       .filter((e) => e);
   }
 
-  private gatherAllInformationsNeededToRunTheBuild() {
+  private gatherDataToRunCartActionsBuilder(): DataToRunCartActionsBuilder {
     const coupons: Coupon[] = getCouponsFromCart(this.commerceToolsCart);
     const uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
-    const valid = this.isValid;
-    const totalDiscountAmount = this.totalDiscountAmount;
-
     const applicableCoupons = this.applicableCoupons ?? [];
     const inapplicableCoupons = this.inapplicableCoupons ?? [];
     const skippedCoupons = this.skippedCoupons ?? [];
-
-    const sessionKey = this.sessionKey;
-
     return {
       availablePromotions: this.availablePromotions,
       applicableCoupons,
-      notApplicableCoupons: inapplicableCoupons,
+      inapplicableCoupons,
       skippedCoupons,
       newSessionKey:
-        !getSession(this.commerceToolsCart) || valid ? sessionKey : null,
-      valid,
-      totalDiscountAmount,
+        !getSession(this.commerceToolsCart) || this.isValid
+          ? this.sessionKey
+          : null,
+      valid: this.isValid,
+      totalDiscountAmount: this.totalDiscountAmount,
       productsToAdd: this.productsToAdd ?? [],
-      onlyNewCouponsFailed: this?.applicableCoupons
-        ? checkIfOnlyNewCouponsFailed(
-            uniqCoupons,
-            applicableCoupons,
-            inapplicableCoupons,
-            skippedCoupons,
-          )
-        : undefined,
-      allInapplicableCouponsArePromotionTier: this?.applicableCoupons
-        ? checkIfAllInapplicableCouponsArePromotionTier(inapplicableCoupons)
-        : undefined,
+      onlyNewCouponsFailed:
+        this?.applicableCoupons ||
+        this?.inapplicableCoupons ||
+        this?.skippedCoupons
+          ? checkIfOnlyNewCouponsFailed(
+              uniqCoupons,
+              applicableCoupons,
+              inapplicableCoupons,
+              skippedCoupons,
+            )
+          : undefined,
+      allInapplicableCouponsArePromotionTier:
+        this?.applicableCoupons ||
+        this?.inapplicableCoupons ||
+        this?.skippedCoupons
+          ? checkIfAllInapplicableCouponsArePromotionTier(inapplicableCoupons)
+          : undefined,
       couponsLimit: this.couponsLimit,
       cartDiscountApplyMode: this.cartDiscountApplyMode,
       commerceToolsCart: this.commerceToolsCart,

@@ -4,15 +4,6 @@ import {
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 
-export function oldGetCouponsByStatus(
-  validatedCoupons: ValidationValidateStackableResponse,
-  status: StackableRedeemableResponseStatus,
-) {
-  return (validatedCoupons?.redeemables ?? []).filter(
-    (redeemable) => redeemable.status === status,
-  );
-}
-
 export function getCouponsByStatus(
   redeemables: StackableRedeemableResponse[],
   status: StackableRedeemableResponseStatus,
