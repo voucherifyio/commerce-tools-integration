@@ -31,6 +31,7 @@ import {
   VoucherifyService,
 } from '../voucherify/voucherify.service';
 import { deserializeCoupons, filterCouponsByLimit } from './helperFunctions';
+import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
 
 export interface StoreActions {
   setAvailablePromotions(promotions: availablePromotion[]);
@@ -150,6 +151,7 @@ export class IntegrationService {
         helperToGetProductsFromStore,
       );
     }
+    console.log(productsToAdd);
 
     const productsToAddWithIncorrectPrice = productsToAdd.filter(
       (product) => product.discount_difference,
@@ -169,6 +171,8 @@ export class IntegrationService {
           ),
         );
     }
+
+    console.log(111, JSON.stringify(validatedCoupons));
 
     if (promotions.length) {
       this.voucherifyService.setBannerOnValidatedPromotions(
@@ -206,7 +210,9 @@ export class IntegrationService {
     const productsToChangeSKUs = productsToChange.map(
       (productsToChange) => productsToChange.product,
     );
-    return OrdersItems.map((item: OrdersItem) => {
+    return OrdersItems.filter(
+      (item) => item.product_id !== FREE_SHIPPING_UNIT_TYPE,
+    ).map((item: OrdersItem) => {
       if (
         !productsToChangeSKUs.includes((item.sku as OrderItemSku).source_id) ||
         item.amount !== item.discount_amount

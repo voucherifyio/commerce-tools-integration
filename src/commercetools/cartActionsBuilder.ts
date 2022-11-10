@@ -81,7 +81,7 @@ export class ActionBuilder {
       ? calculateTotalDiscountAmount(validatedCoupons)
       : 0;
 
-    const notApplicableCoupons = getCouponsByStatus(
+    const inapplicableCoupons = getCouponsByStatus(
       validatedCoupons,
       'INAPPLICABLE',
     );
@@ -96,7 +96,7 @@ export class ActionBuilder {
     return {
       availablePromotions: validateCouponsResult.availablePromotions,
       applicableCoupons,
-      notApplicableCoupons,
+      notApplicableCoupons: inapplicableCoupons,
       skippedCoupons,
       newSessionKey: !getSession(cart) || valid ? sessionKeyResponse : null,
       valid,
@@ -106,13 +106,13 @@ export class ActionBuilder {
         ? checkIfOnlyNewCouponsFailed(
             uniqCoupons,
             applicableCoupons,
-            notApplicableCoupons,
+            inapplicableCoupons,
             skippedCoupons,
           )
         : undefined,
       allInapplicableCouponsArePromotionTier:
         validateCouponsResult?.validatedCoupons
-          ? checkIfAllInapplicableCouponsArePromotionTier(notApplicableCoupons)
+          ? checkIfAllInapplicableCouponsArePromotionTier(inapplicableCoupons)
           : undefined,
       couponsLimit: this.couponsLimit,
     };
