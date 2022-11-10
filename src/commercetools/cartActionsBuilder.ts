@@ -54,10 +54,6 @@ export class ActionBuilder {
   public setInapplicableCoupons(value: StackableRedeemableResponse[]) {
     this.inapplicableCoupons = value;
   }
-  private skippedCoupons: StackableRedeemableResponse[];
-  public setSkippedCoupons(value: StackableRedeemableResponse[]) {
-    this.skippedCoupons = value;
-  }
   private isValid = false;
   public setIsValid(value: boolean) {
     this.isValid = value;
@@ -78,9 +74,9 @@ export class ActionBuilder {
     const uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
     const applicableCoupons = this.applicableCoupons ?? [];
     const inapplicableCoupons = this.inapplicableCoupons ?? [];
-    const skippedCoupons = this.skippedCoupons ?? [];
+    const skippedCoupons = [];
     return {
-      availablePromotions: this.availablePromotions,
+      availablePromotions: this.availablePromotions ?? [],
       applicableCoupons,
       inapplicableCoupons,
       skippedCoupons,
@@ -92,9 +88,7 @@ export class ActionBuilder {
       totalDiscountAmount: this.totalDiscountAmount,
       productsToAdd: this.productsToAdd ?? [],
       onlyNewCouponsFailed:
-        this?.applicableCoupons ||
-        this?.inapplicableCoupons ||
-        this?.skippedCoupons
+        this?.applicableCoupons || this?.inapplicableCoupons
           ? checkIfOnlyNewCouponsFailed(
               uniqCoupons,
               applicableCoupons,
@@ -103,9 +97,7 @@ export class ActionBuilder {
             )
           : undefined,
       allInapplicableCouponsArePromotionTier:
-        this?.applicableCoupons ||
-        this?.inapplicableCoupons ||
-        this?.skippedCoupons
+        this?.applicableCoupons || this?.inapplicableCoupons
           ? checkIfAllInapplicableCouponsArePromotionTier(inapplicableCoupons)
           : undefined,
       couponsLimit: this.couponsLimit,
