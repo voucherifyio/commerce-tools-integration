@@ -70,7 +70,6 @@ export interface StoreActions {
   setTotalDiscountAmount(totalDiscountAmount: number);
   setApplicableCoupons(applicableCoupons: StackableRedeemableResponse[]);
   setInapplicableCoupons(inapplicableCoupons: StackableRedeemableResponse[]);
-  setSkippedCoupons(skippedCoupons: StackableRedeemableResponse[]);
   setIsValid(isValid: boolean);
   setSessionKey(sessionKey: string);
 }
@@ -174,6 +173,29 @@ export class IntegrationService {
         ),
       );
 
+    const inapplicableCoupons = [];
+    if (validatedCoupons.valid === false) {
+      getCouponsByStatus(validatedCoupons.redeemables, 'INAPPLICABLE').forEach(
+        (coupon) => {
+          inapplicableCoupons.push(coupon);
+        },
+      );
+      const applicableCoupons = uniqCoupons
+        .filter((coupon) => coupon.status != 'DELETED')
+        .filter((coupon) => !inapplicableCoupons.includes(coupon.code));
+      if (applicableCoupons.length === 0) {
+        return;
+      }
+      validatedCoupons =
+        await this.voucherifyConnectorService.validateStackableVouchers(
+          buildValidationsValidateStackableParamsForVoucherify(
+            applicableCoupons,
+            cart,
+            mapItemsToVoucherifyOrdersItems(items),
+          ),
+        );
+    }
+
     let productsToAdd = [];
     if (isClass(storeActions)) {
       productsToAdd = await this.storeService.getProductsToAdd(
@@ -231,9 +253,6 @@ export class IntegrationService {
       );
       storeActions.setInapplicableCoupons(
         getCouponsByStatus(redeemables, 'INAPPLICABLE'),
-      );
-      storeActions.setSkippedCoupons(
-        getCouponsByStatus(redeemables, 'SKIPPED'),
       );
       storeActions.setAvailablePromotions(availablePromotions);
       storeActions.setProductsToAdd(productsToAdd);
