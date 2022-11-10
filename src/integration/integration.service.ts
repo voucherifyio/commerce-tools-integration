@@ -184,6 +184,7 @@ export class IntegrationService {
         .filter((coupon) => coupon.status != 'DELETED')
         .filter((coupon) => !inapplicableCoupons.includes(coupon.code));
       if (applicableCoupons.length === 0) {
+        storeActions.setInapplicableCoupons(inapplicableCoupons);
         return;
       }
       validatedCoupons =
@@ -251,9 +252,7 @@ export class IntegrationService {
       storeActions.setApplicableCoupons(
         getCouponsByStatus(redeemables, 'APPLICABLE'),
       );
-      storeActions.setInapplicableCoupons(
-        getCouponsByStatus(redeemables, 'INAPPLICABLE'),
-      );
+      storeActions.setInapplicableCoupons(inapplicableCoupons);
       storeActions.setAvailablePromotions(availablePromotions);
       storeActions.setProductsToAdd(productsToAdd);
     }
