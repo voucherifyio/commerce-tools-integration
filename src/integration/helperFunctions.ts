@@ -1,4 +1,7 @@
-import { Cart } from '@commercetools/platform-sdk';
+import {
+  Cart as CommerceToolsCart,
+  Order as CommerceToolsOrder,
+} from '@commercetools/platform-sdk';
 import {
   StackableRedeemableResponse,
   ValidationValidateStackableResponse,
@@ -16,7 +19,9 @@ export function deserializeCoupons(serializedDiscountOrCode: string): Coupon {
   };
 }
 
-export function getCouponsFromCart(cart: Cart): Coupon[] {
+export function getCouponsFromCartOrOrder(
+  cart: CommerceToolsCart | CommerceToolsOrder,
+): Coupon[] {
   return (cart.custom?.fields?.discount_codes ?? [])
     .map(deserializeCoupons)
     .filter(

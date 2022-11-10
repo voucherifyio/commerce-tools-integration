@@ -8,6 +8,8 @@ import { CustomerGroupReference } from '@commercetools/platform-sdk/dist/declara
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/cart';
 import { TaxCategory } from '@commercetools/platform-sdk';
+import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
+import { CustomerRequest } from '@voucherify/sdk/dist/types/Customers';
 
 export type CartResponse = { status: boolean; actions: CartAction[] };
 
@@ -78,6 +80,17 @@ export type Cart = {
   sessionKey?: string;
   coupons: Coupon[];
   items: Item[];
+};
+
+export type Order = {
+  id: string;
+  customer?: CustomerRequest;
+  customerId: string;
+  status?: OrdersCreate['status'];
+  coupons: Coupon[];
+  items: Item[];
+  sessionKey: string;
+  rawOrder?: any;
 };
 
 export type CouponStatus = 'NEW' | 'APPLIED' | 'NOT_APPLIED' | 'DELETED';

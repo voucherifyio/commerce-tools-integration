@@ -7,7 +7,6 @@ import {
   VoucherifyServerSide,
 } from '@voucherify/sdk';
 import { ConfigService } from '@nestjs/config';
-import { Order } from '@commercetools/platform-sdk';
 import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
@@ -15,6 +14,7 @@ import {
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { getCustomerFromOrder } from '../commercetools/commercetools.service';
 import { mapItemsToVoucherifyOrdersItems } from '../integration/mappers/product';
+import { Order } from '../integration/types';
 
 function elapsedTime(start: number, end: number): string {
   return `Time: ${(end - start).toFixed(3)}ms`;
@@ -68,21 +68,19 @@ export class VoucherifyConnectorService {
   }
 
   async createOrder(
-    order: Order, //CommerceTools Order
-    items: OrdersItem[], //V% OrderItems
+    order: Order, //Integration Order
+    items: OrdersItem[],
     orderMetadata: Record<string, any>,
   ) {
     const orderCreate = {
       source_id: order.id,
-      amount: items.reduce((acc, item) => acc + item.amount, 0),
+      amount: order.items.reduce((acc, item) => acc + item.amount, 0),
       discount_amount: 0,
       items,
       metadata: orderMetadata,
-      customer: getCustomerFromOrder(order),
-      status: (order.paymentState === 'Paid'
-        ? 'PAID'
-        : 'CREATED') as OrdersCreate['status'],
-    };
+      customer: order.customer,
+      status: order.status,
+    } as OrdersCreate;
 
     await this.getClient().orders.create(orderCreate);
   }

@@ -11,7 +11,7 @@ import getCartActionBuilders from './cartActions/getCartActionBuilders';
 import {
   checkIfAllInapplicableCouponsArePromotionTier,
   checkIfOnlyNewCouponsFailed,
-  getCouponsFromCart,
+  getCouponsFromCartOrOrder,
 } from '../integration/helperFunctions';
 import { uniqBy } from 'lodash';
 import { getSession } from './commercetools.service';
@@ -74,7 +74,7 @@ export class ActionBuilder {
   }
 
   private gatherDataToRunCartActionsBuilder(): DataToRunCartActionsBuilder {
-    const coupons: Coupon[] = getCouponsFromCart(this.commerceToolsCart);
+    const coupons: Coupon[] = getCouponsFromCartOrOrder(this.commerceToolsCart);
     const uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
     const applicableCoupons = this.applicableCoupons ?? [];
     const inapplicableCoupons = this.inapplicableCoupons ?? [];

@@ -1,7 +1,7 @@
-import { Order } from '@commercetools/platform-sdk';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
+  RedemptionsRedeemStackableParams,
   RedemptionsRedeemStackableResponse,
   StackableRedeemableResponse,
   ValidationValidateStackableResponse,
@@ -17,15 +17,13 @@ import {
   Coupon,
   ProductToAdd,
   SentCoupons,
-  ValidateCouponsResult,
+  Order,
 } from './types';
 import { mapItemsToVoucherifyOrdersItems } from './mappers/product';
 import { ConfigService } from '@nestjs/config';
 import {
-  buildRedeemStackableRequestForVoucherify,
   buildValidationsValidateStackableParamsForVoucherify,
   CommercetoolsService,
-  mapLineItemsToIntegrationType,
 } from '../commercetools/commercetools.service';
 import {
   getCouponsLimit,
@@ -33,12 +31,38 @@ import {
 } from '../voucherify/voucherify.service';
 import {
   calculateTotalDiscountAmount,
-  deserializeCoupons,
   filterCouponsByLimit,
 } from './helperFunctions';
 import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
 import { getCouponsByStatus } from '../commercetools/utils/oldGetCouponsByStatus';
 import { isClass } from '../misc/isClass';
+
+export function buildRedeemStackableRequestForVoucherify(
+  order: Order,
+  items: OrdersItem[],
+  orderMetadata: Record<string, any>,
+): RedemptionsRedeemStackableParams {
+  return {
+    session: {
+      type: 'LOCK',
+      key: order.sessionKey,
+    },
+    redeemables: order.coupons.map((code) => {
+      return {
+        object: code.type ? code.type : 'voucher',
+        id: code.code,
+      };
+    }),
+    order: {
+      source_id: order.id,
+      amount: order.items.reduce((acc, item) => acc + item.amount, 0),
+      status: 'PAID',
+      items,
+      metadata: orderMetadata,
+    },
+    customer: order.customer,
+  } as RedemptionsRedeemStackableParams;
+}
 
 export interface StoreActions {
   setAvailablePromotions(promotions: availablePromotion[]);
@@ -287,21 +311,19 @@ export class IntegrationService {
         'product',
       );
     const orderMetadata = await this.storeService.getMetadataForOrder(
-      order,
+      order.rawOrder,
       orderMetadataSchemaProperties,
     );
 
     const items = mapItemsToVoucherifyOrdersItems(
-      mapLineItemsToIntegrationType(order.lineItems),
+      order.items,
       productMetadataSchemaProperties,
     );
 
-    const coupons: Coupon[] = (order.custom?.fields?.discount_codes ?? [])
-      .map(deserializeCoupons)
-      .filter(
-        (coupon) =>
-          coupon.status !== 'NOT_APPLIED' && coupon.status !== 'AVAILABLE',
-      );
+    const coupons: Coupon[] = (order.coupons ?? []).filter(
+      (coupon) =>
+        coupon.status !== 'NOT_APPLIED' && coupon.status !== 'DELETED',
+    );
 
     if (!coupons.length) {
       this.logger.debug({
@@ -328,20 +350,13 @@ export class IntegrationService {
     const sentCoupons: SentCoupons[] = [];
     const usedCoupons: string[] = [];
     const notUsedCoupons: string[] = [];
-
-    const sessionKey = order.custom?.fields.session;
     let response: RedemptionsRedeemStackableResponse;
     try {
       response = await this.voucherifyConnectorService.redeemStackableVouchers(
-        buildRedeemStackableRequestForVoucherify(
-          coupons,
-          sessionKey,
-          order,
-          items,
-          orderMetadata,
-        ),
+        buildRedeemStackableRequestForVoucherify(order, items, orderMetadata),
       );
     } catch (e) {
+      console.log(e);
       this.logger.debug({ msg: 'Redeem operation failed', error: e.details });
       return { status: true, actions: [] };
     }

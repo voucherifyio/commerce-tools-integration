@@ -2,14 +2,13 @@ import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   Cart as CommerceToolsCart,
   LineItem,
-  Order,
+  Order as CommerceToolsOrder,
   Product,
   TaxCategory,
 } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../misc/sleep';
 import {
-  availablePromotion,
   Cart,
   CartDiscountApplyMode,
   CartResponse,
@@ -18,6 +17,7 @@ import {
   PriceSelector,
   ProductToAdd,
   ValidateCouponsResult,
+  Order,
 } from '../integration/types';
 import { TypesService } from './types/types.service';
 import {
@@ -36,10 +36,12 @@ import { StoreActions } from '../integration/integration.service';
 import { TaxCategoriesService } from './tax-categories/tax-categories.service';
 import { deleteObjectsFromObject } from '../misc/deleteObjectsFromObject';
 import flatten from 'flat';
-import { getCouponsFromCart } from '../integration/helperFunctions';
+import { getCouponsFromCartOrOrder } from '../integration/helperFunctions';
 import { getCouponsLimit } from '../voucherify/voucherify.service';
 import { getQuantity } from '../integration/mappers/product';
 import { ActionBuilder } from './cartActionsBuilder';
+import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
+import { PaymentState } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/order';
 
 interface ProductWithCurrentPriceAmount extends Product {
   currentPriceAmount: number;
@@ -66,7 +68,7 @@ function getPriceSelectorFromCart(cart: CommerceToolsCart): PriceSelector {
   };
 }
 
-export function getCustomerFromOrder(order: Order) {
+export function getCustomerFromOrder(order: CommerceToolsOrder) {
   return {
     source_id: order.customerId || order.anonymousId,
     name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
@@ -79,35 +81,6 @@ export function getCustomerFromOrder(order: Order) {
     },
     phone: order.shippingAddress?.phone,
   };
-}
-
-export function buildRedeemStackableRequestForVoucherify(
-  coupons: Coupon[],
-  sessionKey: string,
-  order: Order,
-  items: OrdersItem[],
-  orderMetadata: Record<string, any>,
-): RedemptionsRedeemStackableParams {
-  return {
-    session: {
-      type: 'LOCK',
-      key: sessionKey,
-    },
-    redeemables: coupons.map((code) => {
-      return {
-        object: code.type ? code.type : 'voucher',
-        id: code.code,
-      };
-    }),
-    order: {
-      source_id: order.id,
-      amount: items.reduce((acc, item) => acc + item.amount, 0),
-      status: 'PAID',
-      items,
-      metadata: orderMetadata,
-    },
-    customer: getCustomerFromOrder(order),
-  } as RedemptionsRedeemStackableParams;
 }
 
 export function buildValidationsValidateStackableParamsForVoucherify(
@@ -164,8 +137,23 @@ function translateCtCartToCart(cart: CommerceToolsCart): Cart {
     customerId: cart?.customerId,
     anonymousId: cart?.anonymousId,
     sessionKey: getSession(cart as CommerceToolsCart),
-    coupons: getCouponsFromCart(cart),
+    coupons: getCouponsFromCartOrOrder(cart),
     items: mapLineItemsToIntegrationType(cart.lineItems),
+  };
+}
+
+function translateCtOrderToOrder(order: CommerceToolsOrder): Order {
+  return {
+    id: order.id,
+    customer: getCustomerFromOrder(order),
+    customerId: order.customerId || order.anonymousId,
+    status: ((order.paymentState as PaymentState) === 'Paid'
+      ? 'PAID'
+      : 'CREATED') as OrdersCreate['status'],
+    coupons: getCouponsFromCartOrOrder(order),
+    items: mapLineItemsToIntegrationType(order.lineItems),
+    sessionKey: order.custom?.fields.session,
+    rawOrder: order,
   };
 }
 
@@ -279,7 +267,7 @@ export class CommercetoolsService {
   }
 
   public async checkIfCartWasUpdatedWithStatusPaidAndRedeem(
-    orderFromRequest: Order,
+    orderFromRequest: CommerceToolsOrder,
   ) {
     if (orderFromRequest.paymentState !== 'Paid') {
       return this.logger.debug({
@@ -308,7 +296,8 @@ export class CommercetoolsService {
           msg: `Error while commercetoolsService.checkIfCartWasUpdatedWithStatusPaidAndRedeem handlerOrderRedeem not configured`,
         });
       }
-      return await this.handlerOrderRedeem(order);
+      await this.handlerOrderRedeem(translateCtOrderToOrder(order));
+      return;
     } catch (e) {
       console.log(e);
       this.logger.error({
@@ -449,7 +438,7 @@ export class CommercetoolsService {
   }
 
   public async getMetadataForOrder(
-    order: Order,
+    order: CommerceToolsOrder,
     allMetadataSchemaProperties: string[],
   ) {
     const standardMetaProperties = allMetadataSchemaProperties.filter(
