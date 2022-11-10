@@ -18,7 +18,10 @@ import {
   ValidateCouponsResult,
 } from './types';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
-import { mapItems, ProductMapper } from './mappers/product';
+import {
+  mapItemsToVoucherifyOrdersItems,
+  ProductMapper,
+} from './mappers/product';
 import { ConfigService } from '@nestjs/config';
 import {
   buildRedeemStackableRequestForVoucherify,
@@ -30,11 +33,7 @@ import {
   getCouponsLimit,
   VoucherifyService,
 } from '../voucherify/voucherify.service';
-import {
-  deserializeCoupons,
-  filterCouponsByLimit,
-  getCouponsFromCart,
-} from './helperFunctions';
+import { deserializeCoupons, filterCouponsByLimit } from './helperFunctions';
 
 @Injectable()
 export class IntegrationService {
@@ -54,10 +53,9 @@ export class IntegrationService {
 
   public async validateCouponsAndGetAvailablePromotions(
     cart: Cart,
-    priceSelector: any,
+    helperToGetProductsFromStore?: any,
   ): Promise<ValidateCouponsResult> {
     const { id, customerId, anonymousId, sessionKey, coupons, items } = cart;
-    console.log('111');
     let uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
     if (coupons.length !== uniqCoupons.length) {
       this.logger.debug({
@@ -116,19 +114,18 @@ export class IntegrationService {
       ),
     );
 
-    console.log(121, items);
     let validatedCoupons: ValidationValidateStackableResponse =
       await this.voucherifyConnectorService.validateStackableVouchers(
         buildValidationsValidateStackableParamsForVoucherify(
           uniqCoupons.filter((coupon) => coupon.status != 'DELETED'),
           cart,
-          mapItems(items),
+          mapItemsToVoucherifyOrdersItems(items),
         ),
       );
 
     const productsToAdd = await this.commercetoolsService.getProductsToAdd(
       validatedCoupons,
-      priceSelector,
+      helperToGetProductsFromStore,
     );
 
     const productsToAddWithIncorrectPrice = productsToAdd.filter(
@@ -243,7 +240,7 @@ export class IntegrationService {
       orderMetadataSchemaProperties,
     );
 
-    const items = mapItems(
+    const items = mapItemsToVoucherifyOrdersItems(
       mapLineItemsToGenericType(order.lineItems),
       productMetadataSchemaProperties,
     );

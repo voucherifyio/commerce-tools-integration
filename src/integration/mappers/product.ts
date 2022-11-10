@@ -1,5 +1,4 @@
 import { OrdersItem } from '@voucherify/sdk';
-import { LineItem } from '@commercetools/platform-sdk';
 import { Item } from '../types';
 
 export class ProductMapper {}
@@ -14,11 +13,10 @@ export function getMetadata(attributes, metadataSchemaProperties) {
     : {};
 }
 
-export function mapItems(
+export function mapItemsToVoucherifyOrdersItems(
   lineItems: Item[],
   metadataSchemaProperties = [],
 ): OrdersItem[] {
-  console.log(lineItems);
   return lineItems
     .filter((item) => item.quantity > 0)
     .map((item) => {

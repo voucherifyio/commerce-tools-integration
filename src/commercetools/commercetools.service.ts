@@ -4,6 +4,7 @@ import {
   LineItem,
   Order,
   Product,
+  TaxCategory,
 } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../misc/sleep';
@@ -197,7 +198,6 @@ export class CommercetoolsService {
     actions: CartAction[];
     status: boolean;
   }> {
-    console.log(translateCtCartToCart(cart));
     const validateCouponsResult =
       await this.integrationService.validateCouponsAndGetAvailablePromotions(
         translateCtCartToCart(cart),
@@ -238,7 +238,9 @@ export class CommercetoolsService {
     };
   }
 
-  public async getCouponTaxCategory(cart: CommerceToolsCart) {
+  public async getCouponTaxCategory(
+    cart: CommerceToolsCart,
+  ): Promise<TaxCategory> {
     const { country } = cart;
     const taxCategory =
       await this.taxCategoriesService.getCouponTaxCategoryFromResponse();
