@@ -2,22 +2,19 @@ import {
   getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
   defaultGetCouponTaxCategoryResponse,
 } from '../../../commercetools/tax-categories/__mocks__/tax-categories.service';
-import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/types/__mocks__/types.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/custom-types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
-import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 import { CommercetoolsService } from '../../../commercetools/commercetools.service';
 describe('When another -20€ amount voucher is provided after -10% coupon in one session', () => {
   let commercetoolsService: CommercetoolsService;
-  let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
   const FIRST_COUPON_CODE = 'PERC10';
   const SECOND_COUPON_CODE = 'AMOUNT20';
-  const SESSION_KEY = 'existing-session-id';
 
   beforeEach(async () => {
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
@@ -28,17 +25,16 @@ describe('When another -20€ amount voucher is provided after -10% coupon in on
     const commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithResponse();
 
-    ({ commercetoolsService, productMapper } =
-      await buildCartServiceWithMockedDependencies({
-        typesService,
-        taxCategoriesService,
-        voucherifyConnectorService,
-        commerceToolsConnectorService,
-      }));
+    ({ commercetoolsService } = await buildCartServiceWithMockedDependencies({
+      typesService,
+      taxCategoriesService,
+      voucherifyConnectorService,
+      commerceToolsConnectorService,
+    }));
   });
 
   it('Should call voucherify once', async () => {
-    await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    await commercetoolsService.handleCartUpdate(cart);
     expect(
       voucherifyConnectorService.validateStackableVouchers,
     ).toBeCalledTimes(1);
@@ -71,8 +67,7 @@ describe('When another -20€ amount voucher is provided after -10% coupon in on
     );
   });
   it('Should create one `addCustomLineItem` action with all coupons value combined', async () => {
-    const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([
@@ -98,8 +93,7 @@ describe('When another -20€ amount voucher is provided after -10% coupon in on
   });
 
   it('Should create one `setCustomField` action with all coupons applied', async () => {
-    const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([

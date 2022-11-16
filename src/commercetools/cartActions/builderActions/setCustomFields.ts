@@ -1,8 +1,4 @@
-import { Cart } from '@commercetools/platform-sdk';
-import {
-  Coupon,
-  ExtendedValidateCouponsResult,
-} from '../../../integration/types';
+import { Coupon } from '../../../integration/types';
 import {
   CartAction,
   CartActionSetCustomFieldFreeShipping,
@@ -10,29 +6,23 @@ import {
   CartActionSetCustomFieldWithCouponsLimit,
   CartActionSetCustomFieldWithSession,
   CartActionSetCustomFieldWithValidationFailed,
+  DataToRunCartActionsBuilder,
 } from '../CartAction';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
 import {
   FREE_SHIPPING,
   FREE_SHIPPING_UNIT_TYPE,
 } from '../../../consts/voucherify';
-import isValidAndNewCouponNotFailed from '../helpers/utils';
-import {
-  checkIfAllInapplicableCouponsArePromotionTier,
-  checkIfOnlyNewCouponsFailed,
-  deserializeCoupons,
-  getCouponsFromCart,
-} from '../../../integration/helperFunctions';
-import { getCouponsByStatus } from '../../utils/getCouponsByStatus';
-import { uniqBy } from 'lodash';
+import { deserializeCoupons } from '../../../integration/utils/helperFunctions';
 
 function setSessionAsCustomField(
-  cart: Cart,
-  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
+  dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
 ): CartActionSetCustomFieldWithSession {
-  const { valid, newSessionKey } = extendedValidateCouponsResult;
-  const sessionKey = cart.custom?.fields?.session ?? null;
-  if (!valid || !newSessionKey || newSessionKey === sessionKey) {
+  const { newSessionKey } = dataToRunCartActionsBuilder;
+  const sessionKey =
+    dataToRunCartActionsBuilder.commerceToolsCart.custom?.fields?.session ??
+    null;
+  if (!newSessionKey || newSessionKey === sessionKey) {
     return;
   }
 
@@ -65,44 +55,38 @@ function getShippingProductSourceIds(
 }
 
 function addShippingProductSourceIds(
-  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
+  dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
 ): CartActionSetCustomFieldFreeShipping {
   return {
     action: 'setCustomField',
     name: 'shippingProductSourceIds',
     value: getShippingProductSourceIds(
-      extendedValidateCouponsResult.applicableCoupons,
+      dataToRunCartActionsBuilder.applicableCoupons,
     ),
   };
 }
 
 function setCouponsLimit(
-  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
+  dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
 ): CartActionSetCustomFieldWithCouponsLimit {
   return {
     action: 'setCustomField',
     name: 'couponsLimit',
-    value: +extendedValidateCouponsResult.couponsLimit,
+    value: +dataToRunCartActionsBuilder.couponsLimit,
   };
 }
 
 function updateDiscountsCodes(
-  cart: Cart,
-  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
+  dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
 ):
   | CartActionSetCustomFieldWithCoupons[]
   | CartActionSetCustomFieldWithValidationFailed[] {
-  const {
-    availablePromotions,
-    applicableCoupons,
-    notApplicableCoupons,
-    onlyNewCouponsFailed,
-    allInapplicableCouponsArePromotionTier,
-    skippedCoupons,
-  } = extendedValidateCouponsResult;
+  const { availablePromotions, applicableCoupons, inapplicableCoupons } =
+    dataToRunCartActionsBuilder;
   const validationFailedAction = [];
   const oldCouponsCodes: Coupon[] = (
-    cart.custom?.fields?.discount_codes ?? []
+    dataToRunCartActionsBuilder.commerceToolsCart.custom?.fields
+      ?.discount_codes ?? []
   ).map(deserializeCoupons);
   const coupons = [
     ...availablePromotions,
@@ -133,7 +117,7 @@ function updateDiscountsCodes(
         value: value,
       } as Coupon;
     }),
-    ...notApplicableCoupons.map(
+    ...inapplicableCoupons.map(
       (coupon) =>
         ({
           code: coupon.id,
@@ -144,34 +128,6 @@ function updateDiscountsCodes(
         } as Coupon),
     ),
   ];
-
-  if (onlyNewCouponsFailed || allInapplicableCouponsArePromotionTier) {
-    coupons.push(
-      ...skippedCoupons.map(
-        (coupon) =>
-          ({
-            code: coupon.id,
-            status: 'APPLIED',
-            value:
-              oldCouponsCodes.find((oldCoupon) => coupon.id === oldCoupon.code)
-                ?.value || 0,
-          } as Coupon),
-      ),
-    );
-  } else if (skippedCoupons.length) {
-    console.log(2);
-    validationFailedAction.push({
-      action: 'setCustomField',
-      name: 'isValidationFailed',
-      value: true,
-    });
-  } else {
-    validationFailedAction.push({
-      action: 'setCustomField',
-      name: 'isValidationFailed',
-      value: false,
-    });
-  }
 
   return [
     {
@@ -184,24 +140,14 @@ function updateDiscountsCodes(
 }
 
 export default function setCustomFields(
-  cart: Cart,
-  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
+  dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
 ): CartAction[] {
   const cartActions = [] as CartAction[];
 
-  cartActions.push(
-    setSessionAsCustomField(cart, extendedValidateCouponsResult),
-  );
-  cartActions.push(
-    ...updateDiscountsCodes(cart, extendedValidateCouponsResult),
-  );
-
-  if (isValidAndNewCouponNotFailed(extendedValidateCouponsResult)) {
-    cartActions.push(
-      addShippingProductSourceIds(extendedValidateCouponsResult),
-    );
-    cartActions.push(setCouponsLimit(extendedValidateCouponsResult));
-  }
+  cartActions.push(setSessionAsCustomField(dataToRunCartActionsBuilder));
+  cartActions.push(...updateDiscountsCodes(dataToRunCartActionsBuilder));
+  cartActions.push(addShippingProductSourceIds(dataToRunCartActionsBuilder));
+  cartActions.push(setCouponsLimit(dataToRunCartActionsBuilder));
 
   return cartActions;
 }

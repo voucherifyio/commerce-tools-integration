@@ -6,7 +6,6 @@ import {
   RoundingMode,
   TaxCalculationMode,
   TaxMode,
-  TypedMoney,
   Cart,
 } from '@commercetools/platform-sdk';
 

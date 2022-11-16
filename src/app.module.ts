@@ -9,7 +9,7 @@ import { ApiExtensionController } from './commercetools/api-extension.controller
 import { IntegrationService } from './integration/integration.service';
 import { ApiExtensionService } from './commercetools/api-extension.service';
 import { TaxCategoriesService } from './commercetools/tax-categories/tax-categories.service';
-import { TypesService } from './commercetools/types/types.service';
+import { CustomTypesService } from './commercetools/custom-types/custom-types.service';
 import { ProductImportService } from './import/product-import.service';
 import { ImportController } from './import/import.controller';
 import { OrderImportService } from './import/order-import.service';
@@ -20,8 +20,8 @@ import { ApiExtensionUpdateCommand } from './cli/api-extension-update.command';
 import { ApiExtensionListCommand } from './cli/api-extension-list.command';
 import { ConfigCommand } from './cli/config.command';
 import { MigrateCommand } from './cli/migrate.command';
-import { OrderMapper } from './integration/mappers/order';
-import { ProductMapper } from './integration/mappers/product';
+import { OrderMapper } from './integration/utils/mappers/order';
+import { ProductMapper } from './integration/utils/mappers/product';
 import { ValidationSchema } from './configs/validationSchema';
 import { AppValidationPipe } from './configs/appValidationPipe';
 import { RequestJsonLogger } from './configs/requestJsonLogger';
@@ -43,7 +43,7 @@ import { VoucherifyService } from './voucherify/voucherify.service';
     VoucherifyConnectorService,
     CommercetoolsConnectorService,
     TaxCategoriesService,
-    TypesService,
+    CustomTypesService,
     ProductImportService,
     OrderImportService,
     CustomerImportService,

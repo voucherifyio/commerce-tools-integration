@@ -1,13 +1,11 @@
-import { Cart, LineItem } from '@commercetools/platform-sdk';
-import {
-  ExtendedValidateCouponsResult,
-  ProductToAdd,
-} from '../../../integration/types';
+import { LineItem } from '@commercetools/platform-sdk';
+import { ProductToAdd } from '../../../integration/types';
 import {
   CartAction,
   CartActionAddLineItem,
   CartActionChangeLineItemQuantity,
   CartActionSetLineItemCustomType,
+  DataToRunCartActionsBuilder,
 } from '../CartAction';
 import { uniqBy } from 'lodash';
 
@@ -75,16 +73,17 @@ function addLineItem(
 }
 
 export default function addFreeLineItems(
-  cart: Cart,
-  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
+  dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
 ): CartAction[] {
   const applicableCouponsIds =
-    extendedValidateCouponsResult.applicableCoupons.map(
+    dataToRunCartActionsBuilder.applicableCoupons.map(
       (couponData) => couponData.id,
     );
 
   const findLineItemBySku = (sku: string) =>
-    cart.lineItems.find((item) => item.variant.sku === sku);
+    dataToRunCartActionsBuilder.commerceToolsCart.lineItems.find(
+      (item) => item.variant.sku === sku,
+    );
 
   const isCouponAppliedToItem = (item, couponCode: string) => {
     return item?.custom?.fields?.applied_codes
@@ -127,7 +126,7 @@ export default function addFreeLineItems(
 
   const productToAddQuantities = {} as Record<string, number>;
 
-  extendedValidateCouponsResult.productsToAdd.map((product) => {
+  dataToRunCartActionsBuilder.productsToAdd.map((product) => {
     if (productToAddQuantities[product.product]) {
       productToAddQuantities[product.product] += product.quantity;
     } else {
@@ -135,7 +134,7 @@ export default function addFreeLineItems(
     }
   });
 
-  return extendedValidateCouponsResult.productsToAdd.flatMap((product) => {
+  return dataToRunCartActionsBuilder.productsToAdd.flatMap((product) => {
     const item = findLineItemBySku(product.product);
 
     if (product.effect === 'ADD_NEW_ITEMS') {

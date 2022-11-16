@@ -7,28 +7,20 @@ import {
   VoucherifyServerSide,
 } from '@voucherify/sdk';
 import { ConfigService } from '@nestjs/config';
-import { Cart, Order } from '@commercetools/platform-sdk';
 import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
-import { Coupon } from '../integration/types';
-import {
-  CommercetoolsService,
-  getCustomerFromOrder,
-} from '../commercetools/commercetools.service';
-
-function elapsedTime(start: number, end: number): string {
-  return `Time: ${(end - start).toFixed(3)}ms`;
-}
+import { mapItemsToVoucherifyOrdersItems } from '../integration/utils/mappers/product';
+import { Order } from '../integration/types';
+import { elapsedTime } from '../misc/elapsedTime';
 
 @Injectable()
 export class VoucherifyConnectorService {
   constructor(
     private configService: ConfigService,
     private logger: Logger,
-    private commercetoolsService: CommercetoolsService,
     @Inject(REQUEST_JSON_LOGGER)
     private readonly requestJsonLogger: RequestJsonLogger,
   ) {}
@@ -72,21 +64,19 @@ export class VoucherifyConnectorService {
   }
 
   async createOrder(
-    order: Order, //CommerceTools Order
-    items: OrdersItem[], //V% OrderItems
+    order: Order, //Integration Order
+    items: OrdersItem[],
     orderMetadata: Record<string, any>,
   ) {
     const orderCreate = {
       source_id: order.id,
-      amount: items.reduce((acc, item) => acc + item.amount, 0),
+      amount: order.items.reduce((acc, item) => acc + item.amount, 0),
       discount_amount: 0,
       items,
       metadata: orderMetadata,
-      customer: getCustomerFromOrder(order),
-      status: (order.paymentState === 'Paid'
-        ? 'PAID'
-        : 'CREATED') as OrdersCreate['status'],
-    };
+      customer: order.customer,
+      status: order.status,
+    } as OrdersCreate;
 
     await this.getClient().orders.create(orderCreate);
   }
@@ -124,7 +114,8 @@ export class VoucherifyConnectorService {
     return Object.keys(metadataSchema?.properties ?? {});
   }
 
-  async getAvailablePromotions(cart, items) {
+  async getAvailablePromotions(cart) {
+    const items = mapItemsToVoucherifyOrdersItems(cart.items);
     const promotions = await this.getClient().promotions.validate({
       customer: {
         id: cart.customerId || cart.anonymousId,
@@ -132,7 +123,7 @@ export class VoucherifyConnectorService {
       },
       order: {
         source_id: cart.id,
-        items: items,
+        items,
         amount: items.reduce((acc, item) => acc + item.amount, 0),
       },
     });

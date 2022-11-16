@@ -1,7 +1,7 @@
 import { Command, CommandRunner } from 'nest-commander';
 import loadingCli from 'loading-cli';
 import { TaxCategoriesService } from '../commercetools/tax-categories/tax-categories.service';
-import { TypesService } from '../commercetools/types/types.service';
+import { CustomTypesService } from '../commercetools/custom-types/custom-types.service';
 
 @Command({
   name: 'config',
@@ -12,7 +12,7 @@ import { TypesService } from '../commercetools/types/types.service';
 })
 export class ConfigCommand implements CommandRunner {
   constructor(
-    private readonly typesService: TypesService,
+    private readonly typesService: CustomTypesService,
     private readonly taxCategoriesService: TaxCategoriesService,
   ) {}
   async run(): Promise<void> {
@@ -23,7 +23,7 @@ export class ConfigCommand implements CommandRunner {
     const { success: couponTypesCreated } =
       await this.typesService.configureCouponTypes();
     if (couponTypesCreated) {
-      spinnerCouponsTypes.succeed('[1/2] Coupon types configured');
+      spinnerCouponsTypes.succeed('[1/2] Coupon custom-types configured');
     } else {
       spinnerCouponsTypes.fail('[1/2] Could not configure coupon codes');
     }

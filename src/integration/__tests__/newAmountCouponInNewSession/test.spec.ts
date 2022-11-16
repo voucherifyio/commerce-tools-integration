@@ -2,18 +2,16 @@ import {
   getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
   defaultGetCouponTaxCategoryResponse,
 } from '../../../commercetools/tax-categories/__mocks__/tax-categories.service';
-import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/types/__mocks__/types.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/custom-types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 import { CommercetoolsService } from '../../../commercetools/commercetools.service';
-import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 describe('When one -20€ amount voucher is provided in new session', () => {
   let commercetoolsService: CommercetoolsService;
-  let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
   const COUPON_CODE = 'AMOUNT20';
   const SESSION_KEY = 'new-session-id';
@@ -27,17 +25,16 @@ describe('When one -20€ amount voucher is provided in new session', () => {
     const commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithResponse();
 
-    ({ commercetoolsService, productMapper } =
-      await buildCartServiceWithMockedDependencies({
-        typesService,
-        taxCategoriesService,
-        voucherifyConnectorService,
-        commerceToolsConnectorService,
-      }));
+    ({ commercetoolsService } = await buildCartServiceWithMockedDependencies({
+      typesService,
+      taxCategoriesService,
+      voucherifyConnectorService,
+      commerceToolsConnectorService,
+    }));
   });
 
   it('Should call voucherify exactly once', async () => {
-    await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    await commercetoolsService.handleCartUpdate(cart);
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
@@ -69,8 +66,7 @@ describe('When one -20€ amount voucher is provided in new session', () => {
   });
 
   it('Should assign new session with voucherify and store in cart', async () => {
-    const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([
@@ -84,8 +80,7 @@ describe('When one -20€ amount voucher is provided in new session', () => {
   });
 
   it('Should create "addCustomLineItem" action with coupons total value', async () => {
-    const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([
@@ -110,8 +105,7 @@ describe('When one -20€ amount voucher is provided in new session', () => {
     );
   });
   it('Should create "setCustomField" action with validated coupons', async () => {
-    const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([

@@ -1,15 +1,14 @@
-import { Cart, LineItem } from '@commercetools/platform-sdk';
-import { ExtendedValidateCouponsResult } from '../../../integration/types';
+import { LineItem } from '@commercetools/platform-sdk';
 import {
   CartAction,
   CartActionAddLineItem,
   CartActionRemoveLineItem,
   CartActionSetLineItemCustomType,
+  DataToRunCartActionsBuilder,
 } from '../CartAction';
 import mapValidateCouponsResultToLineProductsWithFixedAmount from '../helpers/fixedPrice';
 import addFreeLineItems from '../helpers/addFreeLineItems';
 import removeFreeLineItemsForNonApplicableCoupon from '../helpers/removeFreeLineItemsForNonApplicableCoupon';
-import isValidAndNewCouponNotFailed from '../helpers/utils';
 
 function removeDuplicatedAddLineItems(
   actionsAddLineItem: CartActionAddLineItem[],
@@ -82,23 +81,14 @@ function mergeUniqueSetLineItemCustomTypeActions(
 }
 
 export default function lineItemsAndTheirCustomFields(
-  cart: Cart,
-  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
+  dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
 ): CartAction[] {
-  if (!isValidAndNewCouponNotFailed(extendedValidateCouponsResult)) {
-    return [];
-  }
-
   const lineProductsWithFixedAmount =
     mapValidateCouponsResultToLineProductsWithFixedAmount(
-      cart,
-      extendedValidateCouponsResult,
+      dataToRunCartActionsBuilder,
     );
 
-  const freeLineItemsActions = addFreeLineItems(
-    cart,
-    extendedValidateCouponsResult,
-  );
+  const freeLineItemsActions = addFreeLineItems(dataToRunCartActionsBuilder);
 
   const allActionsSetLineItemCustomType = [
     ...lineProductsWithFixedAmount,
@@ -106,8 +96,7 @@ export default function lineItemsAndTheirCustomFields(
   ].filter((action) => action?.action === 'setLineItemCustomType');
 
   const removeActions = removeFreeLineItemsForNonApplicableCoupon(
-    cart,
-    extendedValidateCouponsResult,
+    dataToRunCartActionsBuilder,
   );
 
   const removeLineItemActions = removeActions.filter(
@@ -118,7 +107,7 @@ export default function lineItemsAndTheirCustomFields(
     mergeUniqueSetLineItemCustomTypeActions(
       allActionsSetLineItemCustomType as CartActionSetLineItemCustomType[],
       removeLineItemActions as CartActionRemoveLineItem[],
-      cart.lineItems,
+      dataToRunCartActionsBuilder.commerceToolsCart.lineItems,
     );
 
   const uniqueAddLineItems = removeDuplicatedAddLineItems(

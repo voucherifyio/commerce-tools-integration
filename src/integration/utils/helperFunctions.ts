@@ -1,9 +1,13 @@
-import { Cart } from '@commercetools/platform-sdk';
+import {
+  Cart as CommerceToolsCart,
+  Order as CommerceToolsOrder,
+} from '@commercetools/platform-sdk';
 import {
   StackableRedeemableResponse,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
-import { Coupon, CouponStatus } from './types';
+import { Coupon } from '../types';
+import { uniqBy } from 'lodash';
 
 export function deserializeCoupons(serializedDiscountOrCode: string): Coupon {
   if (serializedDiscountOrCode.startsWith('{')) {
@@ -16,28 +20,16 @@ export function deserializeCoupons(serializedDiscountOrCode: string): Coupon {
   };
 }
 
-export function getCouponsFromCart(cart: Cart): Coupon[] {
-  return (cart.custom?.fields?.discount_codes ?? [])
+export function getCouponsFromCartOrOrder(
+  cart: CommerceToolsCart | CommerceToolsOrder,
+): Coupon[] {
+  const coupons = (cart.custom?.fields?.discount_codes ?? [])
     .map(deserializeCoupons)
     .filter(
       (coupon) =>
         coupon.status !== 'NOT_APPLIED' && coupon.status !== 'AVAILABLE',
     ); // we already declined them, will be removed by frontend
-}
-
-function checkCouponsValidatedAsState(
-  coupons: Coupon[],
-  validatedCoupons: StackableRedeemableResponse[],
-  status: CouponStatus,
-): boolean {
-  return (
-    validatedCoupons.length === 0 ||
-    coupons
-      .filter((coupon) => coupon.status === status)
-      .every((coupon) =>
-        validatedCoupons.find((element) => element.id === coupon.code),
-      )
-  );
+  return uniqBy(coupons, 'code');
 }
 
 export function checkIfAllInapplicableCouponsArePromotionTier(
@@ -48,38 +40,6 @@ export function checkIfAllInapplicableCouponsArePromotionTier(
   );
 
   return notApplicableCoupons.length === inapplicableCouponsPromitonTier.length;
-}
-
-export function checkIfOnlyNewCouponsFailed(
-  coupons: Coupon[],
-  applicableCoupons: StackableRedeemableResponse[],
-  notApplicableCoupons: StackableRedeemableResponse[],
-  skippedCoupons: StackableRedeemableResponse[],
-): boolean {
-  const areAllNewCouponsNotApplicable = checkCouponsValidatedAsState(
-    coupons,
-    notApplicableCoupons,
-    'NEW',
-  );
-
-  const areAllAppliedCouponsApplicable = checkCouponsValidatedAsState(
-    coupons,
-    applicableCoupons,
-    'APPLIED',
-  );
-
-  const areAllAppliedCouponsSkipped = checkCouponsValidatedAsState(
-    coupons,
-    skippedCoupons,
-    'APPLIED',
-  );
-
-  return (
-    notApplicableCoupons.length !== 0 &&
-    areAllNewCouponsNotApplicable &&
-    areAllAppliedCouponsSkipped &&
-    areAllAppliedCouponsApplicable
-  );
 }
 
 export function filterCouponsByLimit(coupons: Coupon[], couponsLimit: number) {

@@ -19,21 +19,12 @@ export class ApiExtensionController {
   ) {}
 
   async handleRequestCart(cart: Cart, responseExpress: Response) {
-    if (cart.version === 1) {
-      return responseExpress
-        .status(200)
-        .json(
-          await this.commercetoolsService.setCustomTypeForInitializedCart(),
-        );
-    }
     let response;
+    let start, end;
     try {
-      const start = performance.now();
-      response =
-        await this.commercetoolsService.validatePromotionsAndBuildCartActions(
-          cart,
-        );
-      const end = performance.now();
+      start = performance.now();
+      response = await this.commercetoolsService.handleCartUpdate(cart);
+      end = performance.now();
       this.logger.debug(
         `handleRequestCart->validatePromotionsAndBuildCartActions: ${elapsedTime(
           start,
@@ -50,13 +41,11 @@ export class ApiExtensionController {
     if (!response?.status) {
       return responseExpress.status(400).json({});
     }
-    if (!response.validateCouponsResult || !response.actions.length) {
-      return responseExpress.status(200).json({ actions: response.actions });
-    }
     responseExpress.status(200).json({ actions: response.actions });
     try {
-      return await this.commercetoolsService.checkIfAPIExtensionRespondedOnTimeAndRevalidateCouponsIfNot(
+      await this.commercetoolsService.handleAPIExtensionTimeout(
         cart,
+        start && end ? Math.round(end) - Math.round(start) : 0,
       );
     } catch (e) {
       console.log(e);
@@ -72,9 +61,9 @@ export class ApiExtensionController {
     responseExpress.status(200).json({
       actions: getActionsForAPIExtensionTypeOrder(paymentState),
     });
-    this.commercetoolsService.checkIfCartWasUpdatedWithStatusPaidAndRedeem(
+    await this.commercetoolsService.checkIfCartWasUpdatedWithStatusPaidAndRedeem(
       order,
-    ); //don't wait
+    );
     return;
   }
 

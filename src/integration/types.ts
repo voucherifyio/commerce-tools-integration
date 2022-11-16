@@ -1,21 +1,7 @@
-import { TaxCategory } from '@commercetools/platform-sdk';
-import {
-  DiscountVouchersEffectTypes,
-  StackableRedeemableResponse,
-  ValidationValidateStackableResponse,
-} from '@voucherify/sdk';
-import { CartAction } from '../commercetools/cartActions/CartAction';
-import { CustomerGroupReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/customer-group';
+import { DiscountVouchersEffectTypes } from '@voucherify/sdk';
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
-
-export type CartResponse = { status: boolean; actions: CartAction[] };
-
-export type PriceSelector = {
-  country: string;
-  currencyCode: string;
-  customerGroup: CustomerGroupReference;
-  distributionChannels: ChannelReference[];
-};
+import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
+import { CustomerRequest } from '@voucherify/sdk/dist/types/Customers';
 
 export type ProductToAdd = {
   code: string; // coupon code
@@ -36,31 +22,6 @@ export type availablePromotion = {
   code: string;
 };
 
-export type ValidateCouponsResult = {
-  availablePromotions: availablePromotion[];
-  validatedCoupons?: ValidationValidateStackableResponse;
-  productsToAdd?: ProductToAdd[];
-};
-
-export type ExtendedValidateCouponsResult = {
-  availablePromotions: availablePromotion[];
-  applicableCoupons: StackableRedeemableResponse[];
-  notApplicableCoupons: StackableRedeemableResponse[];
-  skippedCoupons: StackableRedeemableResponse[];
-  newSessionKey?: string;
-  valid: boolean;
-  totalDiscountAmount: number;
-  productsToAdd: ProductToAdd[];
-  onlyNewCouponsFailed?: boolean;
-  allInapplicableCouponsArePromotionTier?: boolean;
-  couponsLimit: number;
-};
-
-export enum CartDiscountApplyMode {
-  CustomLineItem,
-  DirectDiscount,
-}
-
 export type Coupon = {
   code: string;
   status: CouponStatus;
@@ -72,6 +33,36 @@ export type Coupon = {
 export type SentCoupons = {
   result: string;
   coupon: string;
+};
+
+export type Item = {
+  source_id: string;
+  quantity: number;
+  price: number;
+  amount: number;
+  name: string;
+  sku: string;
+  attributes?: { name: string; value: any }[];
+};
+
+export type Cart = {
+  id: string;
+  customerId?: string;
+  anonymousId?: string;
+  sessionKey?: string;
+  coupons: Coupon[];
+  items: Item[];
+};
+
+export type Order = {
+  id: string;
+  customer?: CustomerRequest;
+  customerId: string;
+  status?: OrdersCreate['status'];
+  coupons: Coupon[];
+  items: Item[];
+  sessionKey: string;
+  rawOrder?: any;
 };
 
 export type CouponStatus = 'NEW' | 'APPLIED' | 'NOT_APPLIED' | 'DELETED';

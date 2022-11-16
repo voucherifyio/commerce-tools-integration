@@ -2,21 +2,18 @@ import {
   getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
   defaultGetCouponTaxCategoryResponse,
 } from '../../../commercetools/tax-categories/__mocks__/tax-categories.service';
-import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/types/__mocks__/types.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/custom-types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 import { CommercetoolsService } from '../../../commercetools/commercetools.service';
-import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 describe('when applying discount code on a specific product in the cart', () => {
   let commercetoolsService: CommercetoolsService;
-  let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
   const COUPON_CODE = 'SNEAKERS30';
-  const SESSION_KEY = 'existing-session-id';
 
   beforeEach(async () => {
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
@@ -27,16 +24,15 @@ describe('when applying discount code on a specific product in the cart', () => 
     const commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithResponse();
 
-    ({ commercetoolsService, productMapper } =
-      await buildCartServiceWithMockedDependencies({
-        typesService,
-        taxCategoriesService,
-        voucherifyConnectorService,
-        commerceToolsConnectorService,
-      }));
+    ({ commercetoolsService } = await buildCartServiceWithMockedDependencies({
+      typesService,
+      taxCategoriesService,
+      voucherifyConnectorService,
+      commerceToolsConnectorService,
+    }));
   });
   it('call voucherify once', async () => {
-    await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    await commercetoolsService.handleCartUpdate(cart);
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
@@ -67,8 +63,7 @@ describe('when applying discount code on a specific product in the cart', () => 
     );
   });
   it('should create `addCustomLineItem` action with total coupons value applied', async () => {
-    const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([
@@ -98,8 +93,7 @@ describe('when applying discount code on a specific product in the cart', () => 
   });
 
   it('should create three `setCustomField` with default values and action with storing coupon details to the cart', async () => {
-    const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([

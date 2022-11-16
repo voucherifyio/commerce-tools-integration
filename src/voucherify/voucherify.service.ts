@@ -1,6 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { VoucherifyConnectorService } from './voucherify-connector.service';
-import { ProductMapper } from '../integration/mappers/product';
+import { ProductMapper } from '../integration/utils/mappers/product';
 import { ConfigService } from '@nestjs/config';
 import { ValidationValidateStackableResponse } from '@voucherify/sdk';
 import { Coupon } from '../integration/types';
@@ -24,10 +24,7 @@ export class VoucherifyService {
     }
 
     const promotions =
-      await this.voucherifyConnectorService.getAvailablePromotions(
-        cart,
-        this.productMapper.mapLineItems(cart.lineItems),
-      );
+      await this.voucherifyConnectorService.getAvailablePromotions(cart);
 
     const availablePromotions = promotions
       .filter((promo) => {
@@ -70,11 +67,11 @@ export class VoucherifyService {
         return redeemable;
       });
 
-    validatedCoupons.redeemables = [
+    return (validatedCoupons.redeemables = [
       ...validatedCoupons.redeemables.filter(
         (element) => element.object !== 'promotion_tier',
       ),
       ...promotionTiersWithBanner,
-    ];
+    ]);
   }
 }

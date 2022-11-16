@@ -2,23 +2,20 @@ import {
   getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
   defaultGetCouponTaxCategoryResponse,
 } from '../../../commercetools/tax-categories/__mocks__/tax-categories.service';
-import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/types/__mocks__/types.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/custom-types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
-import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 import { CommercetoolsService } from '../../../commercetools/commercetools.service';
 describe('when adding new product to the cart with free product already applied (via coupon)', () => {
   let commercetoolsService: CommercetoolsService;
-  let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
   const COUPON_CODE = 'ADD_GIFT';
   const SKU_ID = 'gift-sku-id';
   const PRODUCT_ID = 'gift-product-id';
-  const SESSION_KEY = 'existing-session-id';
   const PRODUCT_PRICE = 6500;
 
   beforeEach(async () => {
@@ -34,17 +31,16 @@ describe('when adding new product to the cart with free product already applied 
         id: PRODUCT_ID,
       });
 
-    ({ commercetoolsService, productMapper } =
-      await buildCartServiceWithMockedDependencies({
-        typesService,
-        taxCategoriesService,
-        voucherifyConnectorService,
-        commerceToolsConnectorService,
-      }));
+    ({ commercetoolsService } = await buildCartServiceWithMockedDependencies({
+      typesService,
+      taxCategoriesService,
+      voucherifyConnectorService,
+      commerceToolsConnectorService,
+    }));
   });
 
   it('should call voucherify once', async () => {
-    await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    await commercetoolsService.handleCartUpdate(cart);
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
@@ -76,8 +72,7 @@ describe('when adding new product to the cart with free product already applied 
   });
 
   it('should create one `addCustomLineItem` action with summary of applied coupon', async () => {
-    const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(
       result.actions.filter((e) => e.action === 'addCustomLineItem'),
@@ -107,8 +102,7 @@ describe('when adding new product to the cart with free product already applied 
   });
 
   it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
-    const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(
       result.actions.filter((e) => e.action === 'setCustomField'),

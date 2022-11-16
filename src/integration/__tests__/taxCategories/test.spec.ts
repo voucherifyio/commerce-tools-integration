@@ -3,7 +3,7 @@ import {
   getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
   getTaxCategoryServiceMockWithNotDefinedTaxCategoryResponse,
 } from '../../../commercetools/tax-categories/__mocks__/tax-categories.service';
-import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/types/__mocks__/types.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/custom-types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
@@ -25,7 +25,7 @@ describe('Tax categories', () => {
       });
 
     await expect(
-      commercetoolsService.validatePromotionsAndBuildCartActions(cart),
+      commercetoolsService.handleCartUpdate(cart),
     ).rejects.toThrowError(
       new Error('Coupon tax category was not configured correctly'),
     );
@@ -44,7 +44,7 @@ describe('Tax categories', () => {
         voucherifyConnectorService,
       });
 
-    await commercetoolsService.validatePromotionsAndBuildCartActions(cartCh);
+    await commercetoolsService.handleCartUpdate(cartCh);
 
     expect(
       taxCategoriesService.getCouponTaxCategoryFromResponse,
@@ -72,7 +72,7 @@ describe('Tax categories', () => {
         voucherifyConnectorService,
       });
 
-    await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    await commercetoolsService.handleCartUpdate(cart);
 
     expect(
       taxCategoriesService.getCouponTaxCategoryFromResponse,

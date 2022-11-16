@@ -4,20 +4,17 @@ import {
   CartActionAddCustomLineItem,
   CartActionRemoveCustomLineItem,
   COUPON_CUSTOM_LINE_SLUG,
+  DataToRunCartActionsBuilder,
 } from '../CartAction';
-import {
-  CartDiscountApplyMode,
-  ExtendedValidateCouponsResult,
-} from '../../../integration/types';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import isValidAndNewCouponNotFailed from '../helpers/utils';
 import addDirectDiscountWithDiscountSummary from '../addDirectDiscountWithDiscountSummary';
+import { CartDiscountApplyMode } from '../../types';
 
 // TODO don't create addCustomLineItem action if the summary doesn't actually change
 function addCustomLineItemWithDiscountSummary(
   cart: Cart,
-  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
+  dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
   taxCategory: TaxCategory,
 ): CartActionAddCustomLineItem[] {
   const voucherCustomLineItem = cart.customLineItems
@@ -26,7 +23,7 @@ function addCustomLineItemWithDiscountSummary(
   if (voucherCustomLineItem) return [];
 
   const { totalDiscountAmount, applicableCoupons } =
-    extendedValidateCouponsResult;
+    dataToRunCartActionsBuilder;
 
   if (applicableCoupons.length === 0) return [];
 
@@ -81,33 +78,30 @@ function removeDiscountedCustomLineItems(
 }
 
 export default function customLineItems(
-  cart: Cart,
-  extendedValidateCouponsResult: ExtendedValidateCouponsResult,
-  cartDiscountApplyMode: CartDiscountApplyMode,
-  taxCategory?: TaxCategory,
+  dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
 ): CartAction[] {
   const cartActions = [] as CartAction[];
+  const { commerceToolsCart, cartDiscountApplyMode, taxCategory } =
+    dataToRunCartActionsBuilder;
 
-  if (isValidAndNewCouponNotFailed(extendedValidateCouponsResult)) {
-    if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
-      cartActions.push(
-        ...removeDiscountedCustomLineItems(cart),
-        ...addCustomLineItemWithDiscountSummary(
-          cart,
-          extendedValidateCouponsResult,
-          taxCategory,
-        ),
-      );
-    }
-    if (cartDiscountApplyMode === CartDiscountApplyMode.DirectDiscount) {
-      cartActions.push(
-        ...removeDiscountedCustomLineItems(cart),
-        ...addDirectDiscountWithDiscountSummary(
-          cart,
-          extendedValidateCouponsResult,
-        ),
-      );
-    }
+  if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
+    cartActions.push(
+      ...removeDiscountedCustomLineItems(commerceToolsCart),
+      ...addCustomLineItemWithDiscountSummary(
+        commerceToolsCart,
+        dataToRunCartActionsBuilder,
+        taxCategory,
+      ),
+    );
+  }
+  if (cartDiscountApplyMode === CartDiscountApplyMode.DirectDiscount) {
+    cartActions.push(
+      ...removeDiscountedCustomLineItems(commerceToolsCart),
+      ...addDirectDiscountWithDiscountSummary(
+        commerceToolsCart,
+        dataToRunCartActionsBuilder,
+      ),
+    );
   }
 
   return cartActions;
