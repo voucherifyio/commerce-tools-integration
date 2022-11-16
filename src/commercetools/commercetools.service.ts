@@ -187,7 +187,7 @@ export class CommercetoolsService {
     this.handlerOrderRedeem = handler;
   }
 
-  async validateCouponsAndPromotionsAndBuildCartActions(
+  async validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
     cart: CommerceToolsCart,
   ): Promise<{
     validateCouponsResult?: ValidateCouponsResult;

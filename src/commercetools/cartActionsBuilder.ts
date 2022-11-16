@@ -65,17 +65,16 @@ export class ActionBuilder {
   }
 
   private gatherDataToRunCartActionsBuilder(): DataToRunCartActionsBuilder {
-    const applicableCoupons = this.applicableCoupons ?? [];
-    const inapplicableCoupons = this.inapplicableCoupons ?? [];
+    const inapplicableCoupons = this.inapplicableCoupons;
     return {
-      availablePromotions: this.availablePromotions ?? [],
-      applicableCoupons,
+      availablePromotions: this.availablePromotions,
+      applicableCoupons: this.applicableCoupons,
       inapplicableCoupons,
       newSessionKey: this.sessionKey ?? null,
       totalDiscountAmount: this.totalDiscountAmount,
       productsToAdd: this.productsToAdd ?? [],
       allInapplicableCouponsArePromotionTier:
-        this?.applicableCoupons || this?.inapplicableCoupons
+        this.applicableCoupons.length || inapplicableCoupons.length
           ? checkIfAllInapplicableCouponsArePromotionTier(inapplicableCoupons)
           : undefined,
       couponsLimit: this.couponsLimit,

@@ -23,7 +23,7 @@ export class ApiExtensionController {
     try {
       const start = performance.now();
       response =
-        await this.commercetoolsService.validateCouponsAndPromotionsAndBuildCartActions(
+        await this.commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
           cart,
         );
       const end = performance.now();
