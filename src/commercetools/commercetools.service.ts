@@ -197,7 +197,7 @@ export class CommercetoolsService {
       await this.handlerOrderRedeem(translateCtOrderToOrder(order));
       return;
     } catch (e) {
-      console.log(e);
+      console.log(e); //can't use the logger because it cannot handle error objects
       this.logger.error({
         msg: `Error while redeemVoucherifyCoupons function`,
       });

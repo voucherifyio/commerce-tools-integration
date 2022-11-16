@@ -347,7 +347,7 @@ export class IntegrationService {
         buildRedeemStackableRequestForVoucherify(order, items, orderMetadata),
       );
     } catch (e) {
-      console.log(e);
+      console.log(e); //can't use the logger because it cannot handle error objects
       this.logger.debug({ msg: 'Redeem operation failed', error: e.details });
       return { status: true, actions: [] };
     }

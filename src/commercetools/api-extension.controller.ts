@@ -32,7 +32,7 @@ export class ApiExtensionController {
         )}`,
       );
     } catch (e) {
-      console.log(e);
+      console.log(e); //can't use the logger because it cannot handle error objects
       this.logger.error({
         msg: `Error while commercetoolsService.validatePromotionsAndBuildCartActions function`,
       });
@@ -48,7 +48,7 @@ export class ApiExtensionController {
         start && end ? Math.round(end) - Math.round(start) : 0,
       );
     } catch (e) {
-      console.log(e);
+      console.log(e); //can't use the logger because it cannot handle error objects
       this.logger.error({
         msg: `Error while commercetoolsService.checkIfAPIExtensionRespondedOnTimeAndRevalidateCouponsIfNot function`,
       });
