@@ -31,15 +31,13 @@ export class ApiExtensionService {
     if (!extensionToRemove) {
       return false;
     }
-    const removedExtenison = (
+    return (
       await this.client
         .extensions()
         .withId({ ID: extensionToRemove.id })
         .delete({ queryArgs: { version: extensionToRemove.version } })
         .execute()
-    ).body;
-
-    return removedExtenison;
+    )?.body;
   }
 
   async removeByAttr(attr: 'key' | 'destination', value: string) {
