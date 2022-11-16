@@ -20,10 +20,11 @@ export class ApiExtensionController {
 
   async handleRequestCart(cart: Cart, responseExpress: Response) {
     let response;
+    let start, end;
     try {
-      const start = performance.now();
+      start = performance.now();
       response = await this.commercetoolsService.handleCartUpdate(cart);
-      const end = performance.now();
+      end = performance.now();
       this.logger.debug(
         `handleRequestCart->validatePromotionsAndBuildCartActions: ${elapsedTime(
           start,
@@ -42,7 +43,10 @@ export class ApiExtensionController {
     }
     responseExpress.status(200).json({ actions: response.actions });
     try {
-      await this.commercetoolsService.handleAPIExtensionTimeout(cart);
+      await this.commercetoolsService.handleAPIExtensionTimeout(
+        cart,
+        start && end ? Math.round(end) - Math.round(start) : 0,
+      );
     } catch (e) {
       console.log(e);
       this.logger.error({

@@ -41,6 +41,7 @@ import { getQuantity } from '../integration/mappers/product';
 import { ActionBuilder } from './cartActionsBuilder';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { PaymentState } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/order';
+import { getMaxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut } from './utils/getMaxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut';
 
 interface ProductWithCurrentPriceAmount extends Product {
   currentPriceAmount: number;
@@ -186,6 +187,13 @@ export class CommercetoolsService {
     this.handlerOrderRedeem = handler;
   }
 
+  private maxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut: number =
+    getMaxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut(
+      this.configService.get<number>(
+        'MAX_CART_UPDATE_RESPONSE_TIME_WITHOUT_CHECKING_IF_API_EXTENSION_TIMED_OUT',
+      ),
+    );
+
   async handleCartUpdate(cart: CommerceToolsCart): Promise<{
     validateCouponsResult?: ValidateCouponsResult;
     actions: CartAction[];
@@ -241,8 +249,17 @@ export class CommercetoolsService {
     };
   }
 
-  async handleAPIExtensionTimeout(cart: CommerceToolsCart) {
+  async handleAPIExtensionTimeout(
+    cart: CommerceToolsCart,
+    buildingResponseTime: number,
+  ) {
     if (!cart?.custom?.fields?.discount_codes?.length) {
+      return;
+    }
+    if (
+      buildingResponseTime <
+      this.maxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut
+    ) {
       return;
     }
     let cartMutated = false;
