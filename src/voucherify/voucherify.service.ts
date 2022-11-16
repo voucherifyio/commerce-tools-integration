@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { VoucherifyConnectorService } from './voucherify-connector.service';
 import { ProductMapper } from '../integration/utils/mappers/product';
 import { ConfigService } from '@nestjs/config';
@@ -12,7 +12,6 @@ export function getCouponsLimit(couponLimit?: number): number {
 @Injectable()
 export class VoucherifyService {
   constructor(
-    @Inject(forwardRef(() => VoucherifyConnectorService))
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
     private readonly productMapper: ProductMapper,
     private readonly configService: ConfigService,
