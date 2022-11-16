@@ -24,7 +24,7 @@ import {
   RequestJsonLogger,
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
-import { PriceSelector } from '../integration/types';
+import { PriceSelector } from './types';
 
 type MeasurementKey = '__start' | '__httpStart';
 type ExtendedRequest = ClientRequest & Record<MeasurementKey, number>;
@@ -73,7 +73,7 @@ export class CommercetoolsConnectorService {
   private get jsonLoggerMiddleware(): Middleware {
     return (next) => async (request, response) => {
       const url = new URL(request.uri, request.baseUri);
-      // uri is composed of CT project and resource name, ie. /voucherify-integrations/types
+      // uri is composed of CT project and resource name, ie. /voucherify-integrations/custom-types
       const uri = url.pathname.split('/')[2];
       await this.requestJsonLogger.log(`ct-client-${uri}`, request, response);
       next(request, response);

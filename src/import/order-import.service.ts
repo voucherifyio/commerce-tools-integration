@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Order } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
-import { OrderMapper } from '../integration/mappers/order';
+import { OrderMapper } from '../integration/utils/mappers/order';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
 
 const sleep = (time: number) => {

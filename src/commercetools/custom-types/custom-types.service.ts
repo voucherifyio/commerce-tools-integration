@@ -3,7 +3,7 @@ import { CommercetoolsConnectorService } from '../commercetools-connector.servic
 import { Type, TypeUpdateAction } from '@commercetools/platform-sdk';
 
 @Injectable()
-export class TypesService {
+export class CustomTypesService {
   constructor(
     private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly logger: Logger,
@@ -208,7 +208,7 @@ export class TypesService {
 
     if (orderConfig.success && productConfig.success) {
       this.logger.debug({
-        msg: 'All types are configured properly',
+        msg: 'All custom-types are configured properly',
       });
       return { success: true };
     } else {

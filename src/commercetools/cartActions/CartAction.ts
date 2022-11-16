@@ -4,14 +4,11 @@ import {
   CartDiscountValueDraft,
   CartDiscountTarget,
 } from '@commercetools/platform-sdk';
-import {
-  availablePromotion,
-  CartDiscountApplyMode,
-  ProductToAdd,
-} from '../../integration/types';
+import { availablePromotion, ProductToAdd } from '../../integration/types';
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
 import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/cart';
+import { CartDiscountApplyMode } from '../types';
 
 export type CartActionSetCustomType = {
   action: 'setCustomType';

@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
-  RedemptionsRedeemStackableParams,
   RedemptionsRedeemStackableResponse,
   StackableRedeemableResponse,
   ValidationValidateStackableResponse,
@@ -9,7 +8,7 @@ import {
 import { uniqBy } from 'lodash';
 
 import { TaxCategoriesService } from '../commercetools/tax-categories/tax-categories.service';
-import { TypesService } from '../commercetools/types/types.service';
+import { CustomTypesService } from '../commercetools/custom-types/custom-types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import {
   availablePromotion,
@@ -19,12 +18,9 @@ import {
   SentCoupons,
   Order,
 } from './types';
-import { mapItemsToVoucherifyOrdersItems } from './mappers/product';
+import { mapItemsToVoucherifyOrdersItems } from './utils/mappers/product';
 import { ConfigService } from '@nestjs/config';
-import {
-  buildValidationsValidateStackableParamsForVoucherify,
-  CommercetoolsService,
-} from '../commercetools/commercetools.service';
+import { CommercetoolsService } from '../commercetools/commercetools.service';
 import {
   getCouponsLimit,
   VoucherifyService,
@@ -32,37 +28,12 @@ import {
 import {
   calculateTotalDiscountAmount,
   filterCouponsByLimit,
-} from './helperFunctions';
+} from './utils/helperFunctions';
 import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
 import { getCouponsByStatus } from '../commercetools/utils/oldGetCouponsByStatus';
-import { isClass } from '../misc/isClass';
-
-export function buildRedeemStackableRequestForVoucherify(
-  order: Order,
-  items: OrdersItem[],
-  orderMetadata: Record<string, any>,
-): RedemptionsRedeemStackableParams {
-  return {
-    session: {
-      type: 'LOCK',
-      key: order.sessionKey,
-    },
-    redeemables: order.coupons.map((code) => {
-      return {
-        object: code.type ? code.type : 'voucher',
-        id: code.code,
-      };
-    }),
-    order: {
-      source_id: order.id,
-      amount: order.items.reduce((acc, item) => acc + item.amount, 0),
-      status: 'PAID',
-      items,
-      metadata: orderMetadata,
-    },
-    customer: order.customer,
-  } as RedemptionsRedeemStackableParams;
-}
+import { isClass } from './utils/isClass';
+import { buildValidationsValidateStackableParamsForVoucherify } from './utils/mappers/buildValidationsValidateStackableParamsForVoucherify';
+import { buildRedeemStackableRequestForVoucherify } from './utils/mappers/buildRedeemStackableRequestForVoucherify';
 
 export interface StoreActions {
   setAvailablePromotions(promotions: availablePromotion[]); //starting value: []
@@ -77,7 +48,7 @@ export interface StoreActions {
 export class IntegrationService {
   constructor(
     private readonly taxCategoriesService: TaxCategoriesService,
-    private readonly typesService: TypesService,
+    private readonly typesService: CustomTypesService,
     private readonly logger: Logger,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
     private readonly configService: ConfigService,

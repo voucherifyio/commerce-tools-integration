@@ -12,12 +12,9 @@ import {
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
-import { mapItemsToVoucherifyOrdersItems } from '../integration/mappers/product';
+import { mapItemsToVoucherifyOrdersItems } from '../integration/utils/mappers/product';
 import { Order } from '../integration/types';
-
-function elapsedTime(start: number, end: number): string {
-  return `Time: ${(end - start).toFixed(3)}ms`;
-}
+import { elapsedTime } from '../misc/elapsedTime';
 
 @Injectable()
 export class VoucherifyConnectorService {

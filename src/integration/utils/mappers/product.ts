@@ -1,5 +1,5 @@
 import { OrdersItem } from '@voucherify/sdk';
-import { Item } from '../types';
+import { Item } from '../../types';
 
 export class ProductMapper {}
 

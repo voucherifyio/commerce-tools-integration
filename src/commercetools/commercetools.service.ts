@@ -1,31 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   Cart as CommerceToolsCart,
-  LineItem,
   Order as CommerceToolsOrder,
   Product,
   TaxCategory,
 } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../misc/sleep';
-import {
-  Cart,
-  CartDiscountApplyMode,
-  CartResponse,
-  Coupon,
-  Item,
-  PriceSelector,
-  ProductToAdd,
-  ValidateCouponsResult,
-  Order,
-} from '../integration/types';
-import { TypesService } from './types/types.service';
+import { Cart, ProductToAdd, Order } from '../integration/types';
+import { CustomTypesService } from './custom-types/custom-types.service';
 import {
   OrdersItem,
   RedemptionsRedeemStackableResponse,
   StackableRedeemableResponse,
   StackableRedeemableResultDiscountUnit,
-  ValidationsValidateStackableParams,
 } from '@voucherify/sdk';
 import { getCommercetoolstCurrentPriceAmount } from './utils/getCommercetoolstCurrentPriceAmount';
 import { CUSTOM_FIELD_PREFIX } from '../consts/voucherify';
@@ -33,128 +21,20 @@ import { CartAction } from './cartActions/CartAction';
 import { ConfigService } from '@nestjs/config';
 import { StoreActions } from '../integration/integration.service';
 import { TaxCategoriesService } from './tax-categories/tax-categories.service';
-import { deleteObjectsFromObject } from '../misc/deleteObjectsFromObject';
+import { deleteObjectsFromObject } from './utils/deleteObjectsFromObject';
 import flatten from 'flat';
-import { getCouponsFromCartOrOrder } from '../integration/helperFunctions';
 import { getCouponsLimit } from '../voucherify/voucherify.service';
-import { getQuantity } from '../integration/mappers/product';
 import { ActionBuilder } from './cartActionsBuilder';
-import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
-import { PaymentState } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/order';
 import { getMaxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut } from './utils/getMaxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut';
+import { translateCtCartToCart } from './utils/mappers/translateCtCartToCart';
+import { getPriceSelectorFromCtCart } from './utils/mappers/getPriceSelectorFromCtCart';
+import { translateCtOrderToOrder } from './utils/mappers/translateCtOrderToOrder';
+import { CartDiscountApplyMode, CartResponse, PriceSelector } from './types';
 
 interface ProductWithCurrentPriceAmount extends Product {
   currentPriceAmount: number;
   unit: StackableRedeemableResultDiscountUnit;
   item: OrdersItem;
-}
-
-export function getSession(cart: CommerceToolsCart): string | undefined {
-  return cart.custom?.fields?.session ?? undefined;
-}
-
-function getPriceSelectorFromCart(cart: CommerceToolsCart): PriceSelector {
-  return {
-    country: cart.country,
-    currencyCode: cart.totalPrice.currencyCode,
-    customerGroup: cart.customerGroup,
-    distributionChannels: [
-      ...new Set(
-        cart.lineItems
-          .map((item) => item.distributionChannel)
-          .filter((item) => item != undefined),
-      ),
-    ],
-  };
-}
-
-export function getCustomerFromOrder(order: CommerceToolsOrder) {
-  return {
-    source_id: order.customerId || order.anonymousId,
-    name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
-    email: order.shippingAddress?.email,
-    address: {
-      city: order.shippingAddress?.city,
-      country: order.shippingAddress?.country,
-      postal_code: order.shippingAddress?.postalCode,
-      line_1: order.shippingAddress?.streetName,
-    },
-    phone: order.shippingAddress?.phone,
-  };
-}
-
-export function buildValidationsValidateStackableParamsForVoucherify(
-  coupons: Coupon[],
-  cart: Cart,
-  items,
-) {
-  return {
-    // options?: StackableOptions;
-    redeemables: coupons.map((code) => {
-      return {
-        object: code.type ? code.type : 'voucher',
-        id: code.code,
-      };
-    }),
-    session: {
-      type: 'LOCK',
-      ...(cart.sessionKey && { key: cart.sessionKey }),
-    },
-    order: {
-      source_id: cart.id,
-      customer: {
-        source_id: cart.customerId || cart.anonymousId,
-      },
-      amount: items.reduce((acc, item) => acc + item.amount, 0),
-      discount_amount: 0,
-      items,
-    },
-    customer: {
-      source_id: cart.customerId || cart.anonymousId,
-    },
-  } as ValidationsValidateStackableParams;
-}
-
-export function mapLineItemsToIntegrationType(lineItems: LineItem[]): Item[] {
-  return lineItems
-    .filter((item) => getQuantity(item) > 0)
-    .map((item) => {
-      return {
-        source_id: item?.variant?.sku,
-        quantity: getQuantity(item),
-        price: item.price.value.centAmount,
-        amount: item.price.value.centAmount * getQuantity(item),
-        name: Object?.values(item.name)?.[0],
-        sku: Object?.values(item.name)?.[0],
-        attributes: item?.variant.attributes,
-      };
-    });
-}
-
-function translateCtCartToCart(cart: CommerceToolsCart): Cart {
-  return {
-    id: cart.id,
-    customerId: cart?.customerId,
-    anonymousId: cart?.anonymousId,
-    sessionKey: getSession(cart as CommerceToolsCart),
-    coupons: getCouponsFromCartOrOrder(cart),
-    items: mapLineItemsToIntegrationType(cart.lineItems),
-  };
-}
-
-function translateCtOrderToOrder(order: CommerceToolsOrder): Order {
-  return {
-    id: order.id,
-    customer: getCustomerFromOrder(order),
-    customerId: order.customerId || order.anonymousId,
-    status: ((order.paymentState as PaymentState) === 'Paid'
-      ? 'PAID'
-      : 'CREATED') as OrdersCreate['status'],
-    coupons: getCouponsFromCartOrOrder(order),
-    items: mapLineItemsToIntegrationType(order.lineItems),
-    sessionKey: order.custom?.fields.session,
-    rawOrder: order,
-  };
 }
 
 type handlerCartUpdate = (
@@ -174,7 +54,7 @@ export class CommercetoolsService {
   constructor(
     private readonly logger: Logger,
     private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
-    private readonly typesService: TypesService,
+    private readonly typesService: CustomTypesService,
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly configService: ConfigService,
   ) {}
@@ -195,7 +75,6 @@ export class CommercetoolsService {
     );
 
   async handleCartUpdate(cart: CommerceToolsCart): Promise<{
-    validateCouponsResult?: ValidateCouponsResult;
     actions: CartAction[];
     status: boolean;
   }> {
@@ -237,7 +116,7 @@ export class CommercetoolsService {
     await this.handlerCartUpdate(
       translateCtCartToCart(cart),
       actionBuilder,
-      getPriceSelectorFromCart(cart),
+      getPriceSelectorFromCtCart(cart),
     );
 
     const actions = actionBuilder.buildActions();

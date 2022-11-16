@@ -1,21 +1,7 @@
-import {
-  DiscountVouchersEffectTypes,
-  ValidationValidateStackableResponse,
-} from '@voucherify/sdk';
-import { CartAction } from '../commercetools/cartActions/CartAction';
-import { CustomerGroupReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/customer-group';
+import { DiscountVouchersEffectTypes } from '@voucherify/sdk';
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { CustomerRequest } from '@voucherify/sdk/dist/types/Customers';
-
-export type CartResponse = { status: boolean; actions: CartAction[] };
-
-export type PriceSelector = {
-  country: string;
-  currencyCode: string;
-  customerGroup: CustomerGroupReference;
-  distributionChannels: ChannelReference[];
-};
 
 export type ProductToAdd = {
   code: string; // coupon code
@@ -35,17 +21,6 @@ export type availablePromotion = {
   banner: string;
   code: string;
 };
-
-export type ValidateCouponsResult = {
-  availablePromotions: availablePromotion[];
-  validatedCoupons?: ValidationValidateStackableResponse;
-  productsToAdd?: ProductToAdd[];
-};
-
-export enum CartDiscountApplyMode {
-  CustomLineItem,
-  DirectDiscount,
-}
 
 export type Coupon = {
   code: string;
@@ -75,7 +50,7 @@ export type Cart = {
   customerId?: string;
   anonymousId?: string;
   sessionKey?: string;
-  coupons: Coupon[]; //please make sure, coupon codes are uniq!
+  coupons: Coupon[];
   items: Item[];
 };
 

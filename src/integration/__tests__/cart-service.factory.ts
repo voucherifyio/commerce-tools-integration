@@ -1,10 +1,10 @@
 import { Test } from '@nestjs/testing';
 import { IntegrationService } from '../integration.service';
-import { TypesService } from '../../commercetools/types/types.service';
+import { CustomTypesService } from '../../commercetools/custom-types/custom-types.service';
 import { TaxCategoriesService } from '../../commercetools/tax-categories/tax-categories.service';
 import { VoucherifyConnectorService } from '../../voucherify/voucherify-connector.service';
 import { CommercetoolsConnectorService } from '../../commercetools/commercetools-connector.service';
-import { ProductMapper } from '../mappers/product';
+import { ProductMapper } from '../utils/mappers/product';
 import { ConfigService } from '@nestjs/config';
 
 import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
@@ -14,7 +14,7 @@ import { VoucherifyService } from '../../voucherify/voucherify.service';
 const moduleMocker = new ModuleMocker(global);
 
 export type BuildCartServiceWithMockedDependenciesProps = {
-  typesService: TypesService;
+  typesService: CustomTypesService;
   taxCategoriesService: TaxCategoriesService;
   voucherifyConnectorService?: VoucherifyConnectorService;
   commerceToolsConnectorService?: CommercetoolsConnectorService;
@@ -40,7 +40,7 @@ export async function buildCartServiceWithMockedDependencies({
         useValue: taxCategoriesService,
       },
       {
-        provide: TypesService,
+        provide: CustomTypesService,
         useValue: typesService,
       },
       {

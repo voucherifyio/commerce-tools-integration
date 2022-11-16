@@ -6,7 +6,7 @@ import {
   StackableRedeemableResponse,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
-import { Coupon, CouponStatus } from './types';
+import { Coupon } from '../types';
 import { uniqBy } from 'lodash';
 
 export function deserializeCoupons(serializedDiscountOrCode: string): Coupon {
@@ -32,21 +32,6 @@ export function getCouponsFromCartOrOrder(
   return uniqBy(coupons, 'code');
 }
 
-function checkCouponsValidatedAsState(
-  coupons: Coupon[],
-  validatedCoupons: StackableRedeemableResponse[],
-  status: CouponStatus,
-): boolean {
-  return (
-    validatedCoupons.length === 0 ||
-    coupons
-      .filter((coupon) => coupon.status === status)
-      .every((coupon) =>
-        validatedCoupons.find((element) => element.id === coupon.code),
-      )
-  );
-}
-
 export function checkIfAllInapplicableCouponsArePromotionTier(
   notApplicableCoupons: StackableRedeemableResponse[],
 ) {
@@ -55,30 +40,6 @@ export function checkIfAllInapplicableCouponsArePromotionTier(
   );
 
   return notApplicableCoupons.length === inapplicableCouponsPromitonTier.length;
-}
-
-export function checkIfOnlyNewCouponsFailed(
-  coupons: Coupon[],
-  applicableCoupons: StackableRedeemableResponse[],
-  notApplicableCoupons: StackableRedeemableResponse[],
-): boolean {
-  const areAllNewCouponsNotApplicable = checkCouponsValidatedAsState(
-    coupons,
-    notApplicableCoupons,
-    'NEW',
-  );
-
-  const areAllAppliedCouponsApplicable = checkCouponsValidatedAsState(
-    coupons,
-    applicableCoupons,
-    'APPLIED',
-  );
-
-  return (
-    notApplicableCoupons.length !== 0 &&
-    areAllNewCouponsNotApplicable &&
-    areAllAppliedCouponsApplicable
-  );
 }
 
 export function filterCouponsByLimit(coupons: Coupon[], couponsLimit: number) {

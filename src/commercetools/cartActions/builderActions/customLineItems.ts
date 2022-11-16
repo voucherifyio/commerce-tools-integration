@@ -6,10 +6,10 @@ import {
   COUPON_CUSTOM_LINE_SLUG,
   DataToRunCartActionsBuilder,
 } from '../CartAction';
-import { CartDiscountApplyMode } from '../../../integration/types';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import addDirectDiscountWithDiscountSummary from '../addDirectDiscountWithDiscountSummary';
+import { CartDiscountApplyMode } from '../../types';
 
 // TODO don't create addCustomLineItem action if the summary doesn't actually change
 function addCustomLineItemWithDiscountSummary(

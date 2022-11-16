@@ -1,5 +1,5 @@
 import { Type } from '@commercetools/platform-sdk';
-import { TypesService } from '../types.service';
+import { CustomTypesService } from '../custom-types.service';
 
 export const defaultTypeId = '5aa76235-9d61-41c7-9d57-278b2bcc2f75';
 
@@ -73,8 +73,8 @@ const defaultGetTypeResponse = {
 
 export const getTypesServiceMockWithConfiguredCouponTypeResponse = () => {
   const typesService = jest.createMockFromModule(
-    '../types.service',
-  ) as TypesService;
+    '../custom-types.service',
+  ) as CustomTypesService;
 
   typesService.findCouponType = jest
     .fn()
@@ -85,8 +85,8 @@ export const getTypesServiceMockWithConfiguredCouponTypeResponse = () => {
 
 export const getTypesServiceMockWithNotDefinedCouponTypeResponse = () => {
   const typesService = jest.createMockFromModule(
-    '../types.service',
-  ) as TypesService;
+    '../custom-types.service',
+  ) as CustomTypesService;
 
   typesService.findCouponType = jest.fn().mockResolvedValue(null);
 

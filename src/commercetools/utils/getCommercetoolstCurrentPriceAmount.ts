@@ -1,5 +1,5 @@
 import { Product } from '@commercetools/platform-sdk';
-import { PriceSelector } from '../../integration/types';
+import { PriceSelector } from '../types';
 
 export function getCommercetoolstCurrentPriceAmount(
   ctProduct: Product,

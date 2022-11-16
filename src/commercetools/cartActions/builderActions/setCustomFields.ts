@@ -13,7 +13,7 @@ import {
   FREE_SHIPPING,
   FREE_SHIPPING_UNIT_TYPE,
 } from '../../../consts/voucherify';
-import { deserializeCoupons } from '../../../integration/helperFunctions';
+import { deserializeCoupons } from '../../../integration/utils/helperFunctions';
 
 function setSessionAsCustomField(
   dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
