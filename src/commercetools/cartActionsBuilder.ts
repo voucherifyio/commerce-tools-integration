@@ -2,18 +2,12 @@ import { TaxCategory } from '@commercetools/platform-sdk';
 import {
   availablePromotion,
   CartDiscountApplyMode,
-  Coupon,
   ProductToAdd,
 } from '../integration/types';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
 import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/cart';
 import getCartActionBuilders from './cartActions/getCartActionBuilders';
-import {
-  checkIfAllInapplicableCouponsArePromotionTier,
-  checkIfOnlyNewCouponsFailed,
-  getCouponsFromCartOrOrder,
-} from '../integration/helperFunctions';
-import { uniqBy } from 'lodash';
+import { checkIfAllInapplicableCouponsArePromotionTier } from '../integration/helperFunctions';
 import { DataToRunCartActionsBuilder } from './cartActions/CartAction';
 
 export class ActionBuilder {
