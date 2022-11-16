@@ -44,7 +44,7 @@ export class ApiExtensionController {
       return responseExpress.status(400).json({});
     }
     responseExpress.status(200).json({ actions: response.actions });
-    //coupons ??
+    //coupons ???
     try {
       this.commercetoolsService.checkIfAPIExtensionRespondedOnTimeAndRevalidateCouponsIfNot(
         cart,
