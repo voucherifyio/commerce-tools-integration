@@ -290,8 +290,7 @@ export class IntegrationService {
         };
       }
       const currentProductToChange = productsToChange.find(
-        (productsToChange) =>
-          productsToChange.product === (item.sku as any).source_id,
+        (productsToChange) => productsToChange.product === item.sku.source_id,
       );
       return {
         object: item?.object,

@@ -35,7 +35,9 @@ describe('When one-time -20€ amount voucher is provided in another cart within
   });
 
   it('Should call voucherify exactly once using session identifier', async () => {
-    await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      cart,
+    );
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
@@ -68,7 +70,9 @@ describe('When one-time -20€ amount voucher is provided in another cart within
 
   it('Should return only one `setCustomField` action with information about failure', async () => {
     const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+        cart,
+      );
 
     expect(result.actions).toEqual([
       {

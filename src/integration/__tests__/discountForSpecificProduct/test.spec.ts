@@ -36,7 +36,9 @@ describe('when applying discount code on a specific product in the cart', () => 
       }));
   });
   it('call voucherify once', async () => {
-    await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      cart,
+    );
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
@@ -68,7 +70,9 @@ describe('when applying discount code on a specific product in the cart', () => 
   });
   it('should create `addCustomLineItem` action with total coupons value applied', async () => {
     const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+        cart,
+      );
 
     expect(result.actions).toEqual(
       expect.arrayContaining([
@@ -99,7 +103,9 @@ describe('when applying discount code on a specific product in the cart', () => 
 
   it('should create three `setCustomField` with default values and action with storing coupon details to the cart', async () => {
     const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+        cart,
+      );
 
     expect(result.actions).toEqual(
       expect.arrayContaining([

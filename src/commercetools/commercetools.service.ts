@@ -22,7 +22,6 @@ import {
 import { TypesService } from './types/types.service';
 import {
   OrdersItem,
-  RedemptionsRedeemStackableParams,
   RedemptionsRedeemStackableResponse,
   StackableRedeemableResponse,
   StackableRedeemableResultDiscountUnit,

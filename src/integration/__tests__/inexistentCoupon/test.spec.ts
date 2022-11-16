@@ -33,7 +33,9 @@ describe('When trying to apply inexistent coupon code', () => {
   });
 
   it('Should call voucherify exactly once', async () => {
-    await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      cart,
+    );
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
@@ -66,7 +68,9 @@ describe('When trying to apply inexistent coupon code', () => {
 
   it('Should return only one `setCustomField` action with information about failure', async () => {
     const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+        cart,
+      );
 
     expect(result).toEqual({
       status: true,

@@ -26,7 +26,9 @@ describe('When no coupon codes provided and have no previous voucherify session,
       });
 
     const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+        cart,
+      );
 
     expect(result.actions).toEqual([
       {
@@ -58,7 +60,9 @@ describe('When no coupon codes provided and have no previous voucherify session,
         commerceToolsConnectorService,
       });
 
-    await commercetoolsService.validatePromotionsAndBuildCartActions(cart);
+    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      cart,
+    );
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
@@ -82,7 +86,7 @@ describe('When no coupon codes provided and have no previous voucherify session,
       });
 
     const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(
+      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
         cartWithCustomLineItem,
       );
 
@@ -114,7 +118,7 @@ describe('When no coupon codes provided and have no previous voucherify session,
       });
 
     const result =
-      await commercetoolsService.validatePromotionsAndBuildCartActions(
+      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
         cartWithUnknownCustomLineItem,
       );
     expect(result.actions).toEqual(
