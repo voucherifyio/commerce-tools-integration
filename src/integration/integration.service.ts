@@ -35,7 +35,7 @@ import { isClass } from './utils/isClass';
 import { buildValidationsValidateStackableParamsForVoucherify } from './utils/mappers/buildValidationsValidateStackableParamsForVoucherify';
 import { buildRedeemStackableRequestForVoucherify } from './utils/mappers/buildRedeemStackableRequestForVoucherify';
 
-export interface StoreActions {
+export interface StoreData {
   setAvailablePromotions(promotions: availablePromotion[]); //starting value: []
   setProductsToAdd(productsToAdd: ProductToAdd[]); //starting value: []
   setTotalDiscountAmount(totalDiscountAmount: number); //starting value: 0
@@ -70,7 +70,7 @@ export class IntegrationService {
 
   public async validateCouponsAndGetAvailablePromotions(
     cart: Cart,
-    storeActions?: StoreActions,
+    storeData?: StoreData,
     helperToGetProductsFromStore?: any,
   ): Promise<undefined> {
     const { id, customerId, anonymousId, sessionKey, coupons, items } = cart;
@@ -89,8 +89,8 @@ export class IntegrationService {
         msg: 'No coupons applied, skipping voucherify call',
       });
 
-      if (isClass(storeActions)) {
-        storeActions.setAvailablePromotions(availablePromotions);
+      if (isClass(storeData)) {
+        storeData.setAvailablePromotions(availablePromotions);
       }
       return;
     }
@@ -113,8 +113,8 @@ export class IntegrationService {
         msg: 'Deleting coupons only, skipping voucherify call',
       });
 
-      if (typeof storeActions?.setAvailablePromotions === 'function') {
-        storeActions.setAvailablePromotions(availablePromotions);
+      if (typeof storeData?.setAvailablePromotions === 'function') {
+        storeData.setAvailablePromotions(availablePromotions);
       }
       return;
     }
@@ -159,7 +159,7 @@ export class IntegrationService {
               .includes(coupon.code),
         );
       if (applicableCoupons.length === 0) {
-        storeActions.setInapplicableCoupons(inapplicableCoupons);
+        storeData.setInapplicableCoupons(inapplicableCoupons);
         return;
       }
       validatedCoupons =
@@ -173,7 +173,7 @@ export class IntegrationService {
     }
 
     let productsToAdd = [];
-    if (isClass(storeActions)) {
+    if (isClass(storeData)) {
       productsToAdd = await this.storeService.getProductsToAdd(
         validatedCoupons.redeemables.filter(
           (redeemable) =>
@@ -218,17 +218,17 @@ export class IntegrationService {
       productsToAdd,
     });
 
-    if (isClass(storeActions)) {
-      storeActions.setSessionKey(validatedCoupons?.session?.key);
-      storeActions.setTotalDiscountAmount(
+    if (isClass(storeData)) {
+      storeData.setSessionKey(validatedCoupons?.session?.key);
+      storeData.setTotalDiscountAmount(
         calculateTotalDiscountAmount(validatedCoupons),
       );
-      storeActions.setApplicableCoupons(
+      storeData.setApplicableCoupons(
         getCouponsByStatus(redeemables, 'APPLICABLE'),
       );
-      storeActions.setInapplicableCoupons(inapplicableCoupons);
-      storeActions.setAvailablePromotions(availablePromotions);
-      storeActions.setProductsToAdd(productsToAdd);
+      storeData.setInapplicableCoupons(inapplicableCoupons);
+      storeData.setAvailablePromotions(availablePromotions);
+      storeData.setProductsToAdd(productsToAdd);
     }
     return;
   }

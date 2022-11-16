@@ -19,7 +19,7 @@ import { getCommercetoolstCurrentPriceAmount } from './utils/getCommercetoolstCu
 import { CUSTOM_FIELD_PREFIX } from '../consts/voucherify';
 import { CartAction } from './cartActions/CartAction';
 import { ConfigService } from '@nestjs/config';
-import { StoreActions } from '../integration/integration.service';
+import { StoreData } from '../integration/integration.service';
 import { TaxCategoriesService } from './tax-categories/tax-categories.service';
 import { deleteObjectsFromObject } from './utils/deleteObjectsFromObject';
 import flatten from 'flat';
@@ -39,7 +39,7 @@ interface ProductWithCurrentPriceAmount extends Product {
 
 type handlerCartUpdate = (
   cart: Cart,
-  storeActions?: StoreActions,
+  storeActions?: StoreData,
   helperToGetProductsFromStore?: any,
 ) => void;
 
