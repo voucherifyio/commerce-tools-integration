@@ -37,7 +37,7 @@ describe('When one -20€ amount voucher is provided in new session', () => {
   });
 
   it('Should call voucherify exactly once', async () => {
-    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+    await commercetoolsService.handleCartUpdate(
       cart,
     );
 
@@ -72,7 +72,7 @@ describe('When one -20€ amount voucher is provided in new session', () => {
 
   it('Should assign new session with voucherify and store in cart', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 
@@ -89,7 +89,7 @@ describe('When one -20€ amount voucher is provided in new session', () => {
 
   it('Should create "addCustomLineItem" action with coupons total value', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 
@@ -117,7 +117,7 @@ describe('When one -20€ amount voucher is provided in new session', () => {
   });
   it('Should create "setCustomField" action with validated coupons', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 

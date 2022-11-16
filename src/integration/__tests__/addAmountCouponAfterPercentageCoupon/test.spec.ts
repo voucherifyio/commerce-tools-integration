@@ -38,7 +38,7 @@ describe('When another -20€ amount voucher is provided after -10% coupon in on
   });
 
   it('Should call voucherify once', async () => {
-    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+    await commercetoolsService.handleCartUpdate(
       cart,
     );
     expect(
@@ -74,7 +74,7 @@ describe('When another -20€ amount voucher is provided after -10% coupon in on
   });
   it('Should create one `addCustomLineItem` action with all coupons value combined', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 
@@ -103,7 +103,7 @@ describe('When another -20€ amount voucher is provided after -10% coupon in on
 
   it('Should create one `setCustomField` action with all coupons applied', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 

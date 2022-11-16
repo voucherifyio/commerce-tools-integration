@@ -37,7 +37,7 @@ describe('When two discount codes (percentage and amount) are already applied an
       }));
   });
   it('Should call voucherify to validate applied coupons again against updated cart', async () => {
-    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+    await commercetoolsService.handleCartUpdate(
       cart,
     );
 
@@ -75,7 +75,7 @@ describe('When two discount codes (percentage and amount) are already applied an
 
   it('Should create one `addCustomLineItem` action with all coupons value combined', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 
@@ -108,7 +108,7 @@ describe('When two discount codes (percentage and amount) are already applied an
 
   it('Should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 

@@ -33,9 +33,7 @@ describe('When trying to apply inexistent coupon code', () => {
   });
 
   it('Should call voucherify exactly once', async () => {
-    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
-      cart,
-    );
+    await commercetoolsService.handleCartUpdate(cart);
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
@@ -67,14 +65,17 @@ describe('When trying to apply inexistent coupon code', () => {
   });
 
   it('Should return only one `setCustomField` action with information about failure', async () => {
-    const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
-        cart,
-      );
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result).toEqual({
       status: true,
       actions: [
+        {
+          action: 'setLineItemCustomType',
+          lineItemId: 'line-item-id-2',
+          type: { key: 'lineItemCodesType' },
+          fields: {},
+        },
         {
           action: 'setCustomField',
           name: 'discount_codes',
@@ -82,78 +83,13 @@ describe('When trying to apply inexistent coupon code', () => {
             '{"code":"NOT EXIST","status":"NOT_APPLIED","errMsg":"Resource not found"}',
           ],
         },
-      ],
-      validateCouponsResult: {
-        validatedCoupons: {
-          valid: false,
-          redeemables: [
-            {
-              status: 'INAPPLICABLE',
-              id: 'NOT EXIST',
-              object: 'voucher',
-              result: {
-                error: {
-                  code: 404,
-                  key: 'not_found',
-                  message: 'Resource not found',
-                  details: 'Cannot find voucher with id NOT EXIST',
-                  request_id: 'v-123123123123',
-                },
-              },
-            },
-          ],
-          order: {
-            id: 'e66e763f-589a-4cb8-b478-7bac59f75814',
-            source_id: 'e66e763f-589a-4cb8-b478-7bac59f75814',
-            created_at: '2022-07-07T11:26:37.521Z',
-            amount: 29200,
-            discount_amount: 0,
-            total_discount_amount: 0,
-            initial_amount: 29200,
-            applied_discount_amount: 0,
-            total_applied_discount_amount: 0,
-            items: [
-              {
-                object: 'order_item',
-                source_id: 'M0E20000000E1AZ',
-                related_object: 'sku',
-                product_id: 'prod_0b5672a19f4147f017',
-                quantity: 1,
-                amount: 12000,
-                price: 12000,
-                subtotal_amount: 12000,
-                product: {
-                  id: 'prod_0b5672a19f4147f017',
-                  source_id: '9050a5d2-8f14-4e01-bcdc-c100dd1b441f',
-                  name: 'Sneakers New Balance multi',
-                  override: true,
-                },
-                sku: {
-                  id: 'sku_0b56734248814789a5',
-                  source_id: 'M0E20000000E1AZ',
-                  sku: 'Sneakers New Balance multi',
-                  price: 12000,
-                  override: true,
-                },
-              },
-            ],
-            metadata: {},
-            object: 'order',
-            items_discount_amount: 0,
-            items_applied_discount_amount: 0,
-          },
-          tracking_id:
-            'track_zTa+v4d+mc0ixHNURqEvtCLxvdT5orvdtWeqzafQxfA5XDblMYxS/w==',
-          session: {
-            key: 'ssn_HFTS1dgkRTrJikmCfKAUbDEmGrXpScuw',
-            type: 'LOCK',
-            ttl: 7,
-            ttl_unit: 'DAYS',
-          },
+        {
+          action: 'setCustomField',
+          name: 'shippingProductSourceIds',
+          value: [],
         },
-        availablePromotions: [],
-        productsToAdd: [],
-      },
+        { action: 'setCustomField', name: 'couponsLimit', value: 5 },
+      ],
     });
   });
 });

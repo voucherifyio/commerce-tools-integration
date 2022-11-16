@@ -25,10 +25,7 @@ describe('When no coupon codes provided and have no previous voucherify session,
         commerceToolsConnectorService,
       });
 
-    const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
-        cart,
-      );
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result.actions).toEqual([
       {
@@ -38,8 +35,11 @@ describe('When no coupon codes provided and have no previous voucherify session,
         fields: {},
       },
       { action: 'setCustomField', name: 'discount_codes', value: [] },
-      { action: 'setCustomField', name: 'isValidationFailed', value: false },
-      { action: 'setCustomField', name: 'shippingProductSourceIds', value: [] },
+      {
+        action: 'setCustomField',
+        name: 'shippingProductSourceIds',
+        value: [],
+      },
       { action: 'setCustomField', name: 'couponsLimit', value: 5 },
     ]);
   });
@@ -60,9 +60,7 @@ describe('When no coupon codes provided and have no previous voucherify session,
         commerceToolsConnectorService,
       });
 
-    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
-      cart,
-    );
+    await commercetoolsService.handleCartUpdate(cart);
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
@@ -85,10 +83,9 @@ describe('When no coupon codes provided and have no previous voucherify session,
         commerceToolsConnectorService,
       });
 
-    const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
-        cartWithCustomLineItem,
-      );
+    const result = await commercetoolsService.handleCartUpdate(
+      cartWithCustomLineItem,
+    );
 
     expect(result.actions.length).toBeGreaterThanOrEqual(2);
     expect(result.actions).toEqual(
@@ -117,10 +114,9 @@ describe('When no coupon codes provided and have no previous voucherify session,
         commerceToolsConnectorService,
       });
 
-    const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
-        cartWithUnknownCustomLineItem,
-      );
+    const result = await commercetoolsService.handleCartUpdate(
+      cartWithUnknownCustomLineItem,
+    );
     expect(result.actions).toEqual(
       expect.not.arrayContaining([
         expect.objectContaining({

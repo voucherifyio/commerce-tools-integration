@@ -35,9 +35,7 @@ describe('When one-time -20€ amount voucher is provided in another cart within
   });
 
   it('Should call voucherify exactly once using session identifier', async () => {
-    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
-      cart,
-    );
+    await commercetoolsService.handleCartUpdate(cart);
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
@@ -69,19 +67,18 @@ describe('When one-time -20€ amount voucher is provided in another cart within
   });
 
   it('Should return only one `setCustomField` action with information about failure', async () => {
-    const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
-        cart,
-      );
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
-    expect(result.actions).toEqual([
-      {
-        action: 'setCustomField',
-        name: 'discount_codes',
-        value: [
-          '{"code":"AMOUNT20","status":"NOT_APPLIED","errMsg":"quantity exceeded"}',
-        ],
-      },
-    ]);
+    expect(result.actions).toEqual(
+      expect.arrayContaining([
+        {
+          action: 'setCustomField',
+          name: 'discount_codes',
+          value: [
+            '{"code":"AMOUNT20","status":"NOT_APPLIED","errMsg":"quantity exceeded"}',
+          ],
+        },
+      ]),
+    );
   });
 });

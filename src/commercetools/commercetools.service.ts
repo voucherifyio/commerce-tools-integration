@@ -186,7 +186,7 @@ export class CommercetoolsService {
     this.handlerOrderRedeem = handler;
   }
 
-  async validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+  async handleCartUpdate(
     cart: CommerceToolsCart,
   ): Promise<{
     validateCouponsResult?: ValidateCouponsResult;
@@ -243,9 +243,13 @@ export class CommercetoolsService {
     };
   }
 
-  async checkIfAPIExtensionRespondedOnTimeAndRevalidateCouponsIfNot(
+  async handleAPIExtensionTimeout(
     cart: CommerceToolsCart,
   ) {
+    //
+    if (!cart?.custom?.fields?.discount_codes?.length) {
+      return;
+    }
     let cartMutated = false;
     for (let i = 0; i < 2; i++) {
       await sleep(500);

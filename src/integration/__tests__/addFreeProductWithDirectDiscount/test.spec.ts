@@ -46,7 +46,7 @@ describe('when applying discount code which adds free product to the cart', () =
   });
 
   it('should call voucherify once', async () => {
-    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+    await commercetoolsService.handleCartUpdate(
       cart,
     );
 
@@ -81,7 +81,7 @@ describe('when applying discount code which adds free product to the cart', () =
 
   it('should create `addLineItem` action with gift product', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 
@@ -116,7 +116,7 @@ describe('when applying discount code which adds free product to the cart', () =
 
   it('should create `setDirectDiscount` action with total coupons value applied', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 
@@ -143,7 +143,7 @@ describe('when applying discount code which adds free product to the cart', () =
 
   it('should create three `setCustomField` for default customFields settings and action storing coupon details to the cart', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 

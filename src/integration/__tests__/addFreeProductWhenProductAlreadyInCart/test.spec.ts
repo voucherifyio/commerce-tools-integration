@@ -44,7 +44,7 @@ describe('when adding new product to the cart with free product already applied 
   });
 
   it('should call voucherify once', async () => {
-    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+    await commercetoolsService.handleCartUpdate(
       cart,
     );
 
@@ -79,7 +79,7 @@ describe('when adding new product to the cart with free product already applied 
 
   it('should create one `addCustomLineItem` action with summary of applied coupon', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 
@@ -112,7 +112,7 @@ describe('when adding new product to the cart with free product already applied 
 
   it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 

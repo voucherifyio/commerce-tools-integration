@@ -44,7 +44,7 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
       }));
   });
   it('should call voucherify once', async () => {
-    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+    await commercetoolsService.handleCartUpdate(
       cart,
     );
 
@@ -88,7 +88,7 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
 
   it('should create one `addCustomLineItem` with applied coupon summary', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 
@@ -121,7 +121,7 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
 
   it('should create one `changeLineItemQuantity` action with the id of the discounted product', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 
@@ -142,7 +142,7 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
 
   it("should create one `setLineItemCustomType` action to apply items' applied_codes and one `setLineItemCustomType` to one remaining line item in cart to remove all customTypes from it", async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 
@@ -176,7 +176,7 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
 
   it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
     const result =
-      await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
+      await commercetoolsService.handleCartUpdate(
         cart,
       );
 

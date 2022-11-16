@@ -25,9 +25,7 @@ describe('Tax categories', () => {
       });
 
     await expect(
-      commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
-        cart,
-      ),
+      commercetoolsService.handleCartUpdate(cart),
     ).rejects.toThrowError(
       new Error('Coupon tax category was not configured correctly'),
     );
@@ -46,9 +44,7 @@ describe('Tax categories', () => {
         voucherifyConnectorService,
       });
 
-    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
-      cartCh,
-    );
+    await commercetoolsService.handleCartUpdate(cartCh);
 
     expect(
       taxCategoriesService.getCouponTaxCategoryFromResponse,
@@ -76,9 +72,7 @@ describe('Tax categories', () => {
         voucherifyConnectorService,
       });
 
-    await commercetoolsService.validateCouponsAndPromotionsAndBuildCartActionsOrSetCustomTypeForInitializedCart(
-      cart,
-    );
+    await commercetoolsService.handleCartUpdate(cart);
 
     expect(
       taxCategoriesService.getCouponTaxCategoryFromResponse,
