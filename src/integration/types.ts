@@ -78,7 +78,7 @@ export type Cart = {
   customerId?: string;
   anonymousId?: string;
   sessionKey?: string;
-  coupons: Coupon[];
+  coupons: Coupon[]; //please make sure, coupon codes are uniq!
   items: Item[];
 };
 

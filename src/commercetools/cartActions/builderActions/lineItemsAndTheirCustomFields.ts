@@ -9,7 +9,6 @@ import {
 import mapValidateCouponsResultToLineProductsWithFixedAmount from '../helpers/fixedPrice';
 import addFreeLineItems from '../helpers/addFreeLineItems';
 import removeFreeLineItemsForNonApplicableCoupon from '../helpers/removeFreeLineItemsForNonApplicableCoupon';
-import isValidAndNewCouponNotFailed from '../helpers/utils';
 
 function removeDuplicatedAddLineItems(
   actionsAddLineItem: CartActionAddLineItem[],
@@ -84,10 +83,6 @@ function mergeUniqueSetLineItemCustomTypeActions(
 export default function lineItemsAndTheirCustomFields(
   dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
 ): CartAction[] {
-  if (!isValidAndNewCouponNotFailed(dataToRunCartActionsBuilder)) {
-    return [];
-  }
-
   const lineProductsWithFixedAmount =
     mapValidateCouponsResultToLineProductsWithFixedAmount(
       dataToRunCartActionsBuilder,

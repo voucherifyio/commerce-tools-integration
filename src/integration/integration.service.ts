@@ -65,13 +65,12 @@ export function buildRedeemStackableRequestForVoucherify(
 }
 
 export interface StoreActions {
-  setAvailablePromotions(promotions: availablePromotion[]);
-  setProductsToAdd(productsToAdd: ProductToAdd[]);
-  setTotalDiscountAmount(totalDiscountAmount: number);
-  setApplicableCoupons(applicableCoupons: StackableRedeemableResponse[]);
-  setInapplicableCoupons(inapplicableCoupons: StackableRedeemableResponse[]);
-  setIsValid(isValid: boolean);
-  setSessionKey(sessionKey: string);
+  setAvailablePromotions(promotions: availablePromotion[]); //starting value: []
+  setProductsToAdd(productsToAdd: ProductToAdd[]); //starting value: []
+  setTotalDiscountAmount(totalDiscountAmount: number); //starting value: 0
+  setApplicableCoupons(applicableCoupons: StackableRedeemableResponse[]); //starting value: []
+  setInapplicableCoupons(inapplicableCoupons: StackableRedeemableResponse[]); //starting value: []
+  setSessionKey(sessionKey: string); //starting value: undefined
 }
 
 @Injectable()
@@ -107,7 +106,7 @@ export class IntegrationService {
     let uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
     if (coupons.length !== uniqCoupons.length) {
       this.logger.debug({
-        msg: 'Duplicates found and deleted',
+        msg: 'COUPONS: Duplicates found and deleted',
       });
     }
 
@@ -181,8 +180,13 @@ export class IntegrationService {
         },
       );
       const applicableCoupons = uniqCoupons
-        .filter((coupon) => coupon.status != 'DELETED')
-        .filter((coupon) => !inapplicableCoupons.includes(coupon.code));
+        .filter((coupon) => coupon.status !== 'DELETED')
+        .filter(
+          (coupon) =>
+            !inapplicableCoupons
+              .map((redeemable) => redeemable.id)
+              .includes(coupon.code),
+        );
       if (applicableCoupons.length === 0) {
         storeActions.setInapplicableCoupons(inapplicableCoupons);
         return;
@@ -245,7 +249,6 @@ export class IntegrationService {
 
     if (isClass(storeActions)) {
       storeActions.setSessionKey(validatedCoupons?.session?.key);
-      storeActions.setIsValid(validatedCoupons?.valid ?? false);
       storeActions.setTotalDiscountAmount(
         calculateTotalDiscountAmount(validatedCoupons),
       );

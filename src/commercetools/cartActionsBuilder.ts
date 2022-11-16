@@ -14,7 +14,6 @@ import {
   getCouponsFromCartOrOrder,
 } from '../integration/helperFunctions';
 import { uniqBy } from 'lodash';
-import { getSession } from './commercetools.service';
 import { DataToRunCartActionsBuilder } from './cartActions/CartAction';
 
 export class ActionBuilder {
@@ -34,7 +33,7 @@ export class ActionBuilder {
   public setCartDiscountApplyMode(value: CartDiscountApplyMode) {
     this.cartDiscountApplyMode = value;
   }
-  private availablePromotions: availablePromotion[];
+  private availablePromotions: availablePromotion[] = [];
   public setAvailablePromotions(value: availablePromotion[]) {
     this.availablePromotions = value;
   }
@@ -42,21 +41,17 @@ export class ActionBuilder {
   public setTotalDiscountAmount(value: number) {
     this.totalDiscountAmount = value;
   }
-  private productsToAdd: ProductToAdd[];
+  private productsToAdd: ProductToAdd[] = [];
   public setProductsToAdd(value: ProductToAdd[]) {
     this.productsToAdd = value;
   }
-  private applicableCoupons: StackableRedeemableResponse[];
+  private applicableCoupons: StackableRedeemableResponse[] = [];
   public setApplicableCoupons(value: StackableRedeemableResponse[]) {
     this.applicableCoupons = value;
   }
-  private inapplicableCoupons: StackableRedeemableResponse[];
+  private inapplicableCoupons: StackableRedeemableResponse[] = [];
   public setInapplicableCoupons(value: StackableRedeemableResponse[]) {
     this.inapplicableCoupons = value;
-  }
-  private isValid = false;
-  public setIsValid(value: boolean) {
-    this.isValid = value;
   }
   private sessionKey: string;
   public setSessionKey(value: string) {
@@ -70,32 +65,15 @@ export class ActionBuilder {
   }
 
   private gatherDataToRunCartActionsBuilder(): DataToRunCartActionsBuilder {
-    const coupons: Coupon[] = getCouponsFromCartOrOrder(this.commerceToolsCart);
-    const uniqCoupons: Coupon[] = uniqBy(coupons, 'code');
     const applicableCoupons = this.applicableCoupons ?? [];
     const inapplicableCoupons = this.inapplicableCoupons ?? [];
-    const skippedCoupons = [];
     return {
       availablePromotions: this.availablePromotions ?? [],
       applicableCoupons,
       inapplicableCoupons,
-      skippedCoupons,
-      newSessionKey:
-        !getSession(this.commerceToolsCart) || this.isValid
-          ? this.sessionKey
-          : null,
-      valid: this.isValid,
+      newSessionKey: this.sessionKey ?? null,
       totalDiscountAmount: this.totalDiscountAmount,
       productsToAdd: this.productsToAdd ?? [],
-      onlyNewCouponsFailed:
-        this?.applicableCoupons || this?.inapplicableCoupons
-          ? checkIfOnlyNewCouponsFailed(
-              uniqCoupons,
-              applicableCoupons,
-              inapplicableCoupons,
-              skippedCoupons,
-            )
-          : undefined,
       allInapplicableCouponsArePromotionTier:
         this?.applicableCoupons || this?.inapplicableCoupons
           ? checkIfAllInapplicableCouponsArePromotionTier(inapplicableCoupons)

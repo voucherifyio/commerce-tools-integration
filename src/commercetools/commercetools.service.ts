@@ -194,6 +194,10 @@ export class CommercetoolsService {
     actions: CartAction[];
     status: boolean;
   }> {
+    if (cart.version === 1) {
+      return await this.setCustomTypeForInitializedCart();
+    }
+
     const actionBuilder = new ActionBuilder();
     actionBuilder.setCart(cart);
     actionBuilder.setCouponsLimit(

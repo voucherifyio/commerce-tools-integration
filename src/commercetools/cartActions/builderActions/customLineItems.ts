@@ -9,7 +9,6 @@ import {
 import { CartDiscountApplyMode } from '../../../integration/types';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import isValidAndNewCouponNotFailed from '../helpers/utils';
 import addDirectDiscountWithDiscountSummary from '../addDirectDiscountWithDiscountSummary';
 
 // TODO don't create addCustomLineItem action if the summary doesn't actually change
@@ -85,26 +84,24 @@ export default function customLineItems(
   const { commerceToolsCart, cartDiscountApplyMode, taxCategory } =
     dataToRunCartActionsBuilder;
 
-  if (isValidAndNewCouponNotFailed(dataToRunCartActionsBuilder)) {
-    if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
-      cartActions.push(
-        ...removeDiscountedCustomLineItems(commerceToolsCart),
-        ...addCustomLineItemWithDiscountSummary(
-          commerceToolsCart,
-          dataToRunCartActionsBuilder,
-          taxCategory,
-        ),
-      );
-    }
-    if (cartDiscountApplyMode === CartDiscountApplyMode.DirectDiscount) {
-      cartActions.push(
-        ...removeDiscountedCustomLineItems(commerceToolsCart),
-        ...addDirectDiscountWithDiscountSummary(
-          commerceToolsCart,
-          dataToRunCartActionsBuilder,
-        ),
-      );
-    }
+  if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
+    cartActions.push(
+      ...removeDiscountedCustomLineItems(commerceToolsCart),
+      ...addCustomLineItemWithDiscountSummary(
+        commerceToolsCart,
+        dataToRunCartActionsBuilder,
+        taxCategory,
+      ),
+    );
+  }
+  if (cartDiscountApplyMode === CartDiscountApplyMode.DirectDiscount) {
+    cartActions.push(
+      ...removeDiscountedCustomLineItems(commerceToolsCart),
+      ...addDirectDiscountWithDiscountSummary(
+        commerceToolsCart,
+        dataToRunCartActionsBuilder,
+      ),
+    );
   }
 
   return cartActions;

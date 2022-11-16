@@ -19,13 +19,6 @@ export class ApiExtensionController {
   ) {}
 
   async handleRequestCart(cart: Cart, responseExpress: Response) {
-    if (cart.version === 1) {
-      return responseExpress
-        .status(200)
-        .json(
-          await this.commercetoolsService.setCustomTypeForInitializedCart(),
-        );
-    }
     let response;
     try {
       const start = performance.now();

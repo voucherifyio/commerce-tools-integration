@@ -144,12 +144,9 @@ export type DataToRunCartActionsBuilder = {
   availablePromotions: availablePromotion[];
   applicableCoupons: StackableRedeemableResponse[];
   inapplicableCoupons: StackableRedeemableResponse[];
-  skippedCoupons: StackableRedeemableResponse[];
   newSessionKey?: string;
-  valid: boolean;
   totalDiscountAmount: number;
   productsToAdd: ProductToAdd[];
-  onlyNewCouponsFailed?: boolean;
   allInapplicableCouponsArePromotionTier?: boolean;
   couponsLimit: number;
   commerceToolsCart: CommerceToolsCart;

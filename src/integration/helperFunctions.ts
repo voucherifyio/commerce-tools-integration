@@ -7,6 +7,7 @@ import {
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 import { Coupon, CouponStatus } from './types';
+import { uniqBy } from 'lodash';
 
 export function deserializeCoupons(serializedDiscountOrCode: string): Coupon {
   if (serializedDiscountOrCode.startsWith('{')) {
@@ -22,12 +23,13 @@ export function deserializeCoupons(serializedDiscountOrCode: string): Coupon {
 export function getCouponsFromCartOrOrder(
   cart: CommerceToolsCart | CommerceToolsOrder,
 ): Coupon[] {
-  return (cart.custom?.fields?.discount_codes ?? [])
+  const coupons = (cart.custom?.fields?.discount_codes ?? [])
     .map(deserializeCoupons)
     .filter(
       (coupon) =>
         coupon.status !== 'NOT_APPLIED' && coupon.status !== 'AVAILABLE',
     ); // we already declined them, will be removed by frontend
+  return uniqBy(coupons, 'code');
 }
 
 function checkCouponsValidatedAsState(
@@ -59,7 +61,6 @@ export function checkIfOnlyNewCouponsFailed(
   coupons: Coupon[],
   applicableCoupons: StackableRedeemableResponse[],
   notApplicableCoupons: StackableRedeemableResponse[],
-  skippedCoupons: StackableRedeemableResponse[],
 ): boolean {
   const areAllNewCouponsNotApplicable = checkCouponsValidatedAsState(
     coupons,
@@ -73,16 +74,9 @@ export function checkIfOnlyNewCouponsFailed(
     'APPLIED',
   );
 
-  const areAllAppliedCouponsSkipped = checkCouponsValidatedAsState(
-    coupons,
-    skippedCoupons,
-    'APPLIED',
-  );
-
   return (
     notApplicableCoupons.length !== 0 &&
     areAllNewCouponsNotApplicable &&
-    areAllAppliedCouponsSkipped &&
     areAllAppliedCouponsApplicable
   );
 }
