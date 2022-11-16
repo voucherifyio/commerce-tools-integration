@@ -1,13 +1,10 @@
 import {
   DiscountVouchersEffectTypes,
-  StackableRedeemableResponse,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 import { CartAction } from '../commercetools/cartActions/CartAction';
 import { CustomerGroupReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/customer-group';
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
-import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/cart';
-import { TaxCategory } from '@commercetools/platform-sdk';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { CustomerRequest } from '@voucherify/sdk/dist/types/Customers';
 

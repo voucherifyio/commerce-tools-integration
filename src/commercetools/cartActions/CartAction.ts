@@ -1,5 +1,4 @@
 import {
-  Cart,
   TaxCategory,
   TypedMoney,
   CartDiscountValueDraft,

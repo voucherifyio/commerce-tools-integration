@@ -7,17 +7,14 @@ import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../v
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 import { CommercetoolsService } from '../../../commercetools/commercetools.service';
-import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 describe('When two discount codes (percentage and amount) are already applied and quantity of items have been updated', () => {
   let commercetoolsService: CommercetoolsService;
-  let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
   const FIRST_COUPON_CODE = 'PERC10';
   const SECOND_COUPON_CODE = 'AMOUNT20';
-  const SESSION_KEY = 'existing-session-id';
 
   beforeEach(async () => {
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
@@ -28,18 +25,15 @@ describe('When two discount codes (percentage and amount) are already applied an
     const commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithResponse();
 
-    ({ commercetoolsService, productMapper } =
-      await buildCartServiceWithMockedDependencies({
-        typesService,
-        taxCategoriesService,
-        voucherifyConnectorService,
-        commerceToolsConnectorService,
-      }));
+    ({ commercetoolsService } = await buildCartServiceWithMockedDependencies({
+      typesService,
+      taxCategoriesService,
+      voucherifyConnectorService,
+      commerceToolsConnectorService,
+    }));
   });
   it('Should call voucherify to validate applied coupons again against updated cart', async () => {
-    await commercetoolsService.handleCartUpdate(
-      cart,
-    );
+    await commercetoolsService.handleCartUpdate(cart);
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
@@ -74,10 +68,7 @@ describe('When two discount codes (percentage and amount) are already applied an
   });
 
   it('Should create one `addCustomLineItem` action with all coupons value combined', async () => {
-    const result =
-      await commercetoolsService.handleCartUpdate(
-        cart,
-      );
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([
@@ -107,10 +98,7 @@ describe('When two discount codes (percentage and amount) are already applied an
   });
 
   it('Should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
-    const result =
-      await commercetoolsService.handleCartUpdate(
-        cart,
-      );
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([

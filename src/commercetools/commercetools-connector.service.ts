@@ -25,11 +25,6 @@ import {
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
 import { PriceSelector } from '../integration/types';
-import {
-  OrdersItem,
-  StackableRedeemableResultDiscountUnit,
-} from '@voucherify/sdk';
-import { getCommercetoolstCurrentPriceAmount } from './utils/getCommercetoolstCurrentPriceAmount';
 
 type MeasurementKey = '__start' | '__httpStart';
 type ExtendedRequest = ClientRequest & Record<MeasurementKey, number>;

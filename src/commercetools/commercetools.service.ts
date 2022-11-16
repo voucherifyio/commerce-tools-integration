@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   Cart as CommerceToolsCart,
   LineItem,
@@ -186,9 +186,7 @@ export class CommercetoolsService {
     this.handlerOrderRedeem = handler;
   }
 
-  async handleCartUpdate(
-    cart: CommerceToolsCart,
-  ): Promise<{
+  async handleCartUpdate(cart: CommerceToolsCart): Promise<{
     validateCouponsResult?: ValidateCouponsResult;
     actions: CartAction[];
     status: boolean;
@@ -243,10 +241,7 @@ export class CommercetoolsService {
     };
   }
 
-  async handleAPIExtensionTimeout(
-    cart: CommerceToolsCart,
-  ) {
-    //
+  async handleAPIExtensionTimeout(cart: CommerceToolsCart) {
     if (!cart?.custom?.fields?.discount_codes?.length) {
       return;
     }

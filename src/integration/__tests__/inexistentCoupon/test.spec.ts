@@ -5,13 +5,11 @@ import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../comme
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 
 import { CommercetoolsService } from '../../../commercetools/commercetools.service';
-import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 describe('When trying to apply inexistent coupon code', () => {
   let commercetoolsService: CommercetoolsService;
-  let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
 
   beforeEach(async () => {
@@ -23,13 +21,12 @@ describe('When trying to apply inexistent coupon code', () => {
     const commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithResponse();
 
-    ({ commercetoolsService, productMapper } =
-      await buildCartServiceWithMockedDependencies({
-        typesService,
-        taxCategoriesService,
-        voucherifyConnectorService,
-        commerceToolsConnectorService,
-      }));
+    ({ commercetoolsService } = await buildCartServiceWithMockedDependencies({
+      typesService,
+      taxCategoriesService,
+      voucherifyConnectorService,
+      commerceToolsConnectorService,
+    }));
   });
 
   it('Should call voucherify exactly once', async () => {

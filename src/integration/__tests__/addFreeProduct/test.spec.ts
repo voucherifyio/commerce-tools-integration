@@ -6,19 +6,16 @@ import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../co
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
-import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 import { CommercetoolsService } from '../../../commercetools/commercetools.service';
 describe('when applying discount code which adds free product to the cart', () => {
   let commercetoolsService: CommercetoolsService;
-  let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
   const COUPON_CODE = 'ADD_GIFT';
   const SKU_ID = 'gift-sku-id';
   const PRODUCT_ID = 'gift-product-id';
-  const SESSION_KEY = 'existing-session-id';
   const PRODUCT_PRICE = 6500;
 
   beforeEach(async () => {
@@ -34,19 +31,16 @@ describe('when applying discount code which adds free product to the cart', () =
         id: PRODUCT_ID,
       });
 
-    ({ commercetoolsService, productMapper } =
-      await buildCartServiceWithMockedDependencies({
-        typesService,
-        taxCategoriesService,
-        voucherifyConnectorService,
-        commerceToolsConnectorService,
-      }));
+    ({ commercetoolsService } = await buildCartServiceWithMockedDependencies({
+      typesService,
+      taxCategoriesService,
+      voucherifyConnectorService,
+      commerceToolsConnectorService,
+    }));
   });
 
   it('should call voucherify once', async () => {
-    await commercetoolsService.handleCartUpdate(
-      cart,
-    );
+    await commercetoolsService.handleCartUpdate(cart);
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
@@ -78,10 +72,7 @@ describe('when applying discount code which adds free product to the cart', () =
   });
 
   it('should create `addLineItem` action with gift product', async () => {
-    const result =
-      await commercetoolsService.handleCartUpdate(
-        cart,
-      );
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([
@@ -113,10 +104,7 @@ describe('when applying discount code which adds free product to the cart', () =
   });
 
   it('should create `addCustomLineItem` action with total coupons value applied', async () => {
-    const result =
-      await commercetoolsService.handleCartUpdate(
-        cart,
-      );
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([
@@ -145,10 +133,7 @@ describe('when applying discount code which adds free product to the cart', () =
   });
 
   it('should create three `setCustomField` for default customFields settings and action storing coupon details to the cart', async () => {
-    const result =
-      await commercetoolsService.handleCartUpdate(
-        cart,
-      );
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result.actions).toEqual(
       expect.arrayContaining([

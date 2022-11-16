@@ -12,7 +12,6 @@ import {
   REQUEST_JSON_LOGGER,
 } from '../misc/request-json-logger';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
-import { getCustomerFromOrder } from '../commercetools/commercetools.service';
 import { mapItemsToVoucherifyOrdersItems } from '../integration/mappers/product';
 import { Order } from '../integration/types';
 

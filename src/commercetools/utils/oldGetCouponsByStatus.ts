@@ -1,7 +1,6 @@
 import {
   StackableRedeemableResponse,
   StackableRedeemableResponseStatus,
-  ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 
 export function getCouponsByStatus(

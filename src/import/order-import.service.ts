@@ -3,7 +3,6 @@ import { Order } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { OrderMapper } from '../integration/mappers/order';
-import { IntegrationService } from '../integration/integration.service';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
 
 const sleep = (time: number) => {

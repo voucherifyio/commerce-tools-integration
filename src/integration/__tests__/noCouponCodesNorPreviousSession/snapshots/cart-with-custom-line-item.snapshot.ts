@@ -1,12 +1,10 @@
 import {
   CartOrigin,
   CartState,
-  CustomFields,
   LineItem,
   RoundingMode,
   TaxCalculationMode,
   TaxMode,
-  TypedMoney,
   CustomLineItem,
   LocalizedString,
   Cart,

@@ -4,17 +4,13 @@ import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../v
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 import { CommercetoolsService } from '../../../commercetools/commercetools.service';
-import { ProductMapper } from '../../mappers/product';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 
 describe('When one-time -20€ amount voucher is provided in another cart within another session', () => {
   let commercetoolsService: CommercetoolsService;
-  let productMapper: ProductMapper;
   let voucherifyConnectorService: VoucherifyConnectorService;
-  const COUPON_CODE = 'AMOUNT20';
-  const NEW_SESSION_ID = 'new-session-id';
 
   beforeEach(async () => {
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
@@ -25,13 +21,12 @@ describe('When one-time -20€ amount voucher is provided in another cart within
     const commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithResponse();
 
-    ({ commercetoolsService, productMapper } =
-      await buildCartServiceWithMockedDependencies({
-        typesService,
-        taxCategoriesService,
-        voucherifyConnectorService,
-        commerceToolsConnectorService,
-      }));
+    ({ commercetoolsService } = await buildCartServiceWithMockedDependencies({
+      typesService,
+      taxCategoriesService,
+      voucherifyConnectorService,
+      commerceToolsConnectorService,
+    }));
   });
 
   it('Should call voucherify exactly once using session identifier', async () => {
