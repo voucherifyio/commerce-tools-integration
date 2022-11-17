@@ -1,7 +1,11 @@
-import { DiscountVouchersEffectTypes } from '@voucherify/sdk';
+import {
+  DiscountVouchersEffectTypes,
+  StackableRedeemableResponse,
+} from '@voucherify/sdk';
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { CustomerRequest } from '@voucherify/sdk/dist/types/Customers';
+import { PriceSelector } from '../commercetools/types';
 
 export type ProductToAdd = {
   code: string; // coupon code
@@ -64,6 +68,10 @@ export type Order = {
   sessionKey: string;
   rawOrder?: any;
 };
+
+export type GetProductsToAddListener = (
+  discountTypeUnit: StackableRedeemableResponse[],
+) => Promise<ProductToAdd[]>;
 
 export type CouponStatus = 'NEW' | 'APPLIED' | 'NOT_APPLIED' | 'DELETED';
 export type CouponType = 'promotion_tier' | 'voucher';

@@ -19,7 +19,7 @@ import { getCommercetoolstCurrentPriceAmount } from './utils/getCommercetoolstCu
 import { CUSTOM_FIELD_PREFIX } from '../consts/voucherify';
 import { CartAction } from './cartActions/CartAction';
 import { ConfigService } from '@nestjs/config';
-import { StoreData } from '../integration/integration.service';
+import { StoreActions } from '../integration/integration.service';
 import { TaxCategoriesService } from './tax-categories/tax-categories.service';
 import { deleteObjectsFromObject } from './utils/deleteObjectsFromObject';
 import flatten from 'flat';
@@ -37,13 +37,13 @@ interface ProductWithCurrentPriceAmount extends Product {
   item: OrdersItem;
 }
 
-type handlerCartUpdate = (
+type CartUpdateHandler = (
   cart: Cart,
-  storeActions?: StoreData,
+  storeActions?: StoreActions,
   helperToGetProductsFromStore?: any,
 ) => void;
 
-type handlerOrderRedeem = (order: Order) => Promise<{
+type OrderRedeemHandler = (order: Order) => Promise<{
   actions: { name: string; action: string; value: string[] }[];
   status: boolean;
   redemptionsRedeemStackableResponse?: RedemptionsRedeemStackableResponse;
@@ -58,13 +58,13 @@ export class CommercetoolsService {
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly configService: ConfigService,
   ) {}
-  private handlerCartUpdate: handlerCartUpdate;
-  public setCartUpdateListener(handler: handlerCartUpdate) {
-    this.handlerCartUpdate = handler;
+  private CartUpdateHandler: CartUpdateHandler;
+  public setCartUpdateListener(handler: CartUpdateHandler) {
+    this.CartUpdateHandler = handler;
   }
-  private handlerOrderRedeem: handlerOrderRedeem;
-  public setOrderRedeemListener(handler: handlerOrderRedeem) {
-    this.handlerOrderRedeem = handler;
+  private OrderPaidHandler: OrderRedeemHandler;
+  public setOrderPaidListener(handler: OrderRedeemHandler) {
+    this.OrderPaidHandler = handler;
   }
 
   private maxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut: number =
@@ -83,6 +83,9 @@ export class CommercetoolsService {
     }
 
     const actionBuilder = new ActionBuilder();
+    actionBuilder.setGetProductsToAddListener((discountTypeUnit) =>
+      this.getProductsToAdd(discountTypeUnit, getPriceSelectorFromCtCart(cart)),
+    );
     actionBuilder.setCart(cart);
     actionBuilder.setCouponsLimit(
       getCouponsLimit(
@@ -104,20 +107,16 @@ export class CommercetoolsService {
     }
     actionBuilder.setTaxCategory(taxCategory);
 
-    if (typeof this.handlerCartUpdate !== 'function') {
+    if (typeof this.CartUpdateHandler !== 'function') {
       this.logger.error({
-        msg: `Error while commercetoolsService.validateCouponsAndPromotionsAndBuildCartActions handlerCartUpdate not configured`,
+        msg: `Error while commercetoolsService.validateCouponsAndPromotionsAndBuildCartActions CartUpdateHandler not configured`,
       });
       return {
         status: false,
         actions: [],
       };
     }
-    await this.handlerCartUpdate(
-      translateCtCartToCart(cart),
-      actionBuilder,
-      getPriceSelectorFromCtCart(cart),
-    );
+    await this.CartUpdateHandler(translateCtCartToCart(cart), actionBuilder);
 
     const actions = actionBuilder.buildActions();
 
@@ -141,26 +140,21 @@ export class CommercetoolsService {
     ) {
       return;
     }
-    let cartMutated = false;
     for (let i = 0; i < 2; i++) {
       await sleep(500);
       const updatedCart = await this.commerceToolsConnectorService.findCart(
         cart.id,
       );
       if (updatedCart.version > cart.version) {
-        cartMutated = true;
-        break;
+        return;
       }
     }
-    if (cartMutated) {
-      return;
-    }
-    if (typeof this.handlerCartUpdate !== 'function') {
+    if (typeof this.CartUpdateHandler !== 'function') {
       return this.logger.error({
-        msg: `Error while commercetoolsService.validateCouponsAndPromotionsAndBuildCartActions handlerCartUpdate not configured`,
+        msg: `Error while commercetoolsService.validateCouponsAndPromotionsAndBuildCartActions CartUpdateHandler not configured`,
       });
     }
-    await this.handlerCartUpdate(translateCtCartToCart(cart), null, null);
+    await this.CartUpdateHandler(translateCtCartToCart(cart)); //dropping sessions from coupons that are not included in cart (because of API extension timeout)
     return this.logger.debug('Coupons changes were rolled back successfully');
   }
 
@@ -173,12 +167,12 @@ export class CommercetoolsService {
       });
     }
     try {
-      if (typeof this.handlerOrderRedeem !== 'function') {
+      if (typeof this.OrderPaidHandler !== 'function') {
         return this.logger.error({
-          msg: `Error while commercetoolsService.checkIfCartWasUpdatedWithStatusPaidAndRedeem handlerOrderRedeem not configured`,
+          msg: `Error while commercetoolsService.checkIfCartWasUpdatedWithStatusPaidAndRedeem OrderRedeemHandler not configured`,
         });
       }
-      await this.handlerOrderRedeem(translateCtOrderToOrder(order));
+      await this.OrderPaidHandler(translateCtOrderToOrder(order));
       return;
     } catch (e) {
       console.log(e); //can't use the logger because it cannot handle error objects

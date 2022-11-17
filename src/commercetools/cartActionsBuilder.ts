@@ -1,11 +1,15 @@
 import { TaxCategory } from '@commercetools/platform-sdk';
-import { availablePromotion, ProductToAdd } from '../integration/types';
+import {
+  availablePromotion,
+  GetProductsToAddListener,
+  ProductToAdd,
+} from '../integration/types';
 import { StackableRedeemableResponse } from '@voucherify/sdk';
 import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/cart';
 import getCartActionBuilders from './cartActions/getCartActionBuilders';
 import { checkIfAllInapplicableCouponsArePromotionTier } from '../integration/utils/helperFunctions';
 import { DataToRunCartActionsBuilder } from './cartActions/CartAction';
-import { CartDiscountApplyMode } from './types';
+import { CartDiscountApplyMode, PriceSelector } from './types';
 
 export class ActionBuilder {
   private taxCategory: TaxCategory;
@@ -47,6 +51,16 @@ export class ActionBuilder {
   private sessionKey: string;
   public setSessionKey(value: string) {
     this.sessionKey = value;
+  }
+
+  private priceSelector: PriceSelector;
+  public setPriceSelector(value: PriceSelector) {
+    this.priceSelector = value;
+  }
+
+  public getProductsToAdd: GetProductsToAddListener;
+  public setGetProductsToAddListener(handler: GetProductsToAddListener) {
+    this.getProductsToAdd = handler;
   }
 
   public buildActions() {
