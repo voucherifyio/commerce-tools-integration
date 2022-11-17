@@ -7,7 +7,6 @@ import { Response } from 'express';
 import { performance } from 'perf_hooks';
 import { elapsedTime } from '../misc/elapsedTime';
 import { CommercetoolsService } from './commercetools.service';
-import { getActionsForAPIExtensionTypeOrder } from './utils/getActionsForAPIExtensionTypeOrder';
 
 @Controller('api-extension')
 @UseGuards(ApiExtensionGuard)
@@ -57,13 +56,10 @@ export class ApiExtensionController {
   }
 
   async handleRequestOrder(order: Order, responseExpress: Response) {
-    const { paymentState } = order;
     responseExpress.status(200).json({
-      actions: getActionsForAPIExtensionTypeOrder(paymentState),
+      actions: [],
     });
-    await this.commercetoolsService.checkIfCartWasUpdatedWithStatusPaidAndRedeem(
-      order,
-    );
+    await this.commercetoolsService.checkIfCartStatusIsPaidAndRedeem(order);
     return;
   }
 

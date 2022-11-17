@@ -164,28 +164,12 @@ export class CommercetoolsService {
     return this.logger.debug('Coupons changes were rolled back successfully');
   }
 
-  public async checkIfCartWasUpdatedWithStatusPaidAndRedeem(
-    orderFromRequest: CommerceToolsOrder,
-  ) {
-    if (orderFromRequest.paymentState !== 'Paid') {
+  public async checkIfCartStatusIsPaidAndRedeem(order: CommerceToolsOrder) {
+    if (order.paymentState !== 'Paid') {
       return this.logger.debug({
         msg: 'Order is not paid',
-        id: orderFromRequest.id,
-        customerId: orderFromRequest.customerId,
-      });
-    }
-    await sleep(650);
-    const order = await this.commerceToolsConnectorService.findOrder(
-      orderFromRequest.id,
-    );
-    if (
-      order.version <= orderFromRequest.version ||
-      order.paymentState !== 'Paid'
-    ) {
-      return this.logger.debug({
-        msg: `Order was not modified, payment state: ${order.paymentState}`,
-        id: orderFromRequest.id,
-        customerId: orderFromRequest.customerId,
+        id: order.id,
+        customerId: order.customerId,
       });
     }
     try {
