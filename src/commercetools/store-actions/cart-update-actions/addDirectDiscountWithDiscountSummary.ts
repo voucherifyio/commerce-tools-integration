@@ -3,7 +3,7 @@ import {
   CartActionSetDirectDiscounts,
   DataToRunCartActionsBuilder,
 } from './CartAction';
-import { FREE_SHIPPING_UNIT_TYPE } from '../../consts/voucherify';
+import { FREE_SHIPPING_UNIT_TYPE } from '../../../consts/voucherify';
 
 export default function addDirectDiscountWithDiscountSummary(
   cart: Cart,

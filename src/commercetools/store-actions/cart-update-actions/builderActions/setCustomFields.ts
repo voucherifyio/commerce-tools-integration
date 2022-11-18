@@ -1,4 +1,4 @@
-import { Coupon } from '../../../integration/types';
+import { Coupon } from '../../../../integration/types';
 import {
   CartAction,
   CartActionSetCustomFieldFreeShipping,
@@ -12,8 +12,8 @@ import { StackableRedeemableResponse } from '@voucherify/sdk';
 import {
   FREE_SHIPPING,
   FREE_SHIPPING_UNIT_TYPE,
-} from '../../../consts/voucherify';
-import { deserializeCoupons } from '../../../integration/utils/helperFunctions';
+} from '../../../../consts/voucherify';
+import { deserializeCoupons } from '../../../../integration/utils/helperFunctions';
 
 function setSessionAsCustomField(
   dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,

@@ -1,5 +1,5 @@
 import { LineItem } from '@commercetools/platform-sdk';
-import { ProductToAdd } from '../../../integration/types';
+import { ProductToAdd } from '../../../../integration/types';
 import {
   CartAction,
   CartActionAddLineItem,

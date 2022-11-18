@@ -2,48 +2,34 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   Cart as CommerceToolsCart,
   Order as CommerceToolsOrder,
-  Product,
   TaxCategory,
 } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../misc/sleep';
-import { Cart, ProductToAdd, Order } from '../integration/types';
+import { Cart, Order } from '../integration/types';
 import { CustomTypesService } from './custom-types/custom-types.service';
-import {
-  OrdersItem,
-  RedemptionsRedeemStackableResponse,
-  StackableRedeemableResponse,
-  StackableRedeemableResultDiscountUnit,
-} from '@voucherify/sdk';
-import { getCommercetoolstCurrentPriceAmount } from './utils/getCommercetoolstCurrentPriceAmount';
+import { RedemptionsRedeemStackableResponse } from '@voucherify/sdk';
 import { CUSTOM_FIELD_PREFIX } from '../consts/voucherify';
-import { CartAction } from './cartActions/CartAction';
+import { CartAction } from './store-actions/cart-update-actions/CartAction';
 import { ConfigService } from '@nestjs/config';
-import { StoreActions } from '../integration/integration.service';
 import { TaxCategoriesService } from './tax-categories/tax-categories.service';
 import { deleteObjectsFromObject } from './utils/deleteObjectsFromObject';
 import flatten from 'flat';
 import { getCouponsLimit } from '../voucherify/voucherify.service';
-import { ActionBuilder } from './cartActionsBuilder';
+import { CartUpdateActions } from './store-actions/cart-update-actions';
 import { getMaxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut } from './utils/getMaxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut';
 import { translateCtCartToCart } from './utils/mappers/translateCtCartToCart';
 import { getPriceSelectorFromCtCart } from './utils/mappers/getPriceSelectorFromCtCart';
 import { translateCtOrderToOrder } from './utils/mappers/translateCtOrderToOrder';
-import { CartDiscountApplyMode, CartResponse, PriceSelector } from './types';
+import { CartDiscountApplyMode, CartResponse } from './types';
+import { OrderPaidActions } from './store-actions/order-paid-actions';
 
-interface ProductWithCurrentPriceAmount extends Product {
-  currentPriceAmount: number;
-  unit: StackableRedeemableResultDiscountUnit;
-  item: OrdersItem;
-}
+type CartUpdateHandler = (cart: Cart, storeActions?: CartUpdateActions) => void;
 
-type CartUpdateHandler = (
-  cart: Cart,
-  storeActions?: StoreActions,
-  helperToGetProductsFromStore?: any,
-) => void;
-
-type OrderRedeemHandler = (order: Order) => Promise<{
+type OrderRedeemHandler = (
+  order: Order,
+  storeActions?: OrderPaidActions,
+) => Promise<{
   actions: { name: string; action: string; value: string[] }[];
   status: boolean;
   redemptionsRedeemStackableResponse?: RedemptionsRedeemStackableResponse;
@@ -82,12 +68,13 @@ export class CommercetoolsService {
       return await this.setCustomTypeForInitializedCart();
     }
 
-    const actionBuilder = new ActionBuilder();
-    actionBuilder.setGetProductsToAddListener((discountTypeUnit) =>
-      this.getProductsToAdd(discountTypeUnit, getPriceSelectorFromCtCart(cart)),
+    const cartUpdateActions = new CartUpdateActions();
+    cartUpdateActions.setPriceSelector(getPriceSelectorFromCtCart(cart));
+    cartUpdateActions.setCtClient(
+      this.commerceToolsConnectorService.getClient(),
     );
-    actionBuilder.setCart(cart);
-    actionBuilder.setCouponsLimit(
+    cartUpdateActions.setCart(cart);
+    cartUpdateActions.setCouponsLimit(
       getCouponsLimit(
         this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT'),
       ),
@@ -99,13 +86,13 @@ export class CommercetoolsService {
       ) === 'true'
         ? CartDiscountApplyMode.DirectDiscount
         : CartDiscountApplyMode.CustomLineItem;
-    actionBuilder.setCartDiscountApplyMode(cartDiscountApplyMode);
+    cartUpdateActions.setCartDiscountApplyMode(cartDiscountApplyMode);
 
     let taxCategory;
     if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
       taxCategory = await this.getCouponTaxCategory(cart);
     }
-    actionBuilder.setTaxCategory(taxCategory);
+    cartUpdateActions.setTaxCategory(taxCategory);
 
     if (typeof this.CartUpdateHandler !== 'function') {
       this.logger.error({
@@ -116,9 +103,12 @@ export class CommercetoolsService {
         actions: [],
       };
     }
-    await this.CartUpdateHandler(translateCtCartToCart(cart), actionBuilder);
+    await this.CartUpdateHandler(
+      translateCtCartToCart(cart),
+      cartUpdateActions,
+    );
 
-    const actions = actionBuilder.buildActions();
+    const actions = cartUpdateActions.buildActions();
 
     this.logger.debug({ msg: 'actions', actions });
     return {
@@ -172,7 +162,14 @@ export class CommercetoolsService {
           msg: `Error while commercetoolsService.checkIfCartWasUpdatedWithStatusPaidAndRedeem OrderRedeemHandler not configured`,
         });
       }
-      await this.OrderPaidHandler(translateCtOrderToOrder(order));
+      const orderPaidActions = new OrderPaidActions();
+      orderPaidActions.setCtClient(
+        this.commerceToolsConnectorService.getClient(),
+      );
+      await this.OrderPaidHandler(
+        translateCtOrderToOrder(order),
+        orderPaidActions,
+      );
       return;
     } catch (e) {
       console.log(e); //can't use the logger because it cannot handle error objects
@@ -207,90 +204,6 @@ export class CommercetoolsService {
     return taxCategory;
   }
 
-  public async getProductsToAdd(
-    discountTypeUnit: StackableRedeemableResponse[],
-    priceSelector: PriceSelector,
-  ): Promise<ProductToAdd[]> {
-    const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
-
-    const freeProductsToAdd = discountTypeUnit.flatMap(
-      async (unitTypeRedeemable) => {
-        const discount = unitTypeRedeemable.result?.discount;
-        if (!discount) {
-          return [];
-        }
-        const freeUnits = (
-          discount.units
-            ? discount.units
-            : [{ ...discount } as StackableRedeemableResultDiscountUnit]
-        ).filter((unit) => APPLICABLE_PRODUCT_EFFECT.includes(unit.effect));
-        if (!freeUnits.length) {
-          return [];
-        }
-        const productsToAdd = (
-          await this.getCtProductsWithCurrentPriceAmount(
-            priceSelector,
-            freeUnits,
-            unitTypeRedeemable.order.items,
-          )
-        ).map((productToAdd) => {
-          return {
-            code: unitTypeRedeemable.id,
-            effect: productToAdd.unit.effect,
-            quantity: productToAdd.unit.unit_off,
-            product: productToAdd.unit.sku.source_id,
-            initial_quantity: productToAdd.item.initial_quantity,
-            discount_quantity: productToAdd.item.discount_quantity,
-            discount_difference:
-              productToAdd.item?.applied_discount_amount -
-                productToAdd.currentPriceAmount *
-                  productToAdd.item?.discount_quantity !==
-              0,
-            applied_discount_amount: productToAdd.currentPriceAmount,
-            distributionChannel: priceSelector.distributionChannels[0],
-          } as ProductToAdd;
-        });
-
-        return Promise.all(productsToAdd);
-      },
-    );
-
-    return Promise.all(freeProductsToAdd).then((response) => {
-      return response.flatMap((element) => {
-        return element;
-      });
-    });
-  }
-
-  public async getCtProductsWithCurrentPriceAmount(
-    priceSelector: PriceSelector,
-    freeUnits: StackableRedeemableResultDiscountUnit[],
-    orderItems: OrdersItem[],
-  ): Promise<ProductWithCurrentPriceAmount[]> {
-    const productSourceIds = freeUnits.map((unit) => {
-      return unit.product.source_id;
-    });
-    const ctProducts = await this.commerceToolsConnectorService.getCtProducts(
-      priceSelector,
-      productSourceIds,
-    );
-
-    return ctProducts.map((ctProduct) => {
-      const unit = freeUnits.find(
-        (unit) => unit.product.source_id === ctProduct.id,
-      );
-      const currentPriceAmount = getCommercetoolstCurrentPriceAmount(
-        ctProduct,
-        unit.sku.source_id,
-        priceSelector,
-      );
-      const item = orderItems?.find(
-        (item) => item?.sku?.source_id === unit.sku.source_id,
-      ) as OrdersItem;
-      return { ...ctProduct, currentPriceAmount, unit, item };
-    });
-  }
-
   public async setCustomTypeForInitializedCart(): Promise<CartResponse> {
     const couponType = await this.typesService.findCouponType('couponCodes');
     if (!couponType) {
@@ -311,77 +224,5 @@ export class CommercetoolsService {
         },
       ],
     };
-  }
-
-  public async getMetadataForOrder(
-    order: CommerceToolsOrder,
-    allMetadataSchemaProperties: string[],
-  ) {
-    const standardMetaProperties = allMetadataSchemaProperties.filter(
-      (key) => !key.includes(CUSTOM_FIELD_PREFIX),
-    );
-    const customMetaProperties = allMetadataSchemaProperties.filter(
-      (key) =>
-        key.length > CUSTOM_FIELD_PREFIX.length &&
-        key.slice(0, CUSTOM_FIELD_PREFIX.length) === CUSTOM_FIELD_PREFIX,
-    );
-
-    const metadata = {};
-
-    const addToMataData = (variable: any, name: string) => {
-      if (typeof variable !== 'object') {
-        return (metadata[name] = variable);
-      }
-      if (Array.isArray(variable)) {
-        const newArray = [];
-        variable.forEach((element) => {
-          if (typeof variable !== 'object') {
-            newArray.push(element);
-          }
-          if (!Array.isArray(variable)) {
-            newArray.push(deleteObjectsFromObject(flatten(element)));
-          }
-        });
-        return (metadata[name] = newArray);
-      }
-      if (typeof variable === 'object') {
-        return (metadata[name] = deleteObjectsFromObject(flatten(variable)));
-      }
-      return;
-    };
-
-    standardMetaProperties.forEach((key) => {
-      if (order[key]) {
-        addToMataData(order[key], key);
-      }
-    });
-
-    if (order?.custom?.fields && customMetaProperties.length) {
-      customMetaProperties.forEach((key) => {
-        if (order.custom.fields?.[key.slice(CUSTOM_FIELD_PREFIX.length)]) {
-          addToMataData(
-            order.custom.fields[key.slice(CUSTOM_FIELD_PREFIX.length)],
-            key,
-          );
-        }
-      });
-    }
-
-    if (standardMetaProperties.find((key) => key === 'payments')) {
-      const payments = [];
-      const paymentReferences = order?.paymentInfo?.payments ?? [];
-      for await (const paymentReference of paymentReferences) {
-        payments.push(
-          await this.commerceToolsConnectorService.findPayment(
-            paymentReference.id,
-          ),
-        );
-      }
-      metadata['payments'] = payments
-        .filter((payment) => payment?.id)
-        .map((payment) => deleteObjectsFromObject(flatten(payment)));
-    }
-
-    return metadata;
   }
 }

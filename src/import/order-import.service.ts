@@ -63,10 +63,12 @@ export class OrderImportService {
           continue;
         }
 
-        const metadata = await this.commercetoolsService.getMetadataForOrder(
-          order,
-          metadataSchemaProperties,
-        );
+        const metadata = {};
+        //@todo fix it
+        //await this.commercetoolsService.getMetadataForOrder(
+        //   order,
+        //   metadataSchemaProperties,
+        // );
         const orderObj = this.orderMapper.getOrderObject(order);
 
         orders.push(

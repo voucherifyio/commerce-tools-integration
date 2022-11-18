@@ -17,7 +17,6 @@ import {
   ProductToAdd,
   SentCoupons,
   Order,
-  GetProductsToAddListener,
 } from './types';
 import { mapItemsToVoucherifyOrdersItems } from './utils/mappers/product';
 import { ConfigService } from '@nestjs/config';
@@ -34,15 +33,27 @@ import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
 import { getCouponsByStatus } from '../commercetools/utils/oldGetCouponsByStatus';
 import { buildValidationsValidateStackableParamsForVoucherify } from './utils/mappers/buildValidationsValidateStackableParamsForVoucherify';
 import { buildRedeemStackableRequestForVoucherify } from './utils/mappers/buildRedeemStackableRequestForVoucherify';
+import { getSimpleMetadataForOrder } from '../commercetools/utils/mappers/getSimpleMetadataForOrder';
+import { Order as CommerceToolsOrder } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/order';
+import { mergeTwoObjectsIntoOne } from './utils/mergeTwoObjectsIntoOne';
 
-export interface StoreActions {
+export interface CartUpdateActions {
   setAvailablePromotions(promotions: availablePromotion[]); //starting value: []
   setProductsToAdd(productsToAdd: ProductToAdd[]); //starting value: []
   setTotalDiscountAmount(totalDiscountAmount: number); //starting value: 0
   setApplicableCoupons(applicableCoupons: StackableRedeemableResponse[]); //starting value: []
   setInapplicableCoupons(inapplicableCoupons: StackableRedeemableResponse[]); //starting value: []
   setSessionKey(sessionKey: string); //starting value: undefined
-  getProductsToAdd: GetProductsToAddListener; //function to get price/SKU/ids of products from unit type coupons
+  getProductsToAdd: (
+    discountTypeUnit: StackableRedeemableResponse[],
+  ) => Promise<ProductToAdd[]>; //function to get price/SKU/ids of products from unit type coupons
+}
+
+export interface OrderPaidActions {
+  getCustomMetadataForOrder?: (
+    order: CommerceToolsOrder,
+    allMetadataSchemaProperties: string[],
+  ) => Promise<{ [key: string]: string }>; //function to handle custom metadata for order (for example: metadata from custom fields)
 }
 
 @Injectable()
@@ -59,14 +70,14 @@ export class IntegrationService {
     this.storeService.setCartUpdateListener((cart, storeActions) =>
       this.validateCouponsAndGetAvailablePromotions(cart, storeActions),
     );
-    this.storeService.setOrderPaidListener((order) =>
-      this.redeemVoucherifyCoupons(order),
+    this.storeService.setOrderPaidListener((order, storeActions) =>
+      this.redeemVoucherifyCoupons(order, storeActions),
     );
   }
 
   public async validateCouponsAndGetAvailablePromotions(
     cart: Cart,
-    storeData?: StoreActions,
+    cartUpdateActions?: CartUpdateActions,
   ): Promise<undefined> {
     const { id, customerId, anonymousId, sessionKey, coupons, items } = cart;
     const couponsRequested: Coupon[] = uniqBy(coupons, 'code');
@@ -79,8 +90,8 @@ export class IntegrationService {
     const { promotions, availablePromotions } =
       await this.voucherifyService.getPromotions(cart, couponsRequested);
 
-    if (typeof storeData?.setAvailablePromotions === 'function') {
-      storeData.setAvailablePromotions(availablePromotions);
+    if (typeof cartUpdateActions?.setAvailablePromotions === 'function') {
+      cartUpdateActions.setAvailablePromotions(availablePromotions);
     }
 
     if (!couponsRequested.length) {
@@ -149,7 +160,7 @@ export class IntegrationService {
               .includes(coupon.code),
         );
       if (applicableCoupons.length === 0) {
-        storeData.setInapplicableCoupons(inapplicableCoupons);
+        cartUpdateActions.setInapplicableCoupons(inapplicableCoupons);
         return;
       }
       //We need to do another call to V% if there is any applicable coupon in the cart
@@ -165,8 +176,8 @@ export class IntegrationService {
     }
 
     let productsToAdd: ProductToAdd[] = [];
-    if (typeof storeData.getProductsToAdd === 'function') {
-      productsToAdd = await storeData.getProductsToAdd(
+    if (typeof cartUpdateActions.getProductsToAdd === 'function') {
+      productsToAdd = await cartUpdateActions.getProductsToAdd(
         validatedCoupons.redeemables.filter(
           (redeemable) =>
             redeemable.result?.discount?.type === 'UNIT' &&
@@ -210,21 +221,21 @@ export class IntegrationService {
     });
 
     if (
-      typeof storeData.setSessionKey === 'function' &&
-      typeof storeData.setTotalDiscountAmount === 'function' &&
-      typeof storeData.setApplicableCoupons === 'function' &&
-      typeof storeData.setInapplicableCoupons === 'function' &&
-      typeof storeData.setProductsToAdd === 'function'
+      typeof cartUpdateActions.setSessionKey === 'function' &&
+      typeof cartUpdateActions.setTotalDiscountAmount === 'function' &&
+      typeof cartUpdateActions.setApplicableCoupons === 'function' &&
+      typeof cartUpdateActions.setInapplicableCoupons === 'function' &&
+      typeof cartUpdateActions.setProductsToAdd === 'function'
     ) {
-      storeData.setSessionKey(validatedCoupons?.session?.key);
-      storeData.setTotalDiscountAmount(
+      cartUpdateActions.setSessionKey(validatedCoupons?.session?.key);
+      cartUpdateActions.setTotalDiscountAmount(
         calculateTotalDiscountAmount(validatedCoupons),
       );
-      storeData.setApplicableCoupons(
+      cartUpdateActions.setApplicableCoupons(
         getCouponsByStatus(redeemables, 'APPLICABLE'),
       );
-      storeData.setInapplicableCoupons(inapplicableCoupons);
-      storeData.setProductsToAdd(productsToAdd);
+      cartUpdateActions.setInapplicableCoupons(inapplicableCoupons);
+      cartUpdateActions.setProductsToAdd(productsToAdd);
     }
     return;
   }
@@ -285,27 +296,55 @@ export class IntegrationService {
     });
   }
 
-  public async redeemVoucherifyCoupons(order: Order) {
+  public async redeemVoucherifyCoupons(
+    order: Order,
+    orderPaidActions: OrderPaidActions,
+  ) {
     const { id, customerId } = order;
 
-    const orderMetadataSchemaProperties =
-      await this.voucherifyConnectorService.getMetadataSchemaProperties(
-        'order',
-      );
-
+    //items
     const productMetadataSchemaProperties =
       await this.voucherifyConnectorService.getMetadataSchemaProperties(
         'product',
       );
-    const orderMetadata = await this.storeService.getMetadataForOrder(
-      order.rawOrder,
-      orderMetadataSchemaProperties,
-    );
 
     const items = mapItemsToVoucherifyOrdersItems(
       order.items,
       productMetadataSchemaProperties,
     );
+
+    //order metadata
+    const orderMetadataSchemaProperties =
+      await this.voucherifyConnectorService.getMetadataSchemaProperties(
+        'order',
+      );
+
+    let orderMetadata = {};
+
+    if (
+      typeof order?.rawOrder === 'object' &&
+      order?.rawOrder !== undefined &&
+      orderMetadataSchemaProperties.length > 0
+    ) {
+      const simpleMetadata = getSimpleMetadataForOrder(
+        order.rawOrder,
+        orderMetadataSchemaProperties,
+      );
+      if (typeof orderPaidActions?.getCustomMetadataForOrder !== 'function') {
+        orderMetadata = simpleMetadata;
+      } else {
+        const customMetadata = await orderPaidActions.getCustomMetadataForOrder(
+          order.rawOrder,
+          orderMetadataSchemaProperties,
+        );
+        if (Object.keys(customMetadata).length > 0) {
+          orderMetadata = mergeTwoObjectsIntoOne(
+            customMetadata,
+            simpleMetadata,
+          );
+        }
+      }
+    }
 
     const coupons: Coupon[] = (order.coupons ?? []).filter(
       (coupon) =>
