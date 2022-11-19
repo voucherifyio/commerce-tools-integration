@@ -1,16 +1,4 @@
-import { Payment, Product, TaxCategory } from '@commercetools/platform-sdk';
-import { availablePromotion, ProductToAdd } from '../../integration/types';
-import {
-  OrdersItem,
-  StackableRedeemableResponse,
-  StackableRedeemableResultDiscountUnit,
-} from '@voucherify/sdk';
-import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/cart';
-import getCartActionBuilders from './cart-update-actions/getCartActionBuilders';
-import { checkIfAllInapplicableCouponsArePromotionTier } from '../../integration/utils/helperFunctions';
-import { DataToRunCartActionsBuilder } from './cart-update-actions/CartAction';
-import { CartDiscountApplyMode, PriceSelector } from '../types';
-import { getCommercetoolstCurrentPriceAmount } from '../utils/getCommercetoolstCurrentPriceAmount';
+import { Payment } from '@commercetools/platform-sdk';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 import { Order as CommerceToolsOrder } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/order';
 import { CUSTOM_FIELD_PREFIX } from '../../consts/voucherify';
@@ -51,8 +39,7 @@ export class OrderPaidActions {
         variable.forEach((element) => {
           if (typeof variable !== 'object') {
             newArray.push(element);
-          }
-          if (!Array.isArray(variable)) {
+          } else {
             newArray.push(deleteObjectsFromObject(flatten(element)));
           }
         });

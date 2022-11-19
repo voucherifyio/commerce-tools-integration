@@ -15,8 +15,6 @@ import {
 import {
   Cart,
   createApiBuilderFromCtpClient,
-  Order,
-  Payment,
 } from '@commercetools/platform-sdk';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 import {

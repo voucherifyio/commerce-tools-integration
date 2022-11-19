@@ -16,8 +16,7 @@ export const getSimpleMetadataForOrder = (
       variable.forEach((element) => {
         if (typeof variable !== 'object') {
           newArray.push(element);
-        }
-        if (!Array.isArray(variable)) {
+        } else {
           newArray.push(deleteObjectsFromObject(flatten(element)));
         }
       });

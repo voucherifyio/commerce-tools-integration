@@ -5,7 +5,6 @@ import {
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { CustomerRequest } from '@voucherify/sdk/dist/types/Customers';
-import { PriceSelector } from '../commercetools/types';
 
 export type ProductToAdd = {
   code: string; // coupon code
