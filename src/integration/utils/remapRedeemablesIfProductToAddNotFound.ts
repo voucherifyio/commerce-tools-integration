@@ -17,7 +17,7 @@ export function remapRedeemablesIfProductToAddNotFound(
             key: 'not_found',
             message: 'Product not found',
             details: `Cannot find voucher with id ${redeemable.id}`,
-            request_id: 'v-0c0b35b605c4b71f30',
+            request_id: undefined,
           },
         },
       });
