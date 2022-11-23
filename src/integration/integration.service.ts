@@ -164,7 +164,7 @@ export class IntegrationService {
         return;
       }
       //We need to do another call to V% if there is any applicable coupon in the cart
-      //to get definitions of discounts we should apply to cart
+      //to get definitions of discounts we should apply on a cart
       validatedCoupons =
         await this.voucherifyConnectorService.validateStackableVouchers(
           buildValidationsValidateStackableParamsForVoucherify(
