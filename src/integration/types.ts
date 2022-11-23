@@ -68,6 +68,12 @@ export type Order = {
   rawOrder?: any;
 };
 
+export type ExpectedProductToAdd = {
+  code: string;
+  quantity: number;
+  product: string;
+};
+
 export type GetProductsToAddListener = (
   discountTypeUnit: StackableRedeemableResponse[],
 ) => Promise<ProductToAdd[]>;

@@ -36,6 +36,9 @@ import { buildRedeemStackableRequestForVoucherify } from './utils/mappers/buildR
 import { getSimpleMetadataForOrder } from '../commercetools/utils/mappers/getSimpleMetadataForOrder';
 import { Order as CommerceToolsOrder } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/order';
 import { mergeTwoObjectsIntoOne } from './utils/mergeTwoObjectsIntoOne';
+import { getExpectedProductsToAdd } from './utils/mappers/getExpectedProductsToAdd';
+import { getMissingProductsToAdd } from './utils/mappers/getMissingProductsToAdd';
+import { remapRedeemablesIfProductToAddNotFound } from './utils/remapRedeemablesIfProductToAddNotFound';
 
 export interface CartUpdateActions {
   setAvailablePromotions(promotions: availablePromotion[]); //starting value: []
@@ -176,21 +179,50 @@ export class IntegrationService {
     }
 
     let productsToAdd: ProductToAdd[] = [];
+    const unitTypeRedeemables = validatedCoupons.redeemables.filter(
+      (redeemable) =>
+        redeemable.result?.discount?.type === 'UNIT' &&
+        redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE,
+    );
     if (typeof cartUpdateActions.getProductsToAdd === 'function') {
       productsToAdd = await cartUpdateActions.getProductsToAdd(
-        validatedCoupons.redeemables.filter(
-          (redeemable) =>
-            redeemable.result?.discount?.type === 'UNIT' &&
-            redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE,
-        ),
+        unitTypeRedeemables,
       );
     }
+    const expectedProductsToAdd = getExpectedProductsToAdd(unitTypeRedeemables);
+    const missingProductsToAdd = getMissingProductsToAdd(
+      expectedProductsToAdd,
+      productsToAdd,
+    );
+    const couponsWithMissingProductsToAdd = [
+      ...new Set(
+        missingProductsToAdd.map(
+          (missingProductToAdd) => missingProductToAdd.code,
+        ),
+      ),
+    ];
+    couponsWithMissingProductsToAdd.forEach((coupon) =>
+      this.voucherifyConnectorService.releaseValidationSession(
+        coupon,
+        validatedCoupons?.session?.key ?? sessionKey,
+      ),
+    );
 
     const productsToAddWithIncorrectPrice = productsToAdd.filter(
       (product) => product.discount_difference,
     );
 
-    if (productsToAddWithIncorrectPrice.length) {
+    const couponsLimitedAndNotDeletedWithoutCouponsWithMissingProductsToAdd =
+      couponsLimited.filter(
+        (coupon) =>
+          coupon.status != 'DELETED' &&
+          !couponsWithMissingProductsToAdd.includes(coupon.code),
+      );
+    if (
+      couponsLimitedAndNotDeletedWithoutCouponsWithMissingProductsToAdd.length >
+        0 &&
+      productsToAddWithIncorrectPrice.length
+    ) {
       const itemsWithPricesCorrected = await this.getItemsWithCorrectedPrices(
         validatedCoupons.order.items,
         productsToAddWithIncorrectPrice,
@@ -198,14 +230,18 @@ export class IntegrationService {
       validatedCoupons =
         await this.voucherifyConnectorService.validateStackableVouchers(
           buildValidationsValidateStackableParamsForVoucherify(
-            couponsLimited.filter((coupon) => coupon.status != 'DELETED'),
+            couponsLimitedAndNotDeletedWithoutCouponsWithMissingProductsToAdd,
             cart,
             itemsWithPricesCorrected,
           ),
         );
     }
 
-    let redeemables = validatedCoupons?.redeemables;
+    let redeemables = remapRedeemablesIfProductToAddNotFound(
+      validatedCoupons?.redeemables ?? [],
+      couponsWithMissingProductsToAdd,
+    );
+
     if (promotions.length) {
       redeemables = this.voucherifyService.setBannerOnValidatedPromotions(
         validatedCoupons,
@@ -234,7 +270,10 @@ export class IntegrationService {
       cartUpdateActions.setApplicableCoupons(
         getCouponsByStatus(redeemables, 'APPLICABLE'),
       );
-      cartUpdateActions.setInapplicableCoupons(inapplicableCoupons);
+      cartUpdateActions.setInapplicableCoupons([
+        ...inapplicableCoupons,
+        ...getCouponsByStatus(redeemables, 'INAPPLICABLE'),
+      ]);
       cartUpdateActions.setProductsToAdd(productsToAdd);
     }
     return;

@@ -12,6 +12,7 @@ import { DataToRunCartActionsBuilder } from './cart-update-actions/CartAction';
 import { CartDiscountApplyMode, PriceSelector } from '../types';
 import { getCommercetoolstCurrentPriceAmount } from '../utils/getCommercetoolstCurrentPriceAmount';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
+import { isUuid } from '../utils/isUUID';
 
 interface ProductWithCurrentPriceAmount extends Product {
   currentPriceAmount: number;
@@ -96,6 +97,10 @@ export class CartUpdateActions {
         if (!freeUnits.length) {
           return [];
         }
+        await this.getCtProductsWithCurrentPriceAmount(
+          freeUnits,
+          unitTypeRedeemable.order.items,
+        );
         const productsToAdd = (
           await this.getCtProductsWithCurrentPriceAmount(
             freeUnits,
@@ -162,19 +167,27 @@ export class CartUpdateActions {
     priceSelector: PriceSelector,
     productSourceIds: string[],
   ): Promise<Product[]> {
-    return (
-      await this.ctClient
-        .products()
-        .get({
-          queryArgs: {
-            total: false,
-            priceCurrency: priceSelector.currencyCode,
-            priceCountry: priceSelector.country,
-            where: `id in ("${productSourceIds.join('","')}") `,
-          },
-        })
-        .execute()
-    ).body.results;
+    const uuidProductSourceIds = productSourceIds.filter((productSourceId) =>
+      isUuid(productSourceId),
+    );
+    if (uuidProductSourceIds.length === 0) return [];
+    try {
+      return (
+        await this.ctClient
+          .products()
+          .get({
+            queryArgs: {
+              total: false,
+              priceCurrency: priceSelector.currencyCode,
+              priceCountry: priceSelector.country,
+              where: `id in ("${uuidProductSourceIds.join('","')}") `,
+            },
+          })
+          .execute()
+      ).body.results;
+    } catch (e) {
+      return [];
+    }
   }
 
   private gatherDataToRunCartActionsBuilder(): DataToRunCartActionsBuilder {
