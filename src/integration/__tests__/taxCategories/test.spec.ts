@@ -9,6 +9,7 @@ import { buildCartServiceWithMockedDependencies } from '../cart-service.factory'
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 import { cartCh } from './snapshots/cart-ch.snapshot';
+import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 describe('Tax categories', () => {
   it('should throw error if tax categories are not configured', async () => {
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
@@ -16,12 +17,15 @@ describe('Tax categories', () => {
       getTaxCategoryServiceMockWithNotDefinedTaxCategoryResponse();
     const voucherifyConnectorService =
       getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
+    const commerceToolsConnectorService =
+      getCommerceToolsConnectorServiceMockWithResponse();
 
     const { commercetoolsService } =
       await buildCartServiceWithMockedDependencies({
         typesService,
         taxCategoriesService,
         voucherifyConnectorService,
+        commerceToolsConnectorService,
       });
 
     await expect(
@@ -36,12 +40,15 @@ describe('Tax categories', () => {
       getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();
     const voucherifyConnectorService =
       getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
+    const commerceToolsConnectorService =
+      getCommerceToolsConnectorServiceMockWithResponse();
 
     const { commercetoolsService } =
       await buildCartServiceWithMockedDependencies({
         typesService,
         taxCategoriesService,
         voucherifyConnectorService,
+        commerceToolsConnectorService,
       });
 
     await commercetoolsService.handleCartUpdate(cartCh);
@@ -64,11 +71,14 @@ describe('Tax categories', () => {
       getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();
     const voucherifyConnectorService =
       getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
+    const commerceToolsConnectorService =
+      getCommerceToolsConnectorServiceMockWithResponse();
 
     const { commercetoolsService } =
       await buildCartServiceWithMockedDependencies({
         typesService,
         taxCategoriesService,
+        commerceToolsConnectorService,
         voucherifyConnectorService,
       });
 

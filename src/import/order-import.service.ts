@@ -4,6 +4,7 @@ import { CommercetoolsConnectorService } from '../commercetools/commercetools-co
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { OrderMapper } from '../integration/utils/mappers/order';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
+import { getSimpleMetadataForOrder } from '../commercetools/utils/mappers/getSimpleMetadataForOrder';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -54,7 +55,7 @@ export class OrderImportService {
 
   public async migrateOrders(period?: string) {
     const orders = [];
-    const metadataSchemaProperties =
+    const orderMetadataSchemaProperties =
       await this.voucherifyClient.getMetadataSchemaProperties('order');
 
     for await (const ordersBatch of this.getAllOrders(period)) {
@@ -63,12 +64,10 @@ export class OrderImportService {
           continue;
         }
 
-        const metadata = {};
-        //@todo fix it
-        //await this.commercetoolsService.getMetadataForOrder(
-        //   order,
-        //   metadataSchemaProperties,
-        // );
+        const metadata = getSimpleMetadataForOrder(
+          order,
+          orderMetadataSchemaProperties,
+        );
         const orderObj = this.orderMapper.getOrderObject(order);
 
         orders.push(
