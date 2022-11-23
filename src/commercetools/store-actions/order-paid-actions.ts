@@ -20,9 +20,9 @@ export class OrderPaidActions {
 
   public async getCustomMetadataForOrder(
     order: CommerceToolsOrder,
-    allMetadataSchemaProperties: string[],
+    orderMetadataSchemaProperties: string[],
   ): Promise<{ [key: string]: string }> {
-    const customMetaProperties = allMetadataSchemaProperties.filter(
+    const customMetaProperties = orderMetadataSchemaProperties.filter(
       (key) =>
         key.length > CUSTOM_FIELD_PREFIX_LENGTH &&
         key.slice(0, CUSTOM_FIELD_PREFIX_LENGTH) === CUSTOM_FIELD_PREFIX,
@@ -62,7 +62,7 @@ export class OrderPaidActions {
       });
     }
 
-    if (allMetadataSchemaProperties.includes('payments')) {
+    if (orderMetadataSchemaProperties.includes('payments')) {
       const payments = [];
       const paymentReferences = order?.paymentInfo?.payments ?? [];
       for await (const paymentReference of paymentReferences) {

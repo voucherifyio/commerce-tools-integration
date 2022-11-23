@@ -5,6 +5,8 @@ import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.
 import { OrderMapper } from '../integration/utils/mappers/order';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
 import { getSimpleMetadataForOrder } from '../commercetools/utils/mappers/getSimpleMetadataForOrder';
+import { OrderPaidActions } from '../commercetools/store-actions/order-paid-actions';
+import { mergeTwoObjectsIntoOne } from '../integration/utils/mergeTwoObjectsIntoOne';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -58,16 +60,25 @@ export class OrderImportService {
     const orderMetadataSchemaProperties =
       await this.voucherifyClient.getMetadataSchemaProperties('order');
 
+    const orderActions = new OrderPaidActions();
+    orderActions.setCtClient(this.commerceToolsConnectorService.getClient());
+
     for await (const ordersBatch of this.getAllOrders(period)) {
       for (const order of ordersBatch) {
         if (order.paymentState !== 'Paid') {
           continue;
         }
 
-        const metadata = getSimpleMetadataForOrder(
-          order,
-          orderMetadataSchemaProperties,
+        const metadata = mergeTwoObjectsIntoOne(
+          typeof orderActions?.getCustomMetadataForOrder === 'function'
+            ? await orderActions.getCustomMetadataForOrder(
+                order,
+                orderMetadataSchemaProperties,
+              )
+            : {},
+          getSimpleMetadataForOrder(order, orderMetadataSchemaProperties),
         );
+
         const orderObj = this.orderMapper.getOrderObject(order);
 
         orders.push(
