@@ -20,6 +20,7 @@ import { getPriceSelectorFromCtCart } from './utils/mappers/getPriceSelectorFrom
 import { translateCtOrderToOrder } from './utils/mappers/translateCtOrderToOrder';
 import { CartDiscountApplyMode, CartResponse } from './types';
 import { OrderPaidActions } from './store-actions/order-paid-actions';
+import { CartDiscountApplyModeConfigService } from './cartDiscountApplyModeConfig.service';
 
 @Injectable()
 export class CommercetoolsService implements StoreInterface {
@@ -29,6 +30,7 @@ export class CommercetoolsService implements StoreInterface {
     private readonly typesService: CustomTypesService,
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly configService: ConfigService,
+    private readonly cartDiscountApplyModeConfigService: CartDiscountApplyModeConfigService,
   ) {}
   private cartUpdateHandler: CartUpdateHandler;
   public setCartUpdateListener(handler: CartUpdateHandler) {
@@ -39,11 +41,7 @@ export class CommercetoolsService implements StoreInterface {
     this.orderPaidHandler = handler;
   }
   private cartDiscountApplyMode: CartDiscountApplyMode =
-    this.configService.get<string>(
-      'APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT',
-    ) === 'true'
-      ? CartDiscountApplyMode.DirectDiscount
-      : CartDiscountApplyMode.CustomLineItem;
+    this.cartDiscountApplyModeConfigService.getCartDiscountApplyMode;
 
   private maxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut: number =
     this.configService.get<number>(
