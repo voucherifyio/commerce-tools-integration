@@ -181,7 +181,7 @@ export class CommercetoolsService {
   ): Promise<TaxCategory> {
     const { country } = cart;
     const taxCategory =
-      await this.taxCategoriesService.getCouponTaxCategoryFromResponse();
+      await this.taxCategoriesService.getCachedOrInsertCouponTaxCategory();
     if (!taxCategory) {
       const msg = 'Coupon tax category was not configured correctly';
       this.logger.error({ msg });
@@ -196,7 +196,7 @@ export class CommercetoolsService {
         taxCategory,
         country,
       );
-      return await this.taxCategoriesService.getCouponTaxCategoryFromResponse();
+      return await this.taxCategoriesService.getCachedOrInsertCouponTaxCategory();
     }
     return taxCategory;
   }

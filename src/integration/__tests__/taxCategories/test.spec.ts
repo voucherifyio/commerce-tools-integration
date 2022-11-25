@@ -54,7 +54,7 @@ describe('Tax categories', () => {
     await commercetoolsService.handleCartUpdate(cartCh);
 
     expect(
-      taxCategoriesService.getCouponTaxCategoryFromResponse,
+      taxCategoriesService.getCachedOrInsertCouponTaxCategory,
     ).toBeCalledTimes(2);
     expect(taxCategoriesService.addCountryToCouponTaxCategory).toBeCalledTimes(
       1,
@@ -85,7 +85,7 @@ describe('Tax categories', () => {
     await commercetoolsService.handleCartUpdate(cart);
 
     expect(
-      taxCategoriesService.getCouponTaxCategoryFromResponse,
+      taxCategoriesService.getCachedOrInsertCouponTaxCategory,
     ).toBeCalledTimes(1);
     expect(taxCategoriesService.addCountryToCouponTaxCategory).not.toBeCalled();
   });
