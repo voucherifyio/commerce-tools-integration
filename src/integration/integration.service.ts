@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
   RedemptionsRedeemStackableResponse,
-  StackableRedeemableResponse,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 import { uniqBy } from 'lodash';
@@ -11,20 +10,18 @@ import { TaxCategoriesService } from '../commercetools/tax-categories/tax-catego
 import { CustomTypesService } from '../commercetools/custom-types/custom-types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import {
-  availablePromotion,
   Cart,
   Coupon,
   ProductToAdd,
   SentCoupons,
   Order,
+  CartUpdateActions,
+  OrderPaidActions,
 } from './types';
 import { mapItemsToVoucherifyOrdersItems } from './utils/mappers/product';
 import { ConfigService } from '@nestjs/config';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
-import {
-  getCouponsLimit,
-  VoucherifyService,
-} from '../voucherify/voucherify.service';
+import { VoucherifyService } from '../voucherify/voucherify.service';
 import {
   calculateTotalDiscountAmount,
   filterCouponsByLimit,
@@ -34,27 +31,7 @@ import { getCouponsByStatus } from '../commercetools/utils/oldGetCouponsByStatus
 import { buildValidationsValidateStackableParamsForVoucherify } from './utils/mappers/buildValidationsValidateStackableParamsForVoucherify';
 import { buildRedeemStackableRequestForVoucherify } from './utils/mappers/buildRedeemStackableRequestForVoucherify';
 import { getSimpleMetadataForOrder } from '../commercetools/utils/mappers/getSimpleMetadataForOrder';
-import { Order as CommerceToolsOrder } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/order';
 import { mergeTwoObjectsIntoOne } from './utils/mergeTwoObjectsIntoOne';
-
-export interface CartUpdateActions {
-  setAvailablePromotions(promotions: availablePromotion[]); //starting value: []
-  setProductsToAdd(productsToAdd: ProductToAdd[]); //starting value: []
-  setTotalDiscountAmount(totalDiscountAmount: number); //starting value: 0
-  setApplicableCoupons(applicableCoupons: StackableRedeemableResponse[]); //starting value: []
-  setInapplicableCoupons(inapplicableCoupons: StackableRedeemableResponse[]); //starting value: []
-  setSessionKey(sessionKey: string); //starting value: undefined
-  getProductsToAdd: (
-    discountTypeUnit: StackableRedeemableResponse[],
-  ) => Promise<ProductToAdd[]>; //function to get price/SKU/ids of products from unit type coupons
-}
-
-export interface OrderPaidActions {
-  getCustomMetadataForOrder?: (
-    order: CommerceToolsOrder,
-    allMetadataSchemaProperties: string[],
-  ) => Promise<{ [key: string]: string }>; //function to handle custom metadata for order (for example: metadata from custom fields)
-}
 
 @Injectable()
 export class IntegrationService {
@@ -132,9 +109,7 @@ export class IntegrationService {
 
     const couponsLimited = filterCouponsByLimit(
       couponsRequested,
-      getCouponsLimit(
-        this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT'),
-      ),
+      this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT'),
     );
 
     let validatedCoupons: ValidationValidateStackableResponse =

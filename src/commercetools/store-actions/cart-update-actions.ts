@@ -9,17 +9,15 @@ import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/decl
 import getCartActionBuilders from './cart-update-actions/getCartActionBuilders';
 import { checkIfAllInapplicableCouponsArePromotionTier } from '../../integration/utils/helperFunctions';
 import { DataToRunCartActionsBuilder } from './cart-update-actions/CartAction';
-import { CartDiscountApplyMode, PriceSelector } from '../types';
+import {
+  CartDiscountApplyMode,
+  PriceSelector,
+  ProductWithCurrentPriceAmount,
+} from '../types';
 import { getCommercetoolstCurrentPriceAmount } from '../utils/getCommercetoolstCurrentPriceAmount';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 
-interface ProductWithCurrentPriceAmount extends Product {
-  currentPriceAmount: number;
-  unit: StackableRedeemableResultDiscountUnit;
-  item: OrdersItem;
-}
-
-export class CartUpdateActions {
+export class CartUpdateActions implements CartUpdateActions {
   private taxCategory: TaxCategory;
   public setTaxCategory(value: TaxCategory) {
     this.taxCategory = value;
@@ -89,9 +87,9 @@ export class CartUpdateActions {
           return [];
         }
         const freeUnits = (
-          discount.units
-            ? discount.units
-            : [{ ...discount } as StackableRedeemableResultDiscountUnit]
+          discount.units || [
+            { ...discount } as StackableRedeemableResultDiscountUnit,
+          ]
         ).filter((unit) => APPLICABLE_PRODUCT_EFFECT.includes(unit.effect));
         if (!freeUnits.length) {
           return [];

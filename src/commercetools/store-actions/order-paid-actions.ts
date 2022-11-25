@@ -7,7 +7,7 @@ import flatten from 'flat';
 
 const CUSTOM_FIELD_PREFIX_LENGTH = CUSTOM_FIELD_PREFIX.length;
 
-export class OrderPaidActions {
+export class OrderPaidActions implements OrderPaidActions {
   private ctClient: ByProjectKeyRequestBuilder;
   public setCtClient(value: ByProjectKeyRequestBuilder) {
     this.ctClient = value;

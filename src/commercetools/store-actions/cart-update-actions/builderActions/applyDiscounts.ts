@@ -77,7 +77,7 @@ function removeDiscountedCustomLineItems(
     });
 }
 
-export default function customLineItems(
+export default function applyDiscounts(
   dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
 ): CartAction[] {
   const cartActions = [] as CartAction[];

@@ -1,36 +1,8 @@
 import {
-  Cart as CommerceToolsCart,
-  Order as CommerceToolsOrder,
-} from '@commercetools/platform-sdk';
-import {
   StackableRedeemableResponse,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 import { Coupon } from '../types';
-import { uniqBy } from 'lodash';
-
-export function deserializeCoupons(serializedDiscountOrCode: string): Coupon {
-  if (serializedDiscountOrCode.startsWith('{')) {
-    return JSON.parse(serializedDiscountOrCode);
-  }
-  // that case handle legacy way of saving coupons in Commerce Tools
-  return {
-    code: serializedDiscountOrCode,
-    status: 'NEW',
-  };
-}
-
-export function getCouponsFromCartOrOrder(
-  cart: CommerceToolsCart | CommerceToolsOrder,
-): Coupon[] {
-  const coupons = (cart.custom?.fields?.discount_codes ?? [])
-    .map(deserializeCoupons)
-    .filter(
-      (coupon) =>
-        coupon.status !== 'NOT_APPLIED' && coupon.status !== 'AVAILABLE',
-    ); // we already declined them, will be removed by frontend
-  return uniqBy(coupons, 'code');
-}
 
 export function checkIfAllInapplicableCouponsArePromotionTier(
   notApplicableCoupons: StackableRedeemableResponse[],
@@ -43,24 +15,17 @@ export function checkIfAllInapplicableCouponsArePromotionTier(
 }
 
 export function filterCouponsByLimit(coupons: Coupon[], couponsLimit: number) {
-  if (coupons.length > couponsLimit) {
-    const couponsToRemove = coupons.length - couponsLimit;
-    const newCouponsCodes = coupons
-      .filter((coupon) => coupon.status === 'NEW')
-      .map((coupon) => coupon.code);
-
-    coupons = coupons.filter(
-      (coupon) => !newCouponsCodes.includes(coupon.code),
-    );
-
-    if (newCouponsCodes.length < couponsToRemove) {
-      coupons = coupons.splice(
-        0,
-        coupons.length - (couponsToRemove - newCouponsCodes.length),
-      );
-    }
-  }
-  return coupons;
+  const deletedCoupons = coupons.filter(
+    (coupon) => coupon.status === 'DELETED',
+  );
+  const newCoupons = coupons.filter((coupon) => coupon.status === 'NEW');
+  const applicableCoupons = coupons.filter(
+    (coupon) => coupon.status === 'APPLIED',
+  );
+  return [
+    ...[...applicableCoupons, ...newCoupons].splice(0, couponsLimit),
+    ...deletedCoupons,
+  ];
 }
 
 export function calculateTotalDiscountAmount(

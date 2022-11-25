@@ -4,9 +4,9 @@ import {
 } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/order';
 import { Order } from '../../../integration/types';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
-import { getCouponsFromCartOrOrder } from '../../../integration/utils/helperFunctions';
 import { getCustomerFromCtOrder } from './getCustomerFromCtOrder';
 import { mapLineItemsToIntegrationType } from './mapLineItemsToIntegrationType';
+import { getCouponsFromCartOrOrder } from '../getCouponsFromCartOrOrder';
 
 export function translateCtOrderToOrder(order: CommerceToolsOrder): Order {
   return {

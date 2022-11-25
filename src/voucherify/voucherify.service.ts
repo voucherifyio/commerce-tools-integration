@@ -5,10 +5,6 @@ import { ConfigService } from '@nestjs/config';
 import { ValidationValidateStackableResponse } from '@voucherify/sdk';
 import { Coupon } from '../integration/types';
 
-export function getCouponsLimit(couponLimit?: number): number {
-  return (couponLimit ?? 5) < 5 ? couponLimit : 5;
-}
-
 @Injectable()
 export class VoucherifyService {
   constructor(

@@ -102,47 +102,6 @@ export const getCommerceToolsConnectorServiceMockWithProductResponse = (
 
   commerceToolsConnectoService.getClient = jest.fn().mockReturnValue(null);
 
-  // commerceToolsConnectoService.getCtProducts = jest.fn().mockReturnValue([
-  //   {
-  //     id: product.id,
-  //     masterData: {
-  //       current: {
-  //         variants: [
-  //           {
-  //             id: 2,
-  //             sku: product.sku,
-  //             key: product.sku,
-  //             prices: [
-  //               {
-  //                 id: 'a04f9ae5-fe60-4459-b26c-7461200a0109',
-  //                 value: {
-  //                   type: 'centPrecision',
-  //                   currencyCode: 'EUR',
-  //                   centAmount: product.price,
-  //                   fractionDigits: 2,
-  //                 },
-  //               },
-  //               {
-  //                 id: 'd474a958-c1d9-4523-85fe-b962df0312b0',
-  //                 value: {
-  //                   type: 'centPrecision',
-  //                   currencyCode: 'EUR',
-  //                   centAmount: product.price,
-  //                   fractionDigits: 2,
-  //                 },
-  //                 customerGroup: {
-  //                   typeId: 'customer-group',
-  //                   id: '449b547f-cc6f-4399-983d-27475a00b3f7',
-  //                 },
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //     },
-  //   },
-  // ]);
-
   commerceToolsConnectoService.getClient = jest.fn().mockReturnValue({
     products: jest.fn().mockReturnValue({
       get: jest.fn().mockReturnValue({
