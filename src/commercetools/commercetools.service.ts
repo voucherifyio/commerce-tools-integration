@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   Cart as CommerceToolsCart,
   Order as CommerceToolsOrder,
-  TaxCategory,
 } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../misc/sleep';
@@ -39,6 +38,12 @@ export class CommercetoolsService implements StoreInterface {
   public setOrderPaidListener(handler: OrderRedeemHandler) {
     this.orderPaidHandler = handler;
   }
+  private cartDiscountApplyMode: CartDiscountApplyMode =
+    this.configService.get<string>(
+      'APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT',
+    ) === 'true'
+      ? CartDiscountApplyMode.DirectDiscount
+      : CartDiscountApplyMode.CustomLineItem;
 
   private maxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut: number =
     this.configService.get<number>(
@@ -63,15 +68,9 @@ export class CommercetoolsService implements StoreInterface {
       this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT'),
     );
 
-    const cartDiscountApplyMode =
-      this.configService.get<string>(
-        'APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT',
-      ) === 'true'
-        ? CartDiscountApplyMode.DirectDiscount
-        : CartDiscountApplyMode.CustomLineItem;
-    cartUpdateActions.setCartDiscountApplyMode(cartDiscountApplyMode);
+    cartUpdateActions.setCartDiscountApplyMode(this.cartDiscountApplyMode);
 
-    if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
+    if (this.cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
       cartUpdateActions.setTaxCategory(
         await this.taxCategoriesService.getCouponTaxCategoryAndUpdateItIfNeeded(
           cart?.country,
