@@ -31,24 +31,16 @@ export function filterCouponsByLimit(coupons: Coupon[], couponsLimit: number) {
 export function calculateTotalDiscountAmount(
   validatedCoupons: ValidationValidateStackableResponse,
 ) {
-  let totalDiscountAmount = 0;
-  if (
-    validatedCoupons.redeemables.find(
-      (redeemable) => redeemable?.order?.items?.length,
-    )
-  ) {
-    //Voucherify "order.total_applied_discount_amount" is not always calculated correctly,
-    //so we need to iterate through the items to calculated discounted amount
-    validatedCoupons.redeemables.forEach((redeemable) => {
-      redeemable.order.items.forEach((item) => {
-        if ((item as any).total_applied_discount_amount) {
-          totalDiscountAmount += (item as any).total_applied_discount_amount;
-        } else if ((item as any).total_discount_amount) {
-          totalDiscountAmount += (item as any).total_discount_amount;
-        }
-      });
-    });
-  }
+  const allItems = validatedCoupons.redeemables.flatMap(
+    (redeemable) => redeemable.order.items,
+  );
+  const totalDiscountAmount = allItems.reduce((total, item) => {
+    return (
+      total + (item as any)?.total_applied_discount_amount ||
+      (item as any)?.total_discount_amount ||
+      0
+    );
+  }, 0);
 
   if (totalDiscountAmount === 0) {
     return (

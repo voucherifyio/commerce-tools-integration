@@ -3,10 +3,8 @@ import {
   RedemptionsRedeemStackableResponse,
   StackableRedeemableResponse,
 } from '@voucherify/sdk';
-import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { CustomerRequest } from '@voucherify/sdk/dist/types/Customers';
-import { Order as CommerceToolsOrder } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/order';
 
 export type CartUpdateHandler = (
   cart: Cart,
@@ -31,7 +29,7 @@ export type ProductToAdd = {
   discount_difference: boolean;
   applied_discount_amount?: number;
   product: string; // sku source_id
-  distributionChannel: ChannelReference;
+  distributionChannel: any;
 };
 
 export type availablePromotion = {
@@ -106,7 +104,7 @@ export interface CartUpdateActions {
 
 export interface OrderPaidActions {
   getCustomMetadataForOrder?: (
-    order: CommerceToolsOrder,
+    order: any,
     allMetadataSchemaProperties: string[],
   ) => Promise<{ [key: string]: string }>; //function to handle custom metadata for order (for example: metadata from custom fields)
 }

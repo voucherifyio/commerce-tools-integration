@@ -1,9 +1,10 @@
 import { OrdersItem } from '@voucherify/sdk';
 import { Item } from '../../types';
 
-export class ProductMapper {}
-
-export function getMetadata(attributes, metadataSchemaProperties) {
+export function getMetadata(
+  attributes: { name: string; value: any }[],
+  metadataSchemaProperties: string[],
+) {
   return attributes
     ? Object.fromEntries(
         attributes
@@ -15,7 +16,7 @@ export function getMetadata(attributes, metadataSchemaProperties) {
 
 export function mapItemsToVoucherifyOrdersItems(
   lineItems: Item[],
-  metadataSchemaProperties = [],
+  metadataSchemaProperties: string[] = [],
 ): OrdersItem[] {
   return lineItems
     .filter((item) => item.quantity > 0)
@@ -43,17 +44,16 @@ export function mapItemsToVoucherifyOrdersItems(
 
 export function getQuantity(item) {
   const custom = item.custom?.fields?.applied_codes;
-  let itemQuantity = item?.quantity;
-
-  if (custom) {
-    custom
-      .map((code) => JSON.parse(code))
-      .filter(
-        (code) => code.type === 'UNIT' && code.effect !== 'ADD_MISSING_ITEMS',
-      )
-      .forEach(
-        (code) => (itemQuantity = itemQuantity - code.totalDiscountQuantity),
-      );
+  if (!custom) {
+    return item?.quantity;
   }
-  return itemQuantity;
+
+  return custom
+    .map((code) => JSON.parse(code))
+    .filter(
+      (code) => code.type === 'UNIT' && code.effect !== 'ADD_MISSING_ITEMS',
+    )
+    .reduce((prevQuantity, code) => {
+      return prevQuantity - code.totalDiscountQuantity;
+    }, item?.quantity);
 }

@@ -218,7 +218,7 @@ export class IntegrationService {
   private async getItemsWithCorrectedPrices(
     OrdersItems: OrdersItem[],
     productsToChange: ProductToAdd[],
-  ) {
+  ): Promise<OrdersItem[]> {
     type OrderItemSku = {
       id?: string;
       source_id?: string;
@@ -267,7 +267,7 @@ export class IntegrationService {
           sku: item?.sku?.sku,
           price: currentProductToChange.applied_discount_amount,
         },
-      };
+      } as OrdersItem;
     });
   }
 
@@ -277,7 +277,7 @@ export class IntegrationService {
   ) {
     const { id, customerId } = order;
 
-    //items
+    //products metadata
     const productMetadataSchemaProperties =
       await this.voucherifyConnectorService.getMetadataSchemaProperties(
         'product',

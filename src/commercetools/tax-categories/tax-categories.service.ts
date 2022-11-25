@@ -11,6 +11,31 @@ export class TaxCategoriesService {
 
   private couponTaxCategory: TaxCategory = null;
 
+  public async getCouponTaxCategoryAndUpdateItIfNeeded(
+    country: string,
+  ): Promise<TaxCategory> {
+    if (!country) {
+      const msg = 'Country was not provided to obtain coupon tax category!';
+      this.logger.error({ msg });
+      throw new Error(msg);
+    }
+    const taxCategory = await this.getCouponTaxCategoryFromResponse();
+    if (!taxCategory) {
+      const msg = 'Coupon tax category was not configured correctly';
+      this.logger.error({ msg });
+      throw new Error(msg);
+    }
+
+    if (
+      country &&
+      !taxCategory?.rates?.find((rate) => rate.country === country)
+    ) {
+      await this.addCountryToCouponTaxCategory(taxCategory, country);
+      return await this.getCouponTaxCategoryFromResponse();
+    }
+    return taxCategory;
+  }
+
   async getCouponTaxCategoryFromResponse(): Promise<TaxCategory> {
     if (this.couponTaxCategory) {
       return this.couponTaxCategory;

@@ -72,7 +72,11 @@ export class CommercetoolsService implements StoreInterface {
     cartUpdateActions.setCartDiscountApplyMode(cartDiscountApplyMode);
 
     if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
-      cartUpdateActions.setTaxCategory(await this.getCouponTaxCategory(cart));
+      cartUpdateActions.setTaxCategory(
+        await this.taxCategoriesService.getCouponTaxCategoryAndUpdateItIfNeeded(
+          cart?.country,
+        ),
+      );
     }
 
     if (typeof this.cartUpdateHandler !== 'function') {
@@ -98,7 +102,7 @@ export class CommercetoolsService implements StoreInterface {
     };
   }
 
-  async handleAPIExtensionTimeout(
+  async handleAPIExtensionTimeoutOnCartUpdate(
     cart: CommerceToolsCart,
     buildingResponseTime: number,
   ) {
@@ -165,31 +169,6 @@ export class CommercetoolsService implements StoreInterface {
       });
       return;
     }
-  }
-
-  public async getCouponTaxCategory(
-    cart: CommerceToolsCart,
-  ): Promise<TaxCategory> {
-    const { country } = cart;
-    const taxCategory =
-      await this.taxCategoriesService.getCouponTaxCategoryFromResponse();
-    if (!taxCategory) {
-      const msg = 'Coupon tax category was not configured correctly';
-      this.logger.error({ msg });
-      throw new Error(msg);
-    }
-
-    if (
-      country &&
-      !taxCategory?.rates?.find((rate) => rate.country === country)
-    ) {
-      await this.taxCategoriesService.addCountryToCouponTaxCategory(
-        taxCategory,
-        country,
-      );
-      return await this.taxCategoriesService.getCouponTaxCategoryFromResponse();
-    }
-    return taxCategory;
   }
 
   public async setCustomTypeForInitializedCart(): Promise<CartResponse> {
