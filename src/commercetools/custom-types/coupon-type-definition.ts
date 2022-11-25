@@ -1,121 +1,119 @@
 import { TypeDraft } from '@commercetools/platform-sdk';
 
 export const LINE_ITEM_COUPON_CUSTOM_FIELDS: TypeDraft = {
-  
-    key: 'lineItemCodesType', //DO NOT CHANGE the key
-    name: {
-      en: 'lineItemCodesType',
-    },
-    description: {
-      en: 'lineItemCodesType',
-    },
-    resourceTypeIds: ['line-item'],
-    fieldDefinitions: [
-      {
-        name: 'applied_codes',
-        label: {
-          en: 'applied_codes',
-        },
-        required: false,
-        type: {
-          name: 'Set',
-          elementType: { name: 'String' },
-        },
-        inputHint: 'SingleLine',
+  key: 'lineItemCodesType', //DO NOT CHANGE the key
+  name: {
+    en: 'lineItemCodesType',
+  },
+  description: {
+    en: 'lineItemCodesType',
+  },
+  resourceTypeIds: ['line-item'],
+  fieldDefinitions: [
+    {
+      name: 'applied_codes',
+      label: {
+        en: 'applied_codes',
       },
-      {
-        name: 'coupon_fixed_price',
-        label: {
-          en: 'coupon_fixed_price',
-        },
-        required: false,
-        type: {
-          name: 'Number',
-        },
-        inputHint: 'SingleLine',
+      required: false,
+      type: {
+        name: 'Set',
+        elementType: { name: 'String' },
       },
-    ],
+      inputHint: 'SingleLine',
+    },
+    {
+      name: 'coupon_fixed_price',
+      label: {
+        en: 'coupon_fixed_price',
+      },
+      required: false,
+      type: {
+        name: 'Number',
+      },
+      inputHint: 'SingleLine',
+    },
+  ],
 };
 
 export const OREDER_COUPON_CUSTOM_FIELDS: TypeDraft = {
-  
-    key: 'couponCodes', //DO NOT CHANGE the key
-    name: {
-      en: 'couponCodes',
+  key: 'couponCodes', //DO NOT CHANGE the key
+  name: {
+    en: 'couponCodes',
+  },
+  description: {
+    en: 'couponCodes',
+  },
+  resourceTypeIds: ['order'],
+  fieldDefinitions: [
+    {
+      name: 'discount_codes',
+      label: {
+        en: 'discount_codes',
+      },
+      required: false,
+      type: {
+        name: 'Set',
+        elementType: { name: 'String' },
+      },
+      inputHint: 'SingleLine',
     },
-    description: {
-      en: 'couponCodes',
+    {
+      name: 'used_codes',
+      label: {
+        en: 'used_codes',
+      },
+      required: false,
+      type: {
+        name: 'Set',
+        elementType: { name: 'String' },
+      },
+      inputHint: 'SingleLine',
     },
-    resourceTypeIds: ['order'],
-    fieldDefinitions: [
-      {
-        name: 'discount_codes',
-        label: {
-          en: 'discount_codes',
-        },
-        required: false,
-        type: {
-          name: 'Set',
-          elementType: { name: 'String' },
-        },
-        inputHint: 'SingleLine',
+    {
+      name: 'session',
+      label: {
+        en: 'session',
       },
-      {
-        name: 'used_codes',
-        label: {
-          en: 'used_codes',
-        },
-        required: false,
-        type: {
-          name: 'Set',
-          elementType: { name: 'String' },
-        },
-        inputHint: 'SingleLine',
+      required: false,
+      type: {
+        name: 'String',
       },
-      {
-        name: 'session',
-        label: {
-          en: 'session',
-        },
-        required: false,
-        type: {
-          name: 'String',
-        },
-        inputHint: 'SingleLine',
+      inputHint: 'SingleLine',
+    },
+    {
+      name: 'shippingProductSourceIds',
+      label: {
+        en: 'shippingProductSourceIds',
       },
-      {
-        name: 'shippingProductSourceIds',
-        label: {
-          en: 'shippingProductSourceIds',
-        },
-        required: false,
-        type: {
-          name: 'Set',
-          elementType: { name: 'String' },
-        },
-        inputHint: 'SingleLine',
+      required: false,
+      type: {
+        name: 'Set',
+        elementType: { name: 'String' },
       },
-      {
-        name: 'isValidationFailed',
-        label: {
-          en: 'isValidationFailed',
-        },
-        required: false,
-        type: {
-          name: 'Boolean',
-        },
-        inputHint: 'SingleLine',
+      inputHint: 'SingleLine',
+    },
+    {
+      name: 'isValidationFailed',
+      label: {
+        en: 'isValidationFailed',
       },
-      {
-        name: 'couponsLimit',
-        label: {
-          en: 'couponsLimit',
-        },
-        required: false,
-        type: {
-          name: 'Number',
-        },
-        inputHint: 'SingleLine',
+      required: false,
+      type: {
+        name: 'Boolean',
       },
-    ]
-}
+      inputHint: 'SingleLine',
+    },
+    {
+      name: 'couponsLimit',
+      label: {
+        en: 'couponsLimit',
+      },
+      required: false,
+      type: {
+        name: 'Number',
+      },
+      inputHint: 'SingleLine',
+    },
+  ],
+};

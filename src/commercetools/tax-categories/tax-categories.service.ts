@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommercetoolsConnectorService } from '../commercetools-connector.service';
-import { TaxCategory, TaxCategoryAddTaxRateAction, TaxCategoryRemoveTaxRateAction, TaxCategoryReplaceTaxRateAction, TaxRate } from '@commercetools/platform-sdk';
+import {
+  TaxCategory,
+  TaxCategoryAddTaxRateAction,
+  TaxCategoryRemoveTaxRateAction,
+  TaxCategoryReplaceTaxRateAction,
+  TaxRate,
+} from '@commercetools/platform-sdk';
 @Injectable()
 export class TaxCategoriesService {
   constructor(
@@ -14,20 +20,19 @@ export class TaxCategoriesService {
     if (this.couponTaxCategory) {
       return this.couponTaxCategory;
     }
-    
-    const couponTaxCategory = await this.getOrInsertCouponTaxCategory();  
 
-    if(!couponTaxCategory){
+    const couponTaxCategory = await this.getOrInsertCouponTaxCategory();
+
+    if (!couponTaxCategory) {
       return null;
     }
-    
+
     this.couponTaxCategory = couponTaxCategory;
 
     return this.couponTaxCategory;
   }
 
   private async getOrInsertCouponTaxCategory(): Promise<TaxCategory | null> {
-    
     const ctClient = this.commerceToolsConnectorService.getClient();
     const { statusCode, body } = await ctClient
       .taxCategories()
@@ -35,7 +40,6 @@ export class TaxCategoriesService {
       .execute();
 
     if ([200, 201].includes(statusCode) && body.count === 1) {
-       ;
       this.logger.debug({
         msg: 'Found existing coupon tax category',
         taxCategoryId: body.results[0].id,
@@ -56,7 +60,7 @@ export class TaxCategoriesService {
     if (![200, 201].includes(response.statusCode)) {
       return null;
     }
-    
+
     this.logger.debug({
       msg: 'Created new coupon tax category',
       taxCategoryId: response.body.id,
@@ -64,8 +68,6 @@ export class TaxCategoriesService {
 
     return response.body;
   }
-
-  
 
   public async configureCouponTaxCategory(): Promise<TaxCategory> {
     const ctClient = this.commerceToolsConnectorService.getClient();
@@ -92,20 +94,34 @@ export class TaxCategoriesService {
         };
       }) ?? [];
 
-    const { ratesToAdd, ratesToDelete, ratesToUpdate } = this.calcOperationsToGetDesiredRates(desiredRates, currentRates);
+    const { ratesToAdd, ratesToDelete, ratesToUpdate } =
+      this.calcOperationsToGetDesiredRates(desiredRates, currentRates);
 
     const actions = [
-      ...ratesToAdd.map(taxRate => ({
-        action: 'addTaxRate', taxRate
-      } as TaxCategoryAddTaxRateAction)) ,
-      ...ratesToDelete.map(taxRate => ({
-        action: 'removeTaxRate', taxRateId: taxRate.id
-      } as TaxCategoryRemoveTaxRateAction)),
-      ...ratesToUpdate.map(taxRate => ({
-        action: 'replaceTaxRate',
-        taxRateId: currentRates.find((rate_) => rate_.country === taxRate.country).id,
-        taxRate
-      } as TaxCategoryReplaceTaxRateAction)),
+      ...ratesToAdd.map(
+        (taxRate) =>
+          ({
+            action: 'addTaxRate',
+            taxRate,
+          } as TaxCategoryAddTaxRateAction),
+      ),
+      ...ratesToDelete.map(
+        (taxRate) =>
+          ({
+            action: 'removeTaxRate',
+            taxRateId: taxRate.id,
+          } as TaxCategoryRemoveTaxRateAction),
+      ),
+      ...ratesToUpdate.map(
+        (taxRate) =>
+          ({
+            action: 'replaceTaxRate',
+            taxRateId: currentRates.find(
+              (rate_) => rate_.country === taxRate.country,
+            ).id,
+            taxRate,
+          } as TaxCategoryReplaceTaxRateAction),
+      ),
     ];
 
     this.logger.debug({
@@ -140,14 +156,18 @@ export class TaxCategoriesService {
     return this.getOrInsertCouponTaxCategory();
   }
 
-  private calcOperationsToGetDesiredRates(desiredRates: TaxRate[], currentRates: TaxRate[]) {
+  private calcOperationsToGetDesiredRates(
+    desiredRates: TaxRate[],
+    currentRates: TaxRate[],
+  ) {
     const ratesToAdd = desiredRates?.filter(
-      (rate) => !currentRates?.map((rate_) => rate_.country).includes(rate.country)
+      (rate) =>
+        !currentRates?.map((rate_) => rate_.country).includes(rate.country),
     );
 
     const ratesToUpdate = desiredRates.filter((desiredRate) => {
       const currentRate = currentRates.find(
-        (currentRate) => currentRate.country === desiredRate.country
+        (currentRate) => currentRate.country === desiredRate.country,
       );
       return (
         currentRate &&
@@ -157,7 +177,8 @@ export class TaxCategoriesService {
     });
 
     const ratesToDelete = currentRates?.filter(
-      (rate) => !desiredRates.map((rate_) => rate_.country).includes(rate.country)
+      (rate) =>
+        !desiredRates.map((rate_) => rate_.country).includes(rate.country),
     );
     return { ratesToAdd, ratesToDelete, ratesToUpdate };
   }

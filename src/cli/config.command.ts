@@ -32,7 +32,8 @@ export class ConfigCommand implements CommandRunner {
       '[2/2] Attempt to configure coupon tax categories in Commercetools',
     ).start();
 
-    const  couponTaxCategoriesCreated = await this.taxCategoriesService.configureCouponTaxCategory();
+    const couponTaxCategoriesCreated =
+      await this.taxCategoriesService.configureCouponTaxCategory();
     if (couponTaxCategoriesCreated) {
       spinnerTaxCategories.succeed('[2/2] Coupon tax categories configured');
     } else {

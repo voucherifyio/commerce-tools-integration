@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommercetoolsConnectorService } from '../commercetools-connector.service';
 import { Type, TypeDraft, TypeUpdateAction } from '@commercetools/platform-sdk';
-import {OREDER_COUPON_CUSTOM_FIELDS, LINE_ITEM_COUPON_CUSTOM_FIELDS} from './coupon-type-definition'
+import {
+  OREDER_COUPON_CUSTOM_FIELDS,
+  LINE_ITEM_COUPON_CUSTOM_FIELDS,
+} from './coupon-type-definition';
 
 @Injectable()
 export class CustomTypesService {
@@ -34,27 +37,29 @@ export class CustomTypesService {
     );
 
     const productConfig = await this.upsertCouponType(
-      LINE_ITEM_COUPON_CUSTOM_FIELDS
+      LINE_ITEM_COUPON_CUSTOM_FIELDS,
     );
 
     const isSuccess = !!orderConfig && !!productConfig;
 
     this.logger.debug({
-      msg: isSuccess?'All custom-types are configured properly': 'Types are not configured properly',
+      msg: isSuccess
+        ? 'All custom-types are configured properly'
+        : 'Types are not configured properly',
     });
 
-    return {success: isSuccess}
+    return { success: isSuccess };
   }
 
   private async upsertCouponType(
-    typeDefinition:TypeDraft
+    typeDefinition: TypeDraft,
   ): Promise<Type | null> {
     this.logger.debug({
       msg: 'Attempt to configure custom field type for order that keeps information about coupon codes.',
     });
-    
+
     const couponType = await this.findCouponType(typeDefinition.key);
-    
+
     if (!couponType) {
       this.logger.debug({
         msg: 'No custom field type, creating new one from scratch.',
@@ -80,7 +85,7 @@ export class CustomTypesService {
           fieldDefinition,
         }),
       );
-      await this.updateCouponType(couponType, actions)
+      await this.updateCouponType(couponType, actions);
     }
     this.logger.debug({
       msg: 'Custom field type and fields are up to date.',
@@ -89,10 +94,13 @@ export class CustomTypesService {
     return couponType;
   }
 
-  private async createCouponType(typeDefinition: TypeDraft):Promise<Type> {
+  private async createCouponType(typeDefinition: TypeDraft): Promise<Type> {
     const ctClient = this.commerceToolsConnectorService.getClient();
 
-    const response = await ctClient.types().post({body: typeDefinition}).execute();
+    const response = await ctClient
+      .types()
+      .post({ body: typeDefinition })
+      .execute();
     if (![200, 201].includes(response.statusCode)) {
       const errorMsg = `Type: "${typeDefinition.key}" could not be created`;
       this.logger.error({
@@ -107,11 +115,14 @@ export class CustomTypesService {
       msg: `Type: "${typeDefinition.key}" created`,
       type: response.body,
     });
-    
+
     return response.body;
   }
 
-  private async updateCouponType(oldCouponType: Type, actions: TypeUpdateAction[]) {
+  private async updateCouponType(
+    oldCouponType: Type,
+    actions: TypeUpdateAction[],
+  ) {
     const ctClient = this.commerceToolsConnectorService.getClient();
 
     const response = await ctClient
