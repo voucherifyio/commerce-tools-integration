@@ -24,24 +24,22 @@ export class TaxCategoriesService {
       this.logger.error({ msg });
       throw new Error(msg);
     }
-    const couponTaxCategory = await this.getCouponTaxCategoryFromResponse();
+    const couponTaxCategory =
+      await this.getCashedCouponTaxCategoryOrFromNewRequest();
     if (!couponTaxCategory) {
       const msg = 'Coupon tax category was not configured correctly';
       this.logger.error({ msg });
       throw new Error(msg);
     }
 
-    if (
-      country &&
-      !couponTaxCategory?.rates?.find((rate) => rate.country === country)
-    ) {
+    if (!couponTaxCategory?.rates?.find((rate) => rate.country === country)) {
       await this.addCountryToCouponTaxCategory(couponTaxCategory, country);
-      return await this.getCouponTaxCategoryFromResponse();
+      return await this.getCashedCouponTaxCategoryOrFromNewRequest();
     }
     return couponTaxCategory;
   }
 
-  async getCouponTaxCategoryFromResponse(): Promise<TaxCategory> {
+  async getCashedCouponTaxCategoryOrFromNewRequest(): Promise<TaxCategory> {
     if (this.couponTaxCategory) {
       return this.couponTaxCategory;
     }
@@ -83,7 +81,8 @@ export class TaxCategoriesService {
 
   public async configureCouponTaxCategory(): Promise<TaxCategory> {
     const ctClient = this.commerceToolsConnectorService.getClient();
-    const couponTaxCategory = await this.getCouponTaxCategoryFromResponse();
+    const couponTaxCategory =
+      await this.getCashedCouponTaxCategoryOrFromNewRequest();
 
     const currentRates = couponTaxCategory?.rates;
 
@@ -142,7 +141,7 @@ export class TaxCategoriesService {
     });
 
     if (!actions.length) {
-      return { success: true, couponTaxCategory };
+      return couponTaxCategory;
     }
 
     const response = await ctClient
@@ -165,7 +164,7 @@ export class TaxCategoriesService {
       });
     }
 
-    return this.getCouponTaxCategoryFromResponse();
+    return this.getCashedCouponTaxCategoryOrFromNewRequest();
   }
 
   private calcOperationsToGetDesiredRates(
@@ -224,7 +223,7 @@ export class TaxCategoriesService {
     if (success) {
       this.couponTaxCategory = null;
       this.logger.debug({ msg: 'Added country to coupon tax category' });
-      await this.getCouponTaxCategoryFromResponse();
+      await this.getCashedCouponTaxCategoryOrFromNewRequest();
     } else {
       this.logger.error({
         msg: 'Could not add country to coupon tax category',
