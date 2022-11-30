@@ -21,7 +21,7 @@ export enum CartDiscountApplyMode {
   DirectDiscount,
 }
 
-export interface ProductWithCurrentPriceAmount extends Product {
+export interface ProductWithCurrentPriceAmountInterface extends Product {
   currentPriceAmount: number;
   unit: StackableRedeemableResultDiscountUnit;
   item: OrdersItem;

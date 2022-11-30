@@ -8,9 +8,9 @@ import {
 } from '@voucherify/sdk';
 import { ConfigService } from '@nestjs/config';
 import {
-  RequestJsonLogger,
+  RequestJsonLoggerInterface,
   REQUEST_JSON_LOGGER,
-} from '../misc/request-json-logger';
+} from '../misc/request-json-logger-interface';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { mapItemsToVoucherifyOrdersItems } from '../integration/utils/mappers/product';
 import { Order } from '../integration/types';
@@ -22,7 +22,7 @@ export class VoucherifyConnectorService {
     private configService: ConfigService,
     private logger: Logger,
     @Inject(REQUEST_JSON_LOGGER)
-    private readonly requestJsonLogger: RequestJsonLogger,
+    private readonly requestJsonLogger: RequestJsonLoggerInterface,
   ) {}
 
   private readonly applicationId: string =

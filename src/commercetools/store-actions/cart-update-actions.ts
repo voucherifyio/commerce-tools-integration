@@ -1,5 +1,9 @@
 import { Product, TaxCategory } from '@commercetools/platform-sdk';
-import { availablePromotion, ProductToAdd } from '../../integration/types';
+import {
+  availablePromotion,
+  CartUpdateActionsInterface,
+  ProductToAdd,
+} from '../../integration/types';
 import {
   OrdersItem,
   StackableRedeemableResponse,
@@ -12,12 +16,12 @@ import { DataToRunCartActionsBuilder } from './cart-update-actions/CartAction';
 import {
   CartDiscountApplyMode,
   PriceSelector,
-  ProductWithCurrentPriceAmount,
+  ProductWithCurrentPriceAmountInterface,
 } from '../types';
 import { getCommercetoolstCurrentPriceAmount } from '../utils/getCommercetoolstCurrentPriceAmount';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 
-export class CartUpdateActions implements CartUpdateActions {
+export class CartUpdateActions implements CartUpdateActionsInterface {
   private taxCategory: TaxCategory;
   public setTaxCategory(value: TaxCategory) {
     this.taxCategory = value;
@@ -131,7 +135,7 @@ export class CartUpdateActions implements CartUpdateActions {
   private async getCtProductsWithCurrentPriceAmount(
     freeUnits: StackableRedeemableResultDiscountUnit[],
     orderItems: OrdersItem[],
-  ): Promise<ProductWithCurrentPriceAmount[]> {
+  ): Promise<ProductWithCurrentPriceAmountInterface[]> {
     const productSourceIds = freeUnits.map((unit) => {
       return unit.product.source_id;
     });

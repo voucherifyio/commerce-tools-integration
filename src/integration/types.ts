@@ -8,12 +8,12 @@ import { CustomerRequest } from '@voucherify/sdk/dist/types/Customers';
 
 export type CartUpdateHandler = (
   cart: Cart,
-  storeActions?: CartUpdateActions,
+  storeActions?: CartUpdateActionsInterface,
 ) => void;
 
 export type OrderRedeemHandler = (
   order: Order,
-  storeActions?: OrderPaidActions,
+  storeActions?: OrderPaidActionsInterface,
 ) => Promise<{
   actions: { name: string; action: string; value: string[] }[];
   status: boolean;
@@ -90,7 +90,7 @@ export interface StoreInterface {
   setOrderPaidListener: (handler: OrderRedeemHandler) => void;
 }
 
-export interface CartUpdateActions {
+export interface CartUpdateActionsInterface {
   setAvailablePromotions(promotions: availablePromotion[]); //starting value: []
   setProductsToAdd(productsToAdd: ProductToAdd[]); //starting value: []
   setTotalDiscountAmount(totalDiscountAmount: number); //starting value: 0
@@ -102,7 +102,7 @@ export interface CartUpdateActions {
   ) => Promise<ProductToAdd[]>; //function to get price/SKU/ids of products from unit type coupons
 }
 
-export interface OrderPaidActions {
+export interface OrderPaidActionsInterface {
   getCustomMetadataForOrder?: (
     order: any,
     allMetadataSchemaProperties: string[],

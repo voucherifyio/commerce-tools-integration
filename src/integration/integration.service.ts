@@ -15,8 +15,8 @@ import {
   ProductToAdd,
   SentCoupons,
   Order,
-  CartUpdateActions,
-  OrderPaidActions,
+  CartUpdateActionsInterface,
+  OrderPaidActionsInterface,
 } from './types';
 import { mapItemsToVoucherifyOrdersItems } from './utils/mappers/product';
 import { ConfigService } from '@nestjs/config';
@@ -54,7 +54,7 @@ export class IntegrationService {
 
   public async validateCouponsAndGetAvailablePromotions(
     cart: Cart,
-    cartUpdateActions?: CartUpdateActions,
+    cartUpdateActions?: CartUpdateActionsInterface,
   ): Promise<undefined> {
     const { id, customerId, anonymousId, sessionKey, coupons, items } = cart;
     const couponsRequested: Coupon[] = uniqBy(coupons, 'code');
@@ -273,7 +273,7 @@ export class IntegrationService {
 
   public async redeemVoucherifyCoupons(
     order: Order,
-    orderPaidActions: OrderPaidActions,
+    orderPaidActions: OrderPaidActionsInterface,
   ) {
     const { id, customerId } = order;
 

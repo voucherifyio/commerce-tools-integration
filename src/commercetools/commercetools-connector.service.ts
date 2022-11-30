@@ -18,9 +18,9 @@ import {
 } from '@commercetools/platform-sdk';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 import {
-  RequestJsonLogger,
+  RequestJsonLoggerInterface,
   REQUEST_JSON_LOGGER,
-} from '../misc/request-json-logger';
+} from '../misc/request-json-logger-interface';
 
 type MeasurementKey = '__start' | '__httpStart';
 type ExtendedRequest = ClientRequest & Record<MeasurementKey, number>;
@@ -31,7 +31,7 @@ export class CommercetoolsConnectorService {
     private configService: ConfigService,
     private logger: Logger,
     @Inject(REQUEST_JSON_LOGGER)
-    private readonly requestJsonLogger: RequestJsonLogger,
+    private readonly requestJsonLogger: RequestJsonLoggerInterface,
   ) {}
 
   private readonly authUrl: string = this.configService.get<string>(

@@ -10,7 +10,7 @@ type ResourceTypeArg = {
   callback: (period?: string) => Promise<{ success: true | false }>;
 };
 
-interface MigrateCommandOptions {
+interface MigrateCommandInterface {
   type: ResourceTypeArg;
   days?: string;
   hours?: string;
@@ -121,7 +121,7 @@ export class MigrateCommand implements CommandRunner {
 
   async run(
     passedParams: string[],
-    options: MigrateCommandOptions,
+    options: MigrateCommandInterface,
   ): Promise<void> {
     if (!options.type) {
       loadingCli('')
