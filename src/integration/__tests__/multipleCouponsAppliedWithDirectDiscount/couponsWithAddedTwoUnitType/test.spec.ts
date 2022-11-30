@@ -1,17 +1,17 @@
 import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
-import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../../commerceTools/types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../../../commerceTools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../../cart-service.factory';
-import { CartService } from 'src/api-extension/cart.service';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 import { getConfigServiceMockWithConfiguredDirectDiscount } from '../../__mocks__/config-service.service';
 import { ConfigService } from '@nestjs/config';
 import { Cart } from '@commercetools/platform-sdk';
+import { CommercetoolsService } from '../../../../commercetools/commercetools.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../../commercetools/custom-types/__mocks__/types.service';
 describe('when applying discount code which adds free product to the cart', () => {
-  let cartService: CartService;
+  let commercetoolsService: CommercetoolsService;
   let voucherifyConnectorService: VoucherifyConnectorService;
   let configService: ConfigService;
   const SKU_ID = 'gift-sku-id';
@@ -32,7 +32,7 @@ describe('when applying discount code which adds free product to the cart', () =
       });
     configService = getConfigServiceMockWithConfiguredDirectDiscount();
 
-    ({ cartService } = await buildCartServiceWithMockedDependencies({
+    ({ commercetoolsService } = await buildCartServiceWithMockedDependencies({
       typesService,
       taxCategoriesService,
       voucherifyConnectorService,
@@ -42,127 +42,59 @@ describe('when applying discount code which adds free product to the cart', () =
   });
 
   it('after adding unit type coupon with unit value 2 as last it should create `setDirectDiscounts` action', async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart as Cart,
-    );
+    const result = await commercetoolsService.handleCartUpdate(cart as Cart);
 
     expect(result.actions).toEqual([
       {
         action: 'setDirectDiscounts',
         discounts: [
           {
-            target: {
-              predicate: 'sku="M0E20000000DUJ6"',
-              type: 'lineItems',
-            },
+            target: { type: 'lineItems', predicate: 'sku="M0E20000000DUJ6"' },
             value: {
-              money: [
-                {
-                  centAmount: 53000,
-                  currencyCode: 'EUR',
-                },
-              ],
               type: 'absolute',
+              money: [{ centAmount: 53000, currencyCode: 'EUR' }],
             },
           },
           {
-            target: {
-              predicate: 'sku="M0E20000000DUJ6"',
-              type: 'lineItems',
-            },
+            target: { type: 'lineItems', predicate: 'sku="M0E20000000DUJ6"' },
             value: {
-              money: [
-                {
-                  centAmount: 18550,
-                  currencyCode: 'EUR',
-                },
-              ],
               type: 'absolute',
+              money: [{ centAmount: 18550, currencyCode: 'EUR' }],
             },
           },
           {
-            target: {
-              predicate: 'sku="M0E20000000DUJ6"',
-              type: 'lineItems',
-            },
+            target: { type: 'lineItems', predicate: 'sku="M0E20000000DUJ6"' },
             value: {
-              money: [
-                {
-                  centAmount: 7950,
-                  currencyCode: 'EUR',
-                },
-              ],
               type: 'absolute',
+              money: [{ centAmount: 7950, currencyCode: 'EUR' }],
             },
           },
           {
-            target: {
-              predicate: 'true',
-              type: 'lineItems',
-            },
+            target: { type: 'lineItems', predicate: 'true' },
             value: {
-              money: [
-                {
-                  centAmount: 3101,
-                  currencyCode: 'EUR',
-                },
-              ],
               type: 'absolute',
+              money: [{ centAmount: 3101, currencyCode: 'EUR' }],
             },
           },
           {
-            target: {
-              predicate: 'true',
-              type: 'lineItems',
-            },
+            target: { type: 'lineItems', predicate: 'true' },
             value: {
-              money: [
-                {
-                  centAmount: 2385,
-                  currencyCode: 'EUR',
-                },
-              ],
               type: 'absolute',
+              money: [{ centAmount: 2385, currencyCode: 'EUR' }],
             },
           },
         ],
       },
       {
-        action: 'changeLineItemQuantity',
-        lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
-        quantity: 1,
-      },
-      {
-        action: 'changeLineItemQuantity',
-        lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
-        quantity: 3,
-      },
-      {
-        action: 'setLineItemCustomField',
-        lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
-        name: 'applied_codes',
-      },
-      {
         action: 'removeLineItem',
         lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
-        quantity: 0,
+        quantity: 1,
       },
       {
         action: 'setLineItemCustomType',
         lineItemId: '9ea34a33-36cf-479e-bba6-18644ea181c5',
         type: { key: 'lineItemCodesType' },
         fields: {},
-      },
-      {
-        action: 'setLineItemCustomType',
-        lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
-        type: { key: 'lineItemCodesType' },
-        fields: {
-          applied_codes: [
-            '{"code":"UNIT_TYPE_OFF","type":"UNIT","effect":"ADD_MISSING_ITEMS","quantity":1,"totalDiscountQuantity":3}',
-            '{"code":"UNIT_TYPE_OFF_2","type":"UNIT","effect":"ADD_MISSING_ITEMS","quantity":2,"totalDiscountQuantity":3}',
-          ],
-        },
       },
       {
         action: 'setCustomField',

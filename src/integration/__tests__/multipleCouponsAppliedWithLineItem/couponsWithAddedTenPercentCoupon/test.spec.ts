@@ -2,19 +2,19 @@ import {
   defaultGetCouponTaxCategoryResponse,
   getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
 } from '../../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
-import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../../commerceTools/types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../../../commerceTools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../../cart-service.factory';
-import { CartService } from '../../../cart.service';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
+import { CommercetoolsService } from '../../../../commercetools/commercetools.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../../commercetools/custom-types/__mocks__/types.service';
 describe('when adding new product to the cart with free product already applied (via coupon)', () => {
-  let cartService: CartService;
+  let commercetoolsService: CommercetoolsService;
   let voucherifyConnectorService: VoucherifyConnectorService;
   const SKU_ID = 'gift-sku-id';
-  const PRODUCT_ID = 'gift-product-id';
+  const PRODUCT_ID = '260d2585-daef-4c11-9adb-1b90099b7ae8';
   const PRODUCT_PRICE = 6500;
 
   beforeEach(async () => {
@@ -30,7 +30,7 @@ describe('when adding new product to the cart with free product already applied 
         id: PRODUCT_ID,
       });
 
-    ({ cartService } = await buildCartServiceWithMockedDependencies({
+    ({ commercetoolsService } = await buildCartServiceWithMockedDependencies({
       typesService,
       taxCategoriesService,
       voucherifyConnectorService,
@@ -39,9 +39,7 @@ describe('when adding new product to the cart with free product already applied 
   });
 
   it('after adding 10% coupon it should create `removeCustomLineItem` and `addCustomLineItem` actions', async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart,
-    );
+    const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(result.actions).toEqual([
       {

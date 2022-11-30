@@ -33,7 +33,7 @@ export class ApiExtensionController {
       const start = performance.now();
       response = await this.commercetoolsService.handleCartUpdate(cart);
       this.logger.debug(
-        `handleRequestCart->validatePromotionsAndBuildCartActions: ${elapsedTime(
+        `handleRequestCart->handleCartUpdate: ${elapsedTime(
           start,
           performance.now(),
         )}`,
@@ -41,7 +41,7 @@ export class ApiExtensionController {
     } catch (e) {
       console.log(e); //can't use the logger because it cannot handle error objects
       this.logger.error({
-        msg: `Error while commercetoolsService.validatePromotionsAndBuildCartActions function`,
+        msg: `Error while commercetoolsService.handleCartUpdate function`,
       });
       return responseExpress.status(200).json({ actions: [] });
     }

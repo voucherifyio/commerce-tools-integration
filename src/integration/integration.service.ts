@@ -63,7 +63,6 @@ export class IntegrationService {
         msg: 'COUPONS: Duplicates found and deleted',
       });
     }
-    console.log(coupons);
 
     const { promotions, availablePromotions } =
       await this.voucherifyService.getPromotions(cart, couponsRequested);

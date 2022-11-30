@@ -55,7 +55,12 @@ describe('When one-time -20€ amount voucher is provided in another cart within
           ],
           source_id: 'cart-id',
         },
-        redeemables: [],
+        redeemables: [
+          {
+            id: 'AMOUNT20',
+            object: 'voucher',
+          },
+        ],
         session: { key: 'new-session-id', type: 'LOCK' },
       },
     );

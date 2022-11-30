@@ -1,21 +1,21 @@
 import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
-import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../../commerceTools/types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../../../commerceTools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../../cart-service.factory';
-import { CartService } from 'src/api-extension/cart.service';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 import { getConfigServiceMockWithConfiguredDirectDiscount } from '../../__mocks__/config-service.service';
 import { ConfigService } from '@nestjs/config';
 import { Cart } from '@commercetools/platform-sdk';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../../commercetools/custom-types/__mocks__/types.service';
+import { CommercetoolsService } from '../../../../commercetools/commercetools.service';
 describe('when applying discount code which adds free product to the cart', () => {
-  let cartService: CartService;
+  let commercetoolsService: CommercetoolsService;
   let voucherifyConnectorService: VoucherifyConnectorService;
   let configService: ConfigService;
   const SKU_ID = 'gift-sku-id';
-  const PRODUCT_ID = 'gift-product-id';
+  const PRODUCT_ID = '260d2585-daef-4c11-9adb-1b90099b7ae8';
   const PRODUCT_PRICE = 6500;
 
   beforeEach(async () => {
@@ -32,7 +32,7 @@ describe('when applying discount code which adds free product to the cart', () =
       });
     configService = getConfigServiceMockWithConfiguredDirectDiscount();
 
-    ({ cartService } = await buildCartServiceWithMockedDependencies({
+    ({ commercetoolsService } = await buildCartServiceWithMockedDependencies({
       typesService,
       taxCategoriesService,
       voucherifyConnectorService,
@@ -42,9 +42,7 @@ describe('when applying discount code which adds free product to the cart', () =
   });
 
   it('after adding 10% coupon as last it should create `setDirectDiscounts` action', async () => {
-    const result = await cartService.validatePromotionsAndBuildCartActions(
-      cart as Cart,
-    );
+    const result = await commercetoolsService.handleCartUpdate(cart as Cart);
 
     expect(result.actions).toEqual([
       {

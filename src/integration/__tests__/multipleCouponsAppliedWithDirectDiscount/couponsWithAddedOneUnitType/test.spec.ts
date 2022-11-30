@@ -111,20 +111,6 @@ describe('when applying discount code which adds free product to the cart', () =
         ],
       },
       {
-        action: 'addLineItem',
-        sku: 'M0E20000000DUJ6',
-        quantity: 0,
-        distributionChannel: undefined,
-        custom: {
-          typeKey: 'lineItemCodesType',
-          fields: {
-            applied_codes: [
-              '{"code":"UNIT_TYPE_OFF","type":"UNIT","effect":"ADD_MISSING_ITEMS","quantity":1,"totalDiscountQuantity":1}',
-            ],
-          },
-        },
-      },
-      {
         action: 'setLineItemCustomType',
         lineItemId: 'b574a28b-7e64-4556-b6d4-34a8a938f28d',
         type: { key: 'lineItemCodesType' },

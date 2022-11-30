@@ -144,20 +144,25 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
       productSourceIds,
     );
 
-    return ctProducts.map((ctProduct) => {
-      const unit = freeUnits.find(
-        (unit) => unit.product.source_id === ctProduct.id,
-      );
-      const currentPriceAmount = getCommercetoolstCurrentPriceAmount(
-        ctProduct,
-        unit.sku.source_id,
-        this.priceSelector,
-      );
-      const item = orderItems?.find(
-        (item) => item?.sku?.source_id === unit.sku.source_id,
-      ) as OrdersItem;
-      return { ...ctProduct, currentPriceAmount, unit, item };
-    });
+    return ctProducts
+      .map((ctProduct) => {
+        const unit = freeUnits.find(
+          (unit) => unit.product.source_id === ctProduct.id,
+        );
+        if (!unit) {
+          return undefined;
+        }
+        const currentPriceAmount = getCommercetoolstCurrentPriceAmount(
+          ctProduct,
+          unit.sku.source_id,
+          this.priceSelector,
+        );
+        const item = orderItems?.find(
+          (item) => item?.sku?.source_id === unit.sku.source_id,
+        ) as OrdersItem;
+        return { ...ctProduct, currentPriceAmount, unit, item };
+      })
+      .filter((e) => !!e);
   }
 
   private async getCtProducts(

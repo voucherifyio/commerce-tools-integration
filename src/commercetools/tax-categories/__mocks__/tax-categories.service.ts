@@ -69,6 +69,10 @@ export const getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse =
       .fn()
       .mockResolvedValue(defaultGetCouponTaxCategoryResponse);
 
+    taxCategoriesService.getCouponTaxCategoryAndUpdateItIfNeeded = jest
+      .fn()
+      .mockResolvedValue(defaultGetCouponTaxCategoryResponse);
+
     taxCategoriesService.addCountryToCouponTaxCategory = jest.fn();
 
     return taxCategoriesService;
