@@ -457,7 +457,7 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
-- 2022-11-26 `v5.2.0`
+- 2022-11-30 `v5.2.0`
   - domain refactoring/code quality
   - optimization
   - adding new config var: `MAX_CART_UPDATE_RESPONSE_TIME_WITHOUT_CHECKING_IF_API_EXTENSION_TIMED_OUT` (default value `1000`[ms]). For more info check configuration section.

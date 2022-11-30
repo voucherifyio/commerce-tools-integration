@@ -26,7 +26,6 @@ import { AppValidationPipe } from './configs/appValidationPipe';
 import { RequestJsonLogger } from './configs/requestJsonLogger';
 import { CommercetoolsService } from './commercetools/commercetools.service';
 import { VoucherifyService } from './voucherify/voucherify.service';
-import { CartDiscountApplyModeConfigService } from './commercetools/cartDiscountApplyModeConfig.service';
 
 @Module({
   imports: [
@@ -58,7 +57,6 @@ import { CartDiscountApplyModeConfigService } from './commercetools/cartDiscount
     RequestJsonLogger,
     CommercetoolsService,
     VoucherifyService,
-    CartDiscountApplyModeConfigService,
   ],
 })
 export class AppModule {}
