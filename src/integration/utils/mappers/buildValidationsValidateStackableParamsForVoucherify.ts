@@ -6,7 +6,7 @@ export function buildValidationsValidateStackableParamsForVoucherify(
   cart: Cart,
   items,
 ) {
-  return {
+  const x = {
     // options?: StackableOptions;
     redeemables: coupons.map((code) => {
       return {
@@ -30,5 +30,7 @@ export function buildValidationsValidateStackableParamsForVoucherify(
     customer: {
       source_id: cart.customerId || cart.anonymousId,
     },
-  } as ValidationsValidateStackableParams;
+  };
+  console.log(x);
+  return x as ValidationsValidateStackableParams;
 }

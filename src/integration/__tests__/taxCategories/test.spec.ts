@@ -11,29 +11,6 @@ import { cart } from './snapshots/cart.snapshot';
 import { cartCh } from './snapshots/cart-ch.snapshot';
 import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 describe('Tax categories', () => {
-  it('should throw error if tax categories are not configured', async () => {
-    const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
-    const taxCategoriesService =
-      getTaxCategoryServiceMockWithNotDefinedTaxCategoryResponse();
-    const voucherifyConnectorService =
-      getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
-    const commerceToolsConnectorService =
-      getCommerceToolsConnectorServiceMockWithResponse();
-
-    const { commercetoolsService } =
-      await buildCartServiceWithMockedDependencies({
-        typesService,
-        taxCategoriesService,
-        voucherifyConnectorService,
-        commerceToolsConnectorService,
-      });
-
-    await expect(
-      commercetoolsService.handleCartUpdate(cart),
-    ).rejects.toThrowError(
-      new Error('Coupon tax category was not configured correctly'),
-    );
-  });
   it('Should add new country to coupon tax category if not exist', async () => {
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
     const taxCategoriesService =

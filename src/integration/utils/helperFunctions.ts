@@ -14,7 +14,7 @@ export function checkIfAllInapplicableCouponsArePromotionTier(
   return notApplicableCoupons.length === inapplicableCouponsPromitonTier.length;
 }
 
-export function filterCouponsByLimit(coupons: Coupon[], couponsLimit: number) {
+export function filterCouponsByLimit(coupons: Coupon[], couponsLimit = 5) {
   const deletedCoupons = coupons.filter(
     (coupon) => coupon.status === 'DELETED',
   );
