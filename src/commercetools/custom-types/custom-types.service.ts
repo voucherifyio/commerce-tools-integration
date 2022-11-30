@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommercetoolsConnectorService } from '../commercetools-connector.service';
-import { Type, TypeUpdateAction } from '@commercetools/platform-sdk';
+import { Type, TypeDraft, TypeUpdateAction } from '@commercetools/platform-sdk';
+import {
+  OREDER_COUPON_CUSTOM_FIELDS,
+  LINE_ITEM_COUPON_CUSTOM_FIELDS,
+} from './coupon-type-definition';
 
 @Injectable()
 export class CustomTypesService {
@@ -9,7 +13,7 @@ export class CustomTypesService {
     private readonly logger: Logger,
   ) {}
 
-  async findCouponType(typeName: string): Promise<Type | null> {
+  public async findCouponType(typeName: string): Promise<Type | null> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const response = await ctClient
       .types()
@@ -17,7 +21,7 @@ export class CustomTypesService {
       .execute();
     if (
       ![200, 201].includes(response.statusCode) ||
-      response.body.count === 0
+      response.body?.count === 0
     ) {
       this.logger.debug({ msg: `${typeName} type not found` });
       return null;
@@ -27,145 +31,43 @@ export class CustomTypesService {
     return couponType;
   }
 
-  couponCodesDefinition = {
-    body: {
-      key: 'couponCodes', //DO NOT CHANGE the key
-      name: {
-        en: 'couponCodes',
-      },
-      description: {
-        en: 'couponCodes',
-      },
-      resourceTypeIds: ['order'],
-      fieldDefinitions: [
-        {
-          name: 'discount_codes',
-          label: {
-            en: 'discount_codes',
-          },
-          required: false,
-          type: {
-            name: 'Set',
-            elementType: { name: 'String' },
-          },
-          inputHint: 'SingleLine',
-        },
-        {
-          name: 'used_codes',
-          label: {
-            en: 'used_codes',
-          },
-          required: false,
-          type: {
-            name: 'Set',
-            elementType: { name: 'String' },
-          },
-          inputHint: 'SingleLine',
-        },
-        {
-          name: 'session',
-          label: {
-            en: 'session',
-          },
-          required: false,
-          type: {
-            name: 'String',
-          },
-          inputHint: 'SingleLine',
-        },
-        {
-          name: 'shippingProductSourceIds',
-          label: {
-            en: 'shippingProductSourceIds',
-          },
-          required: false,
-          type: {
-            name: 'Set',
-            elementType: { name: 'String' },
-          },
-          inputHint: 'SingleLine',
-        },
-        {
-          name: 'isValidationFailed',
-          label: {
-            en: 'isValidationFailed',
-          },
-          required: false,
-          type: {
-            name: 'Boolean',
-          },
-          inputHint: 'SingleLine',
-        },
-        {
-          name: 'couponsLimit',
-          label: {
-            en: 'couponsLimit',
-          },
-          required: false,
-          type: {
-            name: 'Number',
-          },
-          inputHint: 'SingleLine',
-        },
-      ],
-    },
-  };
+  public async configureCouponTypes(): Promise<{ success: boolean }> {
+    const orderConfig = await this.upsertCouponType(
+      OREDER_COUPON_CUSTOM_FIELDS,
+    );
 
-  lineItemCodesDefinition = {
-    body: {
-      key: 'lineItemCodesType', //DO NOT CHANGE the key
-      name: {
-        en: 'lineItemCodesType',
-      },
-      description: {
-        en: 'lineItemCodesType',
-      },
-      resourceTypeIds: ['line-item'],
-      fieldDefinitions: [
-        {
-          name: 'applied_codes',
-          label: {
-            en: 'applied_codes',
-          },
-          required: false,
-          type: {
-            name: 'Set',
-            elementType: { name: 'String' },
-          },
-          inputHint: 'SingleLine',
-        },
-        {
-          name: 'coupon_fixed_price',
-          label: {
-            en: 'coupon_fixed_price',
-          },
-          required: false,
-          type: {
-            name: 'Number',
-          },
-          inputHint: 'SingleLine',
-        },
-      ],
-    },
-  };
+    const productConfig = await this.upsertCouponType(
+      LINE_ITEM_COUPON_CUSTOM_FIELDS,
+    );
 
-  async configureCouponType(
-    typeDefinition,
-  ): Promise<{ success: boolean; type: Type }> {
+    const isSuccess = !!orderConfig && !!productConfig;
+
+    this.logger.debug({
+      msg: isSuccess
+        ? 'All custom-types are configured properly'
+        : 'Types are not configured properly',
+    });
+
+    return { success: isSuccess };
+  }
+
+  private async upsertCouponType(
+    typeDefinition: TypeDraft,
+  ): Promise<Type | null> {
     this.logger.debug({
       msg: 'Attempt to configure custom field type for order that keeps information about coupon codes.',
     });
-    const couponType = await this.findCouponType(typeDefinition.body.key);
+
+    const couponType = await this.findCouponType(typeDefinition.key);
+
     if (!couponType) {
       this.logger.debug({
         msg: 'No custom field type, creating new one from scratch.',
       });
-      return {
-        success: true,
-        type: await this.createCouponType(typeDefinition),
-      };
+      return await this.createCouponType(typeDefinition);
     }
-    const missingFields = typeDefinition.body.fieldDefinitions.filter(
+
+    const missingFields = typeDefinition.fieldDefinitions.filter(
       (fieldDefinition) =>
         !couponType.fieldDefinitions.some(
           (field) => field.name === fieldDefinition.name,
@@ -174,7 +76,7 @@ export class CustomTypesService {
 
     if (missingFields.length) {
       this.logger.debug({
-        msg: `We have custom ${typeDefinition.body.key} type registered but fields are outdated. We are going to update custom field type`,
+        msg: `We have custom ${typeDefinition.key} type registered but fields are outdated. We are going to update custom field type`,
         missingFields,
       });
       const actions: TypeUpdateAction[] = missingFields.map(
@@ -183,63 +85,44 @@ export class CustomTypesService {
           fieldDefinition,
         }),
       );
-      return {
-        success: true,
-        type: await this.updateCouponType(couponType, actions),
-      };
+      await this.updateCouponType(couponType, actions);
     }
     this.logger.debug({
       msg: 'Custom field type and fields are up to date.',
     });
 
-    return {
-      success: true,
-      type: couponType,
-    };
+    return couponType;
   }
 
-  async configureCouponTypes(): Promise<{ success: boolean }> {
-    const orderConfig = await this.configureCouponType(
-      this.couponCodesDefinition,
-    );
-    const productConfig = await this.configureCouponType(
-      this.lineItemCodesDefinition,
-    );
-
-    if (orderConfig.success && productConfig.success) {
-      this.logger.debug({
-        msg: 'All custom-types are configured properly',
-      });
-      return { success: true };
-    } else {
-      this.logger.debug({
-        msg: 'Types are not configured properly',
-      });
-      return { success: false };
-    }
-  }
-
-  async createCouponType(typeDefinition) {
+  private async createCouponType(typeDefinition: TypeDraft): Promise<Type> {
     const ctClient = this.commerceToolsConnectorService.getClient();
 
-    const response = await ctClient.types().post(typeDefinition).execute();
-    if ([200, 201].includes(response.statusCode)) {
-      this.logger.debug({
-        msg: `Type: "${typeDefinition.body.key}" created`,
-        type: response.body,
+    const response = await ctClient
+      .types()
+      .post({ body: typeDefinition })
+      .execute();
+    if (![200, 201].includes(response.statusCode)) {
+      const errorMsg = `Type: "${typeDefinition.key}" could not be created`;
+      this.logger.error({
+        msg: errorMsg,
+        statusCode: response.statusCode,
+        body: response.body,
       });
-      return response.body;
+      throw new Error(errorMsg);
     }
-    const errorMsg = `Type: "${typeDefinition.body.key}" could not be created`;
-    this.logger.error({
-      msg: errorMsg,
-      statusCode: response.statusCode,
-      body: response.body,
+
+    this.logger.debug({
+      msg: `Type: "${typeDefinition.key}" created`,
+      type: response.body,
     });
-    throw new Error(errorMsg);
+
+    return response.body;
   }
 
-  async updateCouponType(oldCouponType: Type, actions: TypeUpdateAction[]) {
+  private async updateCouponType(
+    oldCouponType: Type,
+    actions: TypeUpdateAction[],
+  ) {
     const ctClient = this.commerceToolsConnectorService.getClient();
 
     const response = await ctClient
