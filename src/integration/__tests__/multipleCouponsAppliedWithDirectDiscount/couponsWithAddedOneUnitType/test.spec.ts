@@ -1,0 +1,157 @@
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../../commerceTools/types/__mocks__/types.service';
+import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../../voucherify/__mocks__/voucherify-connector.service';
+import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../../../commerceTools/__mocks__/commerce-tools-connector.service';
+import { buildCartServiceWithMockedDependencies } from '../../cart-service.factory';
+import { CartService } from 'src/api-extension/cart.service';
+import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
+import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
+import { cart } from './snapshots/cart.snapshot';
+import { getConfigServiceMockWithConfiguredDirectDiscount } from '../../__mocks__/config-service.service';
+import { ConfigService } from '@nestjs/config';
+import { Cart } from '@commercetools/platform-sdk';
+describe('when applying discount code which adds free product to the cart', () => {
+  let cartService: CartService;
+  let voucherifyConnectorService: VoucherifyConnectorService;
+  let configService: ConfigService;
+  const SKU_ID = 'gift-sku-id';
+  const PRODUCT_ID = 'gift-product-id';
+  const PRODUCT_PRICE = 6500;
+
+  beforeEach(async () => {
+    const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
+    const taxCategoriesService =
+      getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();
+    voucherifyConnectorService =
+      getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
+    const commerceToolsConnectorService =
+      getCommerceToolsConnectorServiceMockWithProductResponse({
+        sku: SKU_ID,
+        price: PRODUCT_PRICE,
+        id: PRODUCT_ID,
+      });
+    configService = getConfigServiceMockWithConfiguredDirectDiscount();
+
+    ({ cartService } = await buildCartServiceWithMockedDependencies({
+      typesService,
+      taxCategoriesService,
+      voucherifyConnectorService,
+      commerceToolsConnectorService,
+      configService,
+    }));
+  });
+
+  it('after adding unit type coupon with unit value 1 as last it  should create `setDirectDiscounts` action', async () => {
+    const result = await cartService.validatePromotionsAndBuildCartActions(
+      cart as Cart,
+    );
+
+    expect(result.actions).toEqual([
+      {
+        action: 'setDirectDiscounts',
+        discounts: [
+          {
+            target: {
+              predicate: 'sku="M0E20000000DUJ6"',
+              type: 'lineItems',
+            },
+            value: {
+              money: [
+                {
+                  centAmount: 23850,
+                  currencyCode: 'EUR',
+                },
+              ],
+              type: 'absolute',
+            },
+          },
+          {
+            target: {
+              predicate: 'sku="M0E20000000DUJ6"',
+              type: 'lineItems',
+            },
+            value: {
+              money: [
+                {
+                  centAmount: 2650,
+                  currencyCode: 'EUR',
+                },
+              ],
+              type: 'absolute',
+            },
+          },
+          {
+            target: {
+              predicate: 'true',
+              type: 'lineItems',
+            },
+            value: {
+              money: [
+                {
+                  centAmount: 1511,
+                  currencyCode: 'EUR',
+                },
+              ],
+              type: 'absolute',
+            },
+          },
+          {
+            target: {
+              predicate: 'true',
+              type: 'lineItems',
+            },
+            value: {
+              money: [
+                {
+                  centAmount: 2385,
+                  currencyCode: 'EUR',
+                },
+              ],
+              type: 'absolute',
+            },
+          },
+        ],
+      },
+      {
+        action: 'addLineItem',
+        sku: 'M0E20000000DUJ6',
+        quantity: 0,
+        distributionChannel: undefined,
+        custom: {
+          typeKey: 'lineItemCodesType',
+          fields: {
+            applied_codes: [
+              '{"code":"UNIT_TYPE_OFF","type":"UNIT","effect":"ADD_MISSING_ITEMS","quantity":1,"totalDiscountQuantity":1}',
+            ],
+          },
+        },
+      },
+      {
+        action: 'setLineItemCustomType',
+        lineItemId: 'b574a28b-7e64-4556-b6d4-34a8a938f28d',
+        type: { key: 'lineItemCodesType' },
+        fields: {},
+      },
+      {
+        action: 'setCustomField',
+        name: 'session',
+        value: 'ssn_mn4zpmmmlovAkXqkDO6w0oIsaGyaB3Bi',
+      },
+      {
+        action: 'setCustomField',
+        name: 'discount_codes',
+        value: [
+          '{"code":"X_3%_OFF","status":"APPLIED","type":"voucher","value":1511}',
+          '{"code":"X_10%_OFF","status":"APPLIED","type":"voucher","value":5035}',
+          '{"code":"UNIT_TYPE_OFF","status":"APPLIED","type":"voucher","value":23850}',
+        ],
+      },
+      {
+        action: 'setCustomField',
+        name: 'shippingProductSourceIds',
+        value: ['260d2585-daef-4c11-9adb-1b90099b7ae8'],
+      },
+      { action: 'setCustomField', name: 'couponsLimit', value: 5 },
+    ]);
+  });
+});
