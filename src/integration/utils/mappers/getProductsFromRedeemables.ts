@@ -1,9 +1,9 @@
 import { StackableRedeemableResponse } from '@voucherify/sdk';
-import { ExpectedProductToAdd } from '../../types';
+import { ProductsFromRedeemables } from '../../types';
 
 export const getProductsFromRedeemables = (
   redeemables: StackableRedeemableResponse[],
-): ExpectedProductToAdd[] => {
+): ProductsFromRedeemables[] => {
   const expectedProductsToAdd = [];
   redeemables.forEach((redeemable) => {
     const discount = redeemable?.result?.discount;

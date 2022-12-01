@@ -82,7 +82,7 @@ export type Order = {
   rawOrder?: any;
 };
 
-export type ExpectedProductToAdd = {
+export type ProductsFromRedeemables = {
   code: string;
   quantity: number;
   product: string;

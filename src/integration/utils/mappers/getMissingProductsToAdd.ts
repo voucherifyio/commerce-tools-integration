@@ -1,12 +1,12 @@
-import { ExpectedProductToAdd, ProductToAdd } from '../../types';
+import { ProductsFromRedeemables, ProductToAdd } from '../../types';
 
 export const getMissingProductsToAdd = (
-  expectedProductsToAdd: ExpectedProductToAdd[],
+  productsFromRedeemables: ProductsFromRedeemables[],
   productsToAdd: ProductToAdd[],
 ): { code: string; quantity: number; product: string }[] => {
   const missingProductsToAdd = [];
-  expectedProductsToAdd.forEach((expectedProductToAdd) => {
-    const sameExpectedProductsToAdd = expectedProductsToAdd.filter(
+  productsFromRedeemables.forEach((expectedProductToAdd) => {
+    const sameExpectedProductsToAdd = productsFromRedeemables.filter(
       (expectedProductToAdd_) =>
         expectedProductToAdd.code === expectedProductToAdd_.code &&
         expectedProductToAdd.quantity === expectedProductToAdd_.quantity &&
