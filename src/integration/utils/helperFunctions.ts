@@ -2,7 +2,6 @@ import {
   StackableRedeemableResponse,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
-import { Coupon } from '../types';
 
 export function checkIfAllInapplicableCouponsArePromotionTier(
   notApplicableCoupons: StackableRedeemableResponse[],
@@ -12,20 +11,6 @@ export function checkIfAllInapplicableCouponsArePromotionTier(
   );
 
   return notApplicableCoupons.length === inapplicableCouponsPromitonTier.length;
-}
-
-export function filterCouponsByLimit(coupons: Coupon[], couponsLimit = 5) {
-  const deletedCoupons = coupons.filter(
-    (coupon) => coupon.status === 'DELETED',
-  );
-  const newCoupons = coupons.filter((coupon) => coupon.status === 'NEW');
-  const applicableCoupons = coupons.filter(
-    (coupon) => coupon.status === 'APPLIED',
-  );
-  return [
-    ...[...applicableCoupons, ...newCoupons].splice(0, couponsLimit),
-    ...deletedCoupons,
-  ];
 }
 
 export function calculateTotalDiscountAmount(
