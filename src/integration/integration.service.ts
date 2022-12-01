@@ -42,7 +42,7 @@ import {
   filterCouponsStatusAppliedAndNewByLimit,
   filterOutCouponsStatusNotApplied,
   codesFromCoupons,
-  uniqueCouponsCodes,
+  uniqueCouponsByCodes,
   filterOutCouponsIfCodeIn,
 } from './utils/couponsOperationFunctions';
 
@@ -77,7 +77,7 @@ export class IntegrationService {
       coupons: couponsFromRequest,
       items,
     } = cart;
-    const uniqueCoupons: Coupon[] = uniqueCouponsCodes(couponsFromRequest);
+    const uniqueCoupons: Coupon[] = uniqueCouponsByCodes(couponsFromRequest);
     if (couponsFromRequest.length !== uniqueCoupons.length) {
       this.logger.debug({
         msg: 'COUPONS: Duplicates found and deleted',

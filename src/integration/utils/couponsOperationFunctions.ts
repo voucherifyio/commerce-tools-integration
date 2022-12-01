@@ -1,6 +1,5 @@
 import { Coupon } from '../types';
 import { uniqBy } from 'lodash';
-// CouponStatus = 'NEW' | 'APPLIED' | 'NOT_APPLIED' | 'DELETED';
 
 export function couponsStatusDeleted(coupons: Coupon[]) {
   return coupons.filter((coupon) => coupon.status === 'DELETED');
@@ -22,7 +21,7 @@ export function filterOutCouponsStatusNotApplied(coupons: Coupon[]) {
   return coupons.filter((coupon) => coupon.status !== 'NOT_APPLIED');
 }
 
-export function uniqueCouponsCodes(coupons: Coupon[]) {
+export function uniqueCouponsByCodes(coupons: Coupon[]) {
   return uniqBy(coupons, 'code');
 }
 
