@@ -34,7 +34,7 @@ import { getSimpleMetadataForOrder } from '../commercetools/utils/mappers/getSim
 import { mergeTwoObjectsIntoOne } from './utils/mergeTwoObjectsIntoOne';
 import { getProductsFromRedeemables } from './utils/mappers/getProductsFromRedeemables';
 import { getMissingProductsToAdd } from './utils/mappers/getMissingProductsToAdd';
-import { remapRedeemablesIfProductToAddNotFound } from './utils/remapRedeemablesIfProductToAddNotFound';
+import { replaceCodesWithInapplicableCoupons } from './utils/replaceCodesWithInapplicableCoupons';
 import { getUnitTypeRedeemablesFromStackableResponse } from './utils/getUnitTypeRedeemablesFromStackableResponse';
 
 @Injectable()
@@ -125,6 +125,8 @@ export class IntegrationService {
         ),
       );
 
+    console.log(111, JSON.stringify(validatedCoupons));
+
     const inapplicableCoupons = getCouponsByStatus(
       validatedCoupons.redeemables,
       'INAPPLICABLE',
@@ -171,14 +173,14 @@ export class IntegrationService {
       productsToAdd,
     );
 
-    const couponsWithMissingProductsToAdd = [
+    const codesWithMissingProductsToAdd = [
       ...new Set(
         missingProductsToAdd.map(
           (missingProductToAdd) => missingProductToAdd.code,
         ),
       ),
     ];
-    couponsWithMissingProductsToAdd.forEach((coupon) =>
+    codesWithMissingProductsToAdd.forEach((coupon) =>
       this.voucherifyConnectorService.releaseValidationSession(
         coupon,
         validatedCoupons?.session?.key ?? sessionKey,
@@ -193,7 +195,7 @@ export class IntegrationService {
       couponsLimited.filter(
         (coupon) =>
           coupon.status != 'DELETED' &&
-          !couponsWithMissingProductsToAdd.includes(coupon.code),
+          !codesWithMissingProductsToAdd.includes(coupon.code),
       );
     if (
       couponsLimitedAndNotDeletedWithoutCouponsWithMissingProductsToAdd.length >
@@ -212,18 +214,6 @@ export class IntegrationService {
             itemsWithPricesCorrected,
           ),
         );
-    }
-
-    let redeemables = remapRedeemablesIfProductToAddNotFound(
-      validatedCoupons?.redeemables ?? [],
-      couponsWithMissingProductsToAdd,
-    );
-
-    if (promotions.length) {
-      redeemables = this.voucherifyService.setBannerOnValidatedPromotions(
-        validatedCoupons,
-        promotions,
-      );
     }
 
     this.logger.debug({
@@ -245,11 +235,14 @@ export class IntegrationService {
         calculateTotalDiscountAmount(validatedCoupons),
       );
       cartUpdateActions.setApplicableCoupons(
-        getCouponsByStatus(redeemables, 'APPLICABLE'),
+        this.voucherifyService.setBannerOnValidatedPromotions(
+          getCouponsByStatus(validatedCoupons.redeemables, 'APPLICABLE'),
+          promotions,
+        ),
       );
       cartUpdateActions.setInapplicableCoupons([
         ...inapplicableCoupons,
-        ...getCouponsByStatus(redeemables, 'INAPPLICABLE'),
+        ...replaceCodesWithInapplicableCoupons(codesWithMissingProductsToAdd),
       ]);
       cartUpdateActions.setProductsToAdd(productsToAdd);
     }
