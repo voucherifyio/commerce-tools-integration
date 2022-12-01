@@ -2,6 +2,7 @@ import {
   DiscountVouchersEffectTypes,
   RedemptionsRedeemStackableResponse,
   StackableRedeemableResponse,
+  StackableRedeemableResultDiscountUnit,
 } from '@voucherify/sdk';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { CustomerRequest } from '@voucherify/sdk/dist/types/Customers';
@@ -107,9 +108,12 @@ export interface CartUpdateActionsInterface {
   setApplicableCoupons(applicableCoupons: StackableRedeemableResponse[]); //starting value: []
   setInapplicableCoupons(inapplicableCoupons: StackableRedeemableResponse[]); //starting value: []
   setSessionKey(sessionKey: string); //starting value: undefined
-  getProductsToAdd: (
-    discountTypeUnit: StackableRedeemableResponse[],
-  ) => Promise<ProductToAdd[]>; //function to get price/SKU/ids of products from unit type coupons
+  getPricesOfProductsFromCommercetools: (
+    freeUnits: StackableRedeemableResultDiscountUnit[],
+  ) => Promise<{
+    found: { price: number; id: string }[];
+    notFound: { price: undefined; id: string }[];
+  }>; //function to get price/SKU/ids of products from unit type coupons
 }
 
 export interface OrderPaidActionsInterface {

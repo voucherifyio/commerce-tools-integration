@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   OrdersItem,
   RedemptionsRedeemStackableResponse,
+  StackableRedeemableResultDiscountUnit,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 
@@ -40,7 +41,6 @@ import {
   couponsStatusDeleted,
   filterOutCouponsTypePromotionTier,
   filterCouponsStatusAppliedAndNewByLimit,
-  filterOutCouponsStatusNotApplied,
   codesFromCoupons,
   uniqueCouponsByCodes,
   filterOutCouponsIfCodeIn,
@@ -162,13 +162,38 @@ export class IntegrationService {
         );
     }
 
+    const productsToAdd = [];
     const unitTypeRedeemables =
       getUnitTypeRedeemablesFromStackableResponse(validatedCoupons);
+    const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
+    if (
+      typeof cartUpdateActions.getPricesOfProductsFromCommercetools ===
+      'function'
+    ) {
+      const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
 
-    let productsToAdd: ProductToAdd[] = [];
-    if (typeof cartUpdateActions.getProductsToAdd === 'function') {
-      productsToAdd = await cartUpdateActions.getProductsToAdd(
-        unitTypeRedeemables,
+      const freeProductsToAdd = unitTypeRedeemables.flatMap(
+        async (unitTypeRedeemable) => {
+          const discount = unitTypeRedeemable.result?.discount;
+          if (!discount) {
+            return [];
+          }
+          const freeUnits = (
+            discount.units || [
+              { ...discount } as StackableRedeemableResultDiscountUnit,
+            ]
+          ).filter((unit) => APPLICABLE_PRODUCT_EFFECT.includes(unit.effect));
+          if (!freeUnits.length) {
+            return [];
+          }
+          const productsToAdd =
+            await cartUpdateActions.getPricesOfProductsFromCommercetools(
+              freeUnits,
+            );
+          console.log(productsToAdd);
+
+          return productsToAdd;
+        },
       );
     }
 

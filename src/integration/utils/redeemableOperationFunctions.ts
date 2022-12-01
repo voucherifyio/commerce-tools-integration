@@ -22,7 +22,7 @@ export function codesFromRedeemables(
 
 export function getUnitTypeRedeemablesFromStackableResponse(
   validatedCoupons: ValidationValidateStackableResponse,
-) {
+): StackableRedeemableResponse[] {
   return validatedCoupons.redeemables.filter(
     (redeemable) =>
       redeemable.result?.discount?.type === 'UNIT' &&
