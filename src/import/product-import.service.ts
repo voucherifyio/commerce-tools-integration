@@ -9,10 +9,7 @@ import ObjectsToCsv from 'objects-to-csv';
 
 import crypto = require('crypto');
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
-import {
-  getMetadata,
-  ProductMapper,
-} from '../integration/utils/mappers/product';
+import { getMetadata } from '../integration/utils/mappers/product';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -28,7 +25,6 @@ export class ProductImportService {
     private readonly logger: Logger,
     private readonly configService: ConfigService,
     private readonly voucherifyClient: VoucherifyConnectorService,
-    private readonly productMapper: ProductMapper,
   ) {}
 
   private async *getAllProducts(

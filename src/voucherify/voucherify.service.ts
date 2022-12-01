@@ -1,19 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { VoucherifyConnectorService } from './voucherify-connector.service';
-import { ProductMapper } from '../integration/utils/mappers/product';
 import { ConfigService } from '@nestjs/config';
 import { ValidationValidateStackableResponse } from '@voucherify/sdk';
 import { Coupon } from '../integration/types';
-
-export function getCouponsLimit(couponLimit?: number): number {
-  return (couponLimit ?? 5) < 5 ? couponLimit : 5;
-}
 
 @Injectable()
 export class VoucherifyService {
   constructor(
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
-    private readonly productMapper: ProductMapper,
     private readonly configService: ConfigService,
   ) {}
 

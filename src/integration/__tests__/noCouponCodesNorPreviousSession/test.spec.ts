@@ -66,7 +66,7 @@ describe('When no coupon codes provided and have no previous voucherify session,
       voucherifyConnectorService.validateStackableVouchers,
     ).not.toBeCalled();
   });
-  it('Should create "removeCustomLineItem" action if had customLineItems previously', async () => {
+  it('Should create "removeCustomLineItem" action if had applyingCoupons previously', async () => {
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
     const taxCategoriesService =
       getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();

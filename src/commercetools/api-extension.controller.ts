@@ -1,4 +1,12 @@
-import { Controller, Post, Body, UseGuards, Logger, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Logger,
+  Res,
+  UseInterceptors,
+} from '@nestjs/common';
 import { IntegrationService } from '../integration/integration.service';
 import { CartOrderDto } from './dto/CartOrder.dto';
 import { ApiExtensionGuard } from './api-extension.guard';
@@ -7,9 +15,11 @@ import { Response } from 'express';
 import { performance } from 'perf_hooks';
 import { elapsedTime } from '../misc/elapsedTime';
 import { CommercetoolsService } from './commercetools.service';
+import { HandleTimeoutInterceptor } from './handle-timeout-interceptor.service';
 
 @Controller('api-extension')
 @UseGuards(ApiExtensionGuard)
+@UseInterceptors(HandleTimeoutInterceptor)
 export class ApiExtensionController {
   constructor(
     private readonly cartService: IntegrationService,
@@ -19,21 +29,19 @@ export class ApiExtensionController {
 
   async handleRequestCart(cart: Cart, responseExpress: Response) {
     let response;
-    let start, end;
     try {
-      start = performance.now();
+      const start = performance.now();
       response = await this.commercetoolsService.handleCartUpdate(cart);
-      end = performance.now();
       this.logger.debug(
-        `handleRequestCart->validatePromotionsAndBuildCartActions: ${elapsedTime(
+        `handleRequestCart->handleCartUpdate: ${elapsedTime(
           start,
-          end,
+          performance.now(),
         )}`,
       );
     } catch (e) {
       console.log(e); //can't use the logger because it cannot handle error objects
       this.logger.error({
-        msg: `Error while commercetoolsService.validatePromotionsAndBuildCartActions function`,
+        msg: `Error while commercetoolsService.handleCartUpdate function`,
       });
       return responseExpress.status(200).json({ actions: [] });
     }
@@ -41,17 +49,6 @@ export class ApiExtensionController {
       return responseExpress.status(400).json({});
     }
     responseExpress.status(200).json({ actions: response.actions });
-    try {
-      await this.commercetoolsService.handleAPIExtensionTimeout(
-        cart,
-        start && end ? Math.round(end) - Math.round(start) : 0,
-      );
-    } catch (e) {
-      console.log(e); //can't use the logger because it cannot handle error objects
-      this.logger.error({
-        msg: `Error while commercetoolsService.checkIfAPIExtensionRespondedOnTimeAndRevalidateCouponsIfNot function`,
-      });
-    }
     return;
   }
 

@@ -1,5 +1,9 @@
 import { Product, TaxCategory } from '@commercetools/platform-sdk';
-import { availablePromotion, ProductToAdd } from '../../integration/types';
+import {
+  availablePromotion,
+  CartUpdateActionsInterface,
+  ProductToAdd,
+} from '../../integration/types';
 import {
   OrdersItem,
   StackableRedeemableResponse,
@@ -9,18 +13,16 @@ import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/decl
 import getCartActionBuilders from './cart-update-actions/getCartActionBuilders';
 import { checkIfAllInapplicableCouponsArePromotionTier } from '../../integration/utils/helperFunctions';
 import { DataToRunCartActionsBuilder } from './cart-update-actions/CartAction';
-import { CartDiscountApplyMode, PriceSelector } from '../types';
+import {
+  CartDiscountApplyMode,
+  PriceSelector,
+  ProductWithCurrentPriceAmountInterface,
+} from '../types';
 import { getCommercetoolstCurrentPriceAmount } from '../utils/getCommercetoolstCurrentPriceAmount';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 import { isUuid } from '../utils/isUUID';
 
-interface ProductWithCurrentPriceAmount extends Product {
-  currentPriceAmount: number;
-  unit: StackableRedeemableResultDiscountUnit;
-  item: OrdersItem;
-}
-
-export class CartUpdateActions {
+export class CartUpdateActions implements CartUpdateActionsInterface {
   private taxCategory: TaxCategory;
   public setTaxCategory(value: TaxCategory) {
     this.taxCategory = value;
@@ -90,9 +92,9 @@ export class CartUpdateActions {
           return [];
         }
         const freeUnits = (
-          discount.units
-            ? discount.units
-            : [{ ...discount } as StackableRedeemableResultDiscountUnit]
+          discount.units || [
+            { ...discount } as StackableRedeemableResultDiscountUnit,
+          ]
         ).filter((unit) => APPLICABLE_PRODUCT_EFFECT.includes(unit.effect));
         if (!freeUnits.length) {
           return [];
@@ -138,7 +140,7 @@ export class CartUpdateActions {
   private async getCtProductsWithCurrentPriceAmount(
     freeUnits: StackableRedeemableResultDiscountUnit[],
     orderItems: OrdersItem[],
-  ): Promise<ProductWithCurrentPriceAmount[]> {
+  ): Promise<ProductWithCurrentPriceAmountInterface[]> {
     const productSourceIds = freeUnits.map((unit) => {
       return unit.product.source_id;
     });
@@ -147,20 +149,25 @@ export class CartUpdateActions {
       productSourceIds,
     );
 
-    return ctProducts.map((ctProduct) => {
-      const unit = freeUnits.find(
-        (unit) => unit.product.source_id === ctProduct.id,
-      );
-      const currentPriceAmount = getCommercetoolstCurrentPriceAmount(
-        ctProduct,
-        unit.sku.source_id,
-        this.priceSelector,
-      );
-      const item = orderItems?.find(
-        (item) => item?.sku?.source_id === unit.sku.source_id,
-      ) as OrdersItem;
-      return { ...ctProduct, currentPriceAmount, unit, item };
-    });
+    return ctProducts
+      .map((ctProduct) => {
+        const unit = freeUnits.find(
+          (unit) => unit.product.source_id === ctProduct.id,
+        );
+        if (!unit) {
+          return undefined;
+        }
+        const currentPriceAmount = getCommercetoolstCurrentPriceAmount(
+          ctProduct,
+          unit.sku.source_id,
+          this.priceSelector,
+        );
+        const item = orderItems?.find(
+          (item) => item?.sku?.source_id === unit.sku.source_id,
+        ) as OrdersItem;
+        return { ...ctProduct, currentPriceAmount, unit, item };
+      })
+      .filter((e) => !!e);
   }
 
   private async getCtProducts(

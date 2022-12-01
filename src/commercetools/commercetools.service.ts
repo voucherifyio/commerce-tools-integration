@@ -2,38 +2,27 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   Cart as CommerceToolsCart,
   Order as CommerceToolsOrder,
-  TaxCategory,
 } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../misc/sleep';
-import { Cart, Order } from '../integration/types';
+import {
+  CartUpdateHandler,
+  OrderRedeemHandler,
+  StoreInterface,
+} from '../integration/types';
 import { CustomTypesService } from './custom-types/custom-types.service';
-import { RedemptionsRedeemStackableResponse } from '@voucherify/sdk';
 import { CartAction } from './store-actions/cart-update-actions/CartAction';
 import { ConfigService } from '@nestjs/config';
 import { TaxCategoriesService } from './tax-categories/tax-categories.service';
-import { getCouponsLimit } from '../voucherify/voucherify.service';
 import { CartUpdateActions } from './store-actions/cart-update-actions';
-import { getMaxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut } from './utils/getMaxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut';
 import { translateCtCartToCart } from './utils/mappers/translateCtCartToCart';
 import { getPriceSelectorFromCtCart } from './utils/mappers/getPriceSelectorFromCtCart';
 import { translateCtOrderToOrder } from './utils/mappers/translateCtOrderToOrder';
 import { CartDiscountApplyMode, CartResponse } from './types';
 import { OrderPaidActions } from './store-actions/order-paid-actions';
 
-type CartUpdateHandler = (cart: Cart, storeActions?: CartUpdateActions) => void;
-
-type OrderRedeemHandler = (
-  order: Order,
-  storeActions?: OrderPaidActions,
-) => Promise<{
-  actions: { name: string; action: string; value: string[] }[];
-  status: boolean;
-  redemptionsRedeemStackableResponse?: RedemptionsRedeemStackableResponse;
-}>;
-
 @Injectable()
-export class CommercetoolsService {
+export class CommercetoolsService implements StoreInterface {
   constructor(
     private readonly logger: Logger,
     private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
@@ -41,20 +30,24 @@ export class CommercetoolsService {
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly configService: ConfigService,
   ) {}
-  private CartUpdateHandler: CartUpdateHandler;
+  private cartUpdateHandler: CartUpdateHandler;
   public setCartUpdateListener(handler: CartUpdateHandler) {
-    this.CartUpdateHandler = handler;
+    this.cartUpdateHandler = handler;
   }
-  private OrderPaidHandler: OrderRedeemHandler;
+  private orderPaidHandler: OrderRedeemHandler;
   public setOrderPaidListener(handler: OrderRedeemHandler) {
-    this.OrderPaidHandler = handler;
+    this.orderPaidHandler = handler;
   }
+  private cartDiscountApplyMode: CartDiscountApplyMode =
+    this.configService.get<string>(
+      'APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT',
+    ) === 'true'
+      ? CartDiscountApplyMode.DirectDiscount
+      : CartDiscountApplyMode.CustomLineItem;
 
   private maxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut: number =
-    getMaxCartUpdateResponseTimeWithoutCheckingIfApiExtensionTimedOut(
-      this.configService.get<number>(
-        'MAX_CART_UPDATE_RESPONSE_TIME_WITHOUT_CHECKING_IF_API_EXTENSION_TIMED_OUT',
-      ),
+    this.configService.get<number>(
+      'MAX_CART_UPDATE_RESPONSE_TIME_WITHOUT_CHECKING_IF_API_EXTENSION_TIMED_OUT',
     );
 
   async handleCartUpdate(cart: CommerceToolsCart): Promise<{
@@ -72,26 +65,20 @@ export class CommercetoolsService {
     );
     cartUpdateActions.setCart(cart);
     cartUpdateActions.setCouponsLimit(
-      getCouponsLimit(
-        this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT'),
-      ),
+      this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT') ?? 5,
     );
 
-    const cartDiscountApplyMode =
-      this.configService.get<string>(
-        'APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT',
-      ) === 'true'
-        ? CartDiscountApplyMode.DirectDiscount
-        : CartDiscountApplyMode.CustomLineItem;
-    cartUpdateActions.setCartDiscountApplyMode(cartDiscountApplyMode);
+    cartUpdateActions.setCartDiscountApplyMode(this.cartDiscountApplyMode);
 
-    let taxCategory;
-    if (cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
-      taxCategory = await this.getCouponTaxCategory(cart);
+    if (this.cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
+      cartUpdateActions.setTaxCategory(
+        await this.taxCategoriesService.getCouponTaxCategoryAndUpdateItIfNeeded(
+          cart?.country,
+        ),
+      );
     }
-    cartUpdateActions.setTaxCategory(taxCategory);
 
-    if (typeof this.CartUpdateHandler !== 'function') {
+    if (typeof this.cartUpdateHandler !== 'function') {
       this.logger.error({
         msg: `Error while commercetoolsService.validateCouponsAndPromotionsAndBuildCartActions CartUpdateHandler not configured`,
       });
@@ -100,7 +87,7 @@ export class CommercetoolsService {
         actions: [],
       };
     }
-    await this.CartUpdateHandler(
+    await this.cartUpdateHandler(
       translateCtCartToCart(cart),
       cartUpdateActions,
     );
@@ -114,7 +101,7 @@ export class CommercetoolsService {
     };
   }
 
-  async handleAPIExtensionTimeout(
+  async handleAPIExtensionTimeoutOnCartUpdate(
     cart: CommerceToolsCart,
     buildingResponseTime: number,
   ) {
@@ -136,34 +123,40 @@ export class CommercetoolsService {
         return;
       }
     }
-    if (typeof this.CartUpdateHandler !== 'function') {
-      return this.logger.error({
+    if (typeof this.cartUpdateHandler !== 'function') {
+      this.logger.error({
         msg: `Error while commercetoolsService.validateCouponsAndPromotionsAndBuildCartActions CartUpdateHandler not configured`,
       });
+      return;
     }
-    await this.CartUpdateHandler(translateCtCartToCart(cart)); //dropping sessions from coupons that are not included in cart (because of API extension timeout)
-    return this.logger.debug('Coupons changes were rolled back successfully');
+    await this.cartUpdateHandler(translateCtCartToCart(cart)); //dropping sessions from coupons that are not included in cart (because of API extension timeout)
+    this.logger.debug('Coupons changes were rolled back successfully');
+    return;
   }
 
-  public async checkIfCartStatusIsPaidAndRedeem(order: CommerceToolsOrder) {
+  public async checkIfCartStatusIsPaidAndRedeem(
+    order: CommerceToolsOrder,
+  ): Promise<void> {
     if (order.paymentState !== 'Paid') {
-      return this.logger.debug({
+      this.logger.debug({
         msg: 'Order is not paid',
         id: order.id,
         customerId: order.customerId,
       });
+      return;
     }
     try {
-      if (typeof this.OrderPaidHandler !== 'function') {
-        return this.logger.error({
+      if (typeof this.orderPaidHandler !== 'function') {
+        this.logger.error({
           msg: `Error while commercetoolsService.checkIfCartWasUpdatedWithStatusPaidAndRedeem OrderRedeemHandler not configured`,
         });
+        return;
       }
       const orderPaidActions = new OrderPaidActions();
       orderPaidActions.setCtClient(
         this.commerceToolsConnectorService.getClient(),
       );
-      await this.OrderPaidHandler(
+      await this.orderPaidHandler(
         translateCtOrderToOrder(order),
         orderPaidActions,
       );
@@ -173,32 +166,8 @@ export class CommercetoolsService {
       this.logger.error({
         msg: `Error while redeemVoucherifyCoupons function`,
       });
+      return;
     }
-  }
-
-  public async getCouponTaxCategory(
-    cart: CommerceToolsCart,
-  ): Promise<TaxCategory> {
-    const { country } = cart;
-    const taxCategory =
-      await this.taxCategoriesService.getCouponTaxCategoryFromResponse();
-    if (!taxCategory) {
-      const msg = 'Coupon tax category was not configured correctly';
-      this.logger.error({ msg });
-      throw new Error(msg);
-    }
-
-    if (
-      country &&
-      !taxCategory?.rates?.find((rate) => rate.country === country)
-    ) {
-      await this.taxCategoriesService.addCountryToCouponTaxCategory(
-        taxCategory,
-        country,
-      );
-      return await this.taxCategoriesService.getCouponTaxCategoryFromResponse();
-    }
-    return taxCategory;
   }
 
   public async setCustomTypeForInitializedCart(): Promise<CartResponse> {

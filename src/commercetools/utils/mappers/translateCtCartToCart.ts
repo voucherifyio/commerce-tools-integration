@@ -1,8 +1,8 @@
 import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/cart';
 import { Cart } from '../../../integration/types';
-import { getCouponsFromCartOrOrder } from '../../../integration/utils/helperFunctions';
 import { getSessionFromCtCart } from './getSessionFromCtCart';
 import { mapLineItemsToIntegrationType } from './mapLineItemsToIntegrationType';
+import { getCouponsFromCartOrOrder } from '../getCouponsFromCartOrOrder';
 
 export function translateCtCartToCart(cart: CommerceToolsCart): Cart {
   return {

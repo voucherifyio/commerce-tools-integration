@@ -1,7 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommercetoolsConnectorService } from '../commercetools-connector.service';
-import { TaxCategory } from '@commercetools/platform-sdk';
-
+import {
+  TaxCategory,
+  TaxCategoryAddTaxRateAction,
+  TaxCategoryRemoveTaxRateAction,
+  TaxCategoryReplaceTaxRateAction,
+  TaxRate,
+} from '@commercetools/platform-sdk';
 @Injectable()
 export class TaxCategoriesService {
   constructor(
@@ -11,7 +16,30 @@ export class TaxCategoriesService {
 
   private couponTaxCategory: TaxCategory = null;
 
-  async getCouponTaxCategoryFromResponse(): Promise<TaxCategory> {
+  public async getCouponTaxCategoryAndUpdateItIfNeeded(
+    country: string,
+  ): Promise<TaxCategory> {
+    if (!country) {
+      const msg = 'Country was not provided to obtain coupon tax category!';
+      this.logger.error({ msg });
+      throw new Error(msg);
+    }
+    const couponTaxCategory =
+      await this.getCashedCouponTaxCategoryOrFromNewRequest();
+    if (!couponTaxCategory) {
+      const msg = 'Coupon tax category was not configured correctly';
+      this.logger.error({ msg });
+      throw new Error(msg);
+    }
+
+    if (!couponTaxCategory?.rates?.find((rate) => rate.country === country)) {
+      await this.addCountryToCouponTaxCategory(couponTaxCategory, country);
+      return await this.getCashedCouponTaxCategoryOrFromNewRequest();
+    }
+    return couponTaxCategory;
+  }
+
+  async getCashedCouponTaxCategoryOrFromNewRequest(): Promise<TaxCategory> {
     if (this.couponTaxCategory) {
       return this.couponTaxCategory;
     }
@@ -22,12 +50,11 @@ export class TaxCategoriesService {
       .execute();
 
     if ([200, 201].includes(statusCode) && body.count === 1) {
-      this.couponTaxCategory = body.results[0];
       this.logger.debug({
         msg: 'Found existing coupon tax category',
-        taxCategoryId: this.couponTaxCategory.id,
+        taxCategoryId: body.results[0].id,
       });
-      return this.couponTaxCategory;
+      return body.results[0];
     }
 
     const response = await ctClient
@@ -43,31 +70,26 @@ export class TaxCategoriesService {
     if (![200, 201].includes(response.statusCode)) {
       return null;
     }
-    this.couponTaxCategory = response.body;
+
     this.logger.debug({
-      msg: 'Found existing coupon tax category',
-      taxCategoryId: this.couponTaxCategory.id,
+      msg: 'Created new coupon tax category',
+      taxCategoryId: response.body.id,
     });
-    return this.couponTaxCategory;
+
+    return response.body;
   }
 
-  async configureCouponTaxCategory({
-    onProgress,
-  }: {
-    onProgress?: (progress: number) => void;
-  }): Promise<{
-    success: boolean;
-    couponTaxCategory: TaxCategory;
-  }> {
+  public async configureCouponTaxCategory(): Promise<TaxCategory> {
     const ctClient = this.commerceToolsConnectorService.getClient();
-    const couponTaxCategory = await this.getCouponTaxCategoryFromResponse();
+    const couponTaxCategory =
+      await this.getCashedCouponTaxCategoryOrFromNewRequest();
 
-    const rates = couponTaxCategory?.rates;
+    const currentRates = couponTaxCategory?.rates;
 
     this.logger.debug({
       msg: 'Configuring coupon tax categories',
       couponTaxCategoryId: couponTaxCategory.id,
-      countryRates: rates.map((rate) => rate.country).join(', '),
+      countryRates: currentRates.map((rate) => rate.country).join(', '),
     });
 
     const listOfCountriesUsedInTheProject = (await ctClient.get().execute())
@@ -83,45 +105,35 @@ export class TaxCategoriesService {
         };
       }) ?? [];
 
-    const ratesToAdd = desiredRates?.filter(
-      (rate) => !rates?.map((rate_) => rate_.country).includes(rate.country),
-    );
+    const { ratesToAdd, ratesToDelete, ratesToUpdate } =
+      this.calcOperationsToGetDesiredRates(desiredRates, currentRates);
 
-    const ratesToUpdate = desiredRates.filter((desiredRate) => {
-      const currentRate = rates.find(
-        (currentRate) => currentRate.country === desiredRate.country,
-      );
-      return (
-        currentRate &&
-        (currentRate.amount !== desiredRate.amount ||
-          currentRate.includedInPrice !== desiredRate.includedInPrice)
-      );
-    });
-
-    const ratesToDelete = rates?.filter(
-      (rate) =>
-        !desiredRates.map((rate_) => rate_.country).includes(rate.country),
-    );
-    const actions = [];
-    for (const rate of ratesToAdd) {
-      actions.push({
-        action: 'addTaxRate',
-        taxRate: rate,
-      });
-    }
-    for (const rate of ratesToDelete) {
-      actions.push({
-        action: 'removeTaxRate',
-        taxRateId: rate.id,
-      });
-    }
-    for (const rate of ratesToUpdate) {
-      actions.push({
-        action: 'replaceTaxRate',
-        taxRateId: rates.find((rate_) => rate_.country === rate.country).id,
-        taxRate: rate,
-      });
-    }
+    const actions = [
+      ...ratesToAdd.map(
+        (taxRate) =>
+          ({
+            action: 'addTaxRate',
+            taxRate,
+          } as TaxCategoryAddTaxRateAction),
+      ),
+      ...ratesToDelete.map(
+        (taxRate) =>
+          ({
+            action: 'removeTaxRate',
+            taxRateId: taxRate.id,
+          } as TaxCategoryRemoveTaxRateAction),
+      ),
+      ...ratesToUpdate.map(
+        (taxRate) =>
+          ({
+            action: 'replaceTaxRate',
+            taxRateId: currentRates.find(
+              (rate_) => rate_.country === taxRate.country,
+            ).id,
+            taxRate,
+          } as TaxCategoryReplaceTaxRateAction),
+      ),
+    ];
 
     this.logger.debug({
       msg: 'Calculated updates for countiries in coupon tax categories:',
@@ -129,7 +141,7 @@ export class TaxCategoriesService {
     });
 
     if (!actions.length) {
-      return { success: true, couponTaxCategory };
+      return couponTaxCategory;
     }
 
     const response = await ctClient
@@ -152,13 +164,37 @@ export class TaxCategoriesService {
       });
     }
 
-    return {
-      success,
-      couponTaxCategory: await this.getCouponTaxCategoryFromResponse(),
-    };
+    return this.getCashedCouponTaxCategoryOrFromNewRequest();
   }
 
-  async addCountryToCouponTaxCategory(
+  private calcOperationsToGetDesiredRates(
+    desiredRates: TaxRate[],
+    currentRates: TaxRate[],
+  ) {
+    const ratesToAdd = desiredRates?.filter(
+      (rate) =>
+        !currentRates?.map((rate_) => rate_.country).includes(rate.country),
+    );
+
+    const ratesToUpdate = desiredRates.filter((desiredRate) => {
+      const currentRate = currentRates.find(
+        (currentRate) => currentRate.country === desiredRate.country,
+      );
+      return (
+        currentRate &&
+        (currentRate.amount !== desiredRate.amount ||
+          currentRate.includedInPrice !== desiredRate.includedInPrice)
+      );
+    });
+
+    const ratesToDelete = currentRates?.filter(
+      (rate) =>
+        !desiredRates.map((rate_) => rate_.country).includes(rate.country),
+    );
+    return { ratesToAdd, ratesToDelete, ratesToUpdate };
+  }
+
+  public async addCountryToCouponTaxCategory(
     taxCategory: TaxCategory,
     countryCode: string,
   ) {
@@ -187,7 +223,7 @@ export class TaxCategoriesService {
     if (success) {
       this.couponTaxCategory = null;
       this.logger.debug({ msg: 'Added country to coupon tax category' });
-      await this.getCouponTaxCategoryFromResponse();
+      await this.getCashedCouponTaxCategoryOrFromNewRequest();
     } else {
       this.logger.error({
         msg: 'Could not add country to coupon tax category',

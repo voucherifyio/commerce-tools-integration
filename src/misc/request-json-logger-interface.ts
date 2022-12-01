@@ -1,6 +1,6 @@
 export const REQUEST_JSON_LOGGER = 'REQUEST_JSON_LOGGER';
 
-export interface RequestJsonLogger {
+export interface RequestJsonLoggerInterface {
   log(
     label: string,
     request: unknown,
@@ -9,7 +9,9 @@ export interface RequestJsonLogger {
   ): Promise<void>;
 }
 
-export class NoOpRequestJsonLogger implements RequestJsonLogger {
+export class NoOpRequestJsonLoggerInterface
+  implements RequestJsonLoggerInterface
+{
   async log() {
     return Promise.resolve();
   }

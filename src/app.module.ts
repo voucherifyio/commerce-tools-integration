@@ -21,7 +21,6 @@ import { ApiExtensionListCommand } from './cli/api-extension-list.command';
 import { ConfigCommand } from './cli/config.command';
 import { MigrateCommand } from './cli/migrate.command';
 import { OrderMapper } from './integration/utils/mappers/order';
-import { ProductMapper } from './integration/utils/mappers/product';
 import { ValidationSchema } from './configs/validationSchema';
 import { AppValidationPipe } from './configs/appValidationPipe';
 import { RequestJsonLogger } from './configs/requestJsonLogger';
@@ -54,7 +53,6 @@ import { VoucherifyService } from './voucherify/voucherify.service';
     ApiExtensionListCommand,
     ApiExtensionUpdateCommand,
     OrderMapper,
-    ProductMapper,
     AppValidationPipe,
     RequestJsonLogger,
     CommercetoolsService,

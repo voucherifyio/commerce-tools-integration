@@ -66,6 +66,7 @@ describe('When another -20€ amount voucher is provided after -10% coupon in on
       },
     );
   });
+
   it('Should create one `addCustomLineItem` action with all coupons value combined', async () => {
     const result = await commercetoolsService.handleCartUpdate(cart);
 
