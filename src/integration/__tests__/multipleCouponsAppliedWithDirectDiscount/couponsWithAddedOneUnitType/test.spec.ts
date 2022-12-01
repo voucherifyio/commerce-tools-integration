@@ -15,7 +15,7 @@ describe('when applying discount code which adds free product to the cart', () =
   let voucherifyConnectorService: VoucherifyConnectorService;
   let configService: ConfigService;
   const SKU_ID = 'gift-sku-id';
-  const PRODUCT_ID = 'gift-product-id';
+  const PRODUCT_ID = '260d2585-daef-4c11-9adb-1b90099b7ae8';
   const PRODUCT_PRICE = 6500;
 
   beforeEach(async () => {
@@ -49,66 +49,47 @@ describe('when applying discount code which adds free product to the cart', () =
         action: 'setDirectDiscounts',
         discounts: [
           {
-            target: {
-              predicate: 'sku="M0E20000000DUJ6"',
-              type: 'lineItems',
-            },
+            target: { type: 'lineItems', predicate: 'sku="M0E20000000DUJ6"' },
             value: {
-              money: [
-                {
-                  centAmount: 23850,
-                  currencyCode: 'EUR',
-                },
-              ],
               type: 'absolute',
+              money: [{ centAmount: 23850, currencyCode: 'EUR' }],
             },
           },
           {
-            target: {
-              predicate: 'sku="M0E20000000DUJ6"',
-              type: 'lineItems',
-            },
+            target: { type: 'lineItems', predicate: 'sku="M0E20000000DUJ6"' },
             value: {
-              money: [
-                {
-                  centAmount: 2650,
-                  currencyCode: 'EUR',
-                },
-              ],
               type: 'absolute',
+              money: [{ centAmount: 2650, currencyCode: 'EUR' }],
             },
           },
           {
-            target: {
-              predicate: 'true',
-              type: 'lineItems',
-            },
+            target: { type: 'lineItems', predicate: 'true' },
             value: {
-              money: [
-                {
-                  centAmount: 1511,
-                  currencyCode: 'EUR',
-                },
-              ],
               type: 'absolute',
+              money: [{ centAmount: 1511, currencyCode: 'EUR' }],
             },
           },
           {
-            target: {
-              predicate: 'true',
-              type: 'lineItems',
-            },
+            target: { type: 'lineItems', predicate: 'true' },
             value: {
-              money: [
-                {
-                  centAmount: 2385,
-                  currencyCode: 'EUR',
-                },
-              ],
               type: 'absolute',
+              money: [{ centAmount: 2385, currencyCode: 'EUR' }],
             },
           },
         ],
+      },
+      {
+        action: 'addLineItem',
+        sku: 'M0E20000000DUJ6',
+        quantity: 0,
+        custom: {
+          typeKey: 'lineItemCodesType',
+          fields: {
+            applied_codes: [
+              '{"code":"UNIT_TYPE_OFF","type":"UNIT","effect":"ADD_MISSING_ITEMS","quantity":1,"totalDiscountQuantity":1}',
+            ],
+          },
+        },
       },
       {
         action: 'setLineItemCustomType',

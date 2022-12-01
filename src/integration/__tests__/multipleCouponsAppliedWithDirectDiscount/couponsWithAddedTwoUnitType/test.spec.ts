@@ -15,7 +15,7 @@ describe('when applying discount code which adds free product to the cart', () =
   let voucherifyConnectorService: VoucherifyConnectorService;
   let configService: ConfigService;
   const SKU_ID = 'gift-sku-id';
-  const PRODUCT_ID = 'gift-product-id';
+  const PRODUCT_ID = '260d2585-daef-4c11-9adb-1b90099b7ae8';
   const PRODUCT_PRICE = 6500;
 
   beforeEach(async () => {
@@ -86,15 +86,41 @@ describe('when applying discount code which adds free product to the cart', () =
         ],
       },
       {
-        action: 'removeLineItem',
+        action: 'changeLineItemQuantity',
         lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
         quantity: 1,
+      },
+      {
+        action: 'changeLineItemQuantity',
+        lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
+        quantity: 3,
+      },
+      {
+        action: 'setLineItemCustomField',
+        lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
+        name: 'applied_codes',
+      },
+      {
+        action: 'removeLineItem',
+        lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
+        quantity: 0,
       },
       {
         action: 'setLineItemCustomType',
         lineItemId: '9ea34a33-36cf-479e-bba6-18644ea181c5',
         type: { key: 'lineItemCodesType' },
         fields: {},
+      },
+      {
+        action: 'setLineItemCustomType',
+        lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
+        type: { key: 'lineItemCodesType' },
+        fields: {
+          applied_codes: [
+            '{"code":"UNIT_TYPE_OFF","type":"UNIT","effect":"ADD_MISSING_ITEMS","quantity":1,"totalDiscountQuantity":3}',
+            '{"code":"UNIT_TYPE_OFF_2","type":"UNIT","effect":"ADD_MISSING_ITEMS","quantity":2,"totalDiscountQuantity":3}',
+          ],
+        },
       },
       {
         action: 'setCustomField',

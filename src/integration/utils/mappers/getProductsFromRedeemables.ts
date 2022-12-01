@@ -1,7 +1,7 @@
 import { StackableRedeemableResponse } from '@voucherify/sdk';
 import { ExpectedProductToAdd } from '../../types';
 
-export const getExpectedProductsToAdd = (
+export const getProductsFromRedeemables = (
   redeemables: StackableRedeemableResponse[],
 ): ExpectedProductToAdd[] => {
   const expectedProductsToAdd = [];

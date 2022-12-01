@@ -20,7 +20,7 @@ import {
 } from '../types';
 import { getCommercetoolstCurrentPriceAmount } from '../utils/getCommercetoolstCurrentPriceAmount';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
-import { isUuid } from '../utils/isUUID';
+import { validate as uuidValidate } from 'uuid';
 
 export class CartUpdateActions implements CartUpdateActionsInterface {
   private taxCategory: TaxCategory;
@@ -99,10 +99,6 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
         if (!freeUnits.length) {
           return [];
         }
-        await this.getCtProductsWithCurrentPriceAmount(
-          freeUnits,
-          unitTypeRedeemable.order.items,
-        );
         const productsToAdd = (
           await this.getCtProductsWithCurrentPriceAmount(
             freeUnits,
@@ -174,10 +170,6 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
     priceSelector: PriceSelector,
     productSourceIds: string[],
   ): Promise<Product[]> {
-    const uuidProductSourceIds = productSourceIds.filter((productSourceId) =>
-      isUuid(productSourceId),
-    );
-    if (uuidProductSourceIds.length === 0) return [];
     try {
       return (
         await this.ctClient
@@ -187,7 +179,9 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
               total: false,
               priceCurrency: priceSelector.currencyCode,
               priceCountry: priceSelector.country,
-              where: `id in ("${uuidProductSourceIds.join('","')}") `,
+              where: `id in ("${productSourceIds
+                .filter((productSourceId) => uuidValidate(productSourceId))
+                .join('","')}") `,
             },
           })
           .execute()

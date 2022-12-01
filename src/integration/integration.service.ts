@@ -32,9 +32,10 @@ import { buildValidationsValidateStackableParamsForVoucherify } from './utils/ma
 import { buildRedeemStackableRequestForVoucherify } from './utils/mappers/buildRedeemStackableRequestForVoucherify';
 import { getSimpleMetadataForOrder } from '../commercetools/utils/mappers/getSimpleMetadataForOrder';
 import { mergeTwoObjectsIntoOne } from './utils/mergeTwoObjectsIntoOne';
-import { getExpectedProductsToAdd } from './utils/mappers/getExpectedProductsToAdd';
+import { getProductsFromRedeemables } from './utils/mappers/getProductsFromRedeemables';
 import { getMissingProductsToAdd } from './utils/mappers/getMissingProductsToAdd';
 import { remapRedeemablesIfProductToAddNotFound } from './utils/remapRedeemablesIfProductToAddNotFound';
+import { getUnitTypeRedeemablesFromStackableResponse } from './utils/getUnitTypeRedeemablesFromStackableResponse';
 
 @Injectable()
 export class IntegrationService {
@@ -153,22 +154,23 @@ export class IntegrationService {
         );
     }
 
+    const unitTypeRedeemables =
+      getUnitTypeRedeemablesFromStackableResponse(validatedCoupons);
+
     let productsToAdd: ProductToAdd[] = [];
-    const unitTypeRedeemables = validatedCoupons.redeemables.filter(
-      (redeemable) =>
-        redeemable.result?.discount?.type === 'UNIT' &&
-        redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE,
-    );
     if (typeof cartUpdateActions.getProductsToAdd === 'function') {
       productsToAdd = await cartUpdateActions.getProductsToAdd(
         unitTypeRedeemables,
       );
     }
-    const expectedProductsToAdd = getExpectedProductsToAdd(unitTypeRedeemables);
+
+    const productsFromRedeemables =
+      getProductsFromRedeemables(unitTypeRedeemables);
     const missingProductsToAdd = getMissingProductsToAdd(
-      expectedProductsToAdd,
+      productsFromRedeemables,
       productsToAdd,
     );
+
     const couponsWithMissingProductsToAdd = [
       ...new Set(
         missingProductsToAdd.map(
