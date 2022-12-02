@@ -61,7 +61,7 @@ describe('when adding new product to the cart with free product already applied 
       {
         action: 'changeLineItemQuantity',
         lineItemId: '324f6e75-62ba-4faa-aced-d63f21f997e2',
-        quantity: 1,
+        quantity: 3,
       },
       {
         action: 'changeLineItemQuantity',

@@ -46,10 +46,7 @@ import {
 import { getIncorrectPrices } from './utils/getIncorrectPrices';
 import { getCodesIfProductNotFoundIn } from './utils/getCodesIfProductNotFoundIn';
 import { getItemsWithCorrectedPrices } from './utils/getItemsWithPricesCorrected';
-import {
-  getCtProductsWithCurrentPriceAmount,
-  getProductsToAdd,
-} from './utils/getProductsToAddWithPricesCorrected';
+import { getProductsToAdd } from './utils/getProductsToAddWithPricesCorrected';
 
 @Injectable()
 export class IntegrationService {
