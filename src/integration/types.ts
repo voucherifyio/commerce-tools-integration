@@ -108,6 +108,12 @@ export interface StoreInterface {
   setOrderPaidListener: (handler: OrderRedeemHandler) => void;
 }
 
+export interface StackableRedeemableResultDiscountUnitWithCodeAndPrice
+  extends StackableRedeemableResultDiscountUnit {
+  code: string;
+  price: number | undefined;
+}
+
 export interface CartUpdateActionsInterface {
   setAvailablePromotions(promotions: availablePromotion[]); //starting value: []
   setProductsToAdd(productsToAdd: ProductToAdd[]); //starting value: []

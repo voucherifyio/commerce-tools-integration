@@ -26,11 +26,11 @@ import { VoucherifyService } from '../voucherify/voucherify.service';
 import { calculateTotalDiscountAmount } from './utils/helperFunctions';
 import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
 import {
-  codesFromRedeemables,
+  redeemablesToCodes,
   filterOutRedeemablesIfCodeIn,
   getRedeemablesByStatus,
-  getUnitStackableRedeemablesResultDiscountUnitFromStackableRedeemablesResponse,
-  getUnitTypeRedeemablesFromStackableResponse,
+  stackableRedeemablesResponseToUnitStackableRedeemablesResultDiscountUnitWithCodes,
+  stackableResponseToUnitTypeRedeemables,
   unitTypeRedeemablesToOrderItems,
 } from './utils/redeemableOperationFunctions';
 import { buildValidationsValidateStackableParamsForVoucherify } from './utils/mappers/buildValidationsValidateStackableParamsForVoucherify';
@@ -49,6 +49,8 @@ import {
   filterOutCouponsIfCodeIn,
 } from './utils/couponsOperationFunctions';
 import { getIncorrectPrices } from './utils/getIncorrectPrices';
+import { getCodesIfProductNotFoundIn } from './utils/getCodesIfProductNotFoundIn';
+import { getItemsWithCorrectedPrices } from './utils/getItemsWithPricesCorrected';
 
 @Injectable()
 export class IntegrationService {
@@ -144,7 +146,7 @@ export class IntegrationService {
       validatedCoupons.redeemables,
       'INAPPLICABLE',
     );
-    const inapplicableCodes = codesFromRedeemables(inapplicableRedeemables);
+    const inapplicableCodes = redeemablesToCodes(inapplicableRedeemables);
 
     if (validatedCoupons.valid === false) {
       const applicableCodes = couponsAppliedAndNewLimitedByConfig.filter(
@@ -166,46 +168,36 @@ export class IntegrationService {
         );
     }
 
-    const productsToAdd = []; //todo to delete
-
     const unitTypeRedeemables =
-      getUnitTypeRedeemablesFromStackableResponse(validatedCoupons);
-    if (
+      stackableResponseToUnitTypeRedeemables(validatedCoupons);
+    const stackableRedeemablesResultDiscountUnitWithPriceAndCodes =
+      stackableRedeemablesResponseToUnitStackableRedeemablesResultDiscountUnitWithCodes(
+        unitTypeRedeemables,
+      );
+
+    const {
+      found: currentPricesOfProducts,
+      notFound: notFoundProductSourceIds,
+    }: {
+      found: ProductPriceAndSourceId[];
+      notFound: string[];
+    } =
       typeof cartUpdateActions.getPricesOfProductsFromCommercetools ===
       'function'
-    ) {
-      const {
-        found: currentPricesOfProducts,
-        notFound: notFoundProductSourceIds,
-      }: {
-        found: ProductPriceAndSourceId[];
-        notFound: string[];
-      } = await cartUpdateActions.getPricesOfProductsFromCommercetools(
-        getUnitStackableRedeemablesResultDiscountUnitFromStackableRedeemablesResponse(
-          [...unitTypeRedeemables, ...unitTypeRedeemables],
-        ),
-      );
-      const pricesIncorrect = getIncorrectPrices(
-        currentPricesOfProducts,
-        unitTypeRedeemablesToOrderItems(unitTypeRedeemables),
-      );
-      console.log(pricesIncorrect);
-    }
+        ? await cartUpdateActions.getPricesOfProductsFromCommercetools(
+            stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
+          )
+        : { found: [], notFound: [] };
 
-    const productsFromRedeemables =
-      getProductsFromRedeemables(unitTypeRedeemables);
-    const missingProductsToAdd = getMissingProductsToAdd(
-      productsFromRedeemables,
-      productsToAdd,
+    const codesWithMissingProductsToAdd = getCodesIfProductNotFoundIn(
+      stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
+      notFoundProductSourceIds,
     );
 
-    const codesWithMissingProductsToAdd = [
-      ...new Set(
-        missingProductsToAdd.map(
-          (missingProductToAdd) => missingProductToAdd.code,
-        ),
-      ),
-    ];
+    const pricesIncorrect = getIncorrectPrices(
+      currentPricesOfProducts,
+      unitTypeRedeemablesToOrderItems(unitTypeRedeemables),
+    );
 
     //don't wait
     this.voucherifyConnectorService.releaseValidationSession(
@@ -213,20 +205,16 @@ export class IntegrationService {
       validatedCoupons?.session?.key ?? sessionKey,
     );
 
-    const productsToAddWithIncorrectPrice = productsToAdd.filter(
-      (product) => product.discount_difference,
-    );
-
     if (
       filterOutCouponsIfCodeIn(
         couponsAppliedAndNewLimitedByConfig,
         codesWithMissingProductsToAdd,
       ).length > 0 &&
-      productsToAddWithIncorrectPrice.length
+      pricesIncorrect.length
     ) {
-      const itemsWithPricesCorrected = await this.getItemsWithCorrectedPrices(
+      const itemsWithPricesCorrected = getItemsWithCorrectedPrices(
         validatedCoupons.order.items,
-        productsToAddWithIncorrectPrice,
+        pricesIncorrect,
       );
       validatedCoupons =
         await this.voucherifyConnectorService.validateStackableVouchers(
@@ -240,6 +228,8 @@ export class IntegrationService {
           ),
         );
     }
+
+    const productsToAdd: ProductToAdd[] = [];
 
     this.logger.debug({
       msg: 'Validated coupons',
@@ -275,62 +265,6 @@ export class IntegrationService {
       cartUpdateActions.setProductsToAdd(productsToAdd);
     }
     return;
-  }
-
-  private async getItemsWithCorrectedPrices(
-    OrdersItems: OrdersItem[],
-    productsToChange: ProductToAdd[],
-  ): Promise<OrdersItem[]> {
-    type OrderItemSku = {
-      id?: string;
-      source_id?: string;
-      override?: boolean;
-      sku?: string;
-      price?: number;
-    };
-    const productsToChangeSKUs = productsToChange.map(
-      (productsToChange) => productsToChange.product,
-    );
-    return OrdersItems.filter(
-      (item) => item.product_id !== FREE_SHIPPING_UNIT_TYPE,
-    ).map((item: OrdersItem) => {
-      if (
-        !productsToChangeSKUs.includes((item.sku as OrderItemSku).source_id) ||
-        item.amount !== item.discount_amount
-      ) {
-        return {
-          ...item,
-          initial_quantity:
-            item?.initial_quantity > 0 ? item.initial_quantity : undefined,
-        };
-      }
-      const currentProductToChange = productsToChange.find(
-        (productsToChange) => productsToChange.product === item.sku.source_id,
-      );
-      return {
-        object: item?.object,
-        product_id: item?.product_id,
-        sku_id: item?.sku_id,
-        initial_quantity:
-          item?.initial_quantity > 0 ? item.initial_quantity : undefined,
-        amount:
-          currentProductToChange.applied_discount_amount *
-          (item.quantity ?? item.initial_quantity ?? 0),
-        price: currentProductToChange.applied_discount_amount,
-        product: {
-          id: item?.product?.id,
-          source_id: item?.product?.source_id,
-          name: item?.product?.name,
-          price: currentProductToChange.applied_discount_amount,
-        },
-        sku: {
-          id: item?.sku?.id,
-          source_id: item?.sku?.source_id,
-          sku: item?.sku?.sku,
-          price: currentProductToChange.applied_discount_amount,
-        },
-      } as OrdersItem;
-    });
   }
 
   public async redeemVoucherifyCoupons(
