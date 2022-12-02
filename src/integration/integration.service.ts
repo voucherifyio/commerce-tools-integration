@@ -46,7 +46,10 @@ import {
 import { getIncorrectPrices } from './utils/getIncorrectPrices';
 import { getCodesIfProductNotFoundIn } from './utils/getCodesIfProductNotFoundIn';
 import { getItemsWithCorrectedPrices } from './utils/getItemsWithPricesCorrected';
-import { getProductsToAddWithCorrectedPrices } from './utils/getProductsToAddWithPricesCorrected';
+import {
+  getCtProductsWithCurrentPriceAmount,
+  getProductsToAdd,
+} from './utils/getProductsToAddWithPricesCorrected';
 
 @Injectable()
 export class IntegrationService {
@@ -201,13 +204,6 @@ export class IntegrationService {
       validatedCoupons?.session?.key ?? sessionKey,
     );
 
-    console.log(
-      getProductsToAddWithCorrectedPrices(
-        validatedCoupons,
-        currentPricesOfProducts,
-      ),
-    );
-
     if (
       filterOutCouponsIfCodeIn(
         couponsAppliedAndNewLimitedByConfig,
@@ -232,7 +228,12 @@ export class IntegrationService {
         );
     }
 
-    const productsToAdd: ProductToAdd[] = [];
+    const productsToAdd: ProductToAdd[] = getProductsToAdd(
+      validatedCoupons,
+      currentPricesOfProducts,
+    );
+
+    console.log(productsToAdd);
 
     this.logger.debug({
       msg: 'Validated coupons',

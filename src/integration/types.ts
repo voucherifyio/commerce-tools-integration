@@ -31,7 +31,6 @@ export type ProductToAdd = {
   initial_quantity: number;
   applied_discount_amount?: number;
   product: string; // sku source_id
-  distributionChannel: any;
 };
 
 export type availablePromotion = {

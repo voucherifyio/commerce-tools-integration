@@ -1,59 +1,71 @@
+import { OrdersItem } from '@voucherify/sdk';
 import {
-  OrdersItem,
-  ValidationValidateStackableResponse,
-} from '@voucherify/sdk';
-import { ProductPriceAndSourceId, ProductToAdd } from '../types';
-import { FREE_SHIPPING_UNIT_TYPE } from '../../consts/voucherify';
+  ProductPriceAndSourceId,
+  StackableRedeemableResultDiscountUnitWithCodeAndPrice,
+} from '../types';
 import {
   stackableRedeemablesResponseToUnitStackableRedeemablesResultDiscountUnitWithCodes,
   stackableResponseToUnitTypeRedeemables,
 } from './redeemableOperationFunctions';
 
-export function getProductsToAddWithCorrectedPrices(
-  validatedCoupons: ValidationValidateStackableResponse,
-  currentPricesOfProducts: ProductPriceAndSourceId[],
-): OrdersItem[] {
-  const unitStackableRedeemablesResultDiscountUnitWithCodes =
+export function getProductsToAdd(validatedCoupons, currentPricesOfProducts) {
+  return getCtProductsWithCurrentPriceAmount(
     stackableRedeemablesResponseToUnitStackableRedeemablesResultDiscountUnitWithCodes(
       stackableResponseToUnitTypeRedeemables(validatedCoupons),
-    );
+    ),
+    validatedCoupons.order.items,
+    currentPricesOfProducts,
+  ).map((productToAdd) => {
+    return {
+      code: productToAdd.unit.code,
+      effect: productToAdd.unit.effect,
+      quantity: productToAdd.unit.unit_off,
+      product: productToAdd.unit.sku.source_id,
+      initial_quantity: productToAdd.item.initial_quantity,
+      discount_quantity: productToAdd.item.discount_quantity,
+      discount_difference:
+        productToAdd.item?.applied_discount_amount -
+          productToAdd.currentPriceAmount *
+            productToAdd.item?.discount_quantity !==
+        0,
+      applied_discount_amount: productToAdd.currentPriceAmount,
+    };
+  });
+}
 
-  console.log(unitStackableRedeemablesResultDiscountUnitWithCodes);
-
-  const ordersItems = validatedCoupons.order.items;
-  return ordersItems
-    .filter((item) => item.product_id !== FREE_SHIPPING_UNIT_TYPE)
-    .map((item: OrdersItem) => {
-      const currentProductToChange = currentPricesOfProducts.find(
-        (productsToChange) => productsToChange.id === item.product.source_id,
+export function getCtProductsWithCurrentPriceAmount(
+  freeUnits: StackableRedeemableResultDiscountUnitWithCodeAndPrice[],
+  orderItems: OrdersItem[],
+  ctProducts: ProductPriceAndSourceId[],
+): {
+  currentPriceAmount: number;
+  unit: StackableRedeemableResultDiscountUnitWithCodeAndPrice;
+  item: OrdersItem;
+  code: string;
+  price: number | undefined;
+  id: string;
+}[] {
+  return ctProducts
+    .map((ctProduct) => {
+      const units = freeUnits.filter(
+        (unit) => unit.product.source_id === ctProduct.id,
       );
-      if (!currentProductToChange || item?.discount_quantity < 1)
-        return undefined;
-      //todo ToItemUnique
+      if (!units?.length) {
+        return [];
+      }
 
-      return {
-        object: item?.object,
-        product_id: item?.product_id,
-        sku_id: item?.sku_id,
-        initial_quantity:
-          item?.initial_quantity > 0 ? item.initial_quantity : undefined,
-        amount:
-          currentProductToChange.price *
-            (item.quantity ?? item.initial_quantity ?? 0) ?? undefined,
-        price: currentProductToChange.price,
-        product: {
-          id: item?.product?.id,
-          source_id: item?.product?.source_id,
-          name: item?.product?.name,
-          price: currentProductToChange.price,
-        },
-        sku: {
-          id: item?.sku?.id,
-          source_id: item?.sku?.source_id,
-          sku: item?.sku?.sku,
-          price: currentProductToChange.price,
-        },
-      } as OrdersItem;
+      return units.map((unit) => {
+        const item = orderItems?.find(
+          (item) => item?.sku?.source_id === unit.sku.source_id,
+        ) as OrdersItem;
+        return {
+          ...ctProduct,
+          currentPriceAmount: ctProduct.price,
+          unit,
+          item,
+          code: ctProduct.id,
+        };
+      });
     })
-    .filter((e) => !!e);
+    .flat();
 }
