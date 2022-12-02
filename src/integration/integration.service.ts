@@ -188,6 +188,11 @@ export class IntegrationService {
           )
         : { found: [], notFound: [] };
 
+    const productsToAdd: ProductToAdd[] = getProductsToAdd(
+      validatedCoupons,
+      currentPricesOfProducts,
+    );
+
     const codesWithMissingProductsToAdd = getCodesIfProductNotFoundIn(
       stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
       notFoundProductSourceIds,
@@ -227,13 +232,6 @@ export class IntegrationService {
           ),
         );
     }
-
-    const productsToAdd: ProductToAdd[] = getProductsToAdd(
-      validatedCoupons,
-      currentPricesOfProducts,
-    );
-
-    console.log(productsToAdd);
 
     this.logger.debug({
       msg: 'Validated coupons',
