@@ -1,8 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
-  OrdersItem,
   RedemptionsRedeemStackableResponse,
-  StackableRedeemableResultDiscountUnit,
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 
@@ -24,7 +22,6 @@ import { ConfigService } from '@nestjs/config';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
 import { VoucherifyService } from '../voucherify/voucherify.service';
 import { calculateTotalDiscountAmount } from './utils/helperFunctions';
-import { FREE_SHIPPING_UNIT_TYPE } from '../consts/voucherify';
 import {
   redeemablesToCodes,
   filterOutRedeemablesIfCodeIn,
@@ -37,8 +34,6 @@ import { buildValidationsValidateStackableParamsForVoucherify } from './utils/ma
 import { buildRedeemStackableRequestForVoucherify } from './utils/mappers/buildRedeemStackableRequestForVoucherify';
 import { getSimpleMetadataForOrder } from '../commercetools/utils/mappers/getSimpleMetadataForOrder';
 import { mergeTwoObjectsIntoOne } from './utils/mergeTwoObjectsIntoOne';
-import { getProductsFromRedeemables } from './utils/mappers/getProductsFromRedeemables';
-import { getMissingProductsToAdd } from './utils/mappers/getMissingProductsToAdd';
 import { replaceCodesWithInapplicableCoupons } from './utils/replaceCodesWithInapplicableCoupons';
 import {
   couponsStatusDeleted,
@@ -51,6 +46,7 @@ import {
 import { getIncorrectPrices } from './utils/getIncorrectPrices';
 import { getCodesIfProductNotFoundIn } from './utils/getCodesIfProductNotFoundIn';
 import { getItemsWithCorrectedPrices } from './utils/getItemsWithPricesCorrected';
+import { getProductsToAddWithCorrectedPrices } from './utils/getProductsToAddWithPricesCorrected';
 
 @Injectable()
 export class IntegrationService {
@@ -203,6 +199,13 @@ export class IntegrationService {
     this.voucherifyConnectorService.releaseValidationSession(
       codesWithMissingProductsToAdd,
       validatedCoupons?.session?.key ?? sessionKey,
+    );
+
+    console.log(
+      getProductsToAddWithCorrectedPrices(
+        validatedCoupons,
+        currentPricesOfProducts,
+      ),
     );
 
     if (

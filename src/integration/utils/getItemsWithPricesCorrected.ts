@@ -39,7 +39,7 @@ export function getItemsWithCorrectedPrices(
         item?.initial_quantity > 0 ? item.initial_quantity : undefined,
       amount:
         currentProductToChange.price *
-        (item.quantity ?? item.initial_quantity ?? 0),
+          (item.quantity ?? item.initial_quantity ?? 0) ?? undefined,
       price: currentProductToChange.price,
       product: {
         id: item?.product?.id,

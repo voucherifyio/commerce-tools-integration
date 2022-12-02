@@ -29,7 +29,6 @@ export type ProductToAdd = {
   quantity?: number;
   discount_quantity?: number;
   initial_quantity: number;
-  discount_difference: boolean;
   applied_discount_amount?: number;
   product: string; // sku source_id
   distributionChannel: any;
