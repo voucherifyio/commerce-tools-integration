@@ -6,6 +6,8 @@ import {
 } from '@voucherify/sdk';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { CustomerRequest } from '@voucherify/sdk/dist/types/Customers';
+import { string } from 'joi';
+import { number } from 'joi';
 
 export type CartUpdateHandler = (
   cart: Cart,
@@ -89,6 +91,11 @@ export type ProductsFromRedeemables = {
   product: string;
 };
 
+export type ProductPriceAndSourceId = {
+  price: number | undefined;
+  id: string;
+};
+
 export type GetProductsToAddListener = (
   discountTypeUnit: StackableRedeemableResponse[],
 ) => Promise<ProductToAdd[]>;
@@ -111,8 +118,8 @@ export interface CartUpdateActionsInterface {
   getPricesOfProductsFromCommercetools: (
     freeUnits: StackableRedeemableResultDiscountUnit[],
   ) => Promise<{
-    found: { price: number; id: string }[];
-    notFound: { price: undefined; id: string }[];
+    found: ProductPriceAndSourceId[];
+    notFound: string[];
   }>; //function to get price/SKU/ids of products from unit type coupons
 }
 

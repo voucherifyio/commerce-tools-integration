@@ -17,6 +17,7 @@ import {
   Order,
   CartUpdateActionsInterface,
   OrderPaidActionsInterface,
+  ProductPriceAndSourceId,
 } from './types';
 import { mapItemsToVoucherifyOrdersItems } from './utils/mappers/product';
 import { ConfigService } from '@nestjs/config';
@@ -28,7 +29,9 @@ import {
   codesFromRedeemables,
   filterOutRedeemablesIfCodeIn,
   getRedeemablesByStatus,
+  getUnitStackableRedeemablesResultDiscountUnitFromStackableRedeemablesResponse,
   getUnitTypeRedeemablesFromStackableResponse,
+  unitTypeRedeemablesToOrderItems,
 } from './utils/redeemableOperationFunctions';
 import { buildValidationsValidateStackableParamsForVoucherify } from './utils/mappers/buildValidationsValidateStackableParamsForVoucherify';
 import { buildRedeemStackableRequestForVoucherify } from './utils/mappers/buildRedeemStackableRequestForVoucherify';
@@ -45,6 +48,7 @@ import {
   uniqueCouponsByCodes,
   filterOutCouponsIfCodeIn,
 } from './utils/couponsOperationFunctions';
+import { getIncorrectPrices } from './utils/getIncorrectPrices';
 
 @Injectable()
 export class IntegrationService {
@@ -162,39 +166,30 @@ export class IntegrationService {
         );
     }
 
-    const productsToAdd = [];
+    const productsToAdd = []; //todo to delete
+
     const unitTypeRedeemables =
       getUnitTypeRedeemablesFromStackableResponse(validatedCoupons);
-    const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
     if (
       typeof cartUpdateActions.getPricesOfProductsFromCommercetools ===
       'function'
     ) {
-      const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
-
-      const freeProductsToAdd = unitTypeRedeemables.flatMap(
-        async (unitTypeRedeemable) => {
-          const discount = unitTypeRedeemable.result?.discount;
-          if (!discount) {
-            return [];
-          }
-          const freeUnits = (
-            discount.units || [
-              { ...discount } as StackableRedeemableResultDiscountUnit,
-            ]
-          ).filter((unit) => APPLICABLE_PRODUCT_EFFECT.includes(unit.effect));
-          if (!freeUnits.length) {
-            return [];
-          }
-          const productsToAdd =
-            await cartUpdateActions.getPricesOfProductsFromCommercetools(
-              freeUnits,
-            );
-          console.log(productsToAdd);
-
-          return productsToAdd;
-        },
+      const {
+        found: currentPricesOfProducts,
+        notFound: notFoundProductSourceIds,
+      }: {
+        found: ProductPriceAndSourceId[];
+        notFound: string[];
+      } = await cartUpdateActions.getPricesOfProductsFromCommercetools(
+        getUnitStackableRedeemablesResultDiscountUnitFromStackableRedeemablesResponse(
+          [...unitTypeRedeemables, ...unitTypeRedeemables],
+        ),
       );
+      const pricesIncorrect = getIncorrectPrices(
+        currentPricesOfProducts,
+        unitTypeRedeemablesToOrderItems(unitTypeRedeemables),
+      );
+      console.log(pricesIncorrect);
     }
 
     const productsFromRedeemables =

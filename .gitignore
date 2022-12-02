@@ -40,3 +40,4 @@ json
 # configuration
 .env
 .env-local
+*.icloud

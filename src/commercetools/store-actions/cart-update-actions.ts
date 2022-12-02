@@ -84,7 +84,7 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
     freeUnits: StackableRedeemableResultDiscountUnit[],
   ): Promise<{
     found: { price: number; id: string }[];
-    notFound: { price: undefined; id: string }[];
+    notFound: string[];
   }> {
     const productSourceIds = freeUnits.map((unit) => {
       return unit.product.source_id;
@@ -113,16 +113,12 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
         };
       })
       .filter((e) => !!e);
-    const productsNotFoundInCommercetools = productSourceIds
-      .filter(
-        (sourceId) =>
-          !productsFoundInCommercetools
-            .map((product) => product.id)
-            .includes(sourceId),
-      )
-      .map((sourceId) => {
-        return { id: sourceId, price: undefined };
-      });
+    const productsNotFoundInCommercetools = productSourceIds.filter(
+      (sourceId) =>
+        !productsFoundInCommercetools
+          .map((product) => product.id)
+          .includes(sourceId),
+    );
 
     return {
       found: productsFoundInCommercetools,
