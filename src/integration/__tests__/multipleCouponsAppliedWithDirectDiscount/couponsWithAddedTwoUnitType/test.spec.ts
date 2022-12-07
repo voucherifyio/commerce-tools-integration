@@ -88,7 +88,7 @@ describe('when applying discount code which adds free product to the cart', () =
       {
         action: 'changeLineItemQuantity',
         lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
-        quantity: 1,
+        quantity: 3,
       },
       {
         action: 'changeLineItemQuantity',

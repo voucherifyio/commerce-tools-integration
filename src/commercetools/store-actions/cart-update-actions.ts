@@ -80,63 +80,12 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
       .filter((e) => e);
   }
 
-  public async getProductsToAdd(
-    discountTypeUnit: StackableRedeemableResponse[],
-  ): Promise<ProductToAdd[]> {
-    const APPLICABLE_PRODUCT_EFFECT = ['ADD_MISSING_ITEMS', 'ADD_NEW_ITEMS'];
-
-    const freeProductsToAdd = discountTypeUnit.flatMap(
-      async (unitTypeRedeemable) => {
-        const discount = unitTypeRedeemable.result?.discount;
-        if (!discount) {
-          return [];
-        }
-        const freeUnits = (
-          discount.units || [
-            { ...discount } as StackableRedeemableResultDiscountUnit,
-          ]
-        ).filter((unit) => APPLICABLE_PRODUCT_EFFECT.includes(unit.effect));
-        if (!freeUnits.length) {
-          return [];
-        }
-        const productsToAdd = (
-          await this.getCtProductsWithCurrentPriceAmount(
-            freeUnits,
-            unitTypeRedeemable.order.items,
-          )
-        ).map((productToAdd) => {
-          return {
-            code: unitTypeRedeemable.id,
-            effect: productToAdd.unit.effect,
-            quantity: productToAdd.unit.unit_off,
-            product: productToAdd.unit.sku.source_id,
-            initial_quantity: productToAdd.item.initial_quantity,
-            discount_quantity: productToAdd.item.discount_quantity,
-            discount_difference:
-              productToAdd.item?.applied_discount_amount -
-                productToAdd.currentPriceAmount *
-                  productToAdd.item?.discount_quantity !==
-              0,
-            applied_discount_amount: productToAdd.currentPriceAmount,
-            distributionChannel: this.priceSelector?.distributionChannels[0],
-          } as ProductToAdd;
-        });
-
-        return Promise.all(productsToAdd);
-      },
-    );
-
-    return Promise.all(freeProductsToAdd).then((response) => {
-      return response.flatMap((element) => {
-        return element;
-      });
-    });
-  }
-
-  private async getCtProductsWithCurrentPriceAmount(
+  public async getPricesOfProductsFromCommercetools(
     freeUnits: StackableRedeemableResultDiscountUnit[],
-    orderItems: OrdersItem[],
-  ): Promise<ProductWithCurrentPriceAmountInterface[]> {
+  ): Promise<{
+    found: { price: number; id: string }[];
+    notFound: string[];
+  }> {
     const productSourceIds = freeUnits.map((unit) => {
       return unit.product.source_id;
     });
@@ -145,7 +94,7 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
       productSourceIds,
     );
 
-    return ctProducts
+    const productsFoundInCommercetools = ctProducts
       .map((ctProduct) => {
         const unit = freeUnits.find(
           (unit) => unit.product.source_id === ctProduct.id,
@@ -153,17 +102,28 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
         if (!unit) {
           return undefined;
         }
-        const currentPriceAmount = getCommercetoolstCurrentPriceAmount(
+        const price = getCommercetoolstCurrentPriceAmount(
           ctProduct,
           unit.sku.source_id,
           this.priceSelector,
         );
-        const item = orderItems?.find(
-          (item) => item?.sku?.source_id === unit.sku.source_id,
-        ) as OrdersItem;
-        return { ...ctProduct, currentPriceAmount, unit, item };
+        return {
+          id: ctProduct.id,
+          price,
+        };
       })
       .filter((e) => !!e);
+    const productsNotFoundInCommercetools = productSourceIds.filter(
+      (sourceId) =>
+        !productsFoundInCommercetools
+          .map((product) => product.id)
+          .includes(sourceId),
+    );
+
+    return {
+      found: productsFoundInCommercetools,
+      notFound: productsNotFoundInCommercetools,
+    };
   }
 
   private async getCtProducts(

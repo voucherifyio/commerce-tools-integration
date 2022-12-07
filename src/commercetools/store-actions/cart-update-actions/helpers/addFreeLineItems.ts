@@ -62,7 +62,7 @@ function addLineItem(
     action: 'addLineItem',
     sku: product.product,
     quantity,
-    distributionChannel: product.distributionChannel,
+    distributionChannel: undefined, //product.distributionChannel, //todo add this from price selector
     custom: {
       typeKey: 'lineItemCodesType',
       fields: {

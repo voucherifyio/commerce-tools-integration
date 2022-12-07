@@ -17,10 +17,6 @@ export function filterOutCouponsTypePromotionTier(coupons: Coupon[]) {
   return coupons.filter((coupon) => coupon.type !== 'promotion_tier');
 }
 
-export function filterOutCouponsStatusNotApplied(coupons: Coupon[]) {
-  return coupons.filter((coupon) => coupon.status !== 'NOT_APPLIED');
-}
-
 export function uniqueCouponsByCodes(coupons: Coupon[]) {
   return uniqBy(coupons, 'code');
 }
