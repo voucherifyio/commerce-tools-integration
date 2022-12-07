@@ -6,8 +6,6 @@ import {
 } from '@voucherify/sdk';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { CustomerRequest } from '@voucherify/sdk/dist/types/Customers';
-import { string } from 'joi';
-import { number } from 'joi';
 
 export type CartUpdateHandler = (
   cart: Cart,

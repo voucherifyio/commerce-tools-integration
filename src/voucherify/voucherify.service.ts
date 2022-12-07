@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { VoucherifyConnectorService } from './voucherify-connector.service';
 import { ConfigService } from '@nestjs/config';
-import { ValidationValidateStackableResponse } from '@voucherify/sdk';
 import { Coupon } from '../integration/types';
 import { StackableRedeemableResponse } from '@voucherify/sdk/dist/types/Stackable';
 

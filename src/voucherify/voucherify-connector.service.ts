@@ -15,7 +15,6 @@ import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { mapItemsToVoucherifyOrdersItems } from '../integration/utils/mappers/product';
 import { Order } from '../integration/types';
 import { elapsedTime } from '../misc/elapsedTime';
-import { string } from 'joi';
 
 @Injectable()
 export class VoucherifyConnectorService {

@@ -1,5 +1,5 @@
 import { OrdersItem } from '@voucherify/sdk';
-import { ProductPriceAndSourceId, ProductToAdd } from '../types';
+import { ProductPriceAndSourceId } from '../types';
 import { FREE_SHIPPING_UNIT_TYPE } from '../../consts/voucherify';
 
 export function getItemsWithCorrectedPrices(

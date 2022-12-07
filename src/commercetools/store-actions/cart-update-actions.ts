@@ -5,7 +5,6 @@ import {
   ProductToAdd,
 } from '../../integration/types';
 import {
-  OrdersItem,
   StackableRedeemableResponse,
   StackableRedeemableResultDiscountUnit,
 } from '@voucherify/sdk';
@@ -13,11 +12,7 @@ import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/decl
 import getCartActionBuilders from './cart-update-actions/getCartActionBuilders';
 import { checkIfAllInapplicableCouponsArePromotionTier } from '../../integration/utils/helperFunctions';
 import { DataToRunCartActionsBuilder } from './cart-update-actions/CartAction';
-import {
-  CartDiscountApplyMode,
-  PriceSelector,
-  ProductWithCurrentPriceAmountInterface,
-} from '../types';
+import { CartDiscountApplyMode, PriceSelector } from '../types';
 import { getCommercetoolstCurrentPriceAmount } from '../utils/getCommercetoolstCurrentPriceAmount';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 import { validate as uuidValidate } from 'uuid';
