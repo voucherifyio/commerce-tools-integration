@@ -69,7 +69,7 @@ type Product = {
 export const getCommerceToolsConnectorServiceMockWithProductResponse = (
   product: Product,
 ) => {
-  const commerceToolsConnectoService = jest.createMockFromModule(
+  const commerceToolsConnectorService = jest.createMockFromModule(
     '../commercetools-connector.service',
   ) as CommercetoolsConnectorService;
 
@@ -100,9 +100,7 @@ export const getCommerceToolsConnectorServiceMockWithProductResponse = (
     },
   };
 
-  commerceToolsConnectoService.getClient = jest.fn().mockReturnValue(null);
-
-  commerceToolsConnectoService.getClient = jest.fn().mockReturnValue({
+  commerceToolsConnectorService.getClient = jest.fn().mockReturnValue({
     products: jest.fn().mockReturnValue({
       get: jest.fn().mockReturnValue({
         execute: jest.fn().mockReturnValue(products),
@@ -110,5 +108,13 @@ export const getCommerceToolsConnectorServiceMockWithProductResponse = (
     }),
   });
 
-  return commerceToolsConnectoService;
+  commerceToolsConnectorService.getClient = jest.fn().mockReturnValue({
+    products: jest.fn().mockReturnValue({
+      get: jest.fn().mockReturnValue({
+        execute: jest.fn().mockReturnValue(products),
+      }),
+    }),
+  });
+
+  return commerceToolsConnectorService;
 };

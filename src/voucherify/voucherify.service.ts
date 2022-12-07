@@ -3,6 +3,7 @@ import { VoucherifyConnectorService } from './voucherify-connector.service';
 import { ConfigService } from '@nestjs/config';
 import { ValidationValidateStackableResponse } from '@voucherify/sdk';
 import { Coupon } from '../integration/types';
+import { StackableRedeemableResponse } from '@voucherify/sdk/dist/types/Stackable';
 
 @Injectable()
 export class VoucherifyService {
@@ -17,7 +18,8 @@ export class VoucherifyService {
     }
 
     const promotions =
-      await this.voucherifyConnectorService.getAvailablePromotions(cart);
+      (await this.voucherifyConnectorService.getAvailablePromotions(cart)) ??
+      [];
 
     const availablePromotions = promotions
       .filter((promo) => {
@@ -44,10 +46,10 @@ export class VoucherifyService {
   }
 
   public setBannerOnValidatedPromotions(
-    validatedCoupons: ValidationValidateStackableResponse,
-    promotions,
+    redeemables: StackableRedeemableResponse[],
+    promotions = [],
   ) {
-    const promotionTiersWithBanner = validatedCoupons.redeemables
+    const promotionTiersWithBanner = redeemables
       .filter((redeemable) => redeemable.object === 'promotion_tier')
       .map((redeemable) => {
         const appliedPromotion = promotions.find(
@@ -60,10 +62,8 @@ export class VoucherifyService {
         return redeemable;
       });
 
-    return (validatedCoupons.redeemables = [
-      ...validatedCoupons.redeemables.filter(
-        (element) => element.object !== 'promotion_tier',
-      ),
+    return (redeemables = [
+      ...redeemables.filter((element) => element.object !== 'promotion_tier'),
       ...promotionTiersWithBanner,
     ]);
   }

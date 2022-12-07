@@ -15,6 +15,7 @@ import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { mapItemsToVoucherifyOrdersItems } from '../integration/utils/mappers/product';
 import { Order } from '../integration/types';
 import { elapsedTime } from '../misc/elapsedTime';
+import { string } from 'joi';
 
 @Injectable()
 export class VoucherifyConnectorService {
@@ -102,8 +103,13 @@ export class VoucherifyConnectorService {
     return response;
   }
 
-  async releaseValidationSession(code: string, sessionKey: string) {
-    await this.getClient().vouchers.releaseValidationSession(code, sessionKey);
+  async releaseValidationSession(codes: string[], sessionKey: string) {
+    for await (const code of codes) {
+      await this.getClient().vouchers.releaseValidationSession(
+        code,
+        sessionKey,
+      );
+    }
   }
 
   async getMetadataSchemaProperties(resourceName: string): Promise<string[]> {

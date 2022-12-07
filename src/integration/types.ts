@@ -2,9 +2,12 @@ import {
   DiscountVouchersEffectTypes,
   RedemptionsRedeemStackableResponse,
   StackableRedeemableResponse,
+  StackableRedeemableResultDiscountUnit,
 } from '@voucherify/sdk';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { CustomerRequest } from '@voucherify/sdk/dist/types/Customers';
+import { string } from 'joi';
+import { number } from 'joi';
 
 export type CartUpdateHandler = (
   cart: Cart,
@@ -26,10 +29,8 @@ export type ProductToAdd = {
   quantity?: number;
   discount_quantity?: number;
   initial_quantity: number;
-  discount_difference: boolean;
   applied_discount_amount?: number;
   product: string; // sku source_id
-  distributionChannel: any;
 };
 
 export type availablePromotion = {
@@ -82,12 +83,33 @@ export type Order = {
   rawOrder?: any;
 };
 
+export type ProductsFromRedeemables = {
+  code: string;
+  quantity: number;
+  product: string;
+};
+
+export type ProductPriceAndSourceId = {
+  price: number | undefined;
+  id: string;
+};
+
+export type GetProductsToAddListener = (
+  discountTypeUnit: StackableRedeemableResponse[],
+) => Promise<ProductToAdd[]>;
+
 export type CouponStatus = 'NEW' | 'APPLIED' | 'NOT_APPLIED' | 'DELETED';
 export type CouponType = 'promotion_tier' | 'voucher';
 
 export interface StoreInterface {
   setCartUpdateListener: (handler: CartUpdateHandler) => void;
   setOrderPaidListener: (handler: OrderRedeemHandler) => void;
+}
+
+export interface StackableRedeemableResultDiscountUnitWithCodeAndPrice
+  extends StackableRedeemableResultDiscountUnit {
+  code: string;
+  price: number | undefined;
 }
 
 export interface CartUpdateActionsInterface {
@@ -97,9 +119,12 @@ export interface CartUpdateActionsInterface {
   setApplicableCoupons(applicableCoupons: StackableRedeemableResponse[]); //starting value: []
   setInapplicableCoupons(inapplicableCoupons: StackableRedeemableResponse[]); //starting value: []
   setSessionKey(sessionKey: string); //starting value: undefined
-  getProductsToAdd: (
-    discountTypeUnit: StackableRedeemableResponse[],
-  ) => Promise<ProductToAdd[]>; //function to get price/SKU/ids of products from unit type coupons
+  getPricesOfProductsFromCommercetools: (
+    freeUnits: StackableRedeemableResultDiscountUnit[],
+  ) => Promise<{
+    found: ProductPriceAndSourceId[];
+    notFound: string[];
+  }>; //function to get price/SKU/ids of products from unit type coupons
 }
 
 export interface OrderPaidActionsInterface {

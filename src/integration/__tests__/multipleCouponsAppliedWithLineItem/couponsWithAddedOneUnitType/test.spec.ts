@@ -1,7 +1,4 @@
-import {
-  defaultGetCouponTaxCategoryResponse,
-  getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
-} from '../../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../../commerceTools/tax-categories/__mocks__/tax-categories.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../../../commerceTools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../../cart-service.factory';
@@ -14,7 +11,7 @@ describe('when adding new product to the cart with free product already applied 
   let commercetoolsService: CommercetoolsService;
   let voucherifyConnectorService: VoucherifyConnectorService;
   const SKU_ID = 'gift-sku-id';
-  const PRODUCT_ID = 'gift-product-id';
+  const PRODUCT_ID = '260d2585-daef-4c11-9adb-1b90099b7ae8';
   const PRODUCT_PRICE = 6500;
 
   beforeEach(async () => {
@@ -57,6 +54,19 @@ describe('when adding new product to the cart with free product already applied 
         },
         slug: 'Voucher, ',
         taxCategory: { id: '64a3b50d-245c-465a-bb5e-faf59d729031' },
+      },
+      {
+        action: 'addLineItem',
+        sku: 'M0E20000000DUJ6',
+        quantity: 1,
+        custom: {
+          typeKey: 'lineItemCodesType',
+          fields: {
+            applied_codes: [
+              '{"code":"UNIT_TYPE_OFF","type":"UNIT","effect":"ADD_MISSING_ITEMS","quantity":1,"totalDiscountQuantity":1}',
+            ],
+          },
+        },
       },
       {
         action: 'setLineItemCustomType',
