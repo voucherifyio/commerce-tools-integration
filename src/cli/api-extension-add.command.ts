@@ -1,10 +1,10 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { ConfigService } from '@nestjs/config';
-import { ApiExtensionService } from '../api-extension/api-extension.service';
+import { ApiExtensionService } from '../commercetools/api-extension.service';
 import loadingCli from 'loading-cli';
 
 @Command({
-  name: 'api-extension-add',
+  name: 'integration-add',
   description:
     'Add commercetools API Extension pointing to your server (server url is taken from APP_URL environment variable)',
 })

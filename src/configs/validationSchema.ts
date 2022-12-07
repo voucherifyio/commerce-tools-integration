@@ -16,4 +16,12 @@ export const ValidationSchema = Joi.object({
   COMMERCE_TOOLS_COUPON_NAMES: Joi.string()
     .optional()
     .default('{"en":"Coupon codes discount","de":"Gutscheincodes rabatt"}'),
+  MAX_CART_UPDATE_RESPONSE_TIME_WITHOUT_CHECKING_IF_API_EXTENSION_TIMED_OUT:
+    Joi.number().integer().min(0).max(1750).optional().default(1000),
+  COMMERCE_TOOLS_COUPONS_LIMIT: Joi.number()
+    .integer()
+    .min(1)
+    .max(5)
+    .optional()
+    .default(5),
 });

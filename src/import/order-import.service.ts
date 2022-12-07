@@ -1,9 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Order } from '@commercetools/platform-sdk';
-import { CommerceToolsConnectorService } from '../commerceTools/commerce-tools-connector.service';
+import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
-import { OrderMapper } from '../api-extension/mappers/order';
-import { OrderService } from '../api-extension/order.service';
+import { OrderMapper } from '../integration/utils/mappers/order';
+import { CommercetoolsService } from '../commercetools/commercetools.service';
+import { getSimpleMetadataForOrder } from '../commercetools/utils/mappers/getSimpleMetadataForOrder';
+import { OrderPaidActions } from '../commercetools/store-actions/order-paid-actions';
+import { mergeTwoObjectsIntoOne } from '../integration/utils/mergeTwoObjectsIntoOne';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -13,11 +16,11 @@ const sleep = (time: number) => {
 @Injectable()
 export class OrderImportService {
   constructor(
-    private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
+    private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly logger: Logger,
     private readonly voucherifyClient: VoucherifyConnectorService,
     private readonly orderMapper: OrderMapper,
-    private readonly orderService: OrderService,
+    private readonly commercetoolsService: CommercetoolsService,
   ) {}
 
   public async *getAllOrders(minDateTime?: string): AsyncGenerator<Order[]> {
@@ -54,8 +57,11 @@ export class OrderImportService {
 
   public async migrateOrders(period?: string) {
     const orders = [];
-    const metadataSchemaProperties =
+    const orderMetadataSchemaProperties =
       await this.voucherifyClient.getMetadataSchemaProperties('order');
+
+    const orderActions = new OrderPaidActions();
+    orderActions.setCtClient(this.commerceToolsConnectorService.getClient());
 
     for await (const ordersBatch of this.getAllOrders(period)) {
       for (const order of ordersBatch) {
@@ -63,10 +69,16 @@ export class OrderImportService {
           continue;
         }
 
-        const metadata = await this.orderService.getMetadataForOrder(
-          order,
-          metadataSchemaProperties,
+        const metadata = mergeTwoObjectsIntoOne(
+          typeof orderActions?.getCustomMetadataForOrder === 'function'
+            ? await orderActions.getCustomMetadataForOrder(
+                order,
+                orderMetadataSchemaProperties,
+              )
+            : {},
+          getSimpleMetadataForOrder(order, orderMetadataSchemaProperties),
         );
+
         const orderObj = this.orderMapper.getOrderObject(order);
 
         orders.push(

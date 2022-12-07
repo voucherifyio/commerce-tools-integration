@@ -135,6 +135,58 @@ Please note that by putting information about applied discount codes in the cart
 - Voucherify [account](http://app.voucherify.io/#/signup) and [API keys](https://docs.voucherify.io/docs/authentication)
 - commercetools [account](https://commercetools.com/free-trial) with API Client and API keys
 
+## Infrastructure
+
+Handling cart updates (validating coupons, getting promotions, releasing sessions):
+``` mermaid
+graph LR;
+    I((integration service))
+    CT(commercetools service)
+    CustomTypes(custom-types service)
+    TaxCategories(tax-categories service)
+    V(voucherify service)
+    VC(voucherify-connector service)
+    SA(store data/actions)
+    APIE(api extension)
+
+    APIE--commercetools cart-->CT
+    CT--actions-->APIE
+    CT--create class-->SA
+    CT--integration cart, store data/actions, ?helper to get products-->I
+    I--validationg coupons and promotions, releasing sessions-->V
+    V-->VC
+    I--geting ids/SKU/prices of products to add for unit type coupons-->CT
+    CT--getting custom type schema for coupons-->CustomTypes
+    CT--getting coupons taxcattegory if application applies a cart discounts by adding a custom line items-->TaxCategories
+```
+Please note that we are getting cart through API Extension, so we have max ~2000ms to send response, otherwise any cart change will be cancelled.
+That is why we need to be able to handle such events by asking commercetools if cart was successfully updated (see 
+`MAX_CART_UPDATE_RESPONSE_TIME_WITHOUT_CHECKING_IF_API_EXTENSION_TIMED_OUT` for more information).
+
+This app is created this way to give us option to swap in the future commercetools service (commercetools store) with any other store service if needed.
+Integration service in order to return data to commercetools service while handling cart updates requires 2 variables
+(cart (integration type) and storeData class)). Integration will set available promotions, applicable coupons,inapplicable coupons and more in StoreData class.
+When finished StoreData class should have all data needed to create response.
+
+Handling order updates (redeeming order if order status is **Paid**):
+``` mermaid
+graph LR;
+    I((integration service))
+    CT(commercetools service)
+    V(voucherify service)
+    VC(voucherify-connector service)
+    APIE(api extension)
+
+    APIE--commercetools order-->CT
+    CT--integration order-->I
+    I--redeeming order-->V
+    V-->VC
+```
+
+Please note that we are using api extension, but we are not returning any actions to modify order.
+
+Integration service just need to get order (integration type) and redeeming should happen.
+
 ## Installation and configuration guide
 
 ### Dependencies
@@ -169,6 +221,9 @@ Set environment variables with credentials to Voucherify and commercetools APIs.
     - (optional) `COMMERCE_TOOLS_COUPONS_LIMIT` - maximum number of coupons that could be applied to cart. Default and maximum value is 5 related to [Voucherify Api](https://docs.voucherify.io/reference/redeem-stacked-discounts)
     - (optional) `DISABLE_CART_PROMOTION` - allow to disable [cart level promotion](https://support.voucherify.io/article/519-create-cart-level-promotions) functionality. It will reduce number of api calls because it's remove usage of [promotion validation request](https://docs.voucherify.io/reference/validate-promotions-1) from all cart related operation.
     - (optional) `APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT` - by default, the application applies a cart discount by adding a custom line item. Set this option value as `true` to enforces the application to use the commercetools beta feature called [direct discounts](https://docs.commercetools.com/api/projects/carts#set-directdiscounts) to apply discounts on the cart.
+    - (optional) `MAX_CART_UPDATE_RESPONSE_TIME_WITHOUT_CHECKING_IF_API_EXTENSION_TIMED_OUT` - default `1000`[ms]. Accepts range of numbers `0` - `1750`. If set to `0` we will always be checking if application responded to
+  API Extension within acceptable time window. If set higher, for example `1000`(default) that means that we will be checking if we responded to API Extension only if building actions (validating coupons) took more than **1000ms**.
+  NOTE: This checking only happens when cart has at least 1 coupon active(added to cart).
 
 ### Installation
 
@@ -202,7 +257,7 @@ npm run register
 
 `npm run test`
 
-We have created integration tests to cover the most important scenarios connected with handling validation process and operations on cart. We mocked requests from commercetools and Voucherify to check behaviour of our application. You can examine tests [here](src/api-extension/__tests__) and mocks here: [1](src/commerceTools/__mocks__/commerce-tools-connector.service.ts), [2](src/commerceTools/tax-categories/__mocks__/tax-categories.service.ts), [3](src/commerceTools/types/__mocks__/types.service.ts), [4](src/voucherify/__mocks__/voucherify-connector.service.ts). Currently, we cover the following scenarios:
+We have created integration tests to cover the most important scenarios connected with handling validation process and operations on cart. We mocked requests from commercetools and Voucherify to check behaviour of our application. You can examine tests [here](src/integration/__tests__) and mocks here: [1](src/commercetools/__mocks__/commerce-tools-connector.service.ts), [2](src/commercetools/tax-categories/__mocks__/tax-categories.service.ts), [3](src/commercetools/custom-types/__mocks__/types.service.ts), [4](src/voucherify/__mocks__/voucherify-connector.service.ts). Currently, we cover the following scenarios:
 - creating a new cart (cart.version = 1)
 - running API extension without any applied coupons (testing integration between V% and CT)
 - running API extension when removing currently applied coupons
@@ -402,6 +457,10 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2022-12-07 `v5.2.0`
+  - domain refactoring/code quality
+  - optimization
+  - adding new config var: `MAX_CART_UPDATE_RESPONSE_TIME_WITHOUT_CHECKING_IF_API_EXTENSION_TIMED_OUT` (default value `1000`[ms]). For more info check configuration section.
 - 2022-10-26 `v5.1.2`
   - cashing coupons tax category
 - 2022-10-19 `v5.1.1`

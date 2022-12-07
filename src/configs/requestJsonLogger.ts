@@ -1,7 +1,7 @@
 import {
-  NoOpRequestJsonLogger,
+  NoOpRequestJsonLoggerInterface,
   REQUEST_JSON_LOGGER,
-} from '../misc/request-json-logger';
+} from '../misc/request-json-logger-interface';
 import path from 'path';
 import { RequestJsonFileLogger } from '../misc/request-json-file-logger';
 import mkdirp from 'mkdirp';
@@ -10,7 +10,7 @@ export const RequestJsonLogger = {
   provide: REQUEST_JSON_LOGGER,
   useFactory: async () => {
     if (process.env.DEBUG_STORE_REQUESTS_IN_JSON !== 'true') {
-      return new NoOpRequestJsonLogger();
+      return new NoOpRequestJsonLoggerInterface();
     }
 
     const requestsDir = process.env.DEBUG_STORE_REQUESTS_DIR;

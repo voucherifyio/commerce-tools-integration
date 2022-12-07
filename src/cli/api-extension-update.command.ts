@@ -1,10 +1,10 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { ConfigService } from '@nestjs/config';
-import { ApiExtensionService } from '../api-extension/api-extension.service';
+import { ApiExtensionService } from '../commercetools/api-extension.service';
 import loadingCli from 'loading-cli';
 
 @Command({
-  name: 'api-extension-update',
+  name: 'integration-update',
   description:
     'Remove old and add new API Extension pointing to your server. Url is taken from APP_URL environment variable. Old API Extension is recognized by API Extension "key" attribute configured by COMMERCE_TOOLS_API_EXTENSION_KEY environment variable',
 })

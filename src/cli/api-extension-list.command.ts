@@ -1,10 +1,10 @@
 import { Command, CommandRunner } from 'nest-commander';
-import { ApiExtensionService } from '../api-extension/api-extension.service';
+import { ApiExtensionService } from '../commercetools/api-extension.service';
 import loadingCli from 'loading-cli';
 import Table from 'cli-table';
 
 @Command({
-  name: 'api-extension-list',
+  name: 'integration-list',
   description: 'List registered commercetools API Extension',
 })
 export class ApiExtensionListCommand implements CommandRunner {

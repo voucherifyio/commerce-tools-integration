@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { RequestJsonLogger } from './request-json-logger';
+import { RequestJsonLoggerInterface } from './request-json-logger-interface';
 
-export class RequestJsonFileLogger implements RequestJsonLogger {
+export class RequestJsonFileLogger implements RequestJsonLoggerInterface {
   constructor(private readonly loggingDirectory: string) {}
 
   log(

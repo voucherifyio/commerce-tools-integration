@@ -3,13 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { createReadStream, unlink } from 'fs';
 import FormData from 'form-data';
 import fetch from 'node-fetch2';
-import { CommerceToolsConnectorService } from 'src/commerceTools/commerce-tools-connector.service';
+import { CommercetoolsConnectorService } from 'src/commercetools/commercetools-connector.service';
 import { Product } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
 
 import crypto = require('crypto');
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
-import { ProductMapper } from '../api-extension/mappers/product';
+import { getMetadata } from '../integration/utils/mappers/product';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -21,11 +21,10 @@ const sleep = (time: number) => {
 @Injectable()
 export class ProductImportService {
   constructor(
-    private readonly commerceToolsConnectorService: CommerceToolsConnectorService,
+    private readonly commerceToolsConnectorService: CommercetoolsConnectorService,
     private readonly logger: Logger,
     private readonly configService: ConfigService,
     private readonly voucherifyClient: VoucherifyConnectorService,
-    private readonly productMapper: ProductMapper,
   ) {}
 
   private async *getAllProducts(
@@ -86,7 +85,7 @@ export class ProductImportService {
         products.push({
           name: product.masterData.current.name.en,
           source_id: product.id,
-          ...this.productMapper.getMetadata(
+          ...getMetadata(
             product.masterData.current.masterVariant.attributes,
             metadataSchemaProperties,
           ),

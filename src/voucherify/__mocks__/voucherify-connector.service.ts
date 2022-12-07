@@ -7,11 +7,15 @@ export const getVoucherifyConnectorServiceMockWithDefinedResponse = (
     '../voucherify-connector.service',
   ) as VoucherifyConnectorService;
 
+  voucherifyConnectorService.releaseValidationSession = jest
+    .fn()
+    .mockResolvedValue([]);
+
   voucherifyConnectorService.getAvailablePromotions = jest
     .fn()
     .mockResolvedValue([]);
 
-  voucherifyConnectorService.validateStackableVouchersWithCTCart = jest
+  voucherifyConnectorService.validateStackableVouchers = jest
     .fn()
     .mockResolvedValue(response);
 

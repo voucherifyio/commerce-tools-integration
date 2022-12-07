@@ -1,7 +1,7 @@
 import { Command, CommandRunner } from 'nest-commander';
 import loadingCli from 'loading-cli';
-import { TaxCategoriesService } from '../commerceTools/tax-categories/tax-categories.service';
-import { TypesService } from '../commerceTools/types/types.service';
+import { TaxCategoriesService } from '../commercetools/tax-categories/tax-categories.service';
+import { CustomTypesService } from '../commercetools/custom-types/custom-types.service';
 
 @Command({
   name: 'config',
@@ -12,7 +12,7 @@ import { TypesService } from '../commerceTools/types/types.service';
 })
 export class ConfigCommand implements CommandRunner {
   constructor(
-    private readonly typesService: TypesService,
+    private readonly typesService: CustomTypesService,
     private readonly taxCategoriesService: TaxCategoriesService,
   ) {}
   async run(): Promise<void> {
@@ -23,7 +23,7 @@ export class ConfigCommand implements CommandRunner {
     const { success: couponTypesCreated } =
       await this.typesService.configureCouponTypes();
     if (couponTypesCreated) {
-      spinnerCouponsTypes.succeed('[1/2] Coupon types configured');
+      spinnerCouponsTypes.succeed('[1/2] Coupon custom-types configured');
     } else {
       spinnerCouponsTypes.fail('[1/2] Could not configure coupon codes');
     }
@@ -32,14 +32,8 @@ export class ConfigCommand implements CommandRunner {
       '[2/2] Attempt to configure coupon tax categories in Commercetools',
     ).start();
 
-    const { success: couponTaxCategoriesCreated } =
-      await this.taxCategoriesService.configureCouponTaxCategory({
-        onProgress: (progress) => {
-          spinnerTaxCategories.text = `[2/2] Configure coupon tax categories in Commercetools, scanning products ${Math.round(
-            progress * 100,
-          )}%`;
-        },
-      });
+    const couponTaxCategoriesCreated =
+      await this.taxCategoriesService.configureCouponTaxCategory();
     if (couponTaxCategoriesCreated) {
       spinnerTaxCategories.succeed('[2/2] Coupon tax categories configured');
     } else {

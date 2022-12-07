@@ -1,5 +1,5 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { ApiExtensionService } from '../api-extension/api-extension.service';
+import { ApiExtensionService } from '../commercetools/api-extension.service';
 import loadingCli from 'loading-cli';
 import { ConfigService } from '@nestjs/config';
 import { Extension } from '@commercetools/platform-sdk';
@@ -9,7 +9,7 @@ type ApiExtensionDeleteCommandOptions = {
 };
 
 @Command({
-  name: 'api-extension-delete',
+  name: 'integration-delete',
   description:
     'Delete commercetools API Extension by "Key" value configured in COMMERCE_TOOLS_API_EXTENSION_KEY environment variable',
 })
