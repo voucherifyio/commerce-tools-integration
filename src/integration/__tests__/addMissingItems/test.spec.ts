@@ -44,7 +44,7 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
-    ).toBeCalledTimes(1);
+    ).toBeCalledTimes(2);
     expect(voucherifyConnectorService.validateStackableVouchers).toBeCalledWith(
       {
         customer: { source_id: undefined },

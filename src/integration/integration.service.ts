@@ -185,11 +185,6 @@ export class IntegrationService {
           )
         : { found: [], notFound: [] };
 
-    const productsToAdd: ProductToAdd[] = getProductsToAdd(
-      validatedCoupons,
-      currentPricesOfProducts,
-    );
-
     const codesWithMissingProductsToAdd = getCodesIfProductNotFoundIn(
       stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
       notFoundProductSourceIds,
@@ -215,8 +210,10 @@ export class IntegrationService {
     ) {
       const itemsWithPricesCorrected = getItemsWithCorrectedPrices(
         validatedCoupons.order.items,
+        items,
         pricesIncorrect,
       );
+
       validatedCoupons =
         await this.voucherifyConnectorService.validateStackableVouchers(
           buildValidationsValidateStackableParamsForVoucherify(
@@ -229,6 +226,11 @@ export class IntegrationService {
           ),
         );
     }
+
+    const productsToAdd: ProductToAdd[] = getProductsToAdd(
+      validatedCoupons,
+      currentPricesOfProducts,
+    );
 
     this.logger.debug({
       msg: 'Validated coupons',
