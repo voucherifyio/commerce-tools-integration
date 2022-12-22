@@ -179,10 +179,10 @@ export class IntegrationService {
       notFound: string[];
     } =
       typeof cartUpdateActions.getPricesOfProductsFromCommercetools ===
-      'function'
+        'function'
         ? await cartUpdateActions.getPricesOfProductsFromCommercetools(
-            stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
-          )
+          stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
+        )
         : { found: [], notFound: [] };
 
     const codesWithMissingProductsToAdd = getCodesIfProductNotFoundIn(
@@ -240,13 +240,16 @@ export class IntegrationService {
     });
 
     if (
-      typeof cartUpdateActions.setSessionKey === 'function' &&
-      typeof cartUpdateActions.setTotalDiscountAmount === 'function' &&
-      typeof cartUpdateActions.setApplicableCoupons === 'function' &&
-      typeof cartUpdateActions.setInapplicableCoupons === 'function' &&
-      typeof cartUpdateActions.setProductsToAdd === 'function'
+      typeof cartUpdateActions.setSessionKey !== 'function' ||
+      typeof cartUpdateActions.setTotalDiscountAmount !== 'function' ||
+      typeof cartUpdateActions.setApplicableCoupons !== 'function' ||
+      typeof cartUpdateActions.setInapplicableCoupons !== 'function' ||
+      typeof cartUpdateActions.setProductsToAdd !== 'function'
     ) {
-      cartUpdateActions.setSessionKey(validatedCoupons?.session?.key);
+      return;
+    }
+    
+    cartUpdateActions.setSessionKey(validatedCoupons?.session?.key);
       cartUpdateActions.setTotalDiscountAmount(
         calculateTotalDiscountAmount(validatedCoupons),
       );
@@ -264,8 +267,6 @@ export class IntegrationService {
         ...replaceCodesWithInapplicableCoupons(codesWithMissingProductsToAdd),
       ]);
       cartUpdateActions.setProductsToAdd(productsToAdd);
-    }
-    return;
   }
 
   public async redeemVoucherifyCoupons(
@@ -291,32 +292,7 @@ export class IntegrationService {
         'order',
       );
 
-    let orderMetadata = {};
-
-    if (
-      typeof order?.rawOrder === 'object' &&
-      order?.rawOrder !== undefined &&
-      orderMetadataSchemaProperties.length > 0
-    ) {
-      const simpleMetadata = getSimpleMetadataForOrder(
-        order.rawOrder,
-        orderMetadataSchemaProperties,
-      );
-      if (typeof orderPaidActions?.getCustomMetadataForOrder !== 'function') {
-        orderMetadata = simpleMetadata;
-      } else {
-        const customMetadata = await orderPaidActions.getCustomMetadataForOrder(
-          order.rawOrder,
-          orderMetadataSchemaProperties,
-        );
-        if (Object.keys(customMetadata).length > 0) {
-          orderMetadata = mergeTwoObjectsIntoOne(
-            customMetadata,
-            simpleMetadata,
-          );
-        }
-      }
-    }
+    const orderMetadata = await this.calculateOrederMetadata(order, orderMetadataSchemaProperties, orderPaidActions);
 
     const coupons: Coupon[] = (order.coupons ?? []).filter(
       (coupon) =>
@@ -345,45 +321,37 @@ export class IntegrationService {
       id,
       customerId,
     });
-    const sentCoupons: SentCoupons[] = [];
-    const usedCoupons: string[] = [];
-    const notUsedCoupons: string[] = [];
-    let response: RedemptionsRedeemStackableResponse;
+    
+    
+    let redemptionResponse: RedemptionsRedeemStackableResponse;
     try {
-      response = await this.voucherifyConnectorService.redeemStackableVouchers(
+      redemptionResponse = await this.voucherifyConnectorService.redeemStackableVouchers(
         buildRedeemStackableRequestForVoucherify(order, items, orderMetadata),
       );
     } catch (e) {
-      console.log(e); //can't use the logger because it cannot handle error objects
+      console.log(e); // Can't use the logger because it cannot handle error objects
       this.logger.debug({ msg: 'Redeem operation failed', error: e.details });
       return { status: true, actions: [] };
     }
-
-    sentCoupons.push(
-      ...response.redemptions.map((redeem) => {
-        return {
-          result: redeem.result,
-          coupon: redeem.voucher?.code
-            ? redeem.voucher.code
-            : redeem['promotion_tier']['id'],
-        };
-      }),
-    );
-
+    
     this.logger.debug({
       msg: 'Voucherify redeem response',
       id,
       customerId,
-      redemptions: response?.redemptions,
+      redemptions: redemptionResponse?.redemptions,
     });
 
-    sentCoupons.forEach((sendedCoupon) => {
-      if (sendedCoupon.result === 'SUCCESS') {
-        usedCoupons.push(sendedCoupon.coupon);
-      } else {
-        notUsedCoupons.push(sendedCoupon.coupon);
-      }
-    });
+    const sentCoupons: SentCoupons[] = redemptionResponse.redemptions.map((redeem) => {
+      return {
+        result: redeem.result,
+        coupon: redeem.voucher?.code
+          ? redeem.voucher.code
+          : redeem['promotion_tier']['id'],
+      };
+    })
+   
+    const usedCoupons: string[] = sentCoupons.filter(sendedCoupon => sendedCoupon.result === 'SUCCESS').map(sendedCoupon => sendedCoupon.coupon)
+    const notUsedCoupons: string[] = sentCoupons.filter(sendedCoupon => sendedCoupon.result !== 'SUCCESS').map(sendedCoupon => sendedCoupon.coupon)
 
     this.logger.debug({
       msg: 'Realized coupons',
@@ -392,6 +360,7 @@ export class IntegrationService {
       usedCoupons,
       notUsedCoupons,
     });
+
     const actions = [
       {
         action: 'setCustomField',
@@ -408,7 +377,38 @@ export class IntegrationService {
     return {
       status: true,
       actions: actions,
-      redemptionsRedeemStackableResponse: response,
+      redemptionsRedeemStackableResponse: redemptionResponse,
     };
+  }
+
+  private async calculateOrederMetadata(order: Order, orderMetadataSchemaProperties: string[], orderPaidActions: OrderPaidActionsInterface,) {
+
+    const isOrderMetadataExisists = typeof order?.rawOrder === 'object' && order?.rawOrder !== undefined && orderMetadataSchemaProperties.length > 0;
+    if (!isOrderMetadataExisists) {
+      return {}
+    }
+
+    const simpleMetadata = getSimpleMetadataForOrder(
+      order.rawOrder,
+      orderMetadataSchemaProperties
+    );
+
+    if (typeof orderPaidActions?.getCustomMetadataForOrder !== 'function') {
+      return simpleMetadata;
+    }
+
+    const customMetadata = await orderPaidActions.getCustomMetadataForOrder(
+      order.rawOrder,
+      orderMetadataSchemaProperties
+    );
+
+    if (!Object.keys(customMetadata).length ) {
+      return {}
+    }
+    
+    return mergeTwoObjectsIntoOne(
+      customMetadata,
+      simpleMetadata
+    );
   }
 }

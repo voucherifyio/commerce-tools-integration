@@ -1,7 +1,6 @@
 import { Module, Logger } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
-import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { VoucherifyConnectorService } from './voucherify/voucherify-connector.service';
 import { CommercetoolsConnectorService } from './commercetools/commercetools-connector.service';
@@ -33,7 +32,7 @@ import { VoucherifyService } from './voucherify/voucherify.service';
       validationSchema: ValidationSchema,
     }),
   ],
-  controllers: [AppController, ApiExtensionController, ImportController],
+  controllers: [ApiExtensionController, ImportController],
   providers: [
     Logger,
     AppService,
