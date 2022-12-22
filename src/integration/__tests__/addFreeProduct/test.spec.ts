@@ -44,7 +44,7 @@ describe('when applying discount code which adds free product to the cart', () =
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
-    ).toBeCalledTimes(1);
+    ).toBeCalledTimes(2);
     expect(voucherifyConnectorService.validateStackableVouchers).toBeCalledWith(
       {
         customer: { source_id: undefined },

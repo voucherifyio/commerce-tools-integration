@@ -39,12 +39,12 @@ describe('when adding new product to the cart with free product already applied 
     }));
   });
 
-  it('should call voucherify once', async () => {
+  it('should call voucherify twice', async () => {
     await commercetoolsService.handleCartUpdate(cart);
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
-    ).toBeCalledTimes(1);
+    ).toBeCalledTimes(2);
     expect(voucherifyConnectorService.validateStackableVouchers).toBeCalledWith(
       {
         customer: { source_id: undefined },

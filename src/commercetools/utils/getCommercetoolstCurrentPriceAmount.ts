@@ -25,9 +25,6 @@ export function getCommercetoolstCurrentPriceAmount(
         })
         .filter((priceVariant) => {
           //country
-          if (!priceVariant?.country) {
-            return true;
-          }
           return priceVariant?.country === country;
         })
         .filter((priceVariant) => {
