@@ -4,7 +4,7 @@ import { createReadStream, unlink } from 'fs';
 import FormData from 'form-data';
 import fetch from 'node-fetch2';
 import { CommercetoolsConnectorService } from 'src/commercetools/commercetools-connector.service';
-import { Customer } from '@commercetools/platform-sdk';
+import { Customer, Order } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import crypto = require('crypto');
@@ -17,6 +17,54 @@ const sleep = (time: number) => {
     }, time);
   });
 };
+
+type VoucherifyCustomer = {
+  source_id: string;
+  name: string;
+  email: string;
+  address?: {
+      city: string;
+      line_1: string;
+      country: string;
+      postal_code: string;
+  };
+  phone?: string;
+  object: 'customer';
+}
+
+const ctCustomerToVocuherifyCustomer = (customer: Customer, metadataSchemaProperties):VoucherifyCustomer => ({
+  object: 'customer',
+  source_id: customer.id,
+  name: `${customer.firstName} ${customer.lastName}`,
+  email: customer.email,
+  address: customer.addresses.length ? {
+    city: customer.addresses[0].city,
+    country: customer.addresses[0].country,
+    postal_code: customer.addresses[0].postalCode,
+    line_1: customer.addresses[0].streetName,
+  }: undefined,
+  phone: customer.addresses.length ? customer.addresses[0].phone : undefined,
+  ...Object.fromEntries(
+    Object.keys(customer.custom?.fields ? customer.custom?.fields : {})
+      .filter((attr) => metadataSchemaProperties.includes(attr))
+      .map((attr) => [attr, customer.custom.fields[attr]]),
+  ),
+});
+
+const getVoucheerifyCustomerFromCtOrder = (order: Order):VoucherifyCustomer => ({
+  object: 'customer',
+  source_id: order.anonymousId,
+  name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
+  email: order.shippingAddress?.email,
+  address: {
+    city: order.shippingAddress?.city,
+    country: order.shippingAddress?.country,
+    postal_code: order.shippingAddress?.postalCode,
+    line_1: order.shippingAddress?.streetName,
+  },
+  phone: order.shippingAddress?.phone,
+})
+
 @Injectable()
 export class CustomerImportService {
   constructor(
@@ -59,28 +107,12 @@ export class CustomerImportService {
   private async customerImport(period?: string) {
     const metadataSchemaProperties =
       await this.voucherifyClient.getMetadataSchemaProperties('customer');
-    const customers = [];
+    
+    const customers: VoucherifyCustomer[] = [];
 
     for await (const customersBatch of this.getAllCustomers(period)) {
       customersBatch.forEach((customer) => {
-        customers.push({
-          object: 'customer',
-          source_id: customer.id,
-          name: `${customer.firstName} ${customer.lastName}`,
-          email: customer.email,
-          address: customer.addresses.length ?? {
-            city: customer.addresses[0].city,
-            country: customer.addresses[0].country,
-            postal_code: customer.addresses[0].postalCode,
-            line_1: customer.addresses[0].streetName,
-          },
-          phone: customer.addresses.length ?? customer.addresses[0].phone,
-          ...Object.fromEntries(
-            Object.keys(customer.custom?.fields ? customer.custom?.fields : {})
-              .filter((attr) => metadataSchemaProperties.includes(attr))
-              .map((attr) => [attr, customer.custom.fields[attr]]),
-          ),
-        });
+        customers.push(ctCustomerToVocuherifyCustomer(customer, metadataSchemaProperties));
       });
     }
 
@@ -91,29 +123,16 @@ export class CustomerImportService {
         if (order.paymentState !== 'Paid' || !order.anonymousId) {
           return;
         }
-
-        customers.push({
-          object: 'customer',
-          source_id: order.anonymousId,
-          name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
-          email: order.shippingAddress?.email,
-          address: {
-            city: order.shippingAddress?.city,
-            country: order.shippingAddress?.country,
-            postal_code: order.shippingAddress?.postalCode,
-            line_1: order.shippingAddress?.streetName,
-          },
-          phone: order.shippingAddress?.phone,
-        });
+        customers.push(getVoucheerifyCustomerFromCtOrder(order));
       });
     }
 
     return { customers };
   }
 
-  private async customerUpload(importedData) {
+  private async customerUpload(customerData: VoucherifyCustomer[]) {
     const randomFileName = `${crypto.randomBytes(20).toString('hex')}.csv`;
-    await new ObjectsToCsv(importedData).toDisk(randomFileName, {
+    await new ObjectsToCsv(customerData).toDisk(randomFileName, {
       allColumns: true,
     });
     const url = `${this.configService.get<string>(

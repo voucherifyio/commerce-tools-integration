@@ -35,20 +35,17 @@ export class OrderPaidActions implements OrderPaidActions {
         return (metadata[name] = variable);
       }
       if (Array.isArray(variable)) {
-        const newArray = [];
-        variable.forEach((element) => {
-          if (typeof variable !== 'object') {
-            newArray.push(element);
-          } else {
-            newArray.push(deleteObjectsFromObject(flatten(element)));
-          }
-        });
+        const newArray = variable.map(
+          (element) => typeof variable === 'object' ?
+            deleteObjectsFromObject(flatten(element)) : element
+        )
+
         return (metadata[name] = newArray);
       }
-      if (typeof variable === 'object') {
-        return (metadata[name] = deleteObjectsFromObject(flatten(variable)));
+      if (typeof variable !== 'object') {
+        return;
       }
-      return;
+      return (metadata[name] = deleteObjectsFromObject(flatten(variable)));
     };
 
     if (order?.custom?.fields && customMetaProperties.length) {

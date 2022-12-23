@@ -44,7 +44,7 @@ export class VoucherifyService {
     return { promotions, availablePromotions };
   }
 
-  public setBannerOnValidatedPromotions(
+  public extendRedeemablesBannerByPromotionsBanner(
     redeemables: StackableRedeemableResponse[],
     promotions = [],
   ) {
@@ -61,9 +61,9 @@ export class VoucherifyService {
         return redeemable;
       });
 
-    return (redeemables = [
+    return [
       ...redeemables.filter((element) => element.object !== 'promotion_tier'),
       ...promotionTiersWithBanner,
-    ]);
+    ];
   }
 }

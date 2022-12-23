@@ -179,10 +179,10 @@ export class IntegrationService {
       notFound: string[];
     } =
       typeof cartUpdateActions.getPricesOfProductsFromCommercetools ===
-        'function'
+      'function'
         ? await cartUpdateActions.getPricesOfProductsFromCommercetools(
-          stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
-        )
+            stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
+          )
         : { found: [], notFound: [] };
 
     const codesWithMissingProductsToAdd = getCodesIfProductNotFoundIn(
@@ -248,25 +248,25 @@ export class IntegrationService {
     ) {
       return;
     }
-    
+
     cartUpdateActions.setSessionKey(validatedCoupons?.session?.key);
-      cartUpdateActions.setTotalDiscountAmount(
-        calculateTotalDiscountAmount(validatedCoupons),
-      );
-      cartUpdateActions.setApplicableCoupons(
-        this.voucherifyService.setBannerOnValidatedPromotions(
-          filterOutRedeemablesIfCodeIn(
-            getRedeemablesByStatus(validatedCoupons.redeemables, 'APPLICABLE'),
-            codesWithMissingProductsToAdd,
-          ),
-          promotions,
+    cartUpdateActions.setTotalDiscountAmount(
+      calculateTotalDiscountAmount(validatedCoupons),
+    );
+    cartUpdateActions.setApplicableCoupons(
+      this.voucherifyService.extendRedeemablesBannerByPromotionsBanner(
+        filterOutRedeemablesIfCodeIn(
+          getRedeemablesByStatus(validatedCoupons.redeemables, 'APPLICABLE'),
+          codesWithMissingProductsToAdd,
         ),
-      );
-      cartUpdateActions.setInapplicableCoupons([
-        ...inapplicableRedeemables,
-        ...replaceCodesWithInapplicableCoupons(codesWithMissingProductsToAdd),
-      ]);
-      cartUpdateActions.setProductsToAdd(productsToAdd);
+        promotions,
+      ),
+    );
+    cartUpdateActions.setInapplicableCoupons([
+      ...inapplicableRedeemables,
+      ...replaceCodesWithInapplicableCoupons(codesWithMissingProductsToAdd),
+    ]);
+    cartUpdateActions.setProductsToAdd(productsToAdd);
   }
 
   public async redeemVoucherifyCoupons(
@@ -292,7 +292,11 @@ export class IntegrationService {
         'order',
       );
 
-    const orderMetadata = await this.calculateOrederMetadata(order, orderMetadataSchemaProperties, orderPaidActions);
+    const orderMetadata = await this.calculateOrederMetadata(
+      order,
+      orderMetadataSchemaProperties,
+      orderPaidActions,
+    );
 
     const coupons: Coupon[] = (order.coupons ?? []).filter(
       (coupon) =>
@@ -321,19 +325,19 @@ export class IntegrationService {
       id,
       customerId,
     });
-    
-    
+
     let redemptionResponse: RedemptionsRedeemStackableResponse;
     try {
-      redemptionResponse = await this.voucherifyConnectorService.redeemStackableVouchers(
-        buildRedeemStackableRequestForVoucherify(order, items, orderMetadata),
-      );
+      redemptionResponse =
+        await this.voucherifyConnectorService.redeemStackableVouchers(
+          buildRedeemStackableRequestForVoucherify(order, items, orderMetadata),
+        );
     } catch (e) {
       console.log(e); // Can't use the logger because it cannot handle error objects
       this.logger.debug({ msg: 'Redeem operation failed', error: e.details });
       return { status: true, actions: [] };
     }
-    
+
     this.logger.debug({
       msg: 'Voucherify redeem response',
       id,
@@ -341,17 +345,23 @@ export class IntegrationService {
       redemptions: redemptionResponse?.redemptions,
     });
 
-    const sentCoupons: SentCoupons[] = redemptionResponse.redemptions.map((redeem) => {
-      return {
-        result: redeem.result,
-        coupon: redeem.voucher?.code
-          ? redeem.voucher.code
-          : redeem['promotion_tier']['id'],
-      };
-    })
-   
-    const usedCoupons: string[] = sentCoupons.filter(sendedCoupon => sendedCoupon.result === 'SUCCESS').map(sendedCoupon => sendedCoupon.coupon)
-    const notUsedCoupons: string[] = sentCoupons.filter(sendedCoupon => sendedCoupon.result !== 'SUCCESS').map(sendedCoupon => sendedCoupon.coupon)
+    const sentCoupons: SentCoupons[] = redemptionResponse.redemptions.map(
+      (redeem) => {
+        return {
+          result: redeem.result,
+          coupon: redeem.voucher?.code
+            ? redeem.voucher.code
+            : redeem['promotion_tier']['id'],
+        };
+      },
+    );
+
+    const usedCoupons: string[] = sentCoupons
+      .filter((sendedCoupon) => sendedCoupon.result === 'SUCCESS')
+      .map((sendedCoupon) => sendedCoupon.coupon);
+    const notUsedCoupons: string[] = sentCoupons
+      .filter((sendedCoupon) => sendedCoupon.result !== 'SUCCESS')
+      .map((sendedCoupon) => sendedCoupon.coupon);
 
     this.logger.debug({
       msg: 'Realized coupons',
@@ -381,16 +391,22 @@ export class IntegrationService {
     };
   }
 
-  private async calculateOrederMetadata(order: Order, orderMetadataSchemaProperties: string[], orderPaidActions: OrderPaidActionsInterface,) {
-
-    const isOrderMetadataExisists = typeof order?.rawOrder === 'object' && order?.rawOrder !== undefined && orderMetadataSchemaProperties.length > 0;
+  private async calculateOrederMetadata(
+    order: Order,
+    orderMetadataSchemaProperties: string[],
+    orderPaidActions: OrderPaidActionsInterface,
+  ) {
+    const isOrderMetadataExisists =
+      typeof order?.rawOrder === 'object' &&
+      order?.rawOrder !== undefined &&
+      orderMetadataSchemaProperties.length > 0;
     if (!isOrderMetadataExisists) {
-      return {}
+      return {};
     }
 
     const simpleMetadata = getSimpleMetadataForOrder(
       order.rawOrder,
-      orderMetadataSchemaProperties
+      orderMetadataSchemaProperties,
     );
 
     if (typeof orderPaidActions?.getCustomMetadataForOrder !== 'function') {
@@ -399,16 +415,13 @@ export class IntegrationService {
 
     const customMetadata = await orderPaidActions.getCustomMetadataForOrder(
       order.rawOrder,
-      orderMetadataSchemaProperties
+      orderMetadataSchemaProperties,
     );
 
-    if (!Object.keys(customMetadata).length ) {
-      return {}
+    if (!Object.keys(customMetadata).length) {
+      return {};
     }
-    
-    return mergeTwoObjectsIntoOne(
-      customMetadata,
-      simpleMetadata
-    );
+
+    return mergeTwoObjectsIntoOne(customMetadata, simpleMetadata);
   }
 }
