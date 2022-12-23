@@ -23,26 +23,31 @@ type VoucherifyCustomer = {
   name: string;
   email: string;
   address?: {
-      city: string;
-      line_1: string;
-      country: string;
-      postal_code: string;
+    city: string;
+    line_1: string;
+    country: string;
+    postal_code: string;
   };
   phone?: string;
   object: 'customer';
-}
+};
 
-const ctCustomerToVocuherifyCustomer = (customer: Customer, metadataSchemaProperties):VoucherifyCustomer => ({
+const ctCustomerToVocuherifyCustomer = (
+  customer: Customer,
+  metadataSchemaProperties,
+): VoucherifyCustomer => ({
   object: 'customer',
   source_id: customer.id,
   name: `${customer.firstName} ${customer.lastName}`,
   email: customer.email,
-  address: customer.addresses.length ? {
-    city: customer.addresses[0].city,
-    country: customer.addresses[0].country,
-    postal_code: customer.addresses[0].postalCode,
-    line_1: customer.addresses[0].streetName,
-  }: undefined,
+  address: customer.addresses.length
+    ? {
+        city: customer.addresses[0].city,
+        country: customer.addresses[0].country,
+        postal_code: customer.addresses[0].postalCode,
+        line_1: customer.addresses[0].streetName,
+      }
+    : undefined,
   phone: customer.addresses.length ? customer.addresses[0].phone : undefined,
   ...Object.fromEntries(
     Object.keys(customer.custom?.fields ? customer.custom?.fields : {})
@@ -51,7 +56,9 @@ const ctCustomerToVocuherifyCustomer = (customer: Customer, metadataSchemaProper
   ),
 });
 
-const getVoucheerifyCustomerFromCtOrder = (order: Order):VoucherifyCustomer => ({
+const getVoucheerifyCustomerFromCtOrder = (
+  order: Order,
+): VoucherifyCustomer => ({
   object: 'customer',
   source_id: order.anonymousId,
   name: `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`,
@@ -63,7 +70,7 @@ const getVoucheerifyCustomerFromCtOrder = (order: Order):VoucherifyCustomer => (
     line_1: order.shippingAddress?.streetName,
   },
   phone: order.shippingAddress?.phone,
-})
+});
 
 @Injectable()
 export class CustomerImportService {
@@ -107,12 +114,14 @@ export class CustomerImportService {
   private async customerImport(period?: string) {
     const metadataSchemaProperties =
       await this.voucherifyClient.getMetadataSchemaProperties('customer');
-    
+
     const customers: VoucherifyCustomer[] = [];
 
     for await (const customersBatch of this.getAllCustomers(period)) {
       customersBatch.forEach((customer) => {
-        customers.push(ctCustomerToVocuherifyCustomer(customer, metadataSchemaProperties));
+        customers.push(
+          ctCustomerToVocuherifyCustomer(customer, metadataSchemaProperties),
+        );
       });
     }
 

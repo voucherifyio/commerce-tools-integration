@@ -35,10 +35,11 @@ export class OrderPaidActions implements OrderPaidActions {
         return (metadata[name] = variable);
       }
       if (Array.isArray(variable)) {
-        const newArray = variable.map(
-          (element) => typeof variable === 'object' ?
-            deleteObjectsFromObject(flatten(element)) : element
-        )
+        const newArray = variable.map((element) =>
+          typeof variable === 'object'
+            ? deleteObjectsFromObject(flatten(element))
+            : element,
+        );
 
         return (metadata[name] = newArray);
       }
