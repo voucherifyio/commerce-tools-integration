@@ -53,7 +53,7 @@ Demo store https://sunrise-ct-voucherify.herokuapp.com
 
 ## How does the integration between Voucherify and commercetools work?
 
-The integration between Voucherify and commercetools allows your customers to use Voucherify-generated promotions in a store built on top of commercetools. We currently support all types of coupon campaign, and we are working to fully support referral programs, gift cards, cart-level promotions, loyalty programs and giveaways.
+The integration between Voucherify and commercetools allows your customers to use Voucherify-generated promotions in a store built on top of commercetools. We support all Voucherify campaigns.
 
 We support coupons campaigns, including:
 
