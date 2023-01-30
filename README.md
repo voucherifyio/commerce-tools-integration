@@ -580,3 +580,4 @@ We believe that the commercetools setup can vary between implementations and int
 ## Licence
 [MIT](./LICENSE.md) Copyright (c) 2022 voucherify.io
 
+
