@@ -65,6 +65,8 @@ We support coupons campaigns, including:
 - [Fixed amount](https://support.voucherify.io/article/512-complete-user-guide-on-discounts#fixed-order-amount) - coupons that set fixed prices of Your cart products or whole cart.
 - [Free shipping](https://docs.voucherify.io/docs/free-shipping-discount) - adding free shipping to your cart when proper code is applied. Check [Free shipping section](#free-shipping) for more information.
 - [Prepaid gift cards](https://docs.voucherify.io/docs/prepaid-gift-cards) - coupons that add to products or whole cart a certain discount value from gift cars.
+- [Referal campaigns](https://support.voucherify.io/article/48-referral-program-basics) - [https://youtu.be/f6hFUtV0n1k?t=479](https://youtu.be/f6hFUtV0n1k?t=479)
+
 
 If we want to allow customers to use coupons defined in Voucherify, the integration application needs to:
 
