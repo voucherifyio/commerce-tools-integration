@@ -1,0 +1,18 @@
+deployAs:
+  - name: voucherify-service
+    applicationType: service
+    endpoint: /
+    scripts:
+      postDeploy: npm install && npm run ct-connect-post-deploy
+      preUndeploy: npm install && npm run ct-connect-pre-undeploy
+    configurationType:
+      COMMERCE_TOOLS_ID: standard
+      COMMERCE_TOOLS_SECRET: secret
+      COMMERCE_TOOLS_AUTH_URL: standard
+      COMMERCE_TOOLS_API_URL: standard
+      COMMERCE_TOOLS_PROJECT_KEY: standard
+      VOUCHERIFY_APP_ID: standard
+      VOUCHERIFY_SECRET_KEY: secret
+      VOUCHERIFY_API_URL: standard
+      API_EXTENSION_BASIC_AUTH_PASSWORD: secret
+      APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT: standard

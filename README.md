@@ -198,7 +198,7 @@ Integration service just need to get order (integration type) and redeeming shou
 ### Configuration
 
 Set environment variables with credentials to Voucherify and commercetools APIs. For local development, put the configuration into `.env` file (see `.env.example` configuration template).
-- `APP_URL` - a public URL where the application is hosted. commercetools will use this URL to make [API Extension HTTP requests](https://docs.commercetools.com/api/projects/api-extensions). This configuration is ignored for local development servers as ngrok provides a public URL dynamically. 
+- `APP_URL` (or `CONNECT_SERVICE_URL`) - a public URL where the application is hosted. commercetools will use this URL to make [API Extension HTTP requests](https://docs.commercetools.com/api/projects/api-extensions). This configuration is ignored for local development servers as ngrok provides a public URL dynamically. Please, note that `CONNECT_SERVICE_URL` environment variable is used by Commecetools Connect. 
 - In Voucherify, go to `Project Dashboard > Project Settings > General Tab > Application Keys`.
     - `VOUCHERIFY_APP_ID`
     - `VOUCHERIFY_SECRET_KEY`
@@ -237,8 +237,9 @@ npm run config
 #### For production
 ```bash
 npm install
+npm run build
 npm run start
-npm run register
+npm run api-extension-add
 ```
 
 #### For local development (ngrok required)
@@ -251,7 +252,7 @@ npm run dev:attach
 ```bash
 npm install
 npm run dev
-npm run register
+npm run api-extension-add
 ```
 ---
 
@@ -459,6 +460,9 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2023-04-25 `v5.2.1`
+  - adjust application to work with Commercetools Connect platform:
+  - fix `api-extension-*` CLI scripts
 - 2022-12-07 `v5.2.0`
   - domain refactoring/code quality
   - optimization

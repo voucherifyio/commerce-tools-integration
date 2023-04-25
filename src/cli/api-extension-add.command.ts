@@ -14,13 +14,16 @@ export class ApiExtensionAddCommand implements CommandRunner {
     private readonly configService: ConfigService,
   ) {}
   async run(): Promise<void> {
-    const url = this.configService.get<string>('APP_URL');
+    const url =
+      this.configService.get<string>('APP_URL') ||
+      this.configService.get<string>('CONNECT_SERVICE_URL');
+
     const apiExtensionKey = this.configService.get<string>(
       'COMMERCE_TOOLS_API_EXTENSION_KEY',
     );
 
     if (!url) {
-      loadingCli(`Missing APP_URL configuration`).fail();
+      loadingCli(`Missing APP_URL or CONNECT_SERVICE_URL configuration`).fail();
       return;
     }
 

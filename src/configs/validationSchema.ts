@@ -1,7 +1,8 @@
 import * as Joi from 'joi';
 
 export const ValidationSchema = Joi.object({
-  APP_URL: Joi.string(),
+  APP_URL: Joi.string().uri(),
+  CONNECT_SERVICE_URL: Joi.string().uri(),
   VOUCHERIFY_APP_ID: Joi.string().required(),
   VOUCHERIFY_SECRET_KEY: Joi.string().required(),
   VOUCHERIFY_API_URL: Joi.string().required(),

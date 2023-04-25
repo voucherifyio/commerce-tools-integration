@@ -6,7 +6,7 @@ import loadingCli from 'loading-cli';
 @Command({
   name: 'integration-update',
   description:
-    'Remove old and add new API Extension pointing to your server. Url is taken from APP_URL environment variable. Old API Extension is recognized by API Extension "key" attribute configured by COMMERCE_TOOLS_API_EXTENSION_KEY environment variable',
+    'Remove old and add new API Extension pointing to your server. Url is taken from APP_URL or CONNECT_SERVICE_URL environment variables. Old API Extension is recognized by API Extension "key" attribute configured by COMMERCE_TOOLS_API_EXTENSION_KEY environment variable',
 })
 export class ApiExtensionUpdateCommand implements CommandRunner {
   constructor(
@@ -14,7 +14,10 @@ export class ApiExtensionUpdateCommand implements CommandRunner {
     private readonly configService: ConfigService,
   ) {}
   async run(): Promise<void> {
-    const url = this.configService.get<string>('APP_URL');
+    const url =
+      this.configService.get<string>('APP_URL') ||
+      this.configService.get<string>('CONNECT_SERVICE_URL');
+
     const spinner = loadingCli(`Add API Extension for ${url}`).start();
     const result = await this.apiExtensionService.update(url);
     if (result) {
