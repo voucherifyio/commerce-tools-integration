@@ -22,10 +22,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prepare": "husky install",
     "config": "nest start --config nest-commander.json -- config",
-    "api-extension-list": "nest start --config nest-commander.json -- api-extension-list",
-    "api-extension-add": "nest start --config nest-commander.json -- api-extension-add",
-    "api-extension-update": "nest start --config nest-commander.json -- api-extension-update",
-    "api-extension-delete": "nest start --config nest-commander.json -- api-extension-delete",
+    "api-extension-list": "nest start --config nest-commander.json -- integration-list",
+    "api-extension-add": "nest start --config nest-commander.json -- integration-add",
+    "api-extension-update": "nest start --config nest-commander.json -- integration-update",
+    "api-extension-delete": "nest start --config nest-commander.json -- integration-delete",
     "migrate": "nest start --config nest-commander.json -- migrate"
   },
   "dependencies": {

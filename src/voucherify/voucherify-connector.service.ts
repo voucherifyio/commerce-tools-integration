@@ -30,12 +30,14 @@ export class VoucherifyConnectorService {
   private readonly secretKey: string = this.configService.get<string>(
     'VOUCHERIFY_SECRET_KEY',
   );
-
+  private readonly apiUrl: string =
+    this.configService.get<string>('VOUCHERIFY_API_URL');
   getClient(): ReturnType<typeof VoucherifyServerSide> {
     const start = performance.now();
     const voucherify = VoucherifyServerSide({
       applicationId: this.applicationId,
       secretKey: this.secretKey,
+      apiUrl: this.apiUrl,
     });
     const end = performance.now();
     this.logger.debug(`V% getClient creation: ${end - start}ms`);
