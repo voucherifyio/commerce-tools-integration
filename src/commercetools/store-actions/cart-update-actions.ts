@@ -125,6 +125,12 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
     priceSelector: PriceSelector,
     productSourceIds: string[],
   ): Promise<Product[]> {
+    const filteredProductSourceIds = productSourceIds.filter(
+      (productSourceId) => uuidValidate(productSourceId),
+    );
+    if (!filteredProductSourceIds.length) {
+      return [];
+    }
     try {
       return (
         await this.ctClient
@@ -134,9 +140,7 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
               total: false,
               priceCurrency: priceSelector.currencyCode,
               priceCountry: priceSelector.country,
-              where: `id in ("${productSourceIds
-                .filter((productSourceId) => uuidValidate(productSourceId))
-                .join('","')}") `,
+              where: `id in ("${filteredProductSourceIds.join('","')}") `,
             },
           })
           .execute()
