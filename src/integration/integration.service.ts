@@ -179,7 +179,8 @@ export class IntegrationService {
       notFound: string[];
     } =
       typeof cartUpdateActions.getPricesOfProductsFromCommercetools ===
-      'function'
+        'function' &&
+      stackableRedeemablesResultDiscountUnitWithPriceAndCodes.length
         ? await cartUpdateActions.getPricesOfProductsFromCommercetools(
             stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
           )
