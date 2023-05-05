@@ -70,6 +70,7 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
   }
 
   public buildActions() {
+    console.log(this.gatherDataToRunCartActionsBuilder());
     return getCartActionBuilders()
       .flatMap((builder) => builder(this.gatherDataToRunCartActionsBuilder()))
       .filter((e) => e);
@@ -99,7 +100,7 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
         }
         const price = getCommercetoolstCurrentPriceAmount(
           ctProduct,
-          unit.sku.source_id,
+          unit.sku?.source_id,
           this.priceSelector,
         );
         return {

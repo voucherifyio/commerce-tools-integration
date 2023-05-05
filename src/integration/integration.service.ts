@@ -178,9 +178,8 @@ export class IntegrationService {
       found: ProductPriceAndSourceId[];
       notFound: string[];
     } =
-      typeof cartUpdateActions.getPricesOfProductsFromCommercetools ===
-        'function' &&
-      stackableRedeemablesResultDiscountUnitWithPriceAndCodes.length
+      typeof cartUpdateActions?.getPricesOfProductsFromCommercetools ===
+      'function'
         ? await cartUpdateActions.getPricesOfProductsFromCommercetools(
             stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
           )
@@ -241,11 +240,11 @@ export class IntegrationService {
     });
 
     if (
-      typeof cartUpdateActions.setSessionKey === 'function' &&
-      typeof cartUpdateActions.setTotalDiscountAmount === 'function' &&
-      typeof cartUpdateActions.setApplicableCoupons === 'function' &&
-      typeof cartUpdateActions.setInapplicableCoupons === 'function' &&
-      typeof cartUpdateActions.setProductsToAdd === 'function'
+      typeof cartUpdateActions?.setSessionKey === 'function' &&
+      typeof cartUpdateActions?.setTotalDiscountAmount === 'function' &&
+      typeof cartUpdateActions?.setApplicableCoupons === 'function' &&
+      typeof cartUpdateActions?.setInapplicableCoupons === 'function' &&
+      typeof cartUpdateActions?.setProductsToAdd === 'function'
     ) {
       cartUpdateActions.setSessionKey(validatedCoupons?.session?.key);
       cartUpdateActions.setTotalDiscountAmount(
