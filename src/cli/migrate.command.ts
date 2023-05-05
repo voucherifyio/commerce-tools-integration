@@ -142,8 +142,8 @@ export class MigrateCommand implements CommandRunner {
 
     const spinnerCouponsTypes = loadingCli(
       fetchTime
-        ? `Attempt to migrate ${options.type.name} from ${fetchTime}`
-        : `Attempt to migrate ${options.type.name}`,
+        ? `Migrating ${options.type.name} from ${fetchTime}`
+        : `Migrating ${options.type.name}`,
     ).start();
 
     const result = await options.type.callback(fetchTime);

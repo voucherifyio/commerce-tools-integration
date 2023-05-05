@@ -187,25 +187,26 @@ export class ProductImportService {
 
   public async migrateProducts(period?: string) {
     const { products, skus } = await this.productImport(period);
-
+    console.log(`Uploading products to Voucherify\n`);
     const productResult = await this.productUpload(products, 'products');
-    this.logger.debug(
-      `Products are processing by Voucherify. It may take a few minutes. Async action id coupled with product import: ${productResult.async_action_id}`,
+    console.log(
+      `Products are processing by Voucherify. It may take time. Async action id coupled with product import: ${productResult.async_action_id}\n`,
     );
     const productUploadStatus = await this.waitUntilDone(
       productResult.async_action_id,
     );
-    this.logger.debug('Products were processed');
+    console.log(productUploadStatus?.message, '\n');
 
-    if (productUploadStatus.failed.length === 0) {
+    if (!productUploadStatus?.failed?.length) {
+      console.log(`Uploading skus to Voucherify`);
       const skusResult = await this.productUpload(skus, 'skus');
-      this.logger.debug(
-        `Skus are processing by Voucherify. It may take a few minutes. Async action id coupled with skus import: ${skusResult.async_action_id}`,
+      console.log(
+        `Skus are processing by Voucherify. It may take a few minutes. Async action id coupled with skus import: ${skusResult.async_action_id}\n`,
       );
       const skusUploadStatus = await this.waitUntilDone(
         skusResult.async_action_id,
       );
-      this.logger.debug('Skus were processed');
+      console.log(skusUploadStatus?.message, '\n');
 
       return skusUploadStatus.failed.length === 0
         ? { success: true }
