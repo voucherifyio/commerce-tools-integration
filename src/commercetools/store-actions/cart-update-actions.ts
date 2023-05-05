@@ -70,7 +70,6 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
   }
 
   public buildActions() {
-    console.log(this.gatherDataToRunCartActionsBuilder());
     return getCartActionBuilders()
       .flatMap((builder) => builder(this.gatherDataToRunCartActionsBuilder()))
       .filter((e) => e);

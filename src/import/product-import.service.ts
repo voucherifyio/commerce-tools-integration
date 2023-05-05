@@ -190,7 +190,8 @@ export class ProductImportService {
     console.log(`Uploading products to Voucherify\n`);
     const productResult = await this.productUpload(products, 'products');
     console.log(
-      `Products are processing by Voucherify. It may take time. Async action id coupled with product import: ${productResult.async_action_id}\n`,
+      `Products are processing by Voucherify. It may take some time. Async action id coupled with product import: ${productResult.async_action_id}\n` +
+        `Please DO NOT cancel this migration right now!`,
     );
     const productUploadStatus = await this.waitUntilDone(
       productResult.async_action_id,
