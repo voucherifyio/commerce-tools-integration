@@ -89,7 +89,7 @@ export const cart = {
     },
     {
       id: 'line-item-id-6',
-      productId: 'gift-product-id',
+      productId: '7c66ebdb-446d-4ea5-846e-80463a356ef2',
       name: { en: 'Free product' },
       productType: { typeId: 'product-type', id: 'product-type-id' },
       productSlug: { en: 'some-product-slug' },

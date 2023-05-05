@@ -15,7 +15,7 @@ describe('when adding new product to the cart with free product already applied 
   let voucherifyConnectorService: VoucherifyConnectorService;
   const COUPON_CODE = 'ADD_GIFT';
   const SKU_ID = 'gift-sku-id';
-  const PRODUCT_ID = 'gift-product-id';
+  const PRODUCT_ID = '7c66ebdb-446d-4ea5-846e-80463a356ef2'; //gift-product-id
   const PRODUCT_PRICE = 6500;
 
   beforeEach(async () => {
@@ -73,8 +73,6 @@ describe('when adding new product to the cart with free product already applied 
 
   it('should create one `addCustomLineItem` action with summary of applied coupon', async () => {
     const result = await commercetoolsService.handleCartUpdate(cart);
-    console.log(result.actions);
-
     expect(
       result.actions.filter((e) => e.action === 'addCustomLineItem'),
     ).toHaveLength(1);
