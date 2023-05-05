@@ -10,9 +10,11 @@ import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 import { CommercetoolsService } from '../../../commercetools/commercetools.service';
+import { CommercetoolsConnectorService } from '../../../commercetools/commercetools-connector.service';
 describe('when applying discount code which adds free product to the cart', () => {
   let commercetoolsService: CommercetoolsService;
   let voucherifyConnectorService: VoucherifyConnectorService;
+  let commerceToolsConnectorService: CommercetoolsConnectorService;
   const COUPON_CODE = 'ADD_GIFT';
   const SKU_ID = 'gift-sku-id';
   const PRODUCT_ID = 'gift-product-id';
@@ -24,19 +26,20 @@ describe('when applying discount code which adds free product to the cart', () =
       getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();
     voucherifyConnectorService =
       getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
-    const commerceToolsConnectorService =
+    commerceToolsConnectorService =
       getCommerceToolsConnectorServiceMockWithProductResponse({
         sku: SKU_ID,
         price: PRODUCT_PRICE,
         id: PRODUCT_ID,
       });
 
-    ({ commercetoolsService } = await buildCartServiceWithMockedDependencies({
-      typesService,
-      taxCategoriesService,
-      voucherifyConnectorService,
-      commerceToolsConnectorService,
-    }));
+    ({ commercetoolsService, commerceToolsConnectorService } =
+      await buildCartServiceWithMockedDependencies({
+        typesService,
+        taxCategoriesService,
+        voucherifyConnectorService,
+        commerceToolsConnectorService,
+      }));
   });
 
   it('should call voucherify once', async () => {
@@ -103,8 +106,9 @@ describe('when applying discount code which adds free product to the cart', () =
     ).toHaveLength(1);
   });
 
-  it('should create `addCustomLineItem` action with total coupons value applied', async () => {
+  it('should create `addCustomLineItem` action with total coupons value applied, should call CT for prices', async () => {
     const result = await commercetoolsService.handleCartUpdate(cart);
+    expect(commerceToolsConnectorService.getClient).toBeCalledTimes(2); //first call is in constructor.
 
     expect(result.actions).toEqual(
       expect.arrayContaining([

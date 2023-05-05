@@ -69,9 +69,12 @@ export async function buildCartServiceWithMockedDependencies({
     module.get<CommercetoolsService>(CommercetoolsService);
   const taxCategoriesService_ =
     module.get<TaxCategoriesService>(TaxCategoriesService);
+  const commerceToolsConnectorService_ =
+    module.get<CommercetoolsConnectorService>(CommercetoolsConnectorService);
 
   return {
     commercetoolsService,
     taxCategoriesService: taxCategoriesService_,
+    commerceToolsConnectorService: commerceToolsConnectorService_,
   };
 }
