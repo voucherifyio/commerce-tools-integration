@@ -13,7 +13,7 @@ describe('when applying discount code which adds free product to the cart', () =
   let voucherifyConnectorService: VoucherifyConnectorService;
   let commerceToolsConnectorService: CommercetoolsConnectorService;
   const SKU_ID = 'gift-sku-id';
-  const PRODUCT_ID = 'gift-product-id';
+  const PRODUCT_ID = '7c66ebdb-446d-4ea5-846e-80463a356ef2';
   const PRODUCT_PRICE = 6500;
 
   beforeEach(async () => {

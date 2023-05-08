@@ -15,7 +15,7 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
   let voucherifyConnectorService: VoucherifyConnectorService;
   const COUPON_CODE = 'ADD_GIFT';
   const SKU_ID = 'gift-sku-id';
-  const PRODUCT_ID = 'gift-product-id';
+  const PRODUCT_ID = '7c66ebdb-446d-4ea5-846e-80463a356ef2';
   const PRODUCT_PRICE = 6500;
   const lineItemId = 'line-item-id-10';
 
@@ -41,7 +41,6 @@ describe('when applying coupon code for a free product with `ADD_MISSING_ITEMS` 
   });
   it('should call voucherify once', async () => {
     await commercetoolsService.handleCartUpdate(cart);
-
     expect(
       voucherifyConnectorService.validateStackableVouchers,
     ).toBeCalledTimes(2);
