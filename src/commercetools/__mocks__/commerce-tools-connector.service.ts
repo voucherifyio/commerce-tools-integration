@@ -108,13 +108,5 @@ export const getCommerceToolsConnectorServiceMockWithProductResponse = (
     }),
   });
 
-  commerceToolsConnectorService.getClient = jest.fn().mockReturnValue({
-    products: jest.fn().mockReturnValue({
-      get: jest.fn().mockReturnValue({
-        execute: jest.fn().mockReturnValue(products),
-      }),
-    }),
-  });
-
   return commerceToolsConnectorService;
 };

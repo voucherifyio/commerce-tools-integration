@@ -1,0 +1,103 @@
+export const voucherifyResponse = {
+  valid: true,
+  redeemables: [
+    {
+      status: 'APPLICABLE',
+      id: 'promo_Y4lMzNB8H69GojnLyF3hJZXP',
+      object: 'promotion_tier',
+      order: {
+        source_id: 'e88e7200-48f1-4bbb-b0a1-af26aace78d8',
+        amount: 106000,
+        discount_amount: 1000,
+        total_discount_amount: 1000,
+        total_amount: 105000,
+        applied_discount_amount: 1000,
+        total_applied_discount_amount: 1000,
+        items: [
+          {
+            object: 'order_item',
+            source_id: 'M0E20000000DUIR',
+            related_object: 'sku',
+            quantity: 4,
+            amount: 106000,
+            price: 26500,
+            subtotal_amount: 106000,
+            product: {
+              name: 'Pants Jacob Cohen green',
+              override: true,
+            },
+            sku: {
+              sku: 'Pants Jacob Cohen green',
+              metadata: {},
+              override: true,
+            },
+          },
+        ],
+        metadata: {},
+        customer_id: null,
+        referrer_id: null,
+        object: 'order',
+      },
+      applicable_to: {
+        data: [],
+        total: 0,
+        data_ref: 'data',
+        object: 'list',
+      },
+      inapplicable_to: {
+        data: [],
+        total: 0,
+        data_ref: 'data',
+        object: 'list',
+      },
+      result: {
+        discount: {
+          type: 'AMOUNT',
+          effect: 'APPLY_TO_ORDER',
+          amount_off: 1000,
+          is_dynamic: false,
+        },
+      },
+    },
+  ],
+  order: {
+    source_id: 'e88e7200-48f1-4bbb-b0a1-af26aace78d8',
+    amount: 106000,
+    discount_amount: 1000,
+    total_discount_amount: 1000,
+    total_amount: 105000,
+    applied_discount_amount: 1000,
+    total_applied_discount_amount: 1000,
+    items: [
+      {
+        object: 'order_item',
+        source_id: 'M0E20000000DUIR',
+        related_object: 'sku',
+        quantity: 4,
+        amount: 106000,
+        price: 26500,
+        subtotal_amount: 106000,
+        product: {
+          name: 'Pants Jacob Cohen green',
+          override: true,
+        },
+        sku: {
+          sku: 'Pants Jacob Cohen green',
+          metadata: {},
+          override: true,
+        },
+      },
+    ],
+    metadata: {},
+    customer_id: null,
+    referrer_id: null,
+    object: 'order',
+  },
+  tracking_id: 'track_7WIx4VHJ3kH9Eq0l7vviiBE4gf0jaFOq1qD3I47SdJUwE17T14L2tw==',
+  session: {
+    key: 'ssn_sP4wyA8d2tGzD6Nt4zVBSLOjoLZB2P3d',
+    type: 'LOCK',
+    ttl: 7,
+    ttl_unit: 'DAYS',
+  },
+};
