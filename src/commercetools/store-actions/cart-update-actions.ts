@@ -131,23 +131,19 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
     if (!filteredProductSourceIds.length) {
       return [];
     }
-    try {
-      return (
-        await this.ctClient
-          .products()
-          .get({
-            queryArgs: {
-              total: false,
-              priceCurrency: priceSelector.currencyCode,
-              priceCountry: priceSelector.country,
-              where: `id in ("${filteredProductSourceIds.join('","')}") `,
-            },
-          })
-          .execute()
-      ).body.results;
-    } catch (e) {
-      return [];
-    }
+    return (
+      await this.ctClient
+        .products()
+        .get({
+          queryArgs: {
+            total: false,
+            priceCurrency: priceSelector.currencyCode,
+            priceCountry: priceSelector.country,
+            where: `id in ("${filteredProductSourceIds.join('","')}") `,
+          },
+        })
+        .execute()
+    ).body.results;
   }
 
   private gatherDataToRunCartActionsBuilder(): DataToRunCartActionsBuilder {
