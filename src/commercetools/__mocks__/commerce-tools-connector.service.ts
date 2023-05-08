@@ -1,65 +1,30 @@
 import { CommercetoolsConnectorService } from '../commercetools-connector.service';
 
-export const getCommerceToolsConnectorServiceMockWithResponse = () => {
-  const commerceToolsConnectoService = jest.createMockFromModule(
-    '../commercetools-connector.service',
-  ) as CommercetoolsConnectorService;
+export const getCommerceToolsConnectorServiceMockWithEmptyProductResponse =
+  () => {
+    const commerceToolsConnectoService = jest.createMockFromModule(
+      '../commercetools-connector.service',
+    ) as CommercetoolsConnectorService & { getProductMock: jest.Mock };
+    const products: any = {
+      body: {
+        results: [],
+      },
+    };
 
-  const products: any = {
-    body: {
-      results: [
-        {
-          id: '2aacfe19-2006-4cf6-9dde-0c402b4b1191',
-          masterData: {
-            current: {
-              variants: [
-                {
-                  id: 2,
-                  sku: 'M0E20000000EE0W',
-                  key: 'M0E20000000EE0W',
-                  prices: [
-                    {
-                      id: 'a04f9ae5-fe60-4459-b26c-7461200a0109',
-                      value: {
-                        type: 'centPrecision',
-                        currencyCode: 'EUR',
-                        centAmount: 28625,
-                        fractionDigits: 2,
-                      },
-                    },
-                    {
-                      id: 'd474a958-c1d9-4523-85fe-b962df0312b0',
-                      value: {
-                        type: 'centPrecision',
-                        currencyCode: 'EUR',
-                        centAmount: 18770,
-                        fractionDigits: 2,
-                      },
-                      customerGroup: {
-                        typeId: 'customer-group',
-                        id: '449b547f-cc6f-4399-983d-27475a00b3f7',
-                      },
-                    },
-                  ],
-                },
-              ],
-            },
-          },
-        },
-      ],
-    },
-  };
+    commerceToolsConnectoService.getProductMock = jest
+      .fn()
+      .mockReturnValue(products);
 
-  commerceToolsConnectoService.getClient = jest.fn().mockReturnValue({
-    products: jest.fn().mockReturnValue({
-      get: jest.fn().mockReturnValue({
-        execute: jest.fn().mockReturnValue(products),
+    commerceToolsConnectoService.getClient = jest.fn().mockReturnValue({
+      products: jest.fn().mockReturnValue({
+        get: jest.fn().mockReturnValue({
+          execute: commerceToolsConnectoService.getProductMock,
+        }),
       }),
-    }),
-  });
+    });
 
-  return commerceToolsConnectoService;
-};
+    return commerceToolsConnectoService;
+  };
 
 type Product = {
   sku: string;
