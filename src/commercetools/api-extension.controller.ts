@@ -7,7 +7,6 @@ import {
   Res,
   UseInterceptors,
 } from '@nestjs/common';
-import { IntegrationService } from '../integration/integration.service';
 import { CartOrderDto } from './dto/CartOrder.dto';
 import { ApiExtensionGuard } from './api-extension.guard';
 import { Cart, Order } from '@commercetools/platform-sdk';
@@ -22,7 +21,6 @@ import { HandleTimeoutInterceptor } from './handle-timeout-interceptor.service';
 @UseInterceptors(HandleTimeoutInterceptor)
 export class ApiExtensionController {
   constructor(
-    private readonly cartService: IntegrationService,
     private readonly logger: Logger,
     private readonly commercetoolsService: CommercetoolsService,
   ) {}

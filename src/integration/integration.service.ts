@@ -4,8 +4,6 @@ import {
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 
-import { TaxCategoriesService } from '../commercetools/tax-categories/tax-categories.service';
-import { CustomTypesService } from '../commercetools/custom-types/custom-types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import {
   Cart,
@@ -51,8 +49,6 @@ import { getProductsToAdd } from './utils/getProductsToAddWithPricesCorrected';
 @Injectable()
 export class IntegrationService {
   constructor(
-    private readonly taxCategoriesService: TaxCategoriesService,
-    private readonly typesService: CustomTypesService,
     private readonly logger: Logger,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
     private readonly configService: ConfigService,
@@ -233,7 +229,6 @@ export class IntegrationService {
     );
 
     this.logger.debug({
-      msg: 'Validated coupons',
       validatedCoupons,
       availablePromotions,
       productsToAdd,
