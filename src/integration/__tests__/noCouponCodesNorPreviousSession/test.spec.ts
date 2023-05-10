@@ -1,7 +1,7 @@
 import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../commercetools/tax-categories/__mocks__/tax-categories.service';
 import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/custom-types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
-import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
+import { getCommerceToolsConnectorServiceMockWithEmptyProductResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
@@ -15,7 +15,7 @@ describe('When no coupon codes provided and have no previous voucherify session,
     const voucherifyConnectorService =
       getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
     const commerceToolsConnectorService =
-      getCommerceToolsConnectorServiceMockWithResponse();
+      getCommerceToolsConnectorServiceMockWithEmptyProductResponse();
 
     const { commercetoolsService } =
       await buildCartServiceWithMockedDependencies({
@@ -50,7 +50,7 @@ describe('When no coupon codes provided and have no previous voucherify session,
     const voucherifyConnectorService =
       getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
     const commerceToolsConnectorService =
-      getCommerceToolsConnectorServiceMockWithResponse();
+      getCommerceToolsConnectorServiceMockWithEmptyProductResponse();
 
     const { commercetoolsService } =
       await buildCartServiceWithMockedDependencies({
@@ -73,7 +73,7 @@ describe('When no coupon codes provided and have no previous voucherify session,
     const voucherifyConnectorService =
       getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
     const commerceToolsConnectorService =
-      getCommerceToolsConnectorServiceMockWithResponse();
+      getCommerceToolsConnectorServiceMockWithEmptyProductResponse();
 
     const { commercetoolsService } =
       await buildCartServiceWithMockedDependencies({
@@ -104,7 +104,7 @@ describe('When no coupon codes provided and have no previous voucherify session,
     const voucherifyConnectorService =
       getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
     const commerceToolsConnectorService =
-      getCommerceToolsConnectorServiceMockWithResponse();
+      getCommerceToolsConnectorServiceMockWithEmptyProductResponse();
 
     const { commercetoolsService } =
       await buildCartServiceWithMockedDependencies({

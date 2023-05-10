@@ -24,7 +24,7 @@ export const voucherifyResponse = {
           },
           {
             sku_id: 'gift-sku-id',
-            product_id: 'gift-product-id',
+            product_id: '7c66ebdb-446d-4ea5-846e-80463a356ef2',
             related_object: 'product',
             quantity: 1,
             price: 6500,
@@ -34,7 +34,7 @@ export const voucherifyResponse = {
           {
             source_id: 'gift-sku-id',
             related_object: 'sku',
-            product_id: 'gift-product-id',
+            product_id: '7c66ebdb-446d-4ea5-846e-80463a356ef2',
             quantity: 1,
             discount_quantity: 1,
             initial_quantity: 1,
@@ -46,7 +46,7 @@ export const voucherifyResponse = {
             subtotal_amount: 0,
             product: {
               id: 'product-id',
-              source_id: 'gift-product-id',
+              source_id: '7c66ebdb-446d-4ea5-846e-80463a356ef2',
               override: true,
             },
             sku: {
@@ -73,9 +73,15 @@ export const voucherifyResponse = {
           type: 'UNIT',
           effect: 'ADD_NEW_ITEMS',
           unit_off: 1,
-          unit_type: 'gift-product-id',
-          sku: { id: 'sku-id', source_id: 'gift-sku-id' },
-          product: { id: 'product-id', source_id: 'gift-product-id' },
+          unit_type: '7c66ebdb-446d-4ea5-846e-80463a356ef2',
+          sku: {
+            id: 'sku-id',
+            source_id: 'gift-sku-id',
+          },
+          product: {
+            id: 'product-id',
+            source_id: '7c66ebdb-446d-4ea5-846e-80463a356ef2',
+          },
         },
       },
     },
@@ -102,7 +108,7 @@ export const voucherifyResponse = {
       },
       {
         sku_id: 'gift-sku-id',
-        product_id: 'gift-product-id',
+        product_id: '7c66ebdb-446d-4ea5-846e-80463a356ef2',
         related_object: 'product',
         quantity: 1,
         price: 6500,
@@ -112,7 +118,7 @@ export const voucherifyResponse = {
       {
         source_id: 'gift-sku-id',
         related_object: 'sku',
-        product_id: 'gift-product-id',
+        product_id: '7c66ebdb-446d-4ea5-846e-80463a356ef2',
         quantity: 1,
         discount_quantity: 1,
         initial_quantity: 1,
@@ -124,7 +130,7 @@ export const voucherifyResponse = {
         subtotal_amount: 0,
         product: {
           id: 'product-id',
-          source_id: 'gift-product-id',
+          source_id: '7c66ebdb-446d-4ea5-846e-80463a356ef2',
           override: true,
         },
         sku: {

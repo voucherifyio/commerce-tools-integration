@@ -459,6 +459,11 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2022-05-05 `v5.2.2`
+  - do not make unnecessary, malformed requests to CT for a products
+  - update tests
+  - for used cart promotions, separate promotion id from promotion banner
+  - fixed console logging data while using `migration CLI`
 - 2022-05-04 `v5.2.1`
   - minor bugfix, when someone have defined unit type promotion/voucher in Voucherify dashboard not based on commercetools products, we should not be looking for this product in commercetools backend store.
 - 2022-12-07 `v5.2.0`

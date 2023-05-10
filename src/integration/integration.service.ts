@@ -4,8 +4,6 @@ import {
   ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
 
-import { TaxCategoriesService } from '../commercetools/tax-categories/tax-categories.service';
-import { CustomTypesService } from '../commercetools/custom-types/custom-types.service';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import {
   Cart,
@@ -51,8 +49,6 @@ import { getProductsToAdd } from './utils/getProductsToAddWithPricesCorrected';
 @Injectable()
 export class IntegrationService {
   constructor(
-    private readonly taxCategoriesService: TaxCategoriesService,
-    private readonly typesService: CustomTypesService,
     private readonly logger: Logger,
     private readonly voucherifyConnectorService: VoucherifyConnectorService,
     private readonly configService: ConfigService,
@@ -178,9 +174,8 @@ export class IntegrationService {
       found: ProductPriceAndSourceId[];
       notFound: string[];
     } =
-      typeof cartUpdateActions.getPricesOfProductsFromCommercetools ===
-        'function' &&
-      stackableRedeemablesResultDiscountUnitWithPriceAndCodes.length
+      typeof cartUpdateActions?.getPricesOfProductsFromCommercetools ===
+      'function'
         ? await cartUpdateActions.getPricesOfProductsFromCommercetools(
             stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
           )
@@ -234,18 +229,17 @@ export class IntegrationService {
     );
 
     this.logger.debug({
-      msg: 'Validated coupons',
       validatedCoupons,
       availablePromotions,
       productsToAdd,
     });
 
     if (
-      typeof cartUpdateActions.setSessionKey === 'function' &&
-      typeof cartUpdateActions.setTotalDiscountAmount === 'function' &&
-      typeof cartUpdateActions.setApplicableCoupons === 'function' &&
-      typeof cartUpdateActions.setInapplicableCoupons === 'function' &&
-      typeof cartUpdateActions.setProductsToAdd === 'function'
+      typeof cartUpdateActions?.setSessionKey === 'function' &&
+      typeof cartUpdateActions?.setTotalDiscountAmount === 'function' &&
+      typeof cartUpdateActions?.setApplicableCoupons === 'function' &&
+      typeof cartUpdateActions?.setInapplicableCoupons === 'function' &&
+      typeof cartUpdateActions?.setProductsToAdd === 'function'
     ) {
       cartUpdateActions.setSessionKey(validatedCoupons?.session?.key);
       cartUpdateActions.setTotalDiscountAmount(

@@ -47,11 +47,14 @@ export class OrderImportService {
       if (ordersResult.body.total < page * limit) {
         allOrdersCollected = true;
       }
-      this.logger.debug({
-        msg: 'iterating over all orders',
-        orders: limit * page,
-        total: ordersResult.body.total,
-      });
+      console.log(
+        {
+          msg: 'iterating over all orders',
+          orders: limit * page,
+          total: ordersResult.body.total,
+        },
+        '\n',
+      );
     } while (!allOrdersCollected);
   }
 
@@ -87,7 +90,7 @@ export class OrderImportService {
       }
     }
 
-    this.logger.debug(`Sending ${orders.length} orders to Voucherify`);
+    console.log(`Sending ${orders.length} orders to Voucherify\n`);
 
     const client = this.voucherifyClient.getClient();
     do {
@@ -106,20 +109,21 @@ export class OrderImportService {
         const retryAfter = apiLimitHandler
           ? client.apiLimitsHandler.getRetryAfter()
           : 0;
-        this.logger.debug(
+        console.log(
           `You are out of api calls. Program will be awaken in ${
             retryAfter * 1000
-          } seconds`,
+          } seconds\n`,
         );
         await sleep(retryAfter * 1000);
         continue;
       }
-      this.logger.debug(
+      console.log(
         `The number of api calls is reduced due to Voucherify API request limit of ${limit}/h. Next call in ${
           (60 * 60 * 1000) / limit
         }ms. Number of remaining requests in this hour is: ${remaining}. Number of needed api calls to migrate all orders is: ${
           orders.length
         }`,
+        '\n',
       );
       await sleep((60 * 60 * 1000) / limit);
     } while (orders.length);

@@ -2,6 +2,7 @@ import { VoucherifyConnectorService } from '../voucherify-connector.service';
 
 export const getVoucherifyConnectorServiceMockWithDefinedResponse = (
   response: any,
+  promotions: any[] = [],
 ) => {
   const voucherifyConnectorService = jest.createMockFromModule(
     '../voucherify-connector.service',
@@ -13,7 +14,7 @@ export const getVoucherifyConnectorServiceMockWithDefinedResponse = (
 
   voucherifyConnectorService.getAvailablePromotions = jest
     .fn()
-    .mockResolvedValue([]);
+    .mockResolvedValue(promotions);
 
   voucherifyConnectorService.validateStackableVouchers = jest
     .fn()
