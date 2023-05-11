@@ -1,4 +1,4 @@
-import { Coupon, availablePromotion } from '../../../../integration/types';
+import { Coupon } from '../../../../integration/types';
 import {
   CartAction,
   CartActionSetCustomFieldFreeShipping,
@@ -123,8 +123,8 @@ function updateDiscountsCodes(
         ({
           code: coupon.id,
           status: 'NOT_APPLIED',
-          errMsg: coupon.result?.error?.error?.message
-            ? coupon.result?.error?.error.message
+          errMsg: coupon.result?.error?.message
+            ? coupon.result?.error?.message
             : coupon.result?.error?.message,
         } as Coupon),
     ),
