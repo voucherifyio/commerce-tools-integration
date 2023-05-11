@@ -1,4 +1,4 @@
-import { Coupon } from '../../../../integration/types';
+import { Coupon, availablePromotion } from '../../../../integration/types';
 import {
   CartAction,
   CartActionSetCustomFieldFreeShipping,
@@ -111,7 +111,8 @@ function updateDiscountsCodes(
         )?.value;
       }
       return {
-        code: coupon['banner'] ? coupon['banner'] : coupon.id,
+        code: coupon.id,
+        banner: coupon['banner'] || undefined,
         status: 'APPLIED',
         type: coupon.object,
         value: value,

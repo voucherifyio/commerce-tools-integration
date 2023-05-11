@@ -99,7 +99,7 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
         }
         const price = getCommercetoolstCurrentPriceAmount(
           ctProduct,
-          unit.sku.source_id,
+          unit.sku?.source_id,
           this.priceSelector,
         );
         return {
@@ -125,25 +125,25 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
     priceSelector: PriceSelector,
     productSourceIds: string[],
   ): Promise<Product[]> {
-    try {
-      return (
-        await this.ctClient
-          .products()
-          .get({
-            queryArgs: {
-              total: false,
-              priceCurrency: priceSelector.currencyCode,
-              priceCountry: priceSelector.country,
-              where: `id in ("${productSourceIds
-                .filter((productSourceId) => uuidValidate(productSourceId))
-                .join('","')}") `,
-            },
-          })
-          .execute()
-      ).body.results;
-    } catch (e) {
+    const filteredProductSourceIds = productSourceIds.filter(
+      (productSourceId) => uuidValidate(productSourceId),
+    );
+    if (!filteredProductSourceIds.length) {
       return [];
     }
+    return (
+      await this.ctClient
+        .products()
+        .get({
+          queryArgs: {
+            total: false,
+            priceCurrency: priceSelector.currencyCode,
+            priceCountry: priceSelector.country,
+            where: `id in ("${filteredProductSourceIds.join('","')}") `,
+          },
+        })
+        .execute()
+    ).body.results;
   }
 
   private gatherDataToRunCartActionsBuilder(): DataToRunCartActionsBuilder {

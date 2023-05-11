@@ -23,13 +23,13 @@ export function getItemsWithCorrectedPrices(
         );
         if (priceIncorrect) {
           return {
-            source_id: item.sku.source_id,
+            source_id: item.sku?.source_id,
             related_object: 'sku',
             price: priceIncorrect.price,
             product: { override: true, name: item.product.name },
             sku: {
               override: true,
-              sku: item.sku.sku,
+              sku: item.sku?.sku,
               price: priceIncorrect.price,
             },
           } as OrdersItem;

@@ -165,7 +165,7 @@ export class CustomerImportService {
       status = responseJson.status;
       result = responseJson.result;
 
-      this.logger.debug(`Processing status: ${status}`);
+      console.log(`Processing status: ${status}\n`);
     } while (
       (status === 'IN_PROGRESS' || status === null || status === undefined) &&
       (await sleep(20000))
@@ -178,13 +178,13 @@ export class CustomerImportService {
     const { customers } = await this.customerImport(period);
 
     const customerResult = await this.customerUpload(customers);
-    this.logger.debug(
-      `Customers are processing by Voucherify. It may take a few minutes. Async action id coupled with customer import: ${customerResult.async_action_id}`,
+    console.log(
+      `Customers are processing by Voucherify. It may take a few minutes. Async action id coupled with customer import: ${customerResult.async_action_id}\n`,
     );
     const customerUploadStatus = await this.waitUntilDone(
       customerResult.async_action_id,
     );
-    this.logger.debug('Customers were processed');
+    console.log('Customers were processed\n');
 
     return customerUploadStatus.failed.length === 0
       ? { success: true }

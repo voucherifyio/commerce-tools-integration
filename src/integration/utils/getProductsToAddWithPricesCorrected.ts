@@ -20,9 +20,9 @@ export function getProductsToAdd(validatedCoupons, currentPricesOfProducts) {
       code: productToAdd.unit.code,
       effect: productToAdd.unit.effect,
       quantity: productToAdd.unit.unit_off,
-      product: productToAdd.unit.sku.source_id,
-      initial_quantity: productToAdd.item.initial_quantity,
-      discount_quantity: productToAdd.item.discount_quantity,
+      product: productToAdd.unit.sku?.source_id,
+      initial_quantity: productToAdd.item?.initial_quantity,
+      discount_quantity: productToAdd.item?.discount_quantity,
       discount_difference:
         productToAdd.item?.applied_discount_amount -
           productToAdd.currentPriceAmount *
@@ -56,7 +56,9 @@ export function getCtProductsWithCurrentPriceAmount(
 
       return units.map((unit) => {
         const item = orderItems?.find(
-          (item) => item?.sku?.source_id === unit.sku.source_id,
+          (item) =>
+            item?.sku?.source_id &&
+            item?.sku?.source_id === unit.sku?.source_id,
         ) as OrdersItem;
         return {
           ...ctProduct,

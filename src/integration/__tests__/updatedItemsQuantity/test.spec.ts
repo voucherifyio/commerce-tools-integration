@@ -4,7 +4,7 @@ import {
 } from '../../../commercetools/tax-categories/__mocks__/tax-categories.service';
 import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/custom-types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
-import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
+import { getCommerceToolsConnectorServiceMockWithEmptyProductResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 import { CommercetoolsService } from '../../../commercetools/commercetools.service';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
@@ -23,7 +23,7 @@ describe('When two discount codes (percentage and amount) are already applied an
     voucherifyConnectorService =
       getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
     const commerceToolsConnectorService =
-      getCommerceToolsConnectorServiceMockWithResponse();
+      getCommerceToolsConnectorServiceMockWithEmptyProductResponse();
 
     ({ commercetoolsService } = await buildCartServiceWithMockedDependencies({
       typesService,

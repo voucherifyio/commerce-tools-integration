@@ -4,15 +4,19 @@ import {
 } from '../../../commercetools/tax-categories/__mocks__/tax-categories.service';
 import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/custom-types/__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
-import { getCommerceToolsConnectorServiceMockWithResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
+import { getCommerceToolsConnectorServiceMockWithEmptyProductResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 import { CommercetoolsService } from '../../../commercetools/commercetools.service';
 import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
+import { CommercetoolsConnectorService } from 'src/commercetools/commercetools-connector.service';
 describe('When one -20€ amount voucher is provided in new session', () => {
   let commercetoolsService: CommercetoolsService;
   let voucherifyConnectorService: VoucherifyConnectorService;
+  let commerceToolsConnectorService: CommercetoolsConnectorService & {
+    getProductMock: jest.Mock;
+  };
   const COUPON_CODE = 'AMOUNT20';
   const SESSION_KEY = 'new-session-id';
 
@@ -22,8 +26,8 @@ describe('When one -20€ amount voucher is provided in new session', () => {
       getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse();
     voucherifyConnectorService =
       getVoucherifyConnectorServiceMockWithDefinedResponse(voucherifyResponse);
-    const commerceToolsConnectorService =
-      getCommerceToolsConnectorServiceMockWithResponse();
+    commerceToolsConnectorService =
+      getCommerceToolsConnectorServiceMockWithEmptyProductResponse();
 
     ({ commercetoolsService } = await buildCartServiceWithMockedDependencies({
       typesService,
@@ -104,6 +108,12 @@ describe('When one -20€ amount voucher is provided in new session', () => {
       ]),
     );
   });
+
+  it('Should not make a request to CT for a products', async () => {
+    await commercetoolsService.handleCartUpdate(cart);
+    expect(commerceToolsConnectorService.getProductMock).toBeCalledTimes(0);
+  });
+
   it('Should create "setCustomField" action with validated coupons', async () => {
     const result = await commercetoolsService.handleCartUpdate(cart);
 
