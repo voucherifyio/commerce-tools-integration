@@ -1,7 +1,7 @@
 deployAs:
   - name: voucherify-service
     applicationType: service
-    endpoint: /
+    endpoint: /voucherify-service
     scripts:
       postDeploy: npm install && npm run ct-connect-post-deploy
       preUndeploy: npm install && npm run ct-connect-pre-undeploy
