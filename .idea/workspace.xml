@@ -5,16 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="558fefcb-a65a-41aa-a22b-c69f67562119" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/integrationMappers.spec.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/payloads/integrationMappers.spec.payloads.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/payloads/voucherify-connector.service.spec.paylaods.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/sleep.spec.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/voucherify-connector.service.spec.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/voucherify-service/src/integration/utils/mappers/order.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/integration/utils/mappers/order.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/voucherify-service/src/voucherify/voucherify-connector.service.spec.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/voucherify-service/src/voucherify/voucherify-connector.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/voucherify/voucherify-connector.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/voucherify-service/src/voucherify/voucherify.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/voucherify/voucherify.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/voucherify-service/src/__tests__/integrationMappers.spec.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/integrationMappers.spec.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/voucherify-service/src/__tests__/payloads/integrationMappers.spec.payloads.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/payloads/integrationMappers.spec.payloads.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/voucherify-service/src/integration/utils/mappers/buildRedeemStackableRequestForVoucherify.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/integration/utils/mappers/buildRedeemStackableRequestForVoucherify.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/voucherify-service/src/integration/utils/mappers/getMissingProductsToAdd.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/voucherify-service/src/integration/utils/mappers/getProductsFromRedeemables.ts" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -122,7 +118,7 @@
       <option name="presentableId" value="Default" />
       <updated>1685541630484</updated>
       <workItem from="1685541631700" duration="9797000" />
-      <workItem from="1685606031929" duration="13843000" />
+      <workItem from="1685606031929" duration="16573000" />
     </task>
     <servers />
   </component>

@@ -6,6 +6,32 @@ export function buildRedeemStackableRequestForVoucherify(
   items: OrdersItem[],
   orderMetadata: Record<string, any>,
 ): RedemptionsRedeemStackableParams {
+  console.log('order', JSON.stringify(order));
+  console.log('items', JSON.stringify(items));
+  console.log('orderMetadata', JSON.stringify(orderMetadata));
+  console.log(
+    'response',
+    JSON.stringify({
+      session: {
+        type: 'LOCK',
+        key: order.sessionKey,
+      },
+      redeemables: order.coupons.map((code) => {
+        return {
+          object: code.type ? code.type : 'voucher',
+          id: code.code,
+        };
+      }),
+      order: {
+        source_id: order.id,
+        amount: order.items.reduce((acc, item) => acc + item.amount, 0),
+        status: 'PAID',
+        items,
+        metadata: orderMetadata,
+      },
+      customer: order.customer,
+    }),
+  );
   return {
     session: {
       type: 'LOCK',
