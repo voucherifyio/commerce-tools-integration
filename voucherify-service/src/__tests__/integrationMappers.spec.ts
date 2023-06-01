@@ -1,13 +1,26 @@
-import { OrderMapper } from '../integration/utils/mappers/order';
 import {
   getOrderObjectOrder,
   getOrderObjectResponse,
+  buildRedeemStackableRequestForVoucherifyItems,
+  buildRedeemStackableRequestForVoucherifyOrder,
+  buildRedeemStackableRequestForVoucherifyResponse,
 } from './payloads/integrationMappers.spec.payloads';
+import { buildRedeemStackableRequestForVoucherify } from '../integration/utils/mappers/buildRedeemStackableRequestForVoucherify';
+import { OrderMapper } from '../integration/utils/mappers/order';
 
-describe('SleepTest', () => {
-  it('should be defined', async () => {
+describe('Integration Mappers Test', () => {
+  it('Should map order correctly', () => {
     const orderMapper = new OrderMapper();
     const result = orderMapper.getOrderObject(getOrderObjectOrder as any);
     expect(result).toEqual(getOrderObjectResponse);
+  });
+
+  it('should map order with items to V% redeem', async () => {
+    const result = buildRedeemStackableRequestForVoucherify(
+      buildRedeemStackableRequestForVoucherifyOrder as any,
+      buildRedeemStackableRequestForVoucherifyItems as any,
+      {},
+    );
+    expect(result).toEqual(buildRedeemStackableRequestForVoucherifyResponse);
   });
 });

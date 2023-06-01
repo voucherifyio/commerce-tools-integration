@@ -5,6 +5,11 @@ export const getSimpleMetadataForOrder = (
   rawOrder: any,
   allMetadataSchemaProperties: string[],
 ): { [key: string]: string } => {
+  console.log('rawOrder', JSON.stringify(rawOrder));
+  console.log(
+    'allMetadataSchemaProperties',
+    JSON.stringify(allMetadataSchemaProperties),
+  );
   const metadata = {};
 
   const addToMataData = (variable: any, name: string) => {
@@ -33,5 +38,6 @@ export const getSimpleMetadataForOrder = (
       addToMataData(rawOrder[key], key);
     }
   });
+  console.log('metadata', JSON.stringify(metadata));
   return metadata;
 };

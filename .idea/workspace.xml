@@ -5,12 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="558fefcb-a65a-41aa-a22b-c69f67562119" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/ctMappers.spec.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/payloads/ctMappers.spec.payloads.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/voucherify-service/src/__tests__/integrationMappers.spec.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/integrationMappers.spec.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/voucherify-service/src/__tests__/payloads/integrationMappers.spec.payloads.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/payloads/integrationMappers.spec.payloads.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/voucherify-service/src/__tests__/payloads/voucherify-connector.service.spec.paylaods.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/payloads/voucherify-connector.service.spec.paylaods.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/voucherify-service/src/commercetools/utils/mappers/getSimpleMetadataForOrder.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/commercetools/utils/mappers/getSimpleMetadataForOrder.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/voucherify-service/src/integration/__tests__/customTypes/snapshots/cart.snapshot.ts" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/voucherify-service/src/integration/utils/mappers/buildRedeemStackableRequestForVoucherify.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/integration/utils/mappers/buildRedeemStackableRequestForVoucherify.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/voucherify-service/src/integration/utils/mappers/getMissingProductsToAdd.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/voucherify-service/src/integration/utils/mappers/getProductsFromRedeemables.ts" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,7 +43,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "/Users/piotrzielinski/Documents/GitHub/commerce-tools-integration/voucherify-service/src/__tests__",
+    "last_opened_file_path": "/Users/piotrzielinski/Documents/GitHub/commerce-tools-integration/voucherify-service/src/__tests__/payloads",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -55,6 +58,7 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/voucherify-service/src/__tests__/payloads" />
       <recent name="$PROJECT_DIR$/voucherify-service/src/__tests__" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
@@ -63,7 +67,21 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="Jest.SleepTest.should be defined">
+  <component name="RunManager" selected="Jest.Integration Mappers Test.should map getSimpleMetadataForOrder correctly">
+    <configuration name="Integration Mappers Test.should map getSimpleMetadataForOrder correctly" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
+      <node-interpreter value="project" />
+      <node-options value="" />
+      <jest-package value="$PROJECT_DIR$/voucherify-service/node_modules/jest" />
+      <working-dir value="$PROJECT_DIR$/voucherify-service" />
+      <envs />
+      <scope-kind value="TEST" />
+      <test-file value="$PROJECT_DIR$/voucherify-service/src/__tests__/integrationMappers.spec.ts" />
+      <test-names>
+        <test-name value="Integration Mappers Test" />
+        <test-name value="should map getSimpleMetadataForOrder correctly" />
+      </test-names>
+      <method v="2" />
+    </configuration>
     <configuration name="SleepTest" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
       <node-interpreter value="project" />
       <node-options value="" />
@@ -103,6 +121,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Jest.Integration Mappers Test.should map getSimpleMetadataForOrder correctly" />
         <item itemvalue="Jest.SleepTest.should be defined" />
         <item itemvalue="Jest.SleepTest" />
         <item itemvalue="Jest.voucherify-connector.service.spec.ts" />
@@ -118,7 +137,7 @@
       <option name="presentableId" value="Default" />
       <updated>1685541630484</updated>
       <workItem from="1685541631700" duration="9797000" />
-      <workItem from="1685606031929" duration="16573000" />
+      <workItem from="1685606031929" duration="18599000" />
     </task>
     <servers />
   </component>
