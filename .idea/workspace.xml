@@ -5,14 +5,28 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="558fefcb-a65a-41aa-a22b-c69f67562119" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/voucherify-service/LICENSE.md" beforeDir="false" afterPath="$PROJECT_DIR$/LICENSE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/voucherify-service/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/voucherify-service/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/package.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/integrationMappers.spec.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/payloads/integrationMappers.spec.payloads.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/payloads/voucherify-connector.service.spec.paylaods.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/sleep.spec.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/voucherify-connector.service.spec.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/voucherify-service/src/integration/utils/mappers/order.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/integration/utils/mappers/order.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/voucherify-service/src/voucherify/voucherify-connector.service.spec.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/voucherify-service/src/voucherify/voucherify-connector.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/voucherify/voucherify-connector.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/voucherify-service/src/voucherify/voucherify.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/voucherify/voucherify.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="TypeScript File" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -30,6 +44,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
+    "last_opened_file_path": "/Users/piotrzielinski/Documents/GitHub/commerce-tools-integration/voucherify-service/src/__tests__",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -43,12 +58,43 @@
   }
 }]]></component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/voucherify-service/src/__tests__" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/voucherify-service/src/__tests__" />
       <recent name="$PROJECT_DIR$/voucherify-service/src/voucherify" />
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Jest.SleepTest.should be defined">
+    <configuration name="SleepTest" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
+      <node-interpreter value="project" />
+      <node-options value="" />
+      <jest-package value="$PROJECT_DIR$/voucherify-service/node_modules/jest" />
+      <working-dir value="$PROJECT_DIR$/voucherify-service" />
+      <envs />
+      <scope-kind value="SUITE" />
+      <test-file value="$PROJECT_DIR$/voucherify-service/src/__tests__/sleep.spec.ts" />
+      <test-names>
+        <test-name value="SleepTest" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <configuration name="SleepTest.should be defined" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
+      <node-interpreter value="project" />
+      <node-options value="" />
+      <jest-package value="$PROJECT_DIR$/voucherify-service/node_modules/jest" />
+      <working-dir value="$PROJECT_DIR$/voucherify-service" />
+      <envs />
+      <scope-kind value="TEST" />
+      <test-file value="$PROJECT_DIR$/voucherify-service/src/__tests__/sleep.spec.ts" />
+      <test-names>
+        <test-name value="SleepTest" />
+        <test-name value="should be defined" />
+      </test-names>
+      <method v="2" />
+    </configuration>
     <configuration name="voucherify-connector.service.spec.ts" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
       <node-interpreter value="project" />
       <node-options value="" />
@@ -61,6 +107,8 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Jest.SleepTest.should be defined" />
+        <item itemvalue="Jest.SleepTest" />
         <item itemvalue="Jest.voucherify-connector.service.spec.ts" />
       </list>
     </recent_temporary>
@@ -73,7 +121,8 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1685541630484</updated>
-      <workItem from="1685541631700" duration="8311000" />
+      <workItem from="1685541631700" duration="9797000" />
+      <workItem from="1685606031929" duration="13843000" />
     </task>
     <servers />
   </component>
