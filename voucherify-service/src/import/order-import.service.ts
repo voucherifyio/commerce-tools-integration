@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Order } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
-import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { OrderMapper } from '../integration/utils/mappers/order';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
 import { getSimpleMetadataForOrder } from '../commercetools/utils/mappers/getSimpleMetadataForOrder';
 import { OrderPaidActions } from '../commercetools/store-actions/order-paid-actions';
 import { mergeTwoObjectsIntoOne } from '../integration/utils/mergeTwoObjectsIntoOne';
+import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {

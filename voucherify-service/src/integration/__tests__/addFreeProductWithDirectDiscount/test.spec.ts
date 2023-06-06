@@ -3,12 +3,12 @@ import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../co
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
-import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 import { getConfigServiceMockWithConfiguredDirectDiscount } from '../__mocks__/config-service.service';
 import { ConfigService } from '@nestjs/config';
 import { CommercetoolsService } from '../../../commercetools/commercetools.service';
+import { VoucherifyConnectorService } from '../../../voucherify/voucherify-connector.service';
 describe('when applying discount code which adds free product to the cart', () => {
   let commercetoolsService: CommercetoolsService;
   let voucherifyConnectorService: VoucherifyConnectorService;
