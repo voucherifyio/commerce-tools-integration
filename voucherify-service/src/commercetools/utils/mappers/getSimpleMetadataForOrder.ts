@@ -33,6 +33,5 @@ export const getSimpleMetadataForOrder = (
       addToMataData(rawOrder[key], key);
     }
   });
-  console.log('metadata', JSON.stringify(metadata));
   return metadata;
 };

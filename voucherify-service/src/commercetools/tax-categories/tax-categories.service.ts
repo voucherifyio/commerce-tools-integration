@@ -144,17 +144,6 @@ export class TaxCategoriesService {
       return couponTaxCategory;
     }
 
-    console.log(
-      666,
-      JSON.stringify({ ID: couponTaxCategory.id }),
-      JSON.stringify({
-        body: {
-          version: couponTaxCategory.version,
-          actions,
-        },
-      }),
-    );
-
     const response = await ctClient
       .taxCategories()
       .withId({ ID: couponTaxCategory.id })
@@ -166,7 +155,6 @@ export class TaxCategoriesService {
       })
       .execute();
 
-    console.log(5553, JSON.stringify(response));
     const success = [200, 201].includes(response.statusCode);
     if (success) {
       this.logger.debug({ msg: 'Updated countries for coupon tax category' });
