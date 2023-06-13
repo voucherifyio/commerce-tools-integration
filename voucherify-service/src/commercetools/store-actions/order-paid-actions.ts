@@ -7,40 +7,36 @@ import flatten from 'flat';
 
 const CUSTOM_FIELD_PREFIX_LENGTH = CUSTOM_FIELD_PREFIX.length;
 
-const getOrderMetadata = (order, customMetaProperties) => {
-  const metadata = {};
-  const addToMataData = (variable: any, name: string) => {
-    if (typeof variable !== 'object') {
-      metadata[name] = variable;
-      return;
-    }
-    if (Array.isArray(variable)) {
-      metadata[name] = variable.map((element) => {
-        if (typeof element !== 'object') {
-          return element;
-        }
-        return deleteObjectsFromObject(flatten(element));
-      });
-      return;
-    }
-    if (typeof variable === 'object') {
-      metadata[name] = deleteObjectsFromObject(flatten(variable));
-      return;
-    }
-    return;
-  };
-
-  if (order?.custom?.fields && customMetaProperties.length) {
-    customMetaProperties.forEach((key) => {
-      if (order.custom.fields?.[key.slice(CUSTOM_FIELD_PREFIX_LENGTH)]) {
-        addToMataData(
-          order.custom.fields[key.slice(CUSTOM_FIELD_PREFIX_LENGTH)],
-          key,
-        );
-      }
-    });
+const getOrderMetadata = (order, customMetadataProperties) => {
+  if (!(order?.custom?.fields && customMetadataProperties.length)) {
+    return {};
   }
-  return metadata;
+  return customMetadataProperties
+    .filter(
+      (key) => order.custom.fields?.[key.slice(CUSTOM_FIELD_PREFIX_LENGTH)],
+    )
+    .reduce((accumulator, key) => {
+      const variable =
+        order.custom.fields[key.slice(CUSTOM_FIELD_PREFIX_LENGTH)];
+      if (typeof variable !== 'object') {
+        accumulator[key] = variable;
+        return;
+      }
+      if (Array.isArray(variable)) {
+        accumulator[key] = variable.map((element) => {
+          if (typeof element !== 'object') {
+            return element;
+          }
+          return deleteObjectsFromObject(flatten(element));
+        });
+        return;
+      }
+      if (typeof variable === 'object') {
+        accumulator[key] = deleteObjectsFromObject(flatten(variable));
+        return;
+      }
+      return;
+    }, {});
 };
 
 export class OrderPaidActions implements OrderPaidActions {

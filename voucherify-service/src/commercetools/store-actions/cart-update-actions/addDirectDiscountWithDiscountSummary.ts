@@ -5,6 +5,13 @@ import {
 } from './CartAction';
 import { FREE_SHIPPING_UNIT_TYPE } from '../../../consts/voucherify';
 
+const sortDiscounts = (discounts) =>
+  discounts.sort((discount1, discount2) => {
+    if (discount1?.target?.predicate === 'true') return 1;
+    if (discount2?.target?.predicate === 'true') return -1;
+    return -1;
+  });
+
 export default function addDirectDiscountWithDiscountSummary(
   cart: Cart,
   dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
@@ -74,11 +81,7 @@ export default function addDirectDiscountWithDiscountSummary(
   return [
     {
       action: 'setDirectDiscounts',
-      discounts: discounts.sort((discount1, discount2) => {
-        if (discount1?.target?.predicate === 'true') return 1;
-        if (discount2?.target?.predicate === 'true') return -1;
-        return -1;
-      }),
+      discounts: sortDiscounts(discounts),
     },
   ];
 }
