@@ -5,10 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="558fefcb-a65a-41aa-a22b-c69f67562119" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/voucherify-service/src/__tests__/cart-paid-actions.spec.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/voucherify-service/src/commercetools/tax-categories/tax-categories.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/commercetools/tax-categories/tax-categories.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/voucherify-service/src/commercetools/utils/mappers/getSimpleMetadataForOrder.ts" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/src/commercetools/utils/mappers/getSimpleMetadataForOrder.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/voucherify-service/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/voucherify-service/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/voucherify-service/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -148,6 +147,7 @@
       <workItem from="1685541631700" duration="9797000" />
       <workItem from="1685606031929" duration="20867000" />
       <workItem from="1686125565553" duration="4093000" />
+      <workItem from="1686638877596" duration="4531000" />
     </task>
     <servers />
   </component>
