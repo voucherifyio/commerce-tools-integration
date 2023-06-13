@@ -27,33 +27,38 @@ export async function buildCartServiceWithMockedDependencies({
   commerceToolsConnectorService,
   configService,
 }: BuildCartServiceWithMockedDependenciesProps) {
+  const baseProviders = [
+    CommercetoolsService,
+    VoucherifyService,
+    IntegrationService,
+    {
+      provide: TaxCategoriesService,
+      useValue: taxCategoriesService,
+    },
+    {
+      provide: CustomTypesService,
+      useValue: typesService,
+    },
+    {
+      provide: VoucherifyConnectorService,
+      useValue: voucherifyConnectorService || {},
+    },
+    {
+      provide: CommercetoolsConnectorService,
+      useValue: commerceToolsConnectorService || {},
+    },
+  ];
   const module = await Test.createTestingModule({
     controllers: [],
-    providers: [
-      CommercetoolsService,
-      VoucherifyService,
-      IntegrationService,
-      {
-        provide: TaxCategoriesService,
-        useValue: taxCategoriesService,
-      },
-      {
-        provide: CustomTypesService,
-        useValue: typesService,
-      },
-      {
-        provide: VoucherifyConnectorService,
-        useValue: voucherifyConnectorService || {},
-      },
-      {
-        provide: CommercetoolsConnectorService,
-        useValue: commerceToolsConnectorService || {},
-      },
-      {
-        provide: ConfigService,
-        useValue: configService,
-      },
-    ],
+    providers: configService
+      ? [
+          ...baseProviders,
+          {
+            provide: ConfigService,
+            useValue: configService,
+          },
+        ]
+      : [...baseProviders, ConfigService],
   })
     .useMocker((token) => {
       if (typeof token === 'function') {
