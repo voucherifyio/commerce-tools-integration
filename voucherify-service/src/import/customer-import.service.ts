@@ -84,7 +84,7 @@ export class CustomerImportService {
       });
     }
 
-    for await (const ordersBatch of this.orderImportService.getAllOrders(
+    for await (const ordersBatch of this.orderImportService.getPartialOrders(
       period,
     )) {
       ordersBatch.forEach((order) => {
