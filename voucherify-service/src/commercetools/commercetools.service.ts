@@ -129,7 +129,8 @@ export class CommercetoolsService implements StoreInterface {
       });
       return;
     }
-    await this.cartUpdateHandler(translateCtCartToCart(cart)); //dropping sessions from coupons that are not included in cart (because of API extension timeout)
+    //dropping sessions from coupons that are not included in cart (because of API extension timeout)
+    await this.cartUpdateHandler(translateCtCartToCart(cart));
     this.logger.debug('Coupons changes were rolled back successfully');
     return;
   }

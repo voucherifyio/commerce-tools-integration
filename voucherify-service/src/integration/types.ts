@@ -10,7 +10,7 @@ import { CustomerRequest } from '@voucherify/sdk/dist/types/Customers';
 export type CartUpdateHandler = (
   cart: Cart,
   storeActions?: CartUpdateActionsInterface,
-) => void;
+) => Promise<void>;
 
 export type OrderRedeemHandler = (
   order: Order,
