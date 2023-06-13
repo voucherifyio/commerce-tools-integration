@@ -8,11 +8,13 @@ import loadingCli from 'loading-cli';
   description:
     'Add commercetools API Extension pointing to your server (server url is taken from APP_URL environment variable)',
 })
-export class ApiExtensionAddCommand implements CommandRunner {
+export class ApiExtensionAddCommand extends CommandRunner {
   constructor(
     private readonly registerService: ApiExtensionService,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    super();
+  }
   async run(): Promise<void> {
     const url =
       this.configService.get<string>('APP_URL') ||
