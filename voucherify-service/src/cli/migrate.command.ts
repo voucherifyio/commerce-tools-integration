@@ -30,7 +30,6 @@ export class MigrateCommand extends CommandRunner {
     private readonly productImportService: ProductImportService,
     private readonly orderImportService: OrderImportService,
     private readonly customerImportService: CustomerImportService,
-    private readonly logger: Logger,
   ) {
     super();
   }
