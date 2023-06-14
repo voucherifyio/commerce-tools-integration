@@ -15,10 +15,15 @@ export class CustomTypesService {
 
   public async findCouponType(typeName: string): Promise<Type | null> {
     const ctClient = this.commerceToolsConnectorService.getClient();
+    console.log(12444, { queryArgs: { where: `key="${typeName}"` } });
+    console.log(
+      await ctClient.types().get({ queryArgs: { where: `key="${typeName}"` } }),
+    );
     const response = await ctClient
       .types()
       .get({ queryArgs: { where: `key="${typeName}"` } })
       .execute();
+    console.log(123, JSON.stringify(response));
     if (
       ![200, 201].includes(response.statusCode) ||
       response.body?.count === 0
