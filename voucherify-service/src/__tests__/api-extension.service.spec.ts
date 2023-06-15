@@ -4,21 +4,44 @@ import { Logger } from '@nestjs/common';
 import { RequestJsonLogger } from '../configs/requestJsonLogger';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import { ApiExtensionService } from '../commercetools/api-extension.service';
+import {
+  getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest,
+  getConfigForAPIExtensionServiceTest,
+} from '../commercetools/__mocks__/commerce-tools-connector.service';
+import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
+
+const moduleMocker = new ModuleMocker(global);
 
 describe('ApiExtensionService', () => {
   let service: ApiExtensionService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule.forRoot()],
       providers: [
-        ConfigModule,
+        {
+          provide: ConfigModule,
+          useValue: getConfigForAPIExtensionServiceTest(),
+        },
         ApiExtensionService,
-        CommercetoolsConnectorService,
+        {
+          provide: CommercetoolsConnectorService,
+          useValue:
+            getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest(),
+        },
         Logger,
         RequestJsonLogger,
       ],
-    }).compile();
+    })
+      .useMocker((token) => {
+        if (typeof token === 'function') {
+          const mockMetadata = moduleMocker.getMetadata(
+            token,
+          ) as MockFunctionMetadata<any, any>;
+          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
+          return new Mock();
+        }
+      })
+      .compile();
 
     service = module.get<ApiExtensionService>(ApiExtensionService);
   });
@@ -33,5 +56,34 @@ describe('ApiExtensionService', () => {
     expect(service.removeByAttr).toBeDefined();
     expect(service.add).toBeDefined();
     expect(service.update).toBeDefined();
+  });
+
+  it('should be defined', async () => {
+    const result = await service.list();
+    expect(result).toBeDefined();
+  });
+
+  it('should be pass with no error', async () => {
+    const result1 = await service.removeById('1234');
+    expect(result1).toBeFalsy();
+    const result2 = await service.removeById('123');
+    expect(result2).toBeFalsy();
+  });
+
+  it('should be pass with no error', async () => {
+    const result1 = await service.removeByAttr('key', '1234');
+    expect(result1).toBeFalsy();
+    const result2 = await service.removeByAttr('key', '123');
+    expect(result2).toBeFalsy();
+  });
+
+  it('should be pass with no error', async () => {
+    const result = await service.add('sss.sss/ss', '1234');
+    expect(result).toBeFalsy();
+  });
+
+  it('should be pass with no error', async () => {
+    const result = await service.update('sss.sss/ss');
+    expect(result).toBeFalsy();
   });
 });

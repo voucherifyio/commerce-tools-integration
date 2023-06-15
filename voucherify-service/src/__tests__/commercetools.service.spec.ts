@@ -1,20 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
 import { RequestJsonLogger } from '../configs/requestJsonLogger';
-import {
-  createOrderItems,
-  createOrderOrderCreateObject,
-  createOrderOrderObject,
-  getAvailablePromotionsCart,
-  getAvailablePromotionsResponseObject,
-  getAvailablePromotionsValidateWith,
-  redeemStackableVouchersRequest,
-  redeemStackableVouchersResponse,
-  validateStackableResponse,
-  validateStackableVouchersRequest,
-} from './payloads/voucherify-connector.service.spec.paylaods';
 import { CustomTypesService } from '../commercetools/custom-types/custom-types.service';
 import { TaxCategoriesService } from '../commercetools/tax-categories/tax-categories.service';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
