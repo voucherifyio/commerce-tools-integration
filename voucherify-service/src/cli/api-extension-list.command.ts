@@ -14,6 +14,7 @@ export class ApiExtensionListCommand extends CommandRunner {
   async run(): Promise<void> {
     const spinner = loadingCli('List registered API Extensions').start();
     const extensions = await this.registerService.list();
+    console.log(123, extensions);
     if (extensions?.length) {
       spinner.succeed(`API Extensions received`);
       const table = new Table({

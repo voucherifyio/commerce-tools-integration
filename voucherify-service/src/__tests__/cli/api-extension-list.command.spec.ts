@@ -15,21 +15,36 @@ import { CustomTypesService } from '../../commercetools/custom-types/custom-type
 import { TaxCategoriesService } from '../../commercetools/tax-categories/tax-categories.service';
 import { ApiExtensionUpdateCommand } from '../../cli/api-extension-update.command';
 import { ApiExtensionListCommand } from '../../cli/api-extension-list.command';
+import {
+  getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest,
+  getConfigForAPIExtensionServiceTest,
+} from '../../commercetools/__mocks__/commerce-tools-connector.service';
+import { ApiExtensionDeleteCommand } from '../../cli/api-extension-delete.command';
+import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
+
+const moduleMocker = new ModuleMocker(global);
 
 describe('ApiExtensionListCommand', () => {
   let command: ApiExtensionListCommand;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule.forRoot()],
       providers: [
+        {
+          provide: ConfigModule,
+          useValue: getConfigForAPIExtensionServiceTest(),
+        },
         ApiExtensionListCommand,
         ApiExtensionService,
         MigrateCommand,
         ProductImportService,
         OrderImportService,
         CustomerImportService,
-        CommercetoolsConnectorService,
+        {
+          provide: CommercetoolsConnectorService,
+          useValue:
+            getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest(),
+        },
         VoucherifyConnectorService,
         CommercetoolsService,
         CustomTypesService,
@@ -38,7 +53,17 @@ describe('ApiExtensionListCommand', () => {
         Logger,
         RequestJsonLogger,
       ],
-    }).compile();
+    })
+      .useMocker((token) => {
+        if (typeof token === 'function') {
+          const mockMetadata = moduleMocker.getMetadata(
+            token,
+          ) as MockFunctionMetadata<any, any>;
+          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
+          return new Mock();
+        }
+      })
+      .compile();
 
     command = module.get<ApiExtensionListCommand>(ApiExtensionListCommand);
   });
@@ -48,6 +73,7 @@ describe('ApiExtensionListCommand', () => {
   });
 
   it('should be defined', () => {
+    command.run();
     expect(command.run).toBeDefined();
   });
 });

@@ -16,21 +16,35 @@ import { TaxCategoriesService } from '../../commercetools/tax-categories/tax-cat
 import { ApiExtensionUpdateCommand } from '../../cli/api-extension-update.command';
 import { ApiExtensionListCommand } from '../../cli/api-extension-list.command';
 import { ApiExtensionDeleteCommand } from '../../cli/api-extension-delete.command';
+import {
+  getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest,
+  getConfigForAPIExtensionServiceTest,
+} from '../../commercetools/__mocks__/commerce-tools-connector.service';
+import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
+
+const moduleMocker = new ModuleMocker(global);
 
 describe('ApiExtensionDeleteCommand', () => {
   let command: ApiExtensionDeleteCommand;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule.forRoot()],
       providers: [
+        {
+          provide: ConfigModule,
+          useValue: getConfigForAPIExtensionServiceTest(),
+        },
         ApiExtensionDeleteCommand,
         ApiExtensionService,
         MigrateCommand,
         ProductImportService,
         OrderImportService,
         CustomerImportService,
-        CommercetoolsConnectorService,
+        {
+          provide: CommercetoolsConnectorService,
+          useValue:
+            getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest(),
+        },
         VoucherifyConnectorService,
         CommercetoolsService,
         CustomTypesService,
@@ -39,7 +53,17 @@ describe('ApiExtensionDeleteCommand', () => {
         Logger,
         RequestJsonLogger,
       ],
-    }).compile();
+    })
+      .useMocker((token) => {
+        if (typeof token === 'function') {
+          const mockMetadata = moduleMocker.getMetadata(
+            token,
+          ) as MockFunctionMetadata<any, any>;
+          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
+          return new Mock();
+        }
+      })
+      .compile();
 
     command = module.get<ApiExtensionDeleteCommand>(ApiExtensionDeleteCommand);
   });
@@ -48,7 +72,8 @@ describe('ApiExtensionDeleteCommand', () => {
     expect(command).toBeDefined();
   });
 
-  it('should be defined', () => {
+  it('should be defined', async () => {
+    await command.run([], { id: '123' });
     expect(command.run).toBeDefined();
   });
 });

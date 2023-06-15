@@ -462,9 +462,7 @@ export const getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest =
 
     const extensions = jest.fn().mockReturnValue({
       get: jest.fn().mockReturnValue({
-        execute: jest
-          .fn()
-          .mockReturnValue({ body: { results: [{ id: '123' }] } }),
+        execute: jest.fn().mockReturnValue({ body: { results: [] } }),
       }),
       withId: jest.fn().mockReturnValue({
         delete: jest
