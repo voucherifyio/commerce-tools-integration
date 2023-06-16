@@ -484,11 +484,23 @@ export const getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest =
     return commerceToolsConnectoService;
   };
 
+export const getCommerceToolsConnectorServiceMockForCommerceToolsServiceTest = (
+  cart,
+) => {
+  const commerceToolsConnectoService = jest.createMockFromModule(
+    '../commercetools-connector.service',
+  ) as CommercetoolsConnectorService;
+
+  commerceToolsConnectoService.findCart = jest.fn().mockResolvedValue(cart);
+  commerceToolsConnectoService.getClient = jest.fn().mockReturnValue({});
+
+  return commerceToolsConnectoService;
+};
+
 export const getConfigForAPIExtensionServiceTest = () => {
   const configService =
     jest.createMockFromModule<ConfigService>('@nestjs/config');
   configService.get = jest.fn((key) => {
-    console.log('123', key);
     if (key === 'COMMERCE_TOOLS_API_EXTENSION_KEY') {
       return '12345';
     }
