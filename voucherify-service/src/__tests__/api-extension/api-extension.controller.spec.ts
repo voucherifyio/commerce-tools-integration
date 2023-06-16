@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
-import { ApiExtensionController } from '../commercetools/api-extension.controller';
-import { CommercetoolsService } from '../commercetools/commercetools.service';
-import { getCommerceToolsServiceMockWithEmptyProductResponse } from '../commercetools/__mocks__/commercetools.service';
-import { cart } from './payloads/api-extension.controller.spec.payloads';
+import { ApiExtensionController } from '../../commercetools/api-extension.controller';
+import { CommercetoolsService } from '../../commercetools/commercetools.service';
+import { getCommerceToolsServiceMockWithMockedResponse } from '../../commercetools/__mocks__/commercetools.service';
+import { cart } from '../payloads/api-extension.controller.spec.payloads';
 
-describe('CommerceToolsController', () => {
+describe('ApiExtensionController', () => {
   let controller: ApiExtensionController;
 
   beforeEach(async () => {
@@ -15,7 +15,7 @@ describe('CommerceToolsController', () => {
         Logger,
         {
           provide: CommercetoolsService,
-          useValue: getCommerceToolsServiceMockWithEmptyProductResponse(),
+          useValue: getCommerceToolsServiceMockWithMockedResponse(),
         },
       ],
     }).compile();

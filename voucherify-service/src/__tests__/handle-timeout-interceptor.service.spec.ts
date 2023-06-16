@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
-import { getCommerceToolsServiceMockWithEmptyProductResponse } from '../commercetools/__mocks__/commercetools.service';
+import { getCommerceToolsServiceMockWithMockedResponse } from '../commercetools/__mocks__/commercetools.service';
 import { cart } from './payloads/api-extension.controller.spec.payloads';
 import { HandleTimeoutInterceptor } from '../commercetools/handle-timeout-interceptor.service';
 
@@ -15,7 +15,7 @@ describe('CommerceToolsController', () => {
         Logger,
         {
           provide: CommercetoolsService,
-          useValue: getCommerceToolsServiceMockWithEmptyProductResponse(),
+          useValue: getCommerceToolsServiceMockWithMockedResponse(),
         },
       ],
     }).compile();

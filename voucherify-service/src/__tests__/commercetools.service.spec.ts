@@ -6,14 +6,17 @@ import { CustomTypesService } from '../commercetools/custom-types/custom-types.s
 import { TaxCategoriesService } from '../commercetools/tax-categories/tax-categories.service';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
+import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
+
+const moduleMocker = new ModuleMocker(global);
 
 describe('CommerceToolsService', () => {
   let service: CommercetoolsService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule.forRoot()],
       providers: [
+        ConfigModule,
         CommercetoolsService,
         CommercetoolsConnectorService,
         ConfigService,
@@ -22,7 +25,17 @@ describe('CommerceToolsService', () => {
         TaxCategoriesService,
         RequestJsonLogger,
       ],
-    }).compile();
+    })
+      .useMocker((token) => {
+        if (typeof token === 'function') {
+          const mockMetadata = moduleMocker.getMetadata(
+            token,
+          ) as MockFunctionMetadata<any, any>;
+          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
+          return new Mock();
+        }
+      })
+      .compile();
 
     service = module.get<CommercetoolsService>(CommercetoolsService);
   });

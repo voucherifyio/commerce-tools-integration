@@ -14,14 +14,17 @@ import { CustomTypesService } from '../commercetools/custom-types/custom-types.s
 import { TaxCategoriesService } from '../commercetools/tax-categories/tax-categories.service';
 import { ConfigCommand } from '../cli/config.command';
 import { getCommerceToolsConnectorServiceMockWithCouponTypes } from '../commercetools/__mocks__/commerce-tools-connector.service';
+import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
+
+const moduleMocker = new ModuleMocker(global);
 
 describe('ConfigCommand', () => {
   let command: CustomTypesService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule.forRoot()],
       providers: [
+        ConfigModule,
         MigrateCommand,
         ProductImportService,
         OrderImportService,
@@ -39,7 +42,17 @@ describe('ConfigCommand', () => {
         Logger,
         RequestJsonLogger,
       ],
-    }).compile();
+    })
+      .useMocker((token) => {
+        if (typeof token === 'function') {
+          const mockMetadata = moduleMocker.getMetadata(
+            token,
+          ) as MockFunctionMetadata<any, any>;
+          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
+          return new Mock();
+        }
+      })
+      .compile();
 
     command = module.get<CustomTypesService>(CustomTypesService);
   });
