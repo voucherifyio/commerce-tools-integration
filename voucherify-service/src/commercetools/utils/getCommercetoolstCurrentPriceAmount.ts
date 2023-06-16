@@ -8,20 +8,20 @@ const filterByDistributionChannels = (priceVariant, distributionChannels) => {
   if (distributionChannels.length > 0 && !priceVariant?.channel) {
     return false;
   }
-  distributionChannels.forEach((currentChannel) => {
+  for (const currentChannel of distributionChannels) {
     if (
       priceVariant.channel.typeId === currentChannel.typeId &&
       priceVariant.channel.id === currentChannel.id
     ) {
       return true;
     }
-  });
+  }
   return false;
 };
 
 const filterByCustomerGroup = (priceVariant, customerGroup) => {
   if (customerGroup) {
-    return (
+    return !!(
       priceVariant?.customerGroup?.typeId === customerGroup.typeId &&
       priceVariant?.customerGroup?.id === customerGroup.id
     );

@@ -8,7 +8,6 @@ import { FREE_SHIPPING_UNIT_TYPE } from '../../../consts/voucherify';
 const sortDiscounts = (discounts) =>
   discounts.sort((discount1, discount2) => {
     if (discount1?.target?.predicate === 'true') return 1;
-    if (discount2?.target?.predicate === 'true') return -1;
     return -1;
   });
 
