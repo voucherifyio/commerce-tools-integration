@@ -9,6 +9,7 @@ import { CommercetoolsService } from '../commercetools/commercetools.service';
 import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 import { getCommerceToolsConnectorServiceMockForCommerceToolsServiceTest } from '../commercetools/__mocks__/commerce-tools-connector.service';
 import { cart } from './payloads/commercetools.service.spec.payloads';
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../commercetools/tax-categories/__mocks__/tax-categories.service';
 
 const moduleMocker = new ModuleMocker(global);
 
@@ -33,7 +34,11 @@ describe('CommerceToolsService', () => {
         ConfigService,
         { provide: Logger, useValue: getLoggerForCommerceToolsServiceTest() },
         CustomTypesService,
-        TaxCategoriesService,
+        {
+          provide: TaxCategoriesService,
+          useValue:
+            getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse(),
+        },
         RequestJsonLogger,
       ],
     })
@@ -95,6 +100,137 @@ describe('CommerceToolsService', () => {
       2,
     );
     expect(result).toBeUndefined();
+  });
+
+  it('Expect to return empty actions and return status false when setCartUpdateListener is not configured', async () => {
+    service.setCartUpdateListener(undefined);
+    const result = await service.handleCartUpdate(cart as any);
+    expect(result).toEqual({
+      status: false,
+      actions: [],
+    });
+  });
+
+  it('Expect to build actions and return status true for correct CT cart when setCartUpdateListener is configured', async () => {
+    const mockFunction = (cart, cartUpdateActions) => {
+      cartUpdateActions.setSessionKey('ssn_7j0LyRRIH7u9NaJVNmHkCtmky7Qezmnt');
+      cartUpdateActions.setTotalDiscountAmount(1000);
+      cartUpdateActions.setApplicableCoupons([
+        {
+          status: 'APPLICABLE',
+          id: '10off',
+          object: 'voucher',
+          order: {
+            source_id: '66567cb6-68e0-44fa-9cf5-3dee728dc396',
+            amount: 37000,
+            discount_amount: 1000,
+            total_discount_amount: 1000,
+            total_amount: 36000,
+            applied_discount_amount: 1000,
+            total_applied_discount_amount: 1000,
+            items: [
+              {
+                object: 'order_item',
+                source_id: 'M0E20000000EE54',
+                related_object: 'sku',
+                quantity: 1,
+                amount: 18500,
+                price: 18500,
+                subtotal_amount: 18500,
+                product: { name: 'Jeans Cycle dark blue', override: true },
+                sku: {
+                  sku: 'Jeans Cycle dark blue',
+                  metadata: {},
+                  override: true,
+                },
+              },
+              {
+                object: 'order_item',
+                source_id: 'M0E20000000EE54',
+                related_object: 'sku',
+                quantity: 1,
+                amount: 18500,
+                price: 18500,
+                subtotal_amount: 18500,
+                product: { name: 'Jeans Cycle dark blue', override: true },
+                sku: {
+                  sku: 'Jeans Cycle dark blue',
+                  metadata: {},
+                  override: true,
+                },
+              },
+            ],
+            metadata: {},
+            customer_id: null,
+            referrer_id: null,
+            object: 'order',
+          },
+          applicable_to: {
+            data: [],
+            total: 0,
+            data_ref: 'data',
+            object: 'list',
+          },
+          inapplicable_to: {
+            data: [],
+            total: 0,
+            data_ref: 'data',
+            object: 'list',
+          },
+          result: {
+            discount: {
+              type: 'AMOUNT',
+              effect: 'APPLY_TO_ORDER',
+              amount_off: 1000,
+              is_dynamic: false,
+            },
+          },
+        },
+      ]);
+    };
+    service.setCartUpdateListener(mockFunction);
+    const result = await service.handleCartUpdate(cart as any);
+    expect(result).toEqual({
+      status: true,
+      actions: [
+        {
+          action: 'addCustomLineItem',
+          name: { en: 'Coupon codes discount', de: 'Gutscheincodes rabatt' },
+          quantity: 1,
+          money: {
+            centAmount: -1000,
+            type: 'centPrecision',
+            currencyCode: 'USD',
+          },
+          slug: 'Voucher, ',
+          taxCategory: { id: '64a3b50d-245c-465a-bb5e-faf59d729031' },
+        },
+        {
+          action: 'setLineItemCustomType',
+          lineItemId: 'd52307c5-1cc4-400b-9459-121da2d261e5',
+          type: { key: 'lineItemCodesType' },
+          fields: {},
+        },
+        {
+          action: 'setCustomField',
+          name: 'session',
+          value: 'ssn_7j0LyRRIH7u9NaJVNmHkCtmky7Qezmnt',
+        },
+        {
+          action: 'setCustomField',
+          name: 'discount_codes',
+          value: [
+            '{"code":"10off","status":"APPLIED","type":"voucher","value":1000}',
+          ],
+        },
+        {
+          action: 'setCustomField',
+          name: 'shippingProductSourceIds',
+          value: [],
+        },
+        { action: 'setCustomField', name: 'couponsLimit', value: 5 },
+      ],
+    });
   });
 });
 

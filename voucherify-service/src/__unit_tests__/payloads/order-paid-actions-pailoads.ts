@@ -20,6 +20,9 @@ export const order = {
     isPlatformClient: true,
     user: { typeId: 'user', id: 'eb521f4b-5a8b-4958-ba9c-93dd29d7c363' },
   },
+  paymentInfo: {
+    payments: [{ id: 'test' }],
+  },
   createdBy: {
     clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i',
     isPlatformClient: false,

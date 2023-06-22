@@ -72,6 +72,18 @@ export class OrderPaidActions implements OrderPaidActions {
         .filter((payment) => payment?.id)
         .map((payment) => deleteObjectsFromObject(flatten(payment)));
     }
+
+    orderMetadataSchemaProperties
+      .filter(
+        (key) =>
+          key !== 'payments' &&
+          key.slice(0, CUSTOM_FIELD_PREFIX_LENGTH) !== CUSTOM_FIELD_PREFIX,
+      )
+      .forEach((key) => {
+        if (order[key]) {
+          metadata[key] = order[key];
+        }
+      });
     return metadata;
   }
 }
