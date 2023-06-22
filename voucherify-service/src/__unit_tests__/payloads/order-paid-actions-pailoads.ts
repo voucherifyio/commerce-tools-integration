@@ -6,6 +6,8 @@ export const orderMetadataSchemaProperties = [
   'booking_end_date',
   'booking_start_date',
   'discount_codes',
+  'custom_filed_shippingInfo',
+  'lineItems',
 ];
 
 export const order = {

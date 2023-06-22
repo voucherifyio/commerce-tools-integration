@@ -35,14 +35,10 @@ export class OrderPaidActions implements OrderPaidActions {
         return (metadata[name] = variable);
       }
       if (Array.isArray(variable)) {
-        const newArray = [];
-        variable.forEach((element) => {
-          if (typeof variable !== 'object') {
-            newArray.push(element);
-          } else {
-            newArray.push(deleteObjectsFromObject(flatten(element)));
-          }
-        });
+        const newArray = variable.reduce((accumulator, currentValue) => {
+          accumulator.push(deleteObjectsFromObject(flatten(currentValue)));
+          return accumulator;
+        }, []);
         return (metadata[name] = newArray);
       }
       if (typeof variable === 'object') {
@@ -81,7 +77,7 @@ export class OrderPaidActions implements OrderPaidActions {
       )
       .forEach((key) => {
         if (order[key]) {
-          metadata[key] = order[key];
+          addToMataData(order[key], key);
         }
       });
     return metadata;
