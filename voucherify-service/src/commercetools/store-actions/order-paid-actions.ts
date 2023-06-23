@@ -7,7 +7,37 @@ import flatten from 'flat';
 
 const CUSTOM_FIELD_PREFIX_LENGTH = CUSTOM_FIELD_PREFIX.length;
 
-const getOrderMetadata = (order, customMetadataProperties) => {
+const addToMetadataReduceFunction = (order, accumulator, key) => {
+  const variable = order.custom.fields[key.slice(CUSTOM_FIELD_PREFIX_LENGTH)];
+  if (typeof variable !== 'object') {
+    accumulator[key] = variable;
+    return;
+  }
+  if (Array.isArray(variable)) {
+    accumulator[key] = variable.map((element) => {
+      if (typeof element !== 'object') {
+        return element;
+      }
+      return deleteObjectsFromObject(flatten(element));
+    });
+    return;
+  }
+  if (typeof variable === 'object') {
+    accumulator[key] = deleteObjectsFromObject(flatten(variable));
+    return;
+  }
+  return;
+};
+
+const getOrderMetadataFromCustomFields = (
+  order,
+  orderMetadataSchemaProperties,
+) => {
+  const customMetadataProperties = orderMetadataSchemaProperties.filter(
+    (key) =>
+      key.length > CUSTOM_FIELD_PREFIX_LENGTH &&
+      key.slice(0, CUSTOM_FIELD_PREFIX_LENGTH) === CUSTOM_FIELD_PREFIX,
+  );
   if (!(order?.custom?.fields && customMetadataProperties.length)) {
     return {};
   }
@@ -15,32 +45,30 @@ const getOrderMetadata = (order, customMetadataProperties) => {
     .filter(
       (key) => order.custom.fields?.[key.slice(CUSTOM_FIELD_PREFIX_LENGTH)],
     )
-    .reduce((accumulator, key) => {
-      const variable =
-        order.custom.fields[key.slice(CUSTOM_FIELD_PREFIX_LENGTH)];
-      if (typeof variable !== 'object') {
-        accumulator[key] = variable;
-        return;
-      }
-      if (Array.isArray(variable)) {
-        accumulator[key] = variable.map((element) => {
-          if (typeof element !== 'object') {
-            return element;
-          }
-          return deleteObjectsFromObject(flatten(element));
-        });
-        return;
-      }
-      if (typeof variable === 'object') {
-        accumulator[key] = deleteObjectsFromObject(flatten(variable));
-        return;
-      }
-      return;
-    }, {});
+    .reduce(
+      (accumulator, key) =>
+        addToMetadataReduceFunction(order, accumulator, key),
+      {},
+    );
+};
+
+const getOrderMetadata = (order, metadataProperties) => {
+  return metadataProperties
+    .filter(
+      (key) =>
+        key !== 'payments' &&
+        key.slice(0, CUSTOM_FIELD_PREFIX_LENGTH) !== CUSTOM_FIELD_PREFIX,
+    )
+    .reduce(
+      (accumulator, key) =>
+        addToMetadataReduceFunction(order, accumulator, key),
+      {},
+    );
 };
 
 export class OrderPaidActions implements OrderPaidActions {
   private ctClient: ByProjectKeyRequestBuilder;
+
   public setCtClient(value: ByProjectKeyRequestBuilder) {
     this.ctClient = value;
   }
@@ -51,16 +79,13 @@ export class OrderPaidActions implements OrderPaidActions {
   }
 
   public async getCustomMetadataForOrder(
-      order: CommerceToolsOrder,
-      orderMetadataSchemaProperties: string[],
+    order: CommerceToolsOrder,
+    orderMetadataSchemaProperties: string[],
   ): Promise<{ [key: string]: string }> {
-    const customMetaProperties = orderMetadataSchemaProperties.filter(
-        (key) =>
-            key.length > CUSTOM_FIELD_PREFIX_LENGTH &&
-            key.slice(0, CUSTOM_FIELD_PREFIX_LENGTH) === CUSTOM_FIELD_PREFIX,
-    );
-
-    const metadata = getOrderMetadata(order, customMetaProperties);
+    const metadata = {
+      ...getOrderMetadataFromCustomFields(order, orderMetadataSchemaProperties),
+      ...getOrderMetadata(order, orderMetadataSchemaProperties),
+    };
 
     if (orderMetadataSchemaProperties.includes('payments')) {
       const payments = [];
@@ -69,21 +94,9 @@ export class OrderPaidActions implements OrderPaidActions {
         payments.push(await this.findPayment(paymentReference.id));
       }
       metadata['payments'] = payments
-          .filter((payment) => payment?.id)
-          .map((payment) => deleteObjectsFromObject(flatten(payment)));
+        .filter((payment) => payment?.id)
+        .map((payment) => deleteObjectsFromObject(flatten(payment)));
     }
-
-    // orderMetadataSchemaProperties
-    //     .filter(
-    //         (key) =>
-    //             key !== 'payments' &&
-    //             key.slice(0, CUSTOM_FIELD_PREFIX_LENGTH) !== CUSTOM_FIELD_PREFIX,
-    //     )
-    //     .forEach((key) => {
-    //       if (order[key]) {
-    //         addToMataData(order[key], key);
-    //       }
-    //     });
 
     return metadata;
   }
