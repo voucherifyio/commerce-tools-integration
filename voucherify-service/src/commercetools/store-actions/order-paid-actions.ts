@@ -7,26 +7,20 @@ import flatten from 'flat';
 
 const CUSTOM_FIELD_PREFIX_LENGTH = CUSTOM_FIELD_PREFIX.length;
 
-const addToMetadataReduceFunction = (order, accumulator, key) => {
-  const variable = order.custom.fields[key.slice(CUSTOM_FIELD_PREFIX_LENGTH)];
+const addToMetadataReduceFunction = (accumulator, key, variable) => {
   if (typeof variable !== 'object') {
     accumulator[key] = variable;
-    return;
-  }
-  if (Array.isArray(variable)) {
+  } else if (Array.isArray(variable)) {
     accumulator[key] = variable.map((element) => {
       if (typeof element !== 'object') {
         return element;
       }
       return deleteObjectsFromObject(flatten(element));
     });
-    return;
-  }
-  if (typeof variable === 'object') {
+  } else if (typeof variable === 'object') {
     accumulator[key] = deleteObjectsFromObject(flatten(variable));
-    return;
   }
-  return;
+  return accumulator;
 };
 
 const getOrderMetadataFromCustomFields = (
@@ -47,7 +41,11 @@ const getOrderMetadataFromCustomFields = (
     )
     .reduce(
       (accumulator, key) =>
-        addToMetadataReduceFunction(order, accumulator, key),
+        addToMetadataReduceFunction(
+          accumulator,
+          key,
+          order.custom.fields[key.slice(CUSTOM_FIELD_PREFIX_LENGTH)],
+        ),
       {},
     );
 };
@@ -61,7 +59,7 @@ const getOrderMetadata = (order, metadataProperties) => {
     )
     .reduce(
       (accumulator, key) =>
-        addToMetadataReduceFunction(order, accumulator, key),
+        addToMetadataReduceFunction(accumulator, key, order[key]),
       {},
     );
 };
