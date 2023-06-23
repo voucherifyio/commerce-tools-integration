@@ -101,9 +101,9 @@ export class ApiExtensionService {
       'COMMERCE_TOOLS_API_EXTENSION_KEY',
     );
 
-    if (!apiExtensionKey) {
-      throw new Error(`Missing COMMERCE_TOOLS_API_EXTENSION_KEY configuration`);
-    }
+    // if (!apiExtensionKey) {
+    //   throw new Error(`Missing COMMERCE_TOOLS_API_EXTENSION_KEY configuration`);
+    // }
 
     await this.removeByAttr('key', apiExtensionKey);
 

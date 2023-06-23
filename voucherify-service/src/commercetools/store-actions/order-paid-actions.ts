@@ -51,13 +51,13 @@ export class OrderPaidActions implements OrderPaidActions {
   }
 
   public async getCustomMetadataForOrder(
-    order: CommerceToolsOrder,
-    orderMetadataSchemaProperties: string[],
+      order: CommerceToolsOrder,
+      orderMetadataSchemaProperties: string[],
   ): Promise<{ [key: string]: string }> {
     const customMetaProperties = orderMetadataSchemaProperties.filter(
-      (key) =>
-        key.length > CUSTOM_FIELD_PREFIX_LENGTH &&
-        key.slice(0, CUSTOM_FIELD_PREFIX_LENGTH) === CUSTOM_FIELD_PREFIX,
+        (key) =>
+            key.length > CUSTOM_FIELD_PREFIX_LENGTH &&
+            key.slice(0, CUSTOM_FIELD_PREFIX_LENGTH) === CUSTOM_FIELD_PREFIX,
     );
 
     const metadata = getOrderMetadata(order, customMetaProperties);
@@ -69,9 +69,22 @@ export class OrderPaidActions implements OrderPaidActions {
         payments.push(await this.findPayment(paymentReference.id));
       }
       metadata['payments'] = payments
-        .filter((payment) => payment?.id)
-        .map((payment) => deleteObjectsFromObject(flatten(payment)));
+          .filter((payment) => payment?.id)
+          .map((payment) => deleteObjectsFromObject(flatten(payment)));
     }
+
+    // orderMetadataSchemaProperties
+    //     .filter(
+    //         (key) =>
+    //             key !== 'payments' &&
+    //             key.slice(0, CUSTOM_FIELD_PREFIX_LENGTH) !== CUSTOM_FIELD_PREFIX,
+    //     )
+    //     .forEach((key) => {
+    //       if (order[key]) {
+    //         addToMataData(order[key], key);
+    //       }
+    //     });
+
     return metadata;
   }
 }

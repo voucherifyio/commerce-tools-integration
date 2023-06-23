@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import { RequestJsonLoggerInterface } from './request-json-logger-interface';
 
 export class RequestJsonFileLogger implements RequestJsonLoggerInterface {
@@ -11,11 +10,9 @@ export class RequestJsonFileLogger implements RequestJsonLoggerInterface {
     response: unknown,
     additional?: Record<any, any>,
   ) {
-    const fileName = path.join(
-      process.cwd(),
-      this.loggingDirectory,
-      `${label}-${Date.now()}.json`,
-    );
+    const fileName = `${process.cwd()}${
+      this.loggingDirectory ? `/${this.loggingDirectory}` : ''
+    }/${label}-${Date.now()}.json`;
 
     return fs.promises.writeFile(
       fileName,
