@@ -188,7 +188,7 @@ describe('CommerceToolsService', () => {
         },
       ]);
     };
-    service.setCartUpdateListener(mockFunction);
+    service.setCartUpdateListener(mockFunction as any);
     const result = await service.handleCartUpdate(cart as any);
     expect(result).toEqual({
       status: true,
