@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Order } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
-import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { OrderMapper } from '../integration/utils/mappers/order';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
 import { getSimpleMetadataForOrder } from '../commercetools/utils/mappers/getSimpleMetadataForOrder';
 import { OrderPaidActions } from '../commercetools/store-actions/order-paid-actions';
 import { mergeTwoObjectsIntoOne } from '../integration/utils/mergeTwoObjectsIntoOne';
+import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -23,7 +23,9 @@ export class OrderImportService {
     private readonly commercetoolsService: CommercetoolsService,
   ) {}
 
-  public async *getAllOrders(minDateTime?: string): AsyncGenerator<Order[]> {
+  public async *getPartialOrders(
+    minDateTime?: string,
+  ): AsyncGenerator<Order[]> {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const limit = 100;
     let page = 0;
@@ -58,7 +60,7 @@ export class OrderImportService {
     } while (!allOrdersCollected);
   }
 
-  public async migrateOrders(period?: string) {
+  private async getAllOrders(period?: string) {
     const orders = [];
     const orderMetadataSchemaProperties =
       await this.voucherifyClient.getMetadataSchemaProperties('order');
@@ -66,7 +68,7 @@ export class OrderImportService {
     const orderActions = new OrderPaidActions();
     orderActions.setCtClient(this.commerceToolsConnectorService.getClient());
 
-    for await (const ordersBatch of this.getAllOrders(period)) {
+    for await (const ordersBatch of this.getPartialOrders(period)) {
       for (const order of ordersBatch) {
         if (order.paymentState !== 'Paid') {
           continue;
@@ -89,7 +91,11 @@ export class OrderImportService {
         );
       }
     }
+    return orders;
+  }
 
+  public async migrateOrders(period?: string) {
+    const orders = await this.getAllOrders(period);
     console.log(`Sending ${orders.length} orders to Voucherify\n`);
 
     const client = this.voucherifyClient.getClient();

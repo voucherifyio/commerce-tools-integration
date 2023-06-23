@@ -4,6 +4,7 @@ import loadingCli from 'loading-cli';
 import { ProductImportService } from '../import/product-import.service';
 import { OrderImportService } from '../import/order-import.service';
 import { CustomerImportService } from '../import/customer-import.service';
+import { CommandMetadata } from 'nest-commander/src/command-runner.interface';
 
 type ResourceTypeArg = {
   name: 'products' | 'orders' | 'customers';
@@ -24,13 +25,14 @@ interface MigrateCommandInterface {
   description:
     'Sync resources from commercetools to Voucherify. You can add optional argument to sync not all resources, but from specific time',
 })
-export class MigrateCommand implements CommandRunner {
+export class MigrateCommand extends CommandRunner {
   constructor(
     private readonly productImportService: ProductImportService,
     private readonly orderImportService: OrderImportService,
     private readonly customerImportService: CustomerImportService,
-    private readonly logger: Logger,
-  ) {}
+  ) {
+    super();
+  }
 
   @Option({
     flags: '--type [string]',

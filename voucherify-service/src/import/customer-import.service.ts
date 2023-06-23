@@ -3,12 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { createReadStream, unlink } from 'fs';
 import FormData from 'form-data';
 import fetch from 'node-fetch2';
-import { CommercetoolsConnectorService } from 'src/commercetools/commercetools-connector.service';
 import { Customer } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
-import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import crypto = require('crypto');
 import { OrderImportService } from './order-import.service';
+import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
+import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -84,7 +84,7 @@ export class CustomerImportService {
       });
     }
 
-    for await (const ordersBatch of this.orderImportService.getAllOrders(
+    for await (const ordersBatch of this.orderImportService.getPartialOrders(
       period,
     )) {
       ordersBatch.forEach((order) => {

@@ -2,12 +2,12 @@ import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../.
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../voucherify/__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../../commerceTools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
-import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 import { promotions } from './snapshots/voucherify-promotions.snapshot';
 import { CommercetoolsService } from '../../../commercetools/commercetools.service';
 import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../commercetools/custom-types/__mocks__/types.service';
+import { VoucherifyConnectorService } from '../../../voucherify/voucherify-connector.service';
 describe('when adding a promottion to a cart', () => {
   let commercetoolsService: CommercetoolsService;
   let voucherifyConnectorService: VoucherifyConnectorService;

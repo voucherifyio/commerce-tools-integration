@@ -10,11 +10,13 @@ import { CustomTypesService } from '../commercetools/custom-types/custom-types.s
   2. coupon tax category - needed for any coupon or gift card with a fixed amount discount
   `,
 })
-export class ConfigCommand implements CommandRunner {
+export class ConfigCommand extends CommandRunner {
   constructor(
     private readonly typesService: CustomTypesService,
     private readonly taxCategoriesService: TaxCategoriesService,
-  ) {}
+  ) {
+    super();
+  }
   async run(): Promise<void> {
     const spinnerCouponsTypes = loadingCli(
       `[1/2] Attempt to configure required coupon types in Commercetools`,

@@ -22,7 +22,7 @@ export class HandleTimeoutInterceptor implements NestInterceptor {
     next: CallHandler,
   ): Promise<Observable<any>> {
     const body = context?.switchToHttp()?.getRequest()?.body;
-    if (!(body.action === 'Update' && body.resource.typeId === 'cart')) {
+    if (!(body?.action === 'Update' && body?.resource.typeId === 'cart')) {
       return next.handle();
     }
     const now = Date.now();

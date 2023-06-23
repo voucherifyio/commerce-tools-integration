@@ -3,13 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { createReadStream, unlink } from 'fs';
 import FormData from 'form-data';
 import fetch from 'node-fetch2';
-import { CommercetoolsConnectorService } from 'src/commercetools/commercetools-connector.service';
 import { Product } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
-
 import crypto = require('crypto');
-import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { getMetadata } from '../integration/utils/mappers/product';
+import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
+import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {

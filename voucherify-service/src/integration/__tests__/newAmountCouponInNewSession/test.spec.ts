@@ -7,10 +7,10 @@ import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../v
 import { getCommerceToolsConnectorServiceMockWithEmptyProductResponse } from '../../../commercetools/__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 import { CommercetoolsService } from '../../../commercetools/commercetools.service';
-import { VoucherifyConnectorService } from 'src/voucherify/voucherify-connector.service';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
-import { CommercetoolsConnectorService } from 'src/commercetools/commercetools-connector.service';
+import { VoucherifyConnectorService } from '../../../voucherify/voucherify-connector.service';
+import { CommercetoolsConnectorService } from '../../../commercetools/commercetools-connector.service';
 describe('When one -20€ amount voucher is provided in new session', () => {
   let commercetoolsService: CommercetoolsService;
   let voucherifyConnectorService: VoucherifyConnectorService;

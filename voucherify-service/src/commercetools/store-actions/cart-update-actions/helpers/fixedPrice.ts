@@ -119,6 +119,7 @@ function getLineItemCustomFieldActions(
 export default function mapValidateCouponsResultToLineProductsWithFixedAmount(
   dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
 ): CartActionSetLineItemCustomType[] {
+  console.log(1234, JSON.stringify(dataToRunCartActionsBuilder));
   const { applicableCoupons } = dataToRunCartActionsBuilder;
 
   const fixedTypeCoupons = applicableCoupons.filter(

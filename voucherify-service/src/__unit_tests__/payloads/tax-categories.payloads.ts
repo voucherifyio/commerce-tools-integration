@@ -1,0 +1,47 @@
+export const getCouponTaxCategoryAndUpdateItIfNeededResponse = {
+  id: '1f84a16d-00b2-42c3-9367-a7a31bf2ebce',
+  version: 5,
+  versionModifiedAt: '2023-05-31T16:04:06.867Z',
+  createdAt: '2023-05-31T16:04:06.656Z',
+  lastModifiedAt: '2023-05-31T16:04:06.867Z',
+  lastModifiedBy: {
+    clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i',
+    isPlatformClient: false,
+  },
+  createdBy: { clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i', isPlatformClient: false },
+  name: 'coupon',
+  rates: [
+    {
+      name: 'coupon',
+      amount: 0,
+      includedInPrice: true,
+      country: 'DE',
+      id: '3SF4_HMk',
+      subRates: [],
+    },
+    {
+      name: 'coupon',
+      amount: 0,
+      includedInPrice: true,
+      country: 'AT',
+      id: 'lRz7jEYP',
+      subRates: [],
+    },
+    {
+      name: 'coupon',
+      amount: 0,
+      includedInPrice: true,
+      country: 'US',
+      id: 'Uw-uqD9r',
+      subRates: [],
+    },
+    {
+      name: 'coupon',
+      amount: 0,
+      includedInPrice: true,
+      country: 'NL',
+      id: 'StiKGNhA',
+      subRates: [],
+    },
+  ],
+};

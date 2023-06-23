@@ -154,6 +154,7 @@ export class TaxCategoriesService {
         },
       })
       .execute();
+
     const success = [200, 201].includes(response.statusCode);
     if (success) {
       this.logger.debug({ msg: 'Updated countries for coupon tax category' });

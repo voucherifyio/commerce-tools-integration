@@ -13,11 +13,13 @@ type ApiExtensionDeleteCommandOptions = {
   description:
     'Delete commercetools API Extension by "Key" value configured in COMMERCE_TOOLS_API_EXTENSION_KEY environment variable',
 })
-export class ApiExtensionDeleteCommand implements CommandRunner {
+export class ApiExtensionDeleteCommand extends CommandRunner {
   constructor(
     private readonly registerService: ApiExtensionService,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    super();
+  }
   async run(
     passedParam: string[],
     options?: ApiExtensionDeleteCommandOptions,
