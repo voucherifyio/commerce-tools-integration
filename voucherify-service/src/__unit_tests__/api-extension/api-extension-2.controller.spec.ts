@@ -4,6 +4,9 @@ import { ApiExtensionController } from '../../commercetools/api-extension.contro
 import { CommercetoolsService } from '../../commercetools/commercetools.service';
 import { getCommerceToolsServiceMockWithMockedResponse } from '../../commercetools/__mocks__/commercetools.service';
 import { cart } from '../payloads/api-extension.controller.spec.payloads';
+import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
+
+const moduleMocker = new ModuleMocker(global);
 
 describe('ApiExtensionController2', () => {
   it('should execute responseExpress with { actions: [] }', async () => {
@@ -18,7 +21,17 @@ describe('ApiExtensionController2', () => {
           }),
         },
       ],
-    }).compile();
+    })
+      .useMocker((token) => {
+        if (typeof token === 'function') {
+          const mockMetadata = moduleMocker.getMetadata(
+            token,
+          ) as MockFunctionMetadata<any, any>;
+          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
+          return new Mock();
+        }
+      })
+      .compile();
 
     const controller = module.get<ApiExtensionController>(
       ApiExtensionController,
@@ -50,7 +63,17 @@ describe('ApiExtensionController2', () => {
           }),
         },
       ],
-    }).compile();
+    })
+      .useMocker((token) => {
+        if (typeof token === 'function') {
+          const mockMetadata = moduleMocker.getMetadata(
+            token,
+          ) as MockFunctionMetadata<any, any>;
+          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
+          return new Mock();
+        }
+      })
+      .compile();
 
     const controller = module.get<ApiExtensionController>(
       ApiExtensionController,

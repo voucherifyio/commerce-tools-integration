@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { ApiExtensionController } from '../../commercetools/api-extension.controller';
 import { CommercetoolsService } from '../../commercetools/commercetools.service';
 import { cart } from '../payloads/api-extension.controller.spec.payloads';
+import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 
 describe('ApiExtensionController', () => {
   it('should execute responseExpress with { actions: [] } after an error occurs', async () => {
