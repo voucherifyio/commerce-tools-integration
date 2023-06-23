@@ -86,10 +86,6 @@ export class IntegrationService {
       await this.voucherifyService.getPromotions(cart, uniqueCoupons);
 
     if (typeof cartUpdateActions?.setAvailablePromotions === 'function') {
-      console.log(
-        'cartUpdateActions.setAvailablePromotions(availablePromotions)',
-        JSON.stringify(availablePromotions),
-      );
       cartUpdateActions.setAvailablePromotions(availablePromotions);
     }
 
@@ -150,10 +146,6 @@ export class IntegrationService {
       );
       if (applicableCodes.length === 0) {
         cartUpdateActions.setInapplicableCoupons(inapplicableRedeemables);
-        console.log(
-          'cartUpdateActions.setInapplicableCoupons(inapplicableRedeemables)',
-          JSON.stringify(inapplicableRedeemables),
-        );
         return;
       }
       //We need to do another call to V% if there is any applicable coupon in the cart
@@ -188,11 +180,6 @@ export class IntegrationService {
             stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
           )
         : { found: [], notFound: [] };
-
-    console.log(
-      'cartUpdateActions.getPricesOfProductsFromCommercetools(stackableRedeemablesResultDiscountUnitWithPriceAndCodes)',
-      JSON.stringify(stackableRedeemablesResultDiscountUnitWithPriceAndCodes),
-    );
 
     const codesWithMissingProductsToAdd = getCodesIfProductNotFoundIn(
       stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
@@ -254,41 +241,6 @@ export class IntegrationService {
       typeof cartUpdateActions?.setInapplicableCoupons === 'function' &&
       typeof cartUpdateActions?.setProductsToAdd === 'function'
     ) {
-      console.log(
-        'cartUpdateActions.setSessionKey(validatedCoupons?.session?.key)',
-        JSON.stringify(validatedCoupons?.session?.key),
-      );
-      console.log(
-        'cartUpdateActions.setTotalDiscountAmount( calculateTotalDiscountAmount(validatedCoupons))',
-        JSON.stringify(calculateTotalDiscountAmount(validatedCoupons)),
-      );
-      console.log(
-        'cartUpdateActions.setApplicableCoupons(xx)',
-        JSON.stringify(
-          this.voucherifyService.setBannerOnValidatedPromotions(
-            filterOutRedeemablesIfCodeIn(
-              getRedeemablesByStatus(
-                validatedCoupons.redeemables,
-                'APPLICABLE',
-              ),
-              codesWithMissingProductsToAdd,
-            ),
-            promotions,
-          ),
-        ),
-      );
-      console.log(
-        'cartUpdateActions.setInapplicableCoupons(xxx)',
-        JSON.stringify([
-          ...inapplicableRedeemables,
-          ...replaceCodesWithInapplicableCoupons(codesWithMissingProductsToAdd),
-        ]),
-      );
-      console.log(
-        'cartUpdateActions.setProductsToAdd(xxx)',
-        JSON.stringify(productsToAdd),
-      );
-
       cartUpdateActions.setSessionKey(validatedCoupons?.session?.key);
       cartUpdateActions.setTotalDiscountAmount(
         calculateTotalDiscountAmount(validatedCoupons),
