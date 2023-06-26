@@ -6,6 +6,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
+    "gcp-build": "nest build",
     "prebuild": "rimraf dist",
     "build": "nest build",
     "command": "nest start --config nest-commander.json --",
