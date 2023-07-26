@@ -125,7 +125,7 @@ export class IntegrationService {
         this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT'),
       );
 
-    let validatedCoupons: ValidationValidateStackableResponse =
+    let validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchers(
         buildValidationsValidateStackableParamsForVoucherify(
           couponsAppliedAndNewLimitedByConfig,
@@ -135,7 +135,10 @@ export class IntegrationService {
       );
 
     const inapplicableRedeemables = getRedeemablesByStatus(
-      validatedCoupons.redeemables,
+      [
+        ...validatedCoupons.redeemables,
+        ...(validatedCoupons?.inapplicable_redeemables || []),
+      ],
       'INAPPLICABLE',
     );
     const inapplicableCodes = redeemablesToCodes(inapplicableRedeemables);
