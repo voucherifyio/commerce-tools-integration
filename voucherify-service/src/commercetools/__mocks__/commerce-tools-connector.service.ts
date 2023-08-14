@@ -506,5 +506,6 @@ export const getConfigForAPIExtensionServiceTest = () => {
     }
     return null;
   });
+
   return configService;
 };

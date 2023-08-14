@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
 import { RequestJsonLogger } from '../configs/requestJsonLogger';
 import { CustomTypesService } from '../commercetools/custom-types/custom-types.service';
@@ -20,7 +20,7 @@ describe('CommerceToolsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         {
-          provide: ConfigModule,
+          provide: ConfigService,
           useValue: getConfigForCommerceToolsServiceTest(),
         },
         CommercetoolsService,
@@ -31,7 +31,6 @@ describe('CommerceToolsService', () => {
               cart,
             ),
         },
-        ConfigService,
         { provide: Logger, useValue: getLoggerForCommerceToolsServiceTest() },
         CustomTypesService,
         {
@@ -194,16 +193,16 @@ describe('CommerceToolsService', () => {
       status: true,
       actions: [
         {
-          action: 'addCustomLineItem',
-          name: { en: 'Coupon codes discount', de: 'Gutscheincodes rabatt' },
-          quantity: 1,
-          money: {
-            centAmount: -1000,
-            type: 'centPrecision',
-            currencyCode: 'USD',
-          },
-          slug: 'Voucher, ',
-          taxCategory: { id: '64a3b50d-245c-465a-bb5e-faf59d729031' },
+          action: 'setDirectDiscounts',
+          discounts: [
+            {
+              target: { type: 'lineItems', predicate: 'true' },
+              value: {
+                type: 'absolute',
+                money: [{ centAmount: 1000, currencyCode: 'USD' }],
+              },
+            },
+          ],
         },
         {
           action: 'setLineItemCustomType',

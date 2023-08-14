@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
 import { RequestJsonLogger } from '../configs/requestJsonLogger';
 import { CommercetoolsConnectorService } from '../commercetools/commercetools-connector.service';
@@ -18,10 +18,6 @@ describe('ApiExtensionService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        {
-          provide: ConfigModule,
-          useValue: getConfigForAPIExtensionServiceTest(),
-        },
         ApiExtensionService,
         {
           provide: CommercetoolsConnectorService,
@@ -30,6 +26,10 @@ describe('ApiExtensionService', () => {
         },
         Logger,
         RequestJsonLogger,
+        {
+          provide: ConfigService,
+          useValue: getConfigForAPIExtensionServiceTest(),
+        },
       ],
     })
       .useMocker((token) => {
