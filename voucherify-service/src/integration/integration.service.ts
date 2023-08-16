@@ -143,7 +143,11 @@ export class IntegrationService {
     );
     const inapplicableCodes = redeemablesToCodes(inapplicableRedeemables);
 
-    if (validatedCoupons.valid === false) {
+    if (
+      //Checking if project uses partial redeemables
+      !Array.isArray(validatedCoupons?.inapplicable_redeemables) &&
+      validatedCoupons.valid === false
+    ) {
       const applicableCodes = couponsAppliedAndNewLimitedByConfig.filter(
         (coupon) => !inapplicableCodes.includes(coupon.code),
       );
