@@ -141,6 +141,10 @@ export class IntegrationService {
       ],
       'INAPPLICABLE',
     );
+    if (typeof cartUpdateActions?.setInapplicableCoupons === 'function') {
+      cartUpdateActions.setInapplicableCoupons(inapplicableRedeemables);
+    }
+
     const inapplicableCodes = redeemablesToCodes(inapplicableRedeemables);
 
     if (
@@ -152,7 +156,6 @@ export class IntegrationService {
         (coupon) => !inapplicableCodes.includes(coupon.code),
       );
       if (applicableCodes.length === 0) {
-        cartUpdateActions.setInapplicableCoupons(inapplicableRedeemables);
         return;
       }
       //We need to do another call to V% if there is any applicable coupon in the cart
