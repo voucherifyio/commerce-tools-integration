@@ -45,6 +45,7 @@ import { getIncorrectPrices } from './utils/getIncorrectPrices';
 import { getCodesIfProductNotFoundIn } from './utils/getCodesIfProductNotFoundIn';
 import { getItemsWithCorrectedPrices } from './utils/getItemsWithPricesCorrected';
 import { getProductsToAdd } from './utils/getProductsToAddWithPricesCorrected';
+import { getOrderMetadata } from './utils/getOrderMetadata';
 
 @Injectable()
 export class IntegrationService {
@@ -269,7 +270,7 @@ export class IntegrationService {
   ) {
     const { id, customerId } = order;
 
-    //products metadata
+    //schema of product metadata
     const productMetadataSchemaProperties =
       await this.voucherifyConnectorService.getMetadataSchemaProperties(
         'product',
@@ -280,38 +281,17 @@ export class IntegrationService {
       productMetadataSchemaProperties,
     );
 
-    //order metadata
+    //schema of order metadata
     const orderMetadataSchemaProperties =
       await this.voucherifyConnectorService.getMetadataSchemaProperties(
         'order',
       );
 
-    let orderMetadata = {};
-
-    if (
-      typeof order?.rawOrder === 'object' &&
-      order?.rawOrder !== undefined &&
-      orderMetadataSchemaProperties.length > 0
-    ) {
-      const simpleMetadata = getSimpleMetadataForOrder(
-        order.rawOrder,
-        orderMetadataSchemaProperties,
-      );
-      if (typeof orderPaidActions?.getCustomMetadataForOrder !== 'function') {
-        orderMetadata = simpleMetadata;
-      } else {
-        const customMetadata = await orderPaidActions.getCustomMetadataForOrder(
-          order.rawOrder,
-          orderMetadataSchemaProperties,
-        );
-        if (Object.keys(customMetadata).length > 0) {
-          orderMetadata = mergeTwoObjectsIntoOne(
-            customMetadata,
-            simpleMetadata,
-          );
-        }
-      }
-    }
+    const orderMetadata = getOrderMetadata(
+      order?.rawOrder,
+      orderMetadataSchemaProperties,
+      orderPaidActions.getCustomMetadataForOrder,
+    );
 
     const coupons: Coupon[] = (order.coupons ?? []).filter(
       (coupon) =>
