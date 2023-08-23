@@ -86,11 +86,6 @@ function updateDiscountsCodes(
       ?.discount_codes ?? []
   ).map(deserializeCoupons);
   const coupons = [
-    //default below
-    {
-      code: undefined,
-      status: undefined,
-    } as Coupon,
     ...availablePromotions,
     ...applicableCoupons.map((coupon) => {
       let value;
