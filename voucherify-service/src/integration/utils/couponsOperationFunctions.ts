@@ -18,7 +18,7 @@ export function filterOutCouponsTypePromotionTier(coupons: Coupon[]) {
 }
 
 export function uniqueCouponsByCodes(coupons: Coupon[]) {
-  return uniqBy(coupons, 'code').filter((coupon) => coupon.code);
+  return uniqBy(coupons, 'code');
 }
 
 export function codesFromCoupons(coupons: Coupon[]) {
