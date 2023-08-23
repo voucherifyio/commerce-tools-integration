@@ -233,10 +233,9 @@ export class IntegrationService {
         );
     }
 
-    const productsToAdd: ProductToAdd[] = getProductsToAdd(
-      validatedCoupons,
-      currentPricesOfProducts,
-    );
+    const productsToAdd: ProductToAdd[] = validatedCoupons.order
+      ? getProductsToAdd(validatedCoupons, currentPricesOfProducts)
+      : [];
 
     this.logger.debug({
       validatedCoupons,
