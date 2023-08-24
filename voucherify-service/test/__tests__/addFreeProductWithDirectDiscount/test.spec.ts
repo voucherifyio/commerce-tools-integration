@@ -5,7 +5,7 @@ import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../_
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
-import { getConfigServiceMockWithConfiguredDirectDiscount } from '../__mocks__/config-service.service';
+import { getConfigServiceMockWithConfiguredDirectDiscount } from '../../__mocks__/config-service.service';
 import { ConfigService } from '@nestjs/config';
 import { CommercetoolsService } from '../../../src/commercetools/commercetools.service';
 import { VoucherifyConnectorService } from '../../../src/voucherify/voucherify-connector.service';
