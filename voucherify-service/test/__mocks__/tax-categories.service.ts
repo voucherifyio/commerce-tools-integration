@@ -1,5 +1,5 @@
 import { TaxCategory } from '@commercetools/platform-sdk';
-import { TaxCategoriesService } from '../tax-categories.service';
+import { TaxCategoriesService } from '../../src/commercetools/tax-categories/tax-categories.service';
 
 const taxRateForCountry = (country) => ({
   name: 'coupon',
@@ -62,7 +62,7 @@ export const defaultGetCouponTaxCategoryResponse = {
 export const getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse =
   () => {
     const taxCategoriesService = jest.createMockFromModule(
-      '../tax-categories.service',
+      '../../src/commercetools/tax-categories/tax-categories.service',
     ) as TaxCategoriesService;
 
     taxCategoriesService.getCouponTaxCategoryAndUpdateItIfNeeded = jest
@@ -77,7 +77,7 @@ export const getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse =
 export const getTaxCategoryServiceMockWithNotDefinedTaxCategoryResponse =
   () => {
     const taxCategoriesService = jest.createMockFromModule(
-      '../tax-categories.service',
+      '../../src/commercetools/tax-categories/tax-categories.service',
     ) as TaxCategoriesService;
 
     taxCategoriesService.addCountryToCouponTaxCategory = jest.fn();

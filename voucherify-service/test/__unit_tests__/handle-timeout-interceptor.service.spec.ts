@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
 import { CommercetoolsService } from '../../src/commercetools/commercetools.service';
-import { getCommerceToolsServiceMockWithMockedResponse } from '../../src/commercetools/__mocks__/commercetools.service';
+import { getCommerceToolsServiceMockWithMockedResponse } from '../__mocks__/commercetools.service';
 import { cart } from './payloads/api-extension.controller.spec.payloads';
 import { HandleTimeoutInterceptor } from '../../src/commercetools/handle-timeout-interceptor.service';
 

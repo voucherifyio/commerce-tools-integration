@@ -1,8 +1,8 @@
-import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../src/commercetools/tax-categories/__mocks__/tax-categories.service';
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../__mocks__/tax-categories.service';
 import {
   getTypesServiceMockWithConfiguredCouponTypeResponse,
   getTypesServiceMockWithNotDefinedCouponTypeResponse,
-} from '../../../src/commercetools/custom-types/__mocks__/types.service';
+} from '../../__mocks__/types.service';
 import { buildCartServiceWithMockedDependencies } from '../cart-service.factory';
 describe('Cart custom custom-types', () => {
   it('Should add custom coupon type for initialized cart', async () => {

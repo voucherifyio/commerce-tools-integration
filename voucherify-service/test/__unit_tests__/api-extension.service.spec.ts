@@ -7,7 +7,7 @@ import { ApiExtensionService } from '../../src/commercetools/api-extension.servi
 import {
   getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest,
   getConfigForAPIExtensionServiceTest,
-} from '../../src/commercetools/__mocks__/commerce-tools-connector.service';
+} from '../__mocks__/commerce-tools-connector.service';
 import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 
 const moduleMocker = new ModuleMocker(global);

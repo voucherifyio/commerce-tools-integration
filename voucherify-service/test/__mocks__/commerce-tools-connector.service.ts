@@ -1,10 +1,10 @@
-import { CommercetoolsConnectorService } from '../commercetools-connector.service';
+import { CommercetoolsConnectorService } from '../../src/commercetools/commercetools-connector.service';
 import { ConfigService } from '@nestjs/config';
 
 export const getCommerceToolsConnectorServiceMockWithEmptyProductResponse =
   () => {
     const commerceToolsConnectoService = jest.createMockFromModule(
-      '../commercetools-connector.service',
+      '../../src/commercetools/commercetools-connector.service',
     ) as CommercetoolsConnectorService & { getProductMock: jest.Mock };
     const products: any = {
       body: {
@@ -36,7 +36,7 @@ export const getCommerceToolsConnectorServiceMockWithProductResponse = (
   product: Product,
 ) => {
   const commerceToolsConnectorService = jest.createMockFromModule(
-    '../commercetools-connector.service',
+    '../../src/commercetools/commercetools-connector.service',
   ) as CommercetoolsConnectorService;
 
   const products: any = {
@@ -184,7 +184,7 @@ export const getCommerceToolsConnectorServiceMockWithProductResponse = (
 
 export const getCommerceToolsConnectorServiceMockWithCouponTypes = () => {
   const commerceToolsConnectoService = jest.createMockFromModule(
-    '../commercetools-connector.service',
+    '../../src/commercetools/commercetools-connector.service',
   ) as CommercetoolsConnectorService;
 
   const get = (payload) => {
@@ -328,7 +328,7 @@ export const getCommerceToolsConnectorServiceMockWithCouponTypes = () => {
 export const getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest =
   () => {
     const commerceToolsConnectoService = jest.createMockFromModule(
-      '../commercetools-connector.service',
+      '../../src/commercetools/commercetools-connector.service',
     ) as CommercetoolsConnectorService;
 
     const get = (payload) => {
@@ -488,7 +488,7 @@ export const getCommerceToolsConnectorServiceMockForCommerceToolsServiceTest = (
   cart,
 ) => {
   const commerceToolsConnectoService = jest.createMockFromModule(
-    '../commercetools-connector.service',
+    '../../src/commercetools/commercetools-connector.service',
   ) as CommercetoolsConnectorService;
 
   commerceToolsConnectoService.findCart = jest.fn().mockResolvedValue(cart);

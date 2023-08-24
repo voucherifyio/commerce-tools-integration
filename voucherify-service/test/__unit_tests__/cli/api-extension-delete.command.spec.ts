@@ -19,7 +19,7 @@ import { ApiExtensionDeleteCommand } from '../../../src/cli/api-extension-delete
 import {
   getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest,
   getConfigForAPIExtensionServiceTest,
-} from '../../../src/commercetools/__mocks__/commerce-tools-connector.service';
+} from '../../__mocks__/commerce-tools-connector.service';
 import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 
 const moduleMocker = new ModuleMocker(global);

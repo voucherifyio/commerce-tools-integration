@@ -1,13 +1,13 @@
-import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../../src/commercetools/tax-categories/__mocks__/tax-categories.service';
-import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../../src/voucherify/__mocks__/voucherify-connector.service';
-import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../../../src/commercetools/__mocks__/commerce-tools-connector.service';
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../__mocks__/tax-categories.service';
+import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../__mocks__/voucherify-connector.service';
+import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../../__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../../cart-service.factory';
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 import { getConfigServiceMockWithConfiguredDirectDiscount } from '../../__mocks__/config-service.service';
 import { ConfigService } from '@nestjs/config';
 import { Cart } from '@commercetools/platform-sdk';
-import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../../src/commercetools/custom-types/__mocks__/types.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../__mocks__/types.service';
 import { CommercetoolsService } from '../../../../src/commercetools/commercetools.service';
 import { VoucherifyConnectorService } from '../../../../src/voucherify/voucherify-connector.service';
 describe('when applying discount code which adds free product to the cart', () => {

@@ -13,7 +13,7 @@ import { CommercetoolsService } from '../../src/commercetools/commercetools.serv
 import { CustomTypesService } from '../../src/commercetools/custom-types/custom-types.service';
 import { TaxCategoriesService } from '../../src/commercetools/tax-categories/tax-categories.service';
 import { ConfigCommand } from '../../src/cli/config.command';
-import { getCommerceToolsConnectorServiceMockWithCouponTypes } from '../../src/commercetools/__mocks__/commerce-tools-connector.service';
+import { getCommerceToolsConnectorServiceMockWithCouponTypes } from '../__mocks__/commerce-tools-connector.service';
 import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 
 const moduleMocker = new ModuleMocker(global);

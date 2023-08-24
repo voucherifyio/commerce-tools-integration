@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
 import { ApiExtensionController } from '../../../src/commercetools/api-extension.controller';
 import { CommercetoolsService } from '../../../src/commercetools/commercetools.service';
-import { getCommerceToolsServiceMockWithMockedResponse } from '../../../src/commercetools/__mocks__/commercetools.service';
+import { getCommerceToolsServiceMockWithMockedResponse } from '../../__mocks__/commercetools.service';
 import { cart } from '../payloads/api-extension.controller.spec.payloads';
 
 describe('ApiExtensionController', () => {

@@ -1,10 +1,10 @@
-import { CommercetoolsService } from '../commercetools.service';
+import { CommercetoolsService } from '../../src/commercetools/commercetools.service';
 
 export const getCommerceToolsServiceMockWithMockedResponse = (
   response?: any,
 ) => {
   const commerceToolsConnectoService = jest.createMockFromModule(
-    '../commercetools.service',
+    '../../src/commercetools/commercetools.service',
   ) as CommercetoolsService & { getProductMock: jest.Mock };
 
   commerceToolsConnectoService.handleCartUpdate = jest

@@ -7,9 +7,9 @@ import { TaxCategoriesService } from '../../src/commercetools/tax-categories/tax
 import { CommercetoolsConnectorService } from '../../src/commercetools/commercetools-connector.service';
 import { CommercetoolsService } from '../../src/commercetools/commercetools.service';
 import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
-import { getCommerceToolsConnectorServiceMockForCommerceToolsServiceTest } from '../../src/commercetools/__mocks__/commerce-tools-connector.service';
+import { getCommerceToolsConnectorServiceMockForCommerceToolsServiceTest } from '../__mocks__/commerce-tools-connector.service';
 import { cart } from './payloads/commercetools.service.spec.payloads';
-import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../src/commercetools/tax-categories/__mocks__/tax-categories.service';
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../__mocks__/tax-categories.service';
 
 const moduleMocker = new ModuleMocker(global);
 
