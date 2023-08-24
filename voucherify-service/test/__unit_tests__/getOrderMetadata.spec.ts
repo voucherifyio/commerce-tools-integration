@@ -40,20 +40,4 @@ describe('Get order metadata', () => {
       custom_filed_session: 'existing-session-id',
     });
   });
-
-  // it('should deserializeCoupons correctly', () => {
-  //   expect(
-  //     deserializeCoupons(deserializeCouponsSerializedDiscountOrCode),
-  //   ).toEqual({
-  //     code: 'unit1',
-  //     status: 'APPLIED',
-  //     type: 'voucher',
-  //     value: 37375,
-  //   });
-  //
-  //   expect(deserializeCoupons('test')).toEqual({
-  //     code: 'test',
-  //     status: 'NEW',
-  //   });
-  // });
 });
