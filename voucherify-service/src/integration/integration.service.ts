@@ -287,7 +287,7 @@ export class IntegrationService {
         'order',
       );
 
-    const orderMetadata = getOrderMetadata(
+    const orderMetadata = await getOrderMetadata(
       order?.rawOrder,
       orderMetadataSchemaProperties,
       orderPaidActions.getCustomMetadataForOrder,
