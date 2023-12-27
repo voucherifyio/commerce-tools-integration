@@ -27,7 +27,7 @@
     "api-extension-update": "nest start --config nest-commander.json -- integration-update",
     "api-extension-delete": "nest start --config nest-commander.json -- integration-delete",
     "migrate": "nest start --config nest-commander.json -- migrate",
-    "ct-connect-post-deploy": "npm run build && npm run api-extension-add",
+    "ct-connect-post-deploy": "npm run build && npm run config && npm run api-extension-add",
     "ct-connect-pre-undeploy": "npm run api-extension-delete"
   },
   "dependencies": {
