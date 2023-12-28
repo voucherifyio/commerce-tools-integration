@@ -81,8 +81,19 @@ export class ProductImportService {
 
     for await (const productsBatch of this.getAllProducts(period)) {
       productsBatch.forEach((product) => {
+        const productNameCountry = this.configService.get<string>(
+          'COMMERCE_TOOLS_PRODUCT_NAME_COUNTRY',
+        );
+        const names = product.masterData.current.name;
+        const namesKeys = Object.keys(names);
+        const name = productNameCountry
+          ? names[productNameCountry]
+          : namesKeys.length > 0
+          ? names[namesKeys[0]]
+          : undefined;
+
         products.push({
-          name: product.masterData.current.name.en,
+          name,
           source_id: product.id,
           ...getMetadata(
             product.masterData.current.masterVariant.attributes,
@@ -94,7 +105,7 @@ export class ProductImportService {
           product.masterData.current.variants.forEach((variant) => {
             skus.push({
               product_id: product.id,
-              sku: product.masterData.current.name.en,
+              sku: name,
               source_id: variant.sku,
               price: product.masterData.current.masterVariant.price
                 ? product.masterData.current.masterVariant.price.value
@@ -106,7 +117,7 @@ export class ProductImportService {
         } else {
           skus.push({
             product_id: product.id,
-            sku: product.masterData.current.name.en,
+            sku: name,
             source_id: product.masterData.current.masterVariant.sku,
             price: product.masterData.current.masterVariant.price
               ? product.masterData.current.masterVariant.price.value
