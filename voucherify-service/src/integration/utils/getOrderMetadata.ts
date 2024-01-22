@@ -4,7 +4,7 @@ import { mergeTwoObjectsIntoOne } from './mergeTwoObjectsIntoOne';
 export const getOrderMetadata = async (
   rawCtOrder,
   orderMetadataSchemaProperties,
-  getCustomMetadataForOrder,
+  getCustomMetadataForOrder = undefined,
 ) => {
   if (
     !(rawCtOrder instanceof Object) ||
