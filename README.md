@@ -468,12 +468,12 @@ If you found a bug or want to suggest a new feature, please file a GitHub issue.
 - 2023-05-16 `v6.0.0` adjust application structure to be compliant with commercetools Connect platform
 - 2023-05-11 `v5.2.3`
   - adjust application to work with Commercetools Connect platform:
-- 2022-05-05 `v5.2.2`
+- 2023-05-05 `v5.2.2`
   - do not make unnecessary, malformed requests to CT for a products
   - update tests
   - for used cart promotions, separate promotion id from promotion banner
   - fixed console logging data while using `migration CLI`
-- 2022-05-04 `v5.2.1`
+- 2023-05-04 `v5.2.1`
   - minor bugfix, when someone have defined unit type promotion/voucher in Voucherify dashboard not based on commercetools products, we should not be looking for this product in commercetools backend store.
 - 2022-12-07 `v5.2.0`
   - domain refactoring/code quality
