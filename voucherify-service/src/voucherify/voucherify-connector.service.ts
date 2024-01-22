@@ -41,6 +41,7 @@ export class VoucherifyConnectorService {
       applicationId: this.applicationId,
       secretKey: this.secretKey,
       apiUrl: this.apiUrl,
+      channel: `Commercetools integration-v${process.env.npm_package_version}`,
     });
     const end = performance.now();
     this.logger.debug(`V% getClient creation: ${end - start}ms`);
