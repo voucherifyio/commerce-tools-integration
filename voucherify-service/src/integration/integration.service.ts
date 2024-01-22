@@ -126,7 +126,7 @@ export class IntegrationService {
         this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT'),
       );
 
-    let validatedCoupons: ValidationValidateStackableResponse =
+    let validatedCoupons =
       await this.voucherifyConnectorService.validateStackableVouchers(
         buildValidationsValidateStackableParamsForVoucherify(
           couponsAppliedAndNewLimitedByConfig,
@@ -136,17 +136,27 @@ export class IntegrationService {
       );
 
     const inapplicableRedeemables = getRedeemablesByStatus(
-      validatedCoupons.redeemables,
+      [
+        ...validatedCoupons.redeemables,
+        ...(validatedCoupons?.inapplicable_redeemables || []),
+      ],
       'INAPPLICABLE',
     );
+    if (typeof cartUpdateActions?.setInapplicableCoupons === 'function') {
+      cartUpdateActions.setInapplicableCoupons(inapplicableRedeemables);
+    }
+
     const inapplicableCodes = redeemablesToCodes(inapplicableRedeemables);
 
-    if (validatedCoupons.valid === false) {
+    if (
+      //Checking if project uses partial redeemables
+      !Array.isArray(validatedCoupons?.inapplicable_redeemables) &&
+      validatedCoupons.valid === false
+    ) {
       const applicableCodes = couponsAppliedAndNewLimitedByConfig.filter(
         (coupon) => !inapplicableCodes.includes(coupon.code),
       );
       if (applicableCodes.length === 0) {
-        cartUpdateActions.setInapplicableCoupons(inapplicableRedeemables);
         return;
       }
       //We need to do another call to V% if there is any applicable coupon in the cart
@@ -224,10 +234,9 @@ export class IntegrationService {
         );
     }
 
-    const productsToAdd: ProductToAdd[] = getProductsToAdd(
-      validatedCoupons,
-      currentPricesOfProducts,
-    );
+    const productsToAdd: ProductToAdd[] = validatedCoupons.order
+      ? getProductsToAdd(validatedCoupons, currentPricesOfProducts)
+      : [];
 
     this.logger.debug({
       validatedCoupons,
