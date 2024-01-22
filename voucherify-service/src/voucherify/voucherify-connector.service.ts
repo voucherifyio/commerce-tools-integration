@@ -5,6 +5,8 @@ import {
   RedemptionsRedeemStackableParams,
   ValidationsValidateStackableParams,
   VoucherifyServerSide,
+  ValidationValidateStackableResponse,
+  StackableRedeemableResponse,
 } from '@voucherify/sdk';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -46,7 +48,14 @@ export class VoucherifyConnectorService {
     return voucherify;
   }
 
-  async validateStackableVouchers(request: ValidationsValidateStackableParams) {
+  async validateStackableVouchers(
+    request: ValidationsValidateStackableParams,
+  ): Promise<
+    ValidationValidateStackableResponse & {
+      // At the momement of the implementation, Voucherifyu SDK do not recognize Partial Redeem API.
+      inapplicable_redeemables?: StackableRedeemableResponse[];
+    }
+  > {
     const start = performance.now();
     const response = await this.getClient().validations.validateStackable(
       request,

@@ -78,12 +78,9 @@ function setCouponsLimit(
 
 function updateDiscountsCodes(
   dataToRunCartActionsBuilder: DataToRunCartActionsBuilder,
-):
-  | CartActionSetCustomFieldWithCoupons[]
-  | CartActionSetCustomFieldWithValidationFailed[] {
+): CartActionSetCustomFieldWithCoupons {
   const { availablePromotions, applicableCoupons, inapplicableCoupons } =
     dataToRunCartActionsBuilder;
-  const validationFailedAction = [];
   const oldCouponsCodes: Coupon[] = (
     dataToRunCartActionsBuilder.commerceToolsCart.custom?.fields
       ?.discount_codes ?? []
@@ -123,21 +120,16 @@ function updateDiscountsCodes(
         ({
           code: coupon.id,
           status: 'NOT_APPLIED',
-          errMsg: coupon.result?.error?.message
-            ? coupon.result?.error?.message
-            : coupon.result?.error?.message,
+          errMsg: coupon.result?.error?.message || 'Unknown error',
         } as Coupon),
     ),
   ];
 
-  return [
-    {
-      action: 'setCustomField',
-      name: 'discount_codes',
-      value: coupons.map((coupon) => JSON.stringify(coupon)) as string[],
-    },
-    ...validationFailedAction,
-  ];
+  return {
+    action: 'setCustomField',
+    name: 'discount_codes',
+    value: coupons.map((coupon) => JSON.stringify(coupon)) as string[],
+  };
 }
 
 export default function setCustomFields(
@@ -146,7 +138,7 @@ export default function setCustomFields(
   const cartActions = [] as CartAction[];
 
   cartActions.push(setSessionAsCustomField(dataToRunCartActionsBuilder));
-  cartActions.push(...updateDiscountsCodes(dataToRunCartActionsBuilder));
+  cartActions.push(updateDiscountsCodes(dataToRunCartActionsBuilder));
   cartActions.push(addShippingProductSourceIds(dataToRunCartActionsBuilder));
   cartActions.push(setCouponsLimit(dataToRunCartActionsBuilder));
 
