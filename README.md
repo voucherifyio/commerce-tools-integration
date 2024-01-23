@@ -10,7 +10,7 @@ Demo store https://sunrise-ct-voucherify.herokuapp.com
 
 
 <div style="background-color: rgb(0, 18, 70); padding: 50px; border-radius: 50px">
-   <img src="./public/voucherify-logo.svg" />
+   <img src="./voucherify-service/public/voucherify-logo.svg" />
 </div>
 
 ---
@@ -51,6 +51,7 @@ Demo store https://sunrise-ct-voucherify.herokuapp.com
 * [Final words](#final-words)
 * [Licence](#licence)
 
+
 ## How does the integration between Voucherify and commercetools work?
 
 The integration between Voucherify and commercetools allows your customers to use Voucherify-generated promotions in a store built on top of commercetools. We support all Voucherify campaigns.
@@ -73,7 +74,7 @@ If we want to allow customers to use coupons defined in Voucherify, the integrat
 1. Watch cart updates on the commercetools’ side. If a customer adds a coupon code, use Voucherify API to validate coupons, get discount details and apply discounts back to the commercetools cart.
 2. Record fulfilled orders from commercetools on the Voucherify’s side using Voucherify redeem endpoint.
 
-![commercetools & Voucherify integration flow chart](./public/integration-flow.jpeg)
+![commercetools & Voucherify integration flow chart](./voucherify-service/public/integration-flow.jpeg)
 
 In addition, we suggest synchronizing your customer, product, and order data between commercetools and Voucherify, so you can use that data to build more advanced promotion campaigns. 
 
@@ -91,7 +92,7 @@ Extensions:
 
 ## How to work with commercetools API Extensions?
 
-Our integration uses [commercetools API Extensions](https://docs.commercetools.com/api/projects/api-extensions) to monitor cart and order updates. But, before commercetools can send us HTTP requests with cart and order update details, we need to register API Extension and let commercetools know under which public URL our integration is available. There are two scenarios. First, if you run the integration on a publicly available server, you can register or unregister commercetools API Extension using `npm run api-extension-add`, `npm run api-extension-delete` or `npm run api-extension-update` commands. Those commands use the APP_URL environment variable as the public server address where commercetools will send cart and order updates. The second scenario is when you develop or test integration locally, and your PC does not have public IP or domain. In that case, you need to use a reverse proxy (e.g., ngrok) solution to expose your local integration application. To simplify this process, we built a script npm run dev:attach that runs an ngrok reverse proxy service, uses a randomly generated ngrok public URL to register API Extension in commercetools and start our application.
+Because we have organized our repository as monorepo to comply with the commercetools Connect platform, all `npm` commands should be executed inside the `/voucherify-service` folder. Our integration uses [commercetools API Extensions](https://docs.commercetools.com/api/projects/api-extensions) to monitor cart and order updates. But, before commercetools can send us HTTP requests with cart and order update details, we need to register API Extension and let commercetools know under which public URL our integration is available. There are two scenarios. First, if you run the integration on a publicly available server, you can register or unregister commercetools API Extension using `npm run api-extension-add`, `npm run api-extension-delete` or `npm run api-extension-update` commands. Those commands use the APP_URL environment variable as the public server address where commercetools will send cart and order updates. The second scenario is when you develop or test integration locally, and your PC does not have public IP or domain. In that case, you need to use a reverse proxy (e.g., ngrok) solution to expose your local integration application. To simplify this process, we built a script npm run dev:attach that runs an ngrok reverse proxy service, uses a randomly generated ngrok public URL to register API Extension in commercetools and start our application.
 
 ``` mermaid
 graph LR;
@@ -198,7 +199,7 @@ Integration service just need to get order (integration type) and redeeming shou
 ### Configuration
 
 Set environment variables with credentials to Voucherify and commercetools APIs. For local development, put the configuration into `.env` file (see `.env.example` configuration template).
-- `APP_URL` - a public URL where the application is hosted. commercetools will use this URL to make [API Extension HTTP requests](https://docs.commercetools.com/api/projects/api-extensions). This configuration is ignored for local development servers as ngrok provides a public URL dynamically. 
+- `APP_URL` (or `CONNECT_SERVICE_URL`) - a public URL where the application is hosted. commercetools will use this URL to make [API Extension HTTP requests](https://docs.commercetools.com/api/projects/api-extensions). This configuration is ignored for local development servers as ngrok provides a public URL dynamically. Please, note that `CONNECT_SERVICE_URL` environment variable is used by Commecetools Connect. 
 - In Voucherify, go to `Project Dashboard > Project Settings > General Tab > Application Keys`.
     - `VOUCHERIFY_APP_ID`
     - `VOUCHERIFY_SECRET_KEY`
@@ -237,8 +238,9 @@ npm run config
 #### For production
 ```bash
 npm install
+npm run build
 npm run start
-npm run register
+npm run api-extension-add
 ```
 
 #### For local development (ngrok required)
@@ -251,7 +253,7 @@ npm run dev:attach
 ```bash
 npm install
 npm run dev
-npm run register
+npm run api-extension-add
 ```
 ---
 
@@ -318,6 +320,10 @@ We have created integration tests to cover the most important scenarios connecte
 1. Create a new application on your Heroku account with a given <application_name>
 2. Go to your <application_name> -> Settings -> Reveal Config Vars
 3. Configure your commercetools application and set up environment variables [see Configuration](#configuration)
+4. Add buildpacks (in order):
+  - https://github.com/lstoll/heroku-buildpack-monorepo
+  - heroku/nodejs
+5. Set `APP_BASE` environment variable to `voucherify-service`
 
 ### Deployment
 
@@ -448,9 +454,9 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 3. As the store operator logged into the commercetools panel, I see new orders, including applied coupon codes on the Custom Fields tab and applied coupon discount value in the Order items list.
 4. As the store operator logged into the commercetools panel when I update Order Payment Status to Paid, customer, order, and redeemed objects are created in Voucherify.
 
-![Order screen in commercetools](./public/ct-order.png)
-![Order custom fields in commercetools](./public/ct-order-custom-fields.png)
-![Redemption screen in Voucherify](./public/voucherify-redemption.png)
+![Order screen in commercetools](./voucherify-service/public/ct-order.png)
+![Order custom fields in commercetools](./voucherify-service/public/ct-order-custom-fields.png)
+![Redemption screen in Voucherify](./voucherify-service/public/voucherify-redemption.png)
 
 ---
 
@@ -459,6 +465,17 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2024-01-23 `v6.0.5` (versions v6.0.1 - v6.0.4 were not released to the public)
+  - added more tests, moved all tests to `voucherify-service/test` folder
+  - updated dependencies
+  - added `npm run config` to `npm run ct-connect-post-deploy` command
+  - added `channel` header to V% requests.
+  - added support for V% `partial` redeem/validation mode.
+  - code refactoring (lowering cognitive complexity)
+  - fixed bug in `productsToAdd` function related to CT price selector.
+- 2023-05-16 `v6.0.0` adjust application structure to be compliant with commercetools Connect platform
+- 2023-05-11 `v5.2.3`
+  - adjust application to work with Commercetools Connect platform:
 - 2023-05-05 `v5.2.2`
   - do not make unnecessary, malformed requests to CT for a products
   - update tests
