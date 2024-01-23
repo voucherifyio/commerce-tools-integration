@@ -465,6 +465,14 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2024-01-23 `v6.0.5` (versions v6.0.1 - v6.0.4 were not released to the public)
+  - added more tests, moved all tests to `voucherify-service/test` folder
+  - updated dependencies
+  - added `npm run config` to `npm run ct-connect-post-deploy` command
+  - added `channel` header to V% requests.
+  - added support for V% `partial` redeem/validation mode.
+  - code refactoring (lowering cognitive complexity)
+  - fixed bug in `productsToAdd` function related to CT price selector.
 - 2023-05-16 `v6.0.0` adjust application structure to be compliant with commercetools Connect platform
 - 2023-05-11 `v5.2.3`
   - adjust application to work with Commercetools Connect platform:
