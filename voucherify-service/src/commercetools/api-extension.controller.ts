@@ -44,8 +44,10 @@ export class ApiExtensionController {
       return responseExpress.status(200).json({ actions: [] });
     }
     if (!response?.status) {
+      console.log(400);
       return responseExpress.status(400).json({});
     }
+    console.log(123, response.actions);
     responseExpress.status(200).json({ actions: response.actions });
     return;
   }

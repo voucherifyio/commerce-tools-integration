@@ -41,7 +41,6 @@ function mergeUniqueSetLineItemCustomTypeActions(
     (action: CartActionRemoveLineItem) => {
       return {
         lineItemId: action.lineItemId,
-        quantity: action.quantity,
       };
     },
   );

@@ -87,7 +87,6 @@ export type CartActionAddLineItem = {
 export type CartActionRemoveLineItem = {
   action: 'removeLineItem';
   lineItemId: string;
-  quantity: number;
 };
 
 export type CartActionSetLineItemCustomField = {
