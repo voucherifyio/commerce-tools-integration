@@ -20,19 +20,11 @@ export function calculateTotalDiscountAmount(
     (redeemable) => redeemable.order.items,
   );
   const totalDiscountAmount = allItems.reduce((total, item) => {
-    return (
-      total + (item as any)?.total_applied_discount_amount ||
-      (item as any)?.total_discount_amount ||
-      0
-    );
+    return total + (item as any)?.total_applied_discount_amount || 0;
   }, 0);
 
   if (totalDiscountAmount === 0) {
-    return (
-      validatedCoupons.order?.total_applied_discount_amount ??
-      validatedCoupons.order?.total_discount_amount ??
-      0
-    );
+    return validatedCoupons.order?.total_applied_discount_amount ?? 0;
   }
 
   if (totalDiscountAmount > (validatedCoupons?.order?.amount ?? 0)) {

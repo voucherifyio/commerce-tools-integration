@@ -96,11 +96,11 @@ function updateDiscountsCodes(
             : typeof (
                 coupon.order?.applied_discount_amount ||
                 coupon.order?.items_applied_discount_amount ||
-                coupon.order?.total_discount_amount
+                0
               ) === 'number'
             ? coupon.order?.applied_discount_amount ||
               coupon.order?.items_applied_discount_amount ||
-              coupon.order?.total_discount_amount
+              0
             : coupon.result?.discount?.amount_off || 0;
       } else {
         value = oldCouponsCodes.find(
