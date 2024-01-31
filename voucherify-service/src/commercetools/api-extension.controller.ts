@@ -27,6 +27,7 @@ export class ApiExtensionController {
 
   async handleRequestCart(cart: Cart, responseExpress: Response) {
     let response;
+
     try {
       const start = performance.now();
       response = await this.commercetoolsService.handleCartUpdate(cart);
