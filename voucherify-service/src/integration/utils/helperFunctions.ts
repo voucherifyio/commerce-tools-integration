@@ -24,10 +24,10 @@ export function calculateTotalDiscountAmount(
   }, 0);
 
   if (totalDiscountAmount === 0) {
-    return validatedCoupons.order?.total_applied_discount_amount ?? 0;
+    return validatedCoupons.order?.total_applied_discount_amount || 0;
   }
 
-  if (totalDiscountAmount > (validatedCoupons?.order?.amount ?? 0)) {
+  if (totalDiscountAmount > (validatedCoupons?.order?.amount || 0)) {
     return validatedCoupons.order.amount;
   }
   return totalDiscountAmount;
