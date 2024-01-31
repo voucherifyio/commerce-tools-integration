@@ -465,6 +465,9 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2024-01-31 `v6.0.6`
+  - validate and redeem with the order, coupons were applied (`buildValidationsValidateStackableParamsForVoucherify.ts`)
+  - remove fallback to `coupon.order?.total_discount_amount` that caused too great promotions in some cases
 - 2024-01-23 `v6.0.5` (versions v6.0.1 - v6.0.4 were not released to the public)
   - added more tests, moved all tests to `voucherify-service/test` folder
   - updated dependencies
