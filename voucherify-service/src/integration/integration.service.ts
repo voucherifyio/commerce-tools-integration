@@ -1,8 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  RedemptionsRedeemStackableResponse,
-  ValidationValidateStackableResponse,
-} from '@voucherify/sdk';
+import { RedemptionsRedeemStackableResponse } from '@voucherify/sdk';
 
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import {
@@ -19,7 +16,6 @@ import { mapItemsToVoucherifyOrdersItems } from './utils/mappers/product';
 import { ConfigService } from '@nestjs/config';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
 import { VoucherifyService } from '../voucherify/voucherify.service';
-import { calculateTotalDiscountAmount } from './utils/helperFunctions';
 import {
   redeemablesToCodes,
   filterOutRedeemablesIfCodeIn,
@@ -30,8 +26,6 @@ import {
 } from './utils/redeemableOperationFunctions';
 import { buildValidationsValidateStackableParamsForVoucherify } from './utils/mappers/buildValidationsValidateStackableParamsForVoucherify';
 import { buildRedeemStackableRequestForVoucherify } from './utils/mappers/buildRedeemStackableRequestForVoucherify';
-import { getSimpleMetadataForOrder } from '../commercetools/utils/mappers/getSimpleMetadataForOrder';
-import { mergeTwoObjectsIntoOne } from './utils/mergeTwoObjectsIntoOne';
 import { replaceCodesWithInapplicableCoupons } from './utils/replaceCodesWithInapplicableCoupons';
 import {
   couponsStatusDeleted,
@@ -253,7 +247,7 @@ export class IntegrationService {
     ) {
       cartUpdateActions.setSessionKey(validatedCoupons?.session?.key);
       cartUpdateActions.setTotalDiscountAmount(
-        calculateTotalDiscountAmount(validatedCoupons),
+        validatedCoupons.order?.total_applied_discount_amount || 0,
       );
       cartUpdateActions.setApplicableCoupons(
         this.voucherifyService.setBannerOnValidatedPromotions(

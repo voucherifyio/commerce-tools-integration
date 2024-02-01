@@ -26,7 +26,7 @@ export const ValidationSchema = Joi.object({
   COMMERCE_TOOLS_COUPONS_LIMIT: Joi.number()
     .integer()
     .min(1)
-    .max(5)
+    .max(30)
     .optional()
     .default(5),
 });
