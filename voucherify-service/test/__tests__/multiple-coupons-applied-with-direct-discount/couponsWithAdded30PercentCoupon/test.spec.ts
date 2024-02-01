@@ -14,9 +14,9 @@ describe('when applying discount code which adds free product to the cart', () =
   let commercetoolsService: CommercetoolsService;
   let voucherifyConnectorService: VoucherifyConnectorService;
   let configService: ConfigService;
-  const SKU_ID = 'gift-sku-id';
-  const PRODUCT_ID = '260d2585-daef-4c11-9adb-1b90099b7ae8';
-  const PRODUCT_PRICE = 6500;
+  const SKU_ID = '3525f646-e4ea-48bd-b925-a327dbc50f99';
+  const PRODUCT_ID = '8196593a-7e3e-464f-95eb-ccfdc5e51a35';
+  const PRODUCT_PRICE = 64900;
 
   beforeEach(async () => {
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
@@ -119,9 +119,6 @@ describe('when applying discount code which adds free product to the cart', () =
         action: 'setCustomField',
         name: 'discount_codes',
         value: [
-          '{"status":"AVAILABLE","value":0,"banner":"YouthBuild Donation Promotion","code":"promo_A82aCSbc8KrXxt13B7rWrrps","type":"promotion_tier"}',
-          '{"status":"AVAILABLE","value":1000,"banner":"$10 Off","code":"promo_YUt5S6IaujnhDLUGUIuN3hnB","type":"promotion_tier"}',
-          '{"status":"AVAILABLE","value":0,"banner":"Free Shipping","code":"promo_b5HZxgDdNScAfItVjldkUKD7","type":"promotion_tier"}',
           '{"code":"30%off","status":"APPLIED","type":"voucher","value":51270}',
           '{"code":"unit_off_1","status":"APPLIED","type":"voucher","value":64900}',
           '{"code":"10off-Handbag","status":"APPLIED","type":"voucher","value":0}',
@@ -135,7 +132,7 @@ describe('when applying discount code which adds free product to the cart', () =
       {
         action: 'setCustomField',
         name: 'couponsLimit',
-        value: 30,
+        value: 5,
       },
     ]);
   });
