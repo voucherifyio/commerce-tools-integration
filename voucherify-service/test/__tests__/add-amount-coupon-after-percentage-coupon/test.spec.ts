@@ -13,8 +13,8 @@ import { VoucherifyConnectorService } from '../../../src/voucherify/voucherify-c
 describe('When another -20€ amount voucher is provided after -10% coupon in one session', () => {
   let commercetoolsService: CommercetoolsService;
   let voucherifyConnectorService: VoucherifyConnectorService;
-  const FIRST_COUPON_CODE = 'AMOUNT20';
-  const SECOND_COUPON_CODE = 'PERC10';
+  const FIRST_COUPON_CODE = 'PERC10';
+  const SECOND_COUPON_CODE = 'AMOUNT20';
 
   beforeEach(async () => {
     const typesService = getTypesServiceMockWithConfiguredCouponTypeResponse();
@@ -59,8 +59,8 @@ describe('When another -20€ amount voucher is provided after -10% coupon in on
           source_id: 'cart-id',
         },
         redeemables: [
-          { id: 'AMOUNT20', object: 'voucher' },
           { id: 'PERC10', object: 'voucher' },
+          { id: 'AMOUNT20', object: 'voucher' },
         ],
         session: { key: 'existing-session-id', type: 'LOCK' },
       },
@@ -103,13 +103,13 @@ describe('When another -20€ amount voucher is provided after -10% coupon in on
           name: 'discount_codes',
           value: [
             JSON.stringify({
-              code: SECOND_COUPON_CODE,
+              code: FIRST_COUPON_CODE,
               status: 'APPLIED',
               type: 'voucher',
               value: 2650,
             }),
             JSON.stringify({
-              code: FIRST_COUPON_CODE,
+              code: SECOND_COUPON_CODE,
               status: 'APPLIED',
               type: 'voucher',
               value: 2000,
