@@ -8,14 +8,12 @@ export function buildValidationsValidateStackableParamsForVoucherify(
 ) {
   return {
     // options?: StackableOptions;
-    redeemables: coupons
-      .map((code) => {
-        return {
-          object: code.type ? code.type : 'voucher',
-          id: code.code,
-        };
-      })
-      .reverse(),
+    redeemables: coupons.map((code) => {
+      return {
+        object: code.type ? code.type : 'voucher',
+        id: code.code,
+      };
+    }),
     session: {
       type: 'LOCK',
       ...(cart.sessionKey && { key: cart.sessionKey }),
