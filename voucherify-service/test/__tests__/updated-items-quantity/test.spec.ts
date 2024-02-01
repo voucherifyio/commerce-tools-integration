@@ -59,8 +59,8 @@ describe('When two discount codes (percentage and amount) are already applied an
           source_id: 'cart-id',
         },
         redeemables: [
-          { id: 'AMOUNT20', object: 'voucher' },
           { id: 'PERC10', object: 'voucher' },
+          { id: 'AMOUNT20', object: 'voucher' },
         ],
         session: { key: 'existing-session-id', type: 'LOCK' },
       },
