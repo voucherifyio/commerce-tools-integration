@@ -1,7 +1,6 @@
 # commerce-tools-integration
 
 [![Licence](https://img.shields.io/github/license/voucherifyio/commerce-tools-integration)]()
-[![version](https://img.shields.io/github/package-json/v/voucherifyio/commerce-tools-integration)]()
 [![code size](https://img.shields.io/github/languages/code-size/voucherifyio/commerce-tools-integration)]()
 
 Voucherify's [commercetools](https://commercetools.com/) connector extends its discount capabilities with unique promo codes and advanced incentives, as well as with referral, gift card, and loyalty programs supported by [Voucherify promotion engine](https://www.voucherify.io).

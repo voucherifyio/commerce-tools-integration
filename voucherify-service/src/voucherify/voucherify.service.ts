@@ -48,22 +48,18 @@ export class VoucherifyService {
     redeemables: StackableRedeemableResponse[],
     promotions = [],
   ) {
-    const promotionTiersWithBanner = redeemables
-      .filter((redeemable) => redeemable.object === 'promotion_tier')
-      .map((redeemable) => {
-        const appliedPromotion = promotions.find(
-          (promotion) => promotion.id === redeemable.id,
-        );
-        if (appliedPromotion) {
-          redeemable['banner'] = appliedPromotion?.banner;
-        }
 
+    return redeemables.map((redeemable) => {
+      if (redeemable.object !== 'promotion_tier') {
         return redeemable;
-      });
-
-    return [
-      ...redeemables.filter((element) => element.object !== 'promotion_tier'),
-      ...promotionTiersWithBanner,
-    ];
+      }
+      const appliedPromotion = promotions.find(
+        (promotion) => promotion.id === redeemable.id,
+      );
+      if (appliedPromotion) {
+        redeemable['banner'] = appliedPromotion?.banner;
+      }
+      return redeemable;
+    });
   }
 }
