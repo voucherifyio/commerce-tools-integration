@@ -1,10 +1,15 @@
 import {
+  DiscountAmount,
+  DiscountFixed,
+  DiscountPercent,
+  DiscountUnit,
   DiscountVouchersEffectTypes,
   RedemptionsRedeemStackableResponse,
   StackableRedeemableResponse,
   StackableRedeemableResultDiscountUnit,
+  ValidationValidateStackableResponse,
 } from '@voucherify/sdk';
-import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
+import { OrdersCreate, OrdersItem } from '@voucherify/sdk/dist/types/Orders';
 import { CustomerRequest } from '@voucherify/sdk/dist/types/Customers';
 
 export type CartUpdateHandler = (
@@ -131,3 +136,44 @@ export interface OrderPaidActionsInterface {
     allMetadataSchemaProperties: string[],
   ) => Promise<{ [key: string]: string }>; //function to handle custom metadata for order (for example: metadata from custom fields)
 }
+
+export type AvailablePromotion = {
+  status: string;
+  value: number;
+  banner: string;
+  code: string;
+  type: 'promotion_tier';
+};
+
+export type ValidatedCoupons = ValidationValidateStackableResponse & {
+  inapplicable_redeemables?: StackableRedeemableResponse[];
+};
+
+export type Promotions = {
+  id: string;
+  object: 'promotion_tier';
+  banner?: string;
+  name: string;
+  start_date?: string;
+  expiration_date?: string;
+  discount?: DiscountUnit | DiscountAmount | DiscountPercent | DiscountFixed;
+  discount_amount?: number;
+  applied_discount_amount?: number;
+  metadata?: Record<string, any>;
+  order?: {
+    id?: string;
+    source_id?: string;
+    amount: number;
+    initial_amount?: number;
+    items_discount_amount?: number;
+    items_applied_discount_amount?: number;
+    items?: OrdersItem[];
+    metadata?: Record<string, any>;
+    discount_amount?: number;
+    total_discount_amount?: number;
+    total_amount?: number;
+    applied_discount_amount?: number;
+    total_applied_discount_amount?: number;
+  };
+  hierarchy?: number;
+}[];
