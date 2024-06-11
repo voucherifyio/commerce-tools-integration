@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createReadStream, unlink } from 'fs';
 import FormData from 'form-data';
 import fetch from 'node-fetch2';
-import { Product } from '@commercetools/platform-sdk';
+import { Product, ProductVariant } from '@commercetools/platform-sdk';
 import ObjectsToCsv from 'objects-to-csv';
 import crypto = require('crypto');
 import { getMetadata } from '../integration/utils/mappers/product';
@@ -25,6 +25,63 @@ export class ProductImportService {
     private readonly configService: ConfigService,
     private readonly voucherifyClient: VoucherifyConnectorService,
   ) {}
+
+  private getProductName(product: Product) {
+    const productNameCountry = this.configService.get<string>(
+      'COMMERCE_TOOLS_PRODUCT_NAME_COUNTRY',
+    );
+    const names = product.masterData.current.name;
+    const namesKeys = Object.keys(names);
+
+    return productNameCountry
+      ? names[productNameCountry]
+      : namesKeys.length > 0
+      ? names[namesKeys[0]]
+      : undefined;
+  }
+
+  private addProduct(
+    products: any[],
+    product: Product,
+    name: string,
+    metadataSchemaProperties: string[],
+  ) {
+    products.push({
+      name,
+      source_id: product.id,
+      ...getMetadata(
+        product.masterData.current.masterVariant.attributes,
+        metadataSchemaProperties,
+      ),
+    });
+
+    return { products };
+  }
+
+  private addSkus(skus: any[], product: Product, name: string) {
+    const variants =
+      product.masterData.current.variants.length > 0
+        ? product.masterData.current.variants
+        : [product.masterData.current.masterVariant];
+
+    variants.forEach((variant) => {
+      skus.push({
+        product_id: product.id,
+        sku: name,
+        source_id: variant.sku,
+        price: this.getPrice(variant),
+      });
+    });
+
+    return { skus };
+  }
+
+  private getPrice(variant: ProductVariant): number {
+    const price = variant.price
+      ? variant.price.value.centAmount
+      : variant.prices[0].value.centAmount;
+    return price / 100;
+  }
 
   private async *getAllProducts(
     minDateTime?: string,
@@ -75,57 +132,14 @@ export class ProductImportService {
   private async productImport(period?: string) {
     const metadataSchemaProperties =
       await this.voucherifyClient.getMetadataSchemaProperties('product');
-
     const products = [];
     const skus = [];
 
     for await (const productsBatch of this.getAllProducts(period)) {
       productsBatch.forEach((product) => {
-        const productNameCountry = this.configService.get<string>(
-          'COMMERCE_TOOLS_PRODUCT_NAME_COUNTRY',
-        );
-        const names = product.masterData.current.name;
-        const namesKeys = Object.keys(names);
-        const name = productNameCountry
-          ? names[productNameCountry]
-          : namesKeys.length > 0
-          ? names[namesKeys[0]]
-          : undefined;
-
-        products.push({
-          name,
-          source_id: product.id,
-          ...getMetadata(
-            product.masterData.current.masterVariant.attributes,
-            metadataSchemaProperties,
-          ),
-        });
-
-        if (product.masterData.current.variants.length) {
-          product.masterData.current.variants.forEach((variant) => {
-            skus.push({
-              product_id: product.id,
-              sku: name,
-              source_id: variant.sku,
-              price: product.masterData.current.masterVariant.price
-                ? product.masterData.current.masterVariant.price.value
-                    .centAmount / 100
-                : product.masterData.current.masterVariant.prices[0].value
-                    .centAmount / 100,
-            });
-          });
-        } else {
-          skus.push({
-            product_id: product.id,
-            sku: name,
-            source_id: product.masterData.current.masterVariant.sku,
-            price: product.masterData.current.masterVariant.price
-              ? product.masterData.current.masterVariant.price.value
-                  .centAmount / 100
-              : product.masterData.current.masterVariant.prices[0].value
-                  .centAmount / 100,
-          });
-        }
+        const name = this.getProductName(product);
+        this.addProduct(products, product, name, metadataSchemaProperties);
+        this.addSkus(skus, product, name);
       });
     }
 
