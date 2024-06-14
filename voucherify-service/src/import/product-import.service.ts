@@ -33,11 +33,14 @@ export class ProductImportService {
     const names = product.masterData.current.name;
     const namesKeys = Object.keys(names);
 
-    return productNameCountry
-      ? names[productNameCountry]
-      : namesKeys.length > 0
-      ? names[namesKeys[0]]
-      : undefined;
+    if (productNameCountry) {
+      return names[productNameCountry];
+    }
+
+    if (namesKeys.length > 0) {
+      return names[namesKeys[0]];
+    }
+    return undefined;
   }
 
   private addProduct(
