@@ -46,16 +46,16 @@ export class ApiExtensionController {
     if (!response?.status) {
       return responseExpress.status(400).json({});
     }
-    responseExpress.status(200).json({ actions: response.actions });
-    return;
+    return responseExpress.status(200).json({ actions: response.actions });
   }
 
   async handleRequestOrder(order: Order, responseExpress: Response) {
     responseExpress.status(200).json({
       actions: [],
     });
-    await this.commercetoolsService.checkIfCartStatusIsPaidAndRedeem(order);
-    return;
+    return await this.commercetoolsService.checkIfCartStatusIsPaidAndRedeem(
+      order,
+    );
   }
 
   @Post()
