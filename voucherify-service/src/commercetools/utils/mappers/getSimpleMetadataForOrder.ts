@@ -7,31 +7,25 @@ export const getSimpleMetadataForOrder = (
 ): { [key: string]: string } => {
   const metadata = {};
 
-  const addToMataData = (variable: any, name: string) => {
+  const addToMetaData = (variable: any, name: string) => {
     if (typeof variable !== 'object') {
-      return (metadata[name] = variable);
+      metadata[name] = variable;
+    } else if (Array.isArray(variable)) {
+      metadata[name] = variable.map((item) =>
+        typeof variable !== 'object'
+          ? item
+          : deleteObjectsFromObject(flatten(item)),
+      );
+    } else {
+      metadata[name] = deleteObjectsFromObject(flatten(variable));
     }
-    if (Array.isArray(variable)) {
-      const newArray = [];
-      variable.forEach((element) => {
-        if (typeof variable !== 'object') {
-          newArray.push(element);
-        } else {
-          newArray.push(deleteObjectsFromObject(flatten(element)));
-        }
-      });
-      return (metadata[name] = newArray);
-    }
-    if (typeof variable === 'object') {
-      return (metadata[name] = deleteObjectsFromObject(flatten(variable)));
-    }
-    return;
   };
 
-  allMetadataSchemaProperties.forEach((key) => {
-    if (rawOrder[key]) {
-      addToMataData(rawOrder[key], key);
+  for (const key of allMetadataSchemaProperties) {
+    const value = rawOrder[key];
+    if (value) {
+      addToMetaData(value, key);
     }
-  });
+  }
   return metadata;
 };

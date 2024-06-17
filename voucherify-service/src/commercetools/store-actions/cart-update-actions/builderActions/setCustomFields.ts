@@ -108,7 +108,7 @@ function updateDiscountsCodes(
   return {
     action: 'setCustomField',
     name: 'discount_codes',
-    value: coupons.map((coupon) => JSON.stringify(coupon)) as string[],
+    value: coupons.map((coupon) => JSON.stringify(coupon)),
   };
 }
 

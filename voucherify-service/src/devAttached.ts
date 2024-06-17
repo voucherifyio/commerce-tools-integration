@@ -3,9 +3,11 @@ import { AppModule } from './app.module';
 import { ApiExtensionService } from './commercetools/api-extension.service';
 import * as ngrok from 'ngrok';
 import { join } from 'path';
-import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
-import { utilities as nestWinstonModuleUtilities } from 'nest-winston';
+import {
+  utilities as nestWinstonModuleUtilities,
+  WinstonModule,
+} from 'nest-winston';
 
 async function bootstrap() {
   const logFormat = winston.format.combine(
