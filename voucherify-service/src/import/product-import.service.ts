@@ -43,25 +43,23 @@ export class ProductImportService {
     return undefined;
   }
 
-  private addProduct(
-    products: any[],
+  private getProduct(
     product: Product,
     name: string,
     metadataSchemaProperties: string[],
   ) {
-    products.push({
+    return {
       name,
       source_id: product.id,
       ...getMetadata(
         product.masterData.current.masterVariant.attributes,
         metadataSchemaProperties,
       ),
-    });
-
-    return { products };
+    };
   }
 
-  private addSkus(skus: any[], product: Product, name: string) {
+  private getSkus(product: Product, name: string) {
+    const skus = [];
     const variants =
       product.masterData.current.variants.length > 0
         ? product.masterData.current.variants
@@ -76,7 +74,7 @@ export class ProductImportService {
       });
     });
 
-    return { skus };
+    return skus;
   }
 
   private getPrice(variant: ProductVariant): number {
@@ -140,9 +138,11 @@ export class ProductImportService {
 
     for await (const productsBatch of this.getAllProducts(period)) {
       productsBatch.forEach((product) => {
-        const name = this.getProductName(product);
-        this.addProduct(products, product, name, metadataSchemaProperties);
-        this.addSkus(skus, product, name);
+        const productName = this.getProductName(product);
+        products.push(
+          this.getProduct(product, productName, metadataSchemaProperties),
+        );
+        skus.push(...this.getSkus(product, productName));
       });
     }
 
