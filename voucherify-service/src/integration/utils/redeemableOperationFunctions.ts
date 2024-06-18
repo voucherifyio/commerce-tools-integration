@@ -5,8 +5,10 @@ import {
   StackableRedeemableResultDiscountUnit,
 } from '@voucherify/sdk';
 import { FREE_SHIPPING_UNIT_TYPE } from '../../consts/voucherify';
-import { ValidationValidateStackableResponse } from '@voucherify/sdk';
-import { StackableRedeemableResultDiscountUnitWithCodeAndPrice } from '../types';
+import {
+  StackableRedeemableResultDiscountUnitWithCodeAndPrice,
+  ValidatedCoupons,
+} from '../types';
 
 export function getRedeemablesByStatus(
   redeemables: StackableRedeemableResponse[],
@@ -24,7 +26,7 @@ export function redeemablesToCodes(
 }
 
 export function stackableResponseToUnitTypeRedeemables(
-  validatedCoupons: ValidationValidateStackableResponse,
+  validatedCoupons: ValidatedCoupons,
 ): StackableRedeemableResponse[] {
   return validatedCoupons.redeemables.filter(
     (redeemable) =>
@@ -76,7 +78,7 @@ export function stackableRedeemablesResponseToUnitStackableRedeemablesResultDisc
 export function unitTypeRedeemablesToOrderItems(
   unitTypeRedeemables: StackableRedeemableResponse[],
 ): OrdersItem[] {
-  return unitTypeRedeemables.flatMap((e) => e.order.items);
+  return unitTypeRedeemables?.flatMap((e) => e.order.items);
 }
 
 export function filterOutRedeemablesIfCodeIn(
