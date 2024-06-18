@@ -179,34 +179,6 @@ export class IntegrationService {
     cartUpdateActions?.setProductsToAdd?.(productsToAdd);
   }
 
-  private async createOrderIfNoCoupons(
-    order: Order,
-    items: OrdersItem[],
-    orderMetadata: Record<string, string>,
-  ) {
-    const { id, customerId } = order;
-    const coupons: Coupon[] = (order.coupons ?? []).filter(
-      (coupon) =>
-        coupon.status !== 'NOT_APPLIED' && coupon.status !== 'DELETED',
-    );
-
-    if (!coupons.length) {
-      this.logger.debug({
-        msg: 'Attempt to add order without coupons',
-        id,
-        customerId,
-      });
-
-      await this.voucherifyConnectorService.createOrder(
-        order,
-        items,
-        orderMetadata,
-      );
-
-      return { coupons };
-    }
-  }
-
   private async getMetadataOptions(
     order: Order,
     orderPaidActions: OrderPaidActionsInterface,
@@ -454,11 +426,26 @@ export class IntegrationService {
       productMetadataSchemaProperties,
     );
 
-    const { coupons } = await this.createOrderIfNoCoupons(
-      order,
-      items,
-      orderMetadata,
+    const coupons: Coupon[] = (order.coupons ?? []).filter(
+      (coupon) =>
+        coupon.status !== 'NOT_APPLIED' && coupon.status !== 'DELETED',
     );
+
+    if (!coupons.length) {
+      this.logger.debug({
+        msg: 'Attempt to add order without coupons',
+        id,
+        customerId,
+      });
+
+      await this.voucherifyConnectorService.createOrder(
+        order,
+        items,
+        orderMetadata,
+      );
+
+      return { status: true, actions: [] };
+    }
 
     this.logger.debug({
       msg: 'Attempt to redeem vouchers',
