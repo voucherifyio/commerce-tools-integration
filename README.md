@@ -470,6 +470,10 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2024-06-18 `v6.0.7`
+  - code refactoring (lowering cognitive complexity)
+  - fixed package vulnerabilities
+  - coupon tax category is not being configured in Direct Discount mode. `[APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT=true]`
 - 2024-01-31 `v6.0.6`
   - remove fallback to `coupon.order?.total_discount_amount` that caused too great promotions in some cases
   - added test to test this case ^
