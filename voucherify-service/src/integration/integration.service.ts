@@ -103,12 +103,11 @@ export class IntegrationService {
     cartUpdateActions: CartUpdateActionsInterface,
     stackableRedeemablesResultDiscountUnitWithPriceAndCodes: StackableRedeemableResultDiscountUnitWithCodeAndPrice[],
   ) {
-    return typeof cartUpdateActions?.getPricesOfProductsFromCommercetools ===
-      'function'
-      ? await cartUpdateActions.getPricesOfProductsFromCommercetools(
-          stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
-        )
-      : { found: [], notFound: [] };
+    return (
+      (await cartUpdateActions.getPricesOfProductsFromCommercetools?.(
+        stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
+      )) || { found: [], notFound: [] }
+    );
   }
 
   private async getCorrectPrices(
@@ -154,38 +153,30 @@ export class IntegrationService {
   }
 
   private async updateCart(
-    cartUpdateActions: CartUpdateActionsInterface,
+    cartUpdateActions: CartUpdateActionsInterface | undefined,
     validatedCoupons: ValidatedCoupons,
     codesWithMissingProductsToAdd: string[],
     promotions: Promotions,
     productsToAdd: ProductToAdd[],
   ) {
-    if (
-      typeof cartUpdateActions?.setSessionKey === 'function' &&
-      typeof cartUpdateActions?.setTotalDiscountAmount === 'function' &&
-      typeof cartUpdateActions?.setApplicableCoupons === 'function' &&
-      typeof cartUpdateActions?.setInapplicableCoupons === 'function' &&
-      typeof cartUpdateActions?.setProductsToAdd === 'function'
-    ) {
-      cartUpdateActions.setSessionKey(validatedCoupons?.session?.key);
-      cartUpdateActions.setTotalDiscountAmount(
-        validatedCoupons?.order?.total_applied_discount_amount || 0,
-      );
-      cartUpdateActions.setApplicableCoupons(
-        this.voucherifyService.setBannerOnValidatedPromotions(
-          filterOutRedeemablesIfCodeIn(
-            getRedeemablesByStatus(validatedCoupons?.redeemables, 'APPLICABLE'),
-            codesWithMissingProductsToAdd,
-          ),
-          promotions,
+    cartUpdateActions?.setSessionKey?.(validatedCoupons?.session?.key);
+    cartUpdateActions?.setTotalDiscountAmount?.(
+      validatedCoupons?.order?.total_applied_discount_amount || 0,
+    );
+    cartUpdateActions?.setApplicableCoupons?.(
+      this.voucherifyService.setBannerOnValidatedPromotions(
+        filterOutRedeemablesIfCodeIn(
+          getRedeemablesByStatus(validatedCoupons?.redeemables, 'APPLICABLE'),
+          codesWithMissingProductsToAdd,
         ),
-      );
-      cartUpdateActions.setInapplicableCoupons([
-        ...this.getInapplicableRedeemables(validatedCoupons),
-        ...replaceCodesWithInapplicableCoupons(codesWithMissingProductsToAdd),
-      ]);
-      cartUpdateActions.setProductsToAdd(productsToAdd);
-    }
+        promotions,
+      ),
+    );
+    cartUpdateActions?.setInapplicableCoupons?.([
+      ...this.getInapplicableRedeemables(validatedCoupons),
+      ...replaceCodesWithInapplicableCoupons(codesWithMissingProductsToAdd),
+    ]);
+    cartUpdateActions?.setProductsToAdd?.(productsToAdd);
   }
 
   private async createOrderIfNoCoupons(
