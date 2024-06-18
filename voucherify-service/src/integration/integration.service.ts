@@ -379,7 +379,7 @@ export class IntegrationService {
       const applicableCodes = couponsAppliedAndNewLimitedByConfig.filter(
         (coupon) => !inapplicableCodes.includes(coupon.code),
       );
-      if (applicableCodes.length > 0) {
+      if (applicableCodes.length === 0) {
         return;
       }
       validatedCoupons = await this.validateCoupons(applicableCodes, cart);
