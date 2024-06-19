@@ -53,9 +53,7 @@ export class ApiExtensionController {
     responseExpress.status(200).json({
       actions: [],
     });
-    return await this.commercetoolsService.checkIfCartStatusIsPaidAndRedeem(
-      order,
-    );
+    await this.commercetoolsService.checkIfCartStatusIsPaidAndRedeem(order);
   }
 
   @Post()
