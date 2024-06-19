@@ -47,7 +47,8 @@ export class TaxCategoriesService {
     const { statusCode, body } = await ctClient
       .taxCategories()
       .get({ queryArgs: { where: 'name="coupon"' } })
-      .execute();
+      .execute()
+      .catch((e) => e);
 
     if ([200, 201].includes(statusCode) && body.count === 1) {
       this.logger.debug({
@@ -65,7 +66,8 @@ export class TaxCategoriesService {
           rates: [],
         },
       })
-      .execute();
+      .execute()
+      .catch((e) => e);
 
     if (![200, 201].includes(response.statusCode)) {
       return null;
@@ -153,7 +155,8 @@ export class TaxCategoriesService {
           actions,
         },
       })
-      .execute();
+      .execute()
+      .catch((e) => e);
 
     const success = [200, 201].includes(response.statusCode);
     if (success) {
@@ -166,6 +169,34 @@ export class TaxCategoriesService {
     }
 
     return this.getCashedCouponTaxCategoryOrFromNewRequest();
+  }
+
+  public async unconfigureCouponTaxCategory(): Promise<{ success: boolean }> {
+    const ctClient = this.commerceToolsConnectorService.getClient();
+    const couponTaxCategory =
+      await this.getCashedCouponTaxCategoryOrFromNewRequest();
+
+    const response = await ctClient
+      .taxCategories()
+      .withId({ ID: couponTaxCategory.id })
+      .delete({
+        queryArgs: {
+          version: couponTaxCategory.version,
+        },
+      })
+      .execute()
+      .catch((e) => e);
+
+    const success = [200, 201].includes(response.statusCode);
+    if (success) {
+      this.logger.debug({ msg: 'Deleted coupon tax category' });
+      return { success: true };
+    }
+    const msg = 'Could not delete coupon tax category';
+    this.logger.error({
+      msg,
+    });
+    return { success: false };
   }
 
   private calcOperationsToGetDesiredRates(
@@ -219,7 +250,8 @@ export class TaxCategoriesService {
           ],
         },
       })
-      .execute();
+      .execute()
+      .catch((e) => e);
     const success = [200, 201].includes(response.statusCode);
     if (success) {
       this.couponTaxCategory = null;

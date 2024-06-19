@@ -290,7 +290,10 @@ We have created integration tests to cover the most important scenarios connecte
     - updating commercetools API Extension to point to our development server
 - `npm run config` - set up the required basic configuration in commercetools:
     1. custom coupon type - needed to store coupons codes inside the [Cart](https://docs.commercetools.com/api/projects/carts) object
-    2. coupon tax category - needed for any coupon or gift card with a fixed amount discount
+    2. (optionally based on `APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT` as this is not required for direct discounts) coupon tax category - needed for any coupon or gift card with a fixed amount discount
+- `npm run unconfig` - unconfiguration required for these connector definitions in commercetools:
+    1. custom coupon type - needed to store coupons codes inside the [Cart](https://docs.commercetools.com/api/projects/carts) object
+    2. (will be skipped for `APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT=true`, as this should not be configured) coupon tax category - needed for any coupon or gift card with a fixed amount discount
 - `npm run test` - run Jest tests
 - `npm run migrate` - migrate data from commercetools to Voucherify. Arguments:
     - `type` - required - type of data which you want to migrate. Values: `products`, `orders`, `customers`
@@ -474,6 +477,8 @@ If you found a bug or want to suggest a new feature, please file a GitHub issue.
   - code refactoring (lowering cognitive complexity)
   - fixed package vulnerabilities
   - coupon tax category is not being configured in Direct Discount mode. `[APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT=true]`
+  - script that undoes `npm run config` - `npm run unconfig`
+  - added `npm run unconfig` to `npm run ct-connect-post-undeploy` command
 - 2024-01-31 `v6.0.6`
   - remove fallback to `coupon.order?.total_discount_amount` that caused too great promotions in some cases
   - added test to test this case ^
