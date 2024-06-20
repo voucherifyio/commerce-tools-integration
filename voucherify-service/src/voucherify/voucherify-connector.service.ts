@@ -111,6 +111,7 @@ export class VoucherifyConnectorService {
         elapsedTime: elapsedTime(start, end),
       },
     );
+
     return response;
   }
 
