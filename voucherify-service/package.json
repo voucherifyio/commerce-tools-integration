@@ -22,13 +22,14 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "config": "nest start --config nest-commander.json -- config",
+    "unconfig": "nest start --config nest-commander.json -- unconfig",
     "api-extension-list": "nest start --config nest-commander.json -- integration-list",
     "api-extension-add": "nest start --config nest-commander.json -- integration-add",
     "api-extension-update": "nest start --config nest-commander.json -- integration-update",
     "api-extension-delete": "nest start --config nest-commander.json -- integration-delete",
     "migrate": "nest start --config nest-commander.json -- migrate",
     "ct-connect-post-deploy": "npm run build && npm run config && npm run api-extension-add",
-    "ct-connect-pre-undeploy": "npm run api-extension-delete"
+    "ct-connect-pre-undeploy": "npm run unconfig && npm run api-extension-delete"
   },
   "dependencies": {
     "@commercetools/platform-sdk": "2.7.0",
