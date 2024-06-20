@@ -15,7 +15,7 @@ function removeDuplicatedAddLineItems(
 ): CartActionAddLineItem[] {
   const processedAddLineItemIds = [];
   const processedAddLineItems = [];
-  for (const currentAction of actionsAddLineItem as CartActionAddLineItem[]) {
+  for (const currentAction of actionsAddLineItem) {
     if (!processedAddLineItemIds.includes(currentAction.sku)) {
       processedAddLineItemIds.push(currentAction.sku);
       processedAddLineItems.push(currentAction);
@@ -93,7 +93,9 @@ export default function lineItemsAndTheirCustomFields(
   const allActionsSetLineItemCustomType = [
     ...lineProductsWithFixedAmount,
     ...freeLineItemsActions,
-  ].filter((action) => action?.action === 'setLineItemCustomType');
+  ].filter(
+    (action) => action?.action === 'setLineItemCustomType',
+  ) as CartActionSetLineItemCustomType[];
 
   const removeActions = removeFreeLineItemsForNonApplicableCoupon(
     dataToRunCartActionsBuilder,
@@ -101,12 +103,12 @@ export default function lineItemsAndTheirCustomFields(
 
   const removeLineItemActions = removeActions.filter(
     (removeAction) => removeAction?.action === 'removeLineItem',
-  );
+  ) as CartActionRemoveLineItem[];
 
   const mergedSetLineItemCustomTypeActions =
     mergeUniqueSetLineItemCustomTypeActions(
-      allActionsSetLineItemCustomType as CartActionSetLineItemCustomType[],
-      removeLineItemActions as CartActionRemoveLineItem[],
+      allActionsSetLineItemCustomType,
+      removeLineItemActions,
       dataToRunCartActionsBuilder.commerceToolsCart.lineItems,
     );
 

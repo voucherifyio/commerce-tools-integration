@@ -2,6 +2,7 @@ import { Command, CommandRunner } from 'nest-commander';
 import loadingCli from 'loading-cli';
 import { TaxCategoriesService } from '../commercetools/tax-categories/tax-categories.service';
 import { CustomTypesService } from '../commercetools/custom-types/custom-types.service';
+import { ConfigService } from '@nestjs/config';
 
 @Command({
   name: 'config',
@@ -14,33 +15,50 @@ export class ConfigCommand extends CommandRunner {
   constructor(
     private readonly typesService: CustomTypesService,
     private readonly taxCategoriesService: TaxCategoriesService,
+    private readonly configService: ConfigService,
   ) {
     super();
   }
   async run(): Promise<void> {
+    const applyCartDiscountAsCtDirectDiscount =
+      this.configService.get<string>(
+        'APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT',
+      ) === 'true';
+    const totalSteps: number = applyCartDiscountAsCtDirectDiscount ? 1 : 2;
+    let currentStep = 1;
     const spinnerCouponsTypes = loadingCli(
-      `[1/2] Attempt to configure required coupon types in Commercetools`,
+      `[${currentStep}/${totalSteps}] Attempt to configure required coupon types in Commercetools`,
     ).start();
 
     const { success: couponTypesCreated } =
       await this.typesService.configureCouponTypes();
     if (couponTypesCreated) {
-      spinnerCouponsTypes.succeed('[1/2] Coupon custom-types configured');
+      spinnerCouponsTypes.succeed(
+        `[${currentStep}/${totalSteps}] Coupon custom-types configured`,
+      );
     } else {
-      spinnerCouponsTypes.fail('[1/2] Could not configure coupon codes');
+      spinnerCouponsTypes.fail(
+        `[${currentStep}/${totalSteps}] Could not configure coupon codes`,
+      );
     }
 
+    if (applyCartDiscountAsCtDirectDiscount) {
+      return;
+    }
+    currentStep++;
     const spinnerTaxCategories = loadingCli(
-      '[2/2] Attempt to configure coupon tax categories in Commercetools',
+      `[${currentStep}/${totalSteps}] Attempt to configure coupon tax categories in Commercetools`,
     ).start();
 
     const couponTaxCategoriesCreated =
       await this.taxCategoriesService.configureCouponTaxCategory();
     if (couponTaxCategoriesCreated) {
-      spinnerTaxCategories.succeed('[2/2] Coupon tax categories configured');
+      spinnerTaxCategories.succeed(
+        `[${currentStep}/${totalSteps}] Coupon tax categories configured`,
+      );
     } else {
       spinnerTaxCategories.fail(
-        '[2/2] Could not configure coupon tax categories',
+        `[${currentStep}/${totalSteps}] Could not configure coupon tax categories`,
       );
     }
   }

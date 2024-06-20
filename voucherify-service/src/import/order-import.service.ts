@@ -75,12 +75,10 @@ export class OrderImportService {
         }
 
         const metadata = mergeTwoObjectsIntoOne(
-          typeof orderActions?.getCustomMetadataForOrder === 'function'
-            ? await orderActions.getCustomMetadataForOrder(
-                order,
-                orderMetadataSchemaProperties,
-              )
-            : {},
+          (await orderActions.getCustomMetadataForOrder?.(
+            order,
+            orderMetadataSchemaProperties,
+          )) || {},
           getSimpleMetadataForOrder(order, orderMetadataSchemaProperties),
         );
 
