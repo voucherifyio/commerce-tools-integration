@@ -9,6 +9,8 @@ import { redeemStackableResponse } from './snapshots/redeemStackableResponse.sna
 import { orderPaidWithoutCustomCodesResponse } from './snapshots/orderPaidWithoutCustomCodesResponse.snapshot';
 import { orderPaidWithCustomCodesResponse } from './snapshots/orderPaidWithCustomCodesResponse.snapshot';
 import { redeemStackableRequest } from './snapshots/redeemStackableRequest.snapshot';
+import { mapItemsToVoucherifyOrdersItems } from '../../../src/integration/utils/mappers/product';
+import { translateCtOrderToOrder } from '../../../src/commercetools/utils/mappers/translateCtOrderToOrder';
 
 describe('When order is paid', () => {
   let voucherifyConnectorService: VoucherifyConnectorService;
@@ -36,12 +38,20 @@ describe('When order is paid', () => {
     const result = await commercetoolsService.checkIfCartStatusIsPaidAndRedeem(
       orderPaidWithoutCustomCodesResponse,
     );
+    const integrationOrder = translateCtOrderToOrder(
+      orderPaidWithoutCustomCodesResponse,
+    );
 
     expect(voucherifyConnectorService.redeemStackableVouchers).toBeCalledTimes(
       0,
     );
     expect(voucherifyConnectorService.createOrder).toBeCalledTimes(1);
     expect(result).toBeUndefined();
+    expect(voucherifyConnectorService.createOrder).toBeCalledWith(
+      integrationOrder,
+      mapItemsToVoucherifyOrdersItems(integrationOrder.items),
+      {},
+    );
   });
 
   it('Should redeem stackable vouchers only one without creating an order', async () => {
