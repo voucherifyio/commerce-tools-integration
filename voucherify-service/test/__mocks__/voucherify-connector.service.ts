@@ -20,5 +20,13 @@ export const getVoucherifyConnectorServiceMockWithDefinedResponse = (
     .fn()
     .mockResolvedValue(response);
 
+  voucherifyConnectorService.redeemStackableVouchers = jest
+    .fn()
+    .mockResolvedValue(response);
+
+  voucherifyConnectorService.getMetadataSchemaProperties = jest.fn();
+
+  voucherifyConnectorService.createOrder = jest.fn();
+
   return voucherifyConnectorService;
 };

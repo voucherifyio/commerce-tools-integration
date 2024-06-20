@@ -81,6 +81,7 @@ export class VoucherifyConnectorService {
     items: OrdersItem[],
     orderMetadata: Record<string, any>,
   ) {
+    console.log(order, items, orderMetadata, 'TEREFERE');
     const orderCreate = {
       source_id: order.id,
       amount: order.items.reduce((acc, item) => acc + item.amount, 0),
@@ -111,6 +112,7 @@ export class VoucherifyConnectorService {
         elapsedTime: elapsedTime(start, end),
       },
     );
+
     return response;
   }
 
