@@ -9,12 +9,13 @@ import {
   StackableRedeemableResultDiscountUnitWithCodeAndPrice,
   ValidatedCoupons,
 } from '../types';
+import { uniqBy } from 'lodash';
 
 export function getRedeemablesByStatus(
   redeemables: StackableRedeemableResponse[],
   status: StackableRedeemableResponseStatus,
 ): StackableRedeemableResponse[] {
-  return (redeemables ?? []).filter(
+  return uniqBy(redeemables ?? [], 'id').filter(
     (redeemable) => redeemable.status === status,
   );
 }
