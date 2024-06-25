@@ -25,18 +25,6 @@ export function codesFromCoupons(coupons: Coupon[]) {
   return coupons.map((coupon) => coupon.code);
 }
 
-export function filterCouponsStatusAppliedAndNewByLimit(
-  coupons: Coupon[],
-  couponsLimit = 5,
-) {
-  return [
-    ...[...couponsStatusApplied(coupons), ...couponsStatusNew(coupons)].splice(
-      0,
-      couponsLimit,
-    ),
-  ];
-}
-
 export function filterOutCouponsIfCodeIn(
   coupons: Coupon[],
   forbiddenCodes: string[],

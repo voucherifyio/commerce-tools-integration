@@ -122,6 +122,7 @@ export interface CartUpdateActionsInterface {
   setApplicableCoupons(applicableCoupons: StackableRedeemableResponse[]); //starting value: []
   setInapplicableCoupons(inapplicableCoupons: StackableRedeemableResponse[]); //starting value: []
   setSessionKey(sessionKey: string); //starting value: undefined
+  setCouponsLimit(couponsLimit: number);
   getPricesOfProductsFromCommercetools: (
     freeUnits: StackableRedeemableResultDiscountUnit[],
   ) => Promise<{
@@ -147,6 +148,17 @@ export type AvailablePromotion = {
 
 export type ValidatedCoupons = ValidationValidateStackableResponse & {
   inapplicable_redeemables?: StackableRedeemableResponse[];
+  skipped_redeemables?: StackableRedeemableResponse[];
+  stacking_rules: {
+    redeemables_limit: number;
+    applicable_redeemables_limit: number;
+    applicable_exclusive_redeemables_limit: number;
+    applicable_redeemables_per_category_limit: number;
+    exclusive_categories: string[];
+    joint_categories: string[];
+    redeemables_application_mode: string;
+    redeemables_sorting_rule: string;
+  };
 };
 
 export type Promotions = {

@@ -85,7 +85,6 @@ describe('When trying to apply inexistent coupon code', () => {
           name: 'shippingProductSourceIds',
           value: [],
         },
-        { action: 'setCustomField', name: 'couponsLimit', value: 5 },
       ],
     });
   });

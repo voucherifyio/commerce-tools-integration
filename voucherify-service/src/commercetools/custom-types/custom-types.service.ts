@@ -20,7 +20,7 @@ export class CustomTypesService {
       .types()
       .get({ queryArgs: { where: `key="${typeName}"` } })
       .execute()
-      .catch((e) => e);
+      .catch((result) => result);
     if (
       ![200, 201].includes(response.statusCode) ||
       response.body?.count === 0
@@ -140,7 +140,7 @@ export class CustomTypesService {
         },
       })
       .execute()
-      .catch((e) => e);
+      .catch((result) => result);
     if (![200, 201].includes(response.statusCode)) {
       const errorMsg = `Type: "${typeDefinition.key}" could not be deleted`;
       this.logger.error({
@@ -168,7 +168,7 @@ export class CustomTypesService {
       .types()
       .post({ body: typeDefinition })
       .execute()
-      .catch((e) => e);
+      .catch((result) => result);
     if (![200, 201].includes(response.statusCode)) {
       const errorMsg = `Type: "${typeDefinition.key}" could not be created`;
       this.logger.error({
@@ -203,7 +203,7 @@ export class CustomTypesService {
         },
       })
       .execute()
-      .catch((e) => e);
+      .catch((result) => result);
 
     if ([200, 201].includes(response.statusCode)) {
       this.logger.debug({

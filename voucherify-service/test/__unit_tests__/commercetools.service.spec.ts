@@ -227,7 +227,6 @@ describe('CommerceToolsService', () => {
           name: 'shippingProductSourceIds',
           value: [],
         },
-        { action: 'setCustomField', name: 'couponsLimit', value: 5 },
       ],
     });
   });

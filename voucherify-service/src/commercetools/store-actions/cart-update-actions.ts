@@ -23,7 +23,7 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
     this.taxCategory = value;
   }
   private couponsLimit: number;
-  public setCouponsLimit(value: number) {
+  public setCouponsLimit(value: number | undefined) {
     this.couponsLimit = value;
   }
   private commerceToolsCart: CommerceToolsCart;
@@ -143,6 +143,7 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
           },
         })
         .execute()
+        .catch((result) => result)
     ).body.results;
   }
 

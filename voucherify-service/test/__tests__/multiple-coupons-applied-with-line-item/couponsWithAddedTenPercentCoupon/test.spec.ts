@@ -114,7 +114,7 @@ describe('when adding new product to the cart with free product already applied 
         name: 'shippingProductSourceIds',
         value: ['260d2585-daef-4c11-9adb-1b90099b7ae8'],
       },
-      { action: 'setCustomField', name: 'couponsLimit', value: 5 },
+      { action: 'setCustomField', name: 'couponsLimit', value: 30 },
     ]);
   });
 });

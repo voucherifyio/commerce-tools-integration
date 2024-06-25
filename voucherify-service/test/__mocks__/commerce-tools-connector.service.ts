@@ -67,65 +67,67 @@ export const getCommerceToolsConnectorServiceMockWithProductResponse = (
   };
 
   const getTaxCategories = jest.fn().mockReturnValue({
-    statusCode: 200,
-    body: {
-      limit: 20,
-      offset: 0,
-      count: 1,
-      total: 1,
-      results: [
-        {
-          id: '1f84a16d-00b2-42c3-9367-a7a31bf2ebce',
-          version: 5,
-          versionModifiedAt: '2023-05-31T16:04:06.867Z',
-          createdAt: '2023-05-31T16:04:06.656Z',
-          lastModifiedAt: '2023-05-31T16:04:06.867Z',
-          lastModifiedBy: {
-            clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i',
-            isPlatformClient: false,
+    catch: jest.fn().mockReturnValue({
+      statusCode: 200,
+      body: {
+        limit: 20,
+        offset: 0,
+        count: 1,
+        total: 1,
+        results: [
+          {
+            id: '1f84a16d-00b2-42c3-9367-a7a31bf2ebce',
+            version: 5,
+            versionModifiedAt: '2023-05-31T16:04:06.867Z',
+            createdAt: '2023-05-31T16:04:06.656Z',
+            lastModifiedAt: '2023-05-31T16:04:06.867Z',
+            lastModifiedBy: {
+              clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i',
+              isPlatformClient: false,
+            },
+            createdBy: {
+              clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i',
+              isPlatformClient: false,
+            },
+            name: 'coupon',
+            rates: [
+              {
+                name: 'coupon',
+                amount: 0,
+                includedInPrice: true,
+                country: 'DE',
+                id: '3SF4_HMk',
+                subRates: [],
+              },
+              {
+                name: 'coupon',
+                amount: 0,
+                includedInPrice: true,
+                country: 'AT',
+                id: 'lRz7jEYP',
+                subRates: [],
+              },
+              {
+                name: 'coupon',
+                amount: 0,
+                includedInPrice: true,
+                country: 'US',
+                id: 'Uw-uqD9r',
+                subRates: [],
+              },
+              {
+                name: 'coupon',
+                amount: 0,
+                includedInPrice: true,
+                country: 'NL',
+                id: 'StiKGNhA',
+                subRates: [],
+              },
+            ],
           },
-          createdBy: {
-            clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i',
-            isPlatformClient: false,
-          },
-          name: 'coupon',
-          rates: [
-            {
-              name: 'coupon',
-              amount: 0,
-              includedInPrice: true,
-              country: 'DE',
-              id: '3SF4_HMk',
-              subRates: [],
-            },
-            {
-              name: 'coupon',
-              amount: 0,
-              includedInPrice: true,
-              country: 'AT',
-              id: 'lRz7jEYP',
-              subRates: [],
-            },
-            {
-              name: 'coupon',
-              amount: 0,
-              includedInPrice: true,
-              country: 'US',
-              id: 'Uw-uqD9r',
-              subRates: [],
-            },
-            {
-              name: 'coupon',
-              amount: 0,
-              includedInPrice: true,
-              country: 'NL',
-              id: 'StiKGNhA',
-              subRates: [],
-            },
-          ],
-        },
-      ],
-    },
+        ],
+      },
+    }),
   });
   const getClientResponse = {
     body: {
@@ -170,12 +172,16 @@ export const getCommerceToolsConnectorServiceMockWithProductResponse = (
   commerceToolsConnectorService.getClient = jest.fn().mockReturnValue({
     products: jest.fn().mockReturnValue({
       get: jest.fn().mockReturnValue({
-        execute: jest.fn().mockReturnValue(products),
+        execute: () => ({
+          catch: jest.fn().mockReturnValue(products),
+        }),
       }),
     }),
     taxCategories,
     get: jest.fn().mockReturnValue({
-      execute: jest.fn().mockReturnValue(getClientResponse),
+      execute: () => ({
+        catch: jest.fn().mockReturnValue(getClientResponse),
+      }),
     }),
   });
 
@@ -190,151 +196,8 @@ export const getCommerceToolsConnectorServiceMockWithCouponTypes = () => {
   const get = (payload) => {
     if (payload?.queryArgs?.where === 'key="couponCodes"') {
       return {
-        execute: jest.fn().mockReturnValue({
-          body: {
-            limit: 20,
-            offset: 0,
-            count: 1,
-            total: 1,
-            results: [
-              {
-                id: '22ec137d-4ea0-468f-98e9-f9289ca8bb01',
-                version: 1,
-                versionModifiedAt: '2023-05-31T16:04:06.194Z',
-                createdAt: '2023-05-31T16:04:06.194Z',
-                lastModifiedAt: '2023-05-31T16:04:06.194Z',
-                lastModifiedBy: {
-                  clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i',
-                  isPlatformClient: false,
-                },
-                createdBy: {
-                  clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i',
-                  isPlatformClient: false,
-                },
-                key: 'couponCodes',
-                name: { en: 'couponCodes' },
-                description: { en: 'couponCodes' },
-                resourceTypeIds: ['order'],
-                fieldDefinitions: [
-                  {
-                    name: 'discount_codes',
-                    label: { en: 'discount_codes' },
-                    required: false,
-                    type: { name: 'Set', elementType: { name: 'String' } },
-                    inputHint: 'SingleLine',
-                  },
-                  {
-                    name: 'used_codes',
-                    label: { en: 'used_codes' },
-                    required: false,
-                    type: { name: 'Set', elementType: { name: 'String' } },
-                    inputHint: 'SingleLine',
-                  },
-                  {
-                    name: 'session',
-                    label: { en: 'session' },
-                    required: false,
-                    type: { name: 'String' },
-                    inputHint: 'SingleLine',
-                  },
-                  {
-                    name: 'shippingProductSourceIds',
-                    label: { en: 'shippingProductSourceIds' },
-                    required: false,
-                    type: { name: 'Set', elementType: { name: 'String' } },
-                    inputHint: 'SingleLine',
-                  },
-                  {
-                    name: 'isValidationFailed',
-                    label: { en: 'isValidationFailed' },
-                    required: false,
-                    type: { name: 'Boolean' },
-                    inputHint: 'SingleLine',
-                  },
-                  {
-                    name: 'couponsLimit',
-                    label: { en: 'couponsLimit' },
-                    required: false,
-                    type: { name: 'Number' },
-                    inputHint: 'SingleLine',
-                  },
-                ],
-              },
-            ],
-          },
-          statusCode: 200,
-        }),
-      };
-    }
-    return {
-      execute: jest.fn().mockReturnValue({
-        body: {
-          limit: 20,
-          offset: 0,
-          count: 1,
-          total: 1,
-          results: [
-            {
-              id: '69840f60-bd39-4958-b3fc-85bf6c492791',
-              version: 1,
-              versionModifiedAt: '2023-05-31T16:04:06.433Z',
-              createdAt: '2023-05-31T16:04:06.433Z',
-              lastModifiedAt: '2023-05-31T16:04:06.433Z',
-              lastModifiedBy: {
-                clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i',
-                isPlatformClient: false,
-              },
-              createdBy: {
-                clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i',
-                isPlatformClient: false,
-              },
-              key: 'lineItemCodesType',
-              name: { en: 'lineItemCodesType' },
-              description: { en: 'lineItemCodesType' },
-              resourceTypeIds: ['line-item'],
-              fieldDefinitions: [
-                {
-                  name: 'applied_codes',
-                  label: { en: 'applied_codes' },
-                  required: false,
-                  type: { name: 'Set', elementType: { name: 'String' } },
-                  inputHint: 'SingleLine',
-                },
-                {
-                  name: 'coupon_fixed_price',
-                  label: { en: 'coupon_fixed_price' },
-                  required: false,
-                  type: { name: 'Number' },
-                  inputHint: 'SingleLine',
-                },
-              ],
-            },
-          ],
-        },
-        statusCode: 200,
-      }),
-    };
-  };
-
-  commerceToolsConnectoService.getClient = jest.fn().mockReturnValue({
-    types: jest.fn().mockReturnValue({
-      get,
-    }),
-  });
-
-  return commerceToolsConnectoService;
-};
-
-export const getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest =
-  () => {
-    const commerceToolsConnectoService = jest.createMockFromModule(
-      '../../src/commercetools/commercetools-connector.service',
-    ) as CommercetoolsConnectorService;
-
-    const get = (payload) => {
-      if (payload?.queryArgs?.where === 'key="couponCodes"') {
-        return {
-          execute: jest.fn().mockReturnValue({
+        execute: () => ({
+          catch: jest.fn().mockReturnValue({
             body: {
               limit: 20,
               offset: 0,
@@ -408,10 +271,12 @@ export const getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest =
             },
             statusCode: 200,
           }),
-        };
-      }
-      return {
-        execute: jest.fn().mockReturnValue({
+        }),
+      };
+    }
+    return {
+      execute: () => ({
+        catch: jest.fn().mockReturnValue({
           body: {
             limit: 20,
             offset: 0,
@@ -457,20 +322,175 @@ export const getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest =
           },
           statusCode: 200,
         }),
+      }),
+    };
+  };
+
+  commerceToolsConnectoService.getClient = jest.fn().mockReturnValue({
+    types: jest.fn().mockReturnValue({
+      get,
+    }),
+  });
+
+  return commerceToolsConnectoService;
+};
+
+export const getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest =
+  () => {
+    const commerceToolsConnectoService = jest.createMockFromModule(
+      '../../src/commercetools/commercetools-connector.service',
+    ) as CommercetoolsConnectorService;
+
+    const get = (payload) => {
+      if (payload?.queryArgs?.where === 'key="couponCodes"') {
+        return {
+          execute: () => ({
+            catch: jest.fn().mockReturnValue({
+              body: {
+                limit: 20,
+                offset: 0,
+                count: 1,
+                total: 1,
+                results: [
+                  {
+                    id: '22ec137d-4ea0-468f-98e9-f9289ca8bb01',
+                    version: 1,
+                    versionModifiedAt: '2023-05-31T16:04:06.194Z',
+                    createdAt: '2023-05-31T16:04:06.194Z',
+                    lastModifiedAt: '2023-05-31T16:04:06.194Z',
+                    lastModifiedBy: {
+                      clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i',
+                      isPlatformClient: false,
+                    },
+                    createdBy: {
+                      clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i',
+                      isPlatformClient: false,
+                    },
+                    key: 'couponCodes',
+                    name: { en: 'couponCodes' },
+                    description: { en: 'couponCodes' },
+                    resourceTypeIds: ['order'],
+                    fieldDefinitions: [
+                      {
+                        name: 'discount_codes',
+                        label: { en: 'discount_codes' },
+                        required: false,
+                        type: { name: 'Set', elementType: { name: 'String' } },
+                        inputHint: 'SingleLine',
+                      },
+                      {
+                        name: 'used_codes',
+                        label: { en: 'used_codes' },
+                        required: false,
+                        type: { name: 'Set', elementType: { name: 'String' } },
+                        inputHint: 'SingleLine',
+                      },
+                      {
+                        name: 'session',
+                        label: { en: 'session' },
+                        required: false,
+                        type: { name: 'String' },
+                        inputHint: 'SingleLine',
+                      },
+                      {
+                        name: 'shippingProductSourceIds',
+                        label: { en: 'shippingProductSourceIds' },
+                        required: false,
+                        type: { name: 'Set', elementType: { name: 'String' } },
+                        inputHint: 'SingleLine',
+                      },
+                      {
+                        name: 'isValidationFailed',
+                        label: { en: 'isValidationFailed' },
+                        required: false,
+                        type: { name: 'Boolean' },
+                        inputHint: 'SingleLine',
+                      },
+                      {
+                        name: 'couponsLimit',
+                        label: { en: 'couponsLimit' },
+                        required: false,
+                        type: { name: 'Number' },
+                        inputHint: 'SingleLine',
+                      },
+                    ],
+                  },
+                ],
+              },
+              statusCode: 200,
+            }),
+          }),
+        };
+      }
+      return {
+        execute: () => ({
+          catch: jest.fn().mockReturnValue({
+            body: {
+              limit: 20,
+              offset: 0,
+              count: 1,
+              total: 1,
+              results: [
+                {
+                  id: '69840f60-bd39-4958-b3fc-85bf6c492791',
+                  version: 1,
+                  versionModifiedAt: '2023-05-31T16:04:06.433Z',
+                  createdAt: '2023-05-31T16:04:06.433Z',
+                  lastModifiedAt: '2023-05-31T16:04:06.433Z',
+                  lastModifiedBy: {
+                    clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i',
+                    isPlatformClient: false,
+                  },
+                  createdBy: {
+                    clientId: '3cx8PEBHMZQ1oHAYF1eoDs8i',
+                    isPlatformClient: false,
+                  },
+                  key: 'lineItemCodesType',
+                  name: { en: 'lineItemCodesType' },
+                  description: { en: 'lineItemCodesType' },
+                  resourceTypeIds: ['line-item'],
+                  fieldDefinitions: [
+                    {
+                      name: 'applied_codes',
+                      label: { en: 'applied_codes' },
+                      required: false,
+                      type: { name: 'Set', elementType: { name: 'String' } },
+                      inputHint: 'SingleLine',
+                    },
+                    {
+                      name: 'coupon_fixed_price',
+                      label: { en: 'coupon_fixed_price' },
+                      required: false,
+                      type: { name: 'Number' },
+                      inputHint: 'SingleLine',
+                    },
+                  ],
+                },
+              ],
+            },
+            statusCode: 200,
+          }),
+        }),
       };
     };
 
     const extensions = jest.fn().mockReturnValue({
       get: jest.fn().mockReturnValue({
-        execute: jest.fn().mockReturnValue({ body: { results: [] } }),
+        execute: () => ({
+          catch: jest.fn().mockReturnValue({ body: { results: [] } }),
+        }),
       }),
       withId: jest.fn().mockReturnValue({
-        delete: jest
-          .fn()
-          .mockReturnValue({ execute: jest.fn().mockResolvedValue({}) }),
+        delete: jest.fn().mockReturnValue({
+          execute: () => ({
+            catch: jest.fn().mockReturnValue({}),
+          }),
+        }),
       }),
       post: jest.fn().mockReturnValue({
-        execute: jest.fn().mockReturnValue({ body: { id: undefined } }),
+        execute: () => ({
+          catch: jest.fn().mockReturnValue({ body: { id: undefined } }),
+        }),
       }),
     });
 
@@ -492,7 +512,7 @@ export const getCommerceToolsConnectorServiceMockForCommerceToolsServiceTest = (
   ) as CommercetoolsConnectorService;
 
   commerceToolsConnectoService.findCart = jest.fn().mockResolvedValue(cart);
-  commerceToolsConnectoService.getClient = jest.fn().mockReturnValue({});
+  commerceToolsConnectoService.getClient = jest.fn().mockReturnValue(jest.fn());
 
   return commerceToolsConnectoService;
 };

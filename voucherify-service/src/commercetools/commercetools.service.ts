@@ -64,9 +64,6 @@ export class CommercetoolsService implements StoreInterface {
       this.commerceToolsConnectorService.getClient(),
     );
     cartUpdateActions.setCart(cart);
-    cartUpdateActions.setCouponsLimit(
-      this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT') ?? 5,
-    );
 
     cartUpdateActions.setCartDiscountApplyMode(this.cartDiscountApplyMode);
 

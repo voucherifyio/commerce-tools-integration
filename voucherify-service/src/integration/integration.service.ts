@@ -30,6 +30,7 @@ import {
   stackableRedeemablesResponseToUnitStackableRedeemablesResultDiscountUnitWithCodes,
   stackableResponseToUnitTypeRedeemables,
   unitTypeRedeemablesToOrderItems,
+  getRedeemablesByStatuses,
 } from './utils/redeemableOperationFunctions';
 import { buildValidationsValidateStackableParamsForVoucherify } from './utils/mappers/buildValidationsValidateStackableParamsForVoucherify';
 import { buildRedeemStackableRequestForVoucherify } from './utils/mappers/buildRedeemStackableRequestForVoucherify';
@@ -37,7 +38,6 @@ import { replaceCodesWithInapplicableCoupons } from './utils/replaceCodesWithIna
 import {
   couponsStatusDeleted,
   filterOutCouponsTypePromotionTier,
-  filterCouponsStatusAppliedAndNewByLimit,
   codesFromCoupons,
   uniqueCouponsByCodes,
   filterOutCouponsIfCodeIn,
@@ -73,12 +73,13 @@ export class IntegrationService {
   }
 
   private getInapplicableRedeemables(validatedCoupons: ValidatedCoupons) {
-    return getRedeemablesByStatus(
+    return getRedeemablesByStatuses(
       [
         ...(validatedCoupons.redeemables || []),
         ...(validatedCoupons.inapplicable_redeemables || []),
+        ...(validatedCoupons.skipped_redeemables || []),
       ],
-      'INAPPLICABLE',
+      ['INAPPLICABLE', 'SKIPPED'],
     );
   }
 
@@ -317,16 +318,12 @@ export class IntegrationService {
       anonymousId,
     });
 
-    const couponsAppliedAndNewLimitedByConfig =
-      filterCouponsStatusAppliedAndNewByLimit(
-        uniqueCoupons,
-        this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT'),
-      );
-
-    let validatedCoupons = await this.validateCoupons(
-      couponsAppliedAndNewLimitedByConfig,
-      cart,
+    const notDeletedCoupons = filterOutCouponsIfCodeIn(
+      uniqueCoupons,
+      deletedCoupons.map((coupon) => coupon.code),
     );
+
+    let validatedCoupons = await this.validateCoupons(notDeletedCoupons, cart);
 
     const inapplicableRedeemables =
       this.getInapplicableRedeemables(validatedCoupons);
@@ -339,7 +336,7 @@ export class IntegrationService {
       !Array.isArray(validatedCoupons?.inapplicable_redeemables) &&
       validatedCoupons.valid === false
     ) {
-      const applicableCodes = couponsAppliedAndNewLimitedByConfig.filter(
+      const applicableCodes = notDeletedCoupons.filter(
         (coupon) => !inapplicableCodes.includes(coupon.code),
       );
       if (applicableCodes.length === 0) {
@@ -382,7 +379,7 @@ export class IntegrationService {
       unitTypeRedeemables,
       codesWithMissingProductsToAdd,
       validatedCoupons,
-      couponsAppliedAndNewLimitedByConfig,
+      notDeletedCoupons,
       cart,
     );
 
@@ -399,6 +396,10 @@ export class IntegrationService {
       availablePromotions,
       productsToAdd,
     });
+
+    cartUpdateActions.setCouponsLimit(
+      validatedCouponsWithCorrectPrices.stacking_rules.redeemables_limit,
+    );
 
     await this.updateCart(
       cartUpdateActions,

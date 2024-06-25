@@ -132,7 +132,7 @@ describe('when applying discount code which adds free product to the cart', () =
       {
         action: 'setCustomField',
         name: 'couponsLimit',
-        value: 5,
+        value: 30,
       },
     ]);
   });

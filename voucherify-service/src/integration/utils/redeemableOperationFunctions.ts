@@ -11,6 +11,15 @@ import {
 } from '../types';
 import { uniqBy } from 'lodash';
 
+export function getRedeemablesByStatuses(
+  redeemables: StackableRedeemableResponse[],
+  statuses: StackableRedeemableResponseStatus[],
+): StackableRedeemableResponse[] {
+  return uniqBy(redeemables ?? [], 'id').filter((redeemable) =>
+    statuses.includes(redeemable.status),
+  );
+}
+
 export function getRedeemablesByStatus(
   redeemables: StackableRedeemableResponse[],
   status: StackableRedeemableResponseStatus,
