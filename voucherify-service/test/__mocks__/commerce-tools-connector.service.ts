@@ -252,13 +252,6 @@ export const getCommerceToolsConnectorServiceMockWithCouponTypes = () => {
                       inputHint: 'SingleLine',
                     },
                     {
-                      name: 'isValidationFailed',
-                      label: { en: 'isValidationFailed' },
-                      required: false,
-                      type: { name: 'Boolean' },
-                      inputHint: 'SingleLine',
-                    },
-                    {
                       name: 'couponsLimit',
                       label: { en: 'couponsLimit' },
                       required: false,
@@ -397,13 +390,6 @@ export const getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest =
                         label: { en: 'shippingProductSourceIds' },
                         required: false,
                         type: { name: 'Set', elementType: { name: 'String' } },
-                        inputHint: 'SingleLine',
-                      },
-                      {
-                        name: 'isValidationFailed',
-                        label: { en: 'isValidationFailed' },
-                        required: false,
-                        type: { name: 'Boolean' },
                         inputHint: 'SingleLine',
                       },
                       {

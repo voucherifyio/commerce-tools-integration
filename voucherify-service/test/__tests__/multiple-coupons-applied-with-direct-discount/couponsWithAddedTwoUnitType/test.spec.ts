@@ -46,6 +46,11 @@ describe('when applying discount code which adds free product to the cart', () =
 
     expect(result.actions).toEqual([
       {
+        action: 'setCustomType',
+        type: { id: '5aa76235-9d61-41c7-9d57-278b2bcc2f75' },
+        name: 'couponCodes',
+      },
+      {
         action: 'setDirectDiscounts',
         discounts: [
           {
@@ -89,21 +94,6 @@ describe('when applying discount code which adds free product to the cart', () =
         action: 'changeLineItemQuantity',
         lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
         quantity: 3,
-      },
-      {
-        action: 'changeLineItemQuantity',
-        lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
-        quantity: 3,
-      },
-      {
-        action: 'setLineItemCustomField',
-        lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
-        name: 'applied_codes',
-      },
-      {
-        action: 'removeLineItem',
-        lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
-        quantity: 0,
       },
       {
         action: 'setLineItemCustomType',

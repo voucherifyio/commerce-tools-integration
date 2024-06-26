@@ -108,10 +108,9 @@ export class VoucherifyConnectorService {
 
   async releaseValidationSession(codes: string[], sessionKey: string) {
     for await (const code of codes) {
-      await this.getClient().vouchers.releaseValidationSession(
-        code,
-        sessionKey,
-      );
+      await this.getClient()
+        .vouchers.releaseValidationSession(code, sessionKey)
+        .catch((err) => err);
     }
   }
 

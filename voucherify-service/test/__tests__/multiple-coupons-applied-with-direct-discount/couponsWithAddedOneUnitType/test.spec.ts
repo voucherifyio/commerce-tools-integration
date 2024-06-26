@@ -46,6 +46,11 @@ describe('when applying discount code which adds free product to the cart', () =
 
     expect(result.actions).toEqual([
       {
+        action: 'setCustomType',
+        type: { id: '5aa76235-9d61-41c7-9d57-278b2bcc2f75' },
+        name: 'couponCodes',
+      },
+      {
         action: 'setDirectDiscounts',
         discounts: [
           {

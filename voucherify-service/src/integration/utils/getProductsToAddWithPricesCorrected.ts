@@ -12,11 +12,11 @@ import {
 export function getProductsToAdd(
   validatedCoupons,
   currentPricesOfProducts,
-  newCoupons: Coupon[],
+  coupons: Coupon[],
 ) {
   return getCtProductsWithCurrentPriceAmount(
     stackableRedeemablesResponseToUnitStackableRedeemablesResultDiscountUnitWithCodes(
-      stackableResponseToUnitTypeRedeemables(validatedCoupons, newCoupons),
+      stackableResponseToUnitTypeRedeemables(validatedCoupons, coupons),
     ),
     validatedCoupons.order.items,
     currentPricesOfProducts,

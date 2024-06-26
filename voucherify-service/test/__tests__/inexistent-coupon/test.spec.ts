@@ -76,9 +76,7 @@ describe('When trying to apply inexistent coupon code', () => {
         {
           action: 'setCustomField',
           name: 'discount_codes',
-          value: [
-            '{"code":"NOT EXIST","status":"NOT_APPLIED","errMsg":"Resource not found"}',
-          ],
+          value: [],
         },
         {
           action: 'setCustomField',

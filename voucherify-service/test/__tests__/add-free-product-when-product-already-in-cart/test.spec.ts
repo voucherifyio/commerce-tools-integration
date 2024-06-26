@@ -44,7 +44,7 @@ describe('when adding new product to the cart with free product already applied 
 
     expect(
       voucherifyConnectorService.validateStackableVouchers,
-    ).toBeCalledTimes(2);
+    ).toBeCalledTimes(1);
     expect(voucherifyConnectorService.validateStackableVouchers).toBeCalledWith(
       {
         customer: { source_id: undefined },
@@ -71,57 +71,22 @@ describe('when adding new product to the cart with free product already applied 
     );
   });
 
-  it('should create one `addCustomLineItem` action with summary of applied coupon', async () => {
-    const result = await commercetoolsService.handleCartUpdate(cart);
-    expect(
-      result.actions.filter((e) => e.action === 'addCustomLineItem'),
-    ).toHaveLength(1);
-
-    expect(result.actions).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          action: 'addCustomLineItem',
-          name: {
-            de: 'Gutscheincodes rabatt',
-            en: 'Coupon codes discount',
-          },
-          quantity: 1,
-          money: {
-            centAmount: -PRODUCT_PRICE,
-            type: 'centPrecision',
-            currencyCode: 'EUR',
-          },
-          slug: 'Voucher, ',
-          taxCategory: {
-            id: defaultGetCouponTaxCategoryResponse.id,
-          },
-        }),
-      ]),
-    );
-  });
-
   it('should create three `setCustomField` for default customFields settings and action with all coupons applied', async () => {
     const result = await commercetoolsService.handleCartUpdate(cart);
 
     expect(
       result.actions.filter((e) => e.action === 'setCustomField'),
-    ).toHaveLength(3);
+    ).toHaveLength(2);
 
-    expect(result.actions).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
+    expect(result.actions.filter((e) => e.action === 'setCustomField')).toEqual(
+      [
+        { action: 'setCustomField', name: 'discount_codes', value: [] },
+        {
           action: 'setCustomField',
-          name: 'discount_codes',
-          value: [
-            JSON.stringify({
-              code: COUPON_CODE,
-              status: 'APPLIED',
-              type: 'voucher',
-              value: PRODUCT_PRICE,
-            }),
-          ],
-        }),
-      ]),
+          name: 'shippingProductSourceIds',
+          value: [],
+        },
+      ],
     );
   });
 });

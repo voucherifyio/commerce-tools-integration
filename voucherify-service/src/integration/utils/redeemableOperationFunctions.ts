@@ -38,14 +38,14 @@ export function redeemablesToCodes(
 
 export function stackableResponseToUnitTypeRedeemables(
   validatedCoupons: ValidatedCoupons,
-  newCoupons: Coupon[],
+  coupons: Coupon[],
 ): StackableRedeemableResponse[] {
-  const newCouponCodes = newCoupons.map((coupon) => coupon.code);
+  const couponCodes = coupons.map((coupon) => coupon.code);
   return validatedCoupons.redeemables.filter(
     (redeemable) =>
       redeemable.result?.discount?.type === 'UNIT' &&
       redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE &&
-      newCouponCodes.includes(redeemable.id),
+      couponCodes.includes(redeemable.id),
   );
 }
 

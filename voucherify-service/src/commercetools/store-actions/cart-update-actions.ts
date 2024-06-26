@@ -10,8 +10,10 @@ import {
 } from '@voucherify/sdk';
 import { Cart as CommerceToolsCart } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/cart';
 import getCartActionBuilders from './cart-update-actions/getCartActionBuilders';
-import { checkIfAllInapplicableCouponsArePromotionTier } from '../../integration/utils/helperFunctions';
-import { DataToRunCartActionsBuilder } from './cart-update-actions/CartAction';
+import {
+  CartAction,
+  DataToRunCartActionsBuilder,
+} from './cart-update-actions/CartAction';
 import { CartDiscountApplyMode, PriceSelector } from '../types';
 import { getCommercetoolstCurrentPriceAmount } from '../utils/getCommercetoolstCurrentPriceAmount';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
@@ -25,6 +27,10 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
   private couponsLimit: number;
   public setCouponsLimit(value: number | undefined) {
     this.couponsLimit = value;
+  }
+  private initialActions: CartAction[] = [];
+  public setInitialActions(value: CartAction[]) {
+    this.initialActions = value;
   }
   private commerceToolsCart: CommerceToolsCart;
   public setCart(value: CommerceToolsCart) {
@@ -148,18 +154,14 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
   }
 
   private gatherDataToRunCartActionsBuilder(): DataToRunCartActionsBuilder {
-    const inapplicableCoupons = this.inapplicableCoupons;
     return {
+      initialActions: this.initialActions,
       availablePromotions: this.availablePromotions,
       applicableCoupons: this.applicableCoupons,
-      inapplicableCoupons,
+      inapplicableCoupons: this.inapplicableCoupons,
       newSessionKey: this.sessionKey ?? null,
       totalDiscountAmount: this.totalDiscountAmount,
       productsToAdd: this.productsToAdd ?? [],
-      allInapplicableCouponsArePromotionTier:
-        this.applicableCoupons.length || inapplicableCoupons.length
-          ? checkIfAllInapplicableCouponsArePromotionTier(inapplicableCoupons)
-          : undefined,
       couponsLimit: this.couponsLimit,
       cartDiscountApplyMode: this.cartDiscountApplyMode,
       commerceToolsCart: this.commerceToolsCart,

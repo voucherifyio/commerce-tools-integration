@@ -43,6 +43,11 @@ describe('when adding new product to the cart with free product already applied 
 
     expect(result.actions).toEqual([
       {
+        action: 'setCustomType',
+        type: { id: '5aa76235-9d61-41c7-9d57-278b2bcc2f75' },
+        name: 'couponCodes',
+      },
+      {
         action: 'removeCustomLineItem',
         customLineItemId: '2a3c6424-41cb-4215-801b-8eaa903cdc3c',
       },
@@ -56,27 +61,12 @@ describe('when adding new product to the cart with free product already applied 
           currencyCode: 'EUR',
         },
         slug: 'Voucher, ',
-        taxCategory: { id: defaultGetCouponTaxCategoryResponse.id },
+        taxCategory: { id: '64a3b50d-245c-465a-bb5e-faf59d729031' },
       },
       {
         action: 'changeLineItemQuantity',
         lineItemId: '324f6e75-62ba-4faa-aced-d63f21f997e2',
         quantity: 3,
-      },
-      {
-        action: 'changeLineItemQuantity',
-        lineItemId: '324f6e75-62ba-4faa-aced-d63f21f997e2',
-        quantity: 3,
-      },
-      {
-        action: 'setLineItemCustomField',
-        lineItemId: '324f6e75-62ba-4faa-aced-d63f21f997e2',
-        name: 'applied_codes',
-      },
-      {
-        action: 'removeLineItem',
-        lineItemId: '324f6e75-62ba-4faa-aced-d63f21f997e2',
-        quantity: 0,
       },
       {
         action: 'setLineItemCustomType',

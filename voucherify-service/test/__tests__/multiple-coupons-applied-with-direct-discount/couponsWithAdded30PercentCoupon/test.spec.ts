@@ -46,69 +46,39 @@ describe('when applying discount code which adds free product to the cart', () =
 
     expect(result.actions).toEqual([
       {
+        action: 'setCustomType',
+        type: { id: '5aa76235-9d61-41c7-9d57-278b2bcc2f75' },
+        name: 'couponCodes',
+      },
+      {
         action: 'setDirectDiscounts',
         discounts: [
           {
-            target: {
-              type: 'lineItems',
-              predicate: 'sku="A0E200000001UTR"',
-            },
+            target: { type: 'lineItems', predicate: 'sku="A0E200000001UTR"' },
             value: {
               type: 'absolute',
-              money: [
-                {
-                  centAmount: 64900,
-                  currencyCode: 'EUR',
-                },
-              ],
+              money: [{ centAmount: 64900, currencyCode: 'EUR' }],
             },
           },
           {
-            target: {
-              type: 'lineItems',
-              predicate: 'true',
-            },
+            target: { type: 'lineItems', predicate: 'true' },
             value: {
               type: 'absolute',
-              money: [
-                {
-                  centAmount: 51270,
-                  currencyCode: 'EUR',
-                },
-              ],
+              money: [{ centAmount: 51270, currencyCode: 'EUR' }],
             },
           },
         ],
       },
       {
-        action: 'changeLineItemQuantity',
-        lineItemId: '3525f646-e4ea-48bd-b925-a327dbc50f99',
-        quantity: 1,
-      },
-      {
-        action: 'setLineItemCustomField',
-        lineItemId: '3525f646-e4ea-48bd-b925-a327dbc50f99',
-        name: 'applied_codes',
-      },
-      {
-        action: 'removeLineItem',
-        lineItemId: '3525f646-e4ea-48bd-b925-a327dbc50f99',
-        quantity: 0,
-      },
-      {
         action: 'setLineItemCustomType',
         lineItemId: 'b052221f-fbf0-49a4-ad28-b6618abd5368',
-        type: {
-          key: 'lineItemCodesType',
-        },
+        type: { key: 'lineItemCodesType' },
         fields: {},
       },
       {
         action: 'setLineItemCustomType',
         lineItemId: '3525f646-e4ea-48bd-b925-a327dbc50f99',
-        type: {
-          key: 'lineItemCodesType',
-        },
+        type: { key: 'lineItemCodesType' },
         fields: {
           applied_codes: [
             '{"code":"unit_off_1","type":"UNIT","effect":"ADD_MISSING_ITEMS","quantity":1,"totalDiscountQuantity":1}',
@@ -129,11 +99,7 @@ describe('when applying discount code which adds free product to the cart', () =
         name: 'shippingProductSourceIds',
         value: ['8196593a-7e3e-464f-95eb-ccfdc5e51a35'],
       },
-      {
-        action: 'setCustomField',
-        name: 'couponsLimit',
-        value: 30,
-      },
+      { action: 'setCustomField', name: 'couponsLimit', value: 30 },
     ]);
   });
 });

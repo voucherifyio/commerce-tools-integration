@@ -1,11 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommercetoolsConnectorService } from '../commercetools-connector.service';
-import { Type, TypeDraft, TypeUpdateAction } from '@commercetools/platform-sdk';
+import {
+  Product,
+  Type,
+  TypeDraft,
+  TypeUpdateAction,
+} from '@commercetools/platform-sdk';
 import {
   OREDER_COUPON_CUSTOM_FIELDS,
   LINE_ITEM_COUPON_CUSTOM_FIELDS,
 } from './coupon-type-definition';
-import { QueryParam } from '@commercetools/platform-sdk/dist/declarations/src/generated/shared/utils/common-types';
 
 @Injectable()
 export class CustomTypesService {
@@ -14,22 +18,30 @@ export class CustomTypesService {
     private readonly logger: Logger,
   ) {}
 
-  public async findCouponType(typeName: string): Promise<Type | null> {
+  //couponTypes should never change, so we can cache them
+  private couponTypes = new Map<string, Type>();
+
+  public async findCouponType(typeName: string): Promise<Type> {
+    if (this.couponTypes.get(typeName)) {
+      return this.couponTypes.get(typeName);
+    }
     const ctClient = this.commerceToolsConnectorService.getClient();
     const response = await ctClient
       .types()
-      .get({ queryArgs: { where: `key="${typeName}"` } })
+      .get({ queryArgs: { where: `key="couponCodes"` } })
       .execute()
       .catch((result) => result);
     if (
       ![200, 201].includes(response.statusCode) ||
       response.body?.count === 0
     ) {
-      this.logger.debug({ msg: `${typeName} type not found` });
-      return null;
+      const msg = 'CouponType not found';
+      this.logger.error({ msg });
+      throw new Error(msg);
     }
     const couponType = response.body.results[0];
-    this.logger.debug({ msg: `${typeName} type found`, id: couponType.id });
+    this.logger.debug({ msg: `couponCodes type found`, id: couponType.id });
+    this.couponTypes.set(typeName, couponType);
     return couponType;
   }
 
