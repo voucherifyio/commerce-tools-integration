@@ -41,6 +41,7 @@ import {
   codesFromCoupons,
   uniqueCouponsByCodes,
   filterOutCouponsIfCodeIn,
+  couponsStatusNew,
 } from './utils/couponsOperationFunctions';
 import { getIncorrectPrices } from './utils/getIncorrectPrices';
 import { getCodesIfProductNotFoundIn } from './utils/getCodesIfProductNotFoundIn';
@@ -284,6 +285,8 @@ export class IntegrationService {
       });
     }
 
+    const newCoupons: Coupon[] = couponsStatusNew(uniqueCoupons);
+
     const { promotions, availablePromotions } =
       await this.voucherifyService.getPromotions(cart, uniqueCoupons);
 
@@ -345,8 +348,10 @@ export class IntegrationService {
       validatedCoupons = await this.validateCoupons(applicableCodes, cart);
     }
 
-    const unitTypeRedeemables =
-      stackableResponseToUnitTypeRedeemables(validatedCoupons);
+    const unitTypeRedeemables = stackableResponseToUnitTypeRedeemables(
+      validatedCoupons,
+      newCoupons,
+    );
     const stackableRedeemablesResultDiscountUnitWithPriceAndCodes =
       stackableRedeemablesResponseToUnitStackableRedeemablesResultDiscountUnitWithCodes(
         unitTypeRedeemables,
@@ -388,6 +393,7 @@ export class IntegrationService {
         ? getProductsToAdd(
             validatedCouponsWithCorrectPrices,
             currentPricesOfProducts,
+            newCoupons,
           )
         : [];
 

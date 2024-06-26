@@ -6,6 +6,7 @@ import {
 } from '@voucherify/sdk';
 import { FREE_SHIPPING_UNIT_TYPE } from '../../consts/voucherify';
 import {
+  Coupon,
   StackableRedeemableResultDiscountUnitWithCodeAndPrice,
   ValidatedCoupons,
 } from '../types';
@@ -37,11 +38,14 @@ export function redeemablesToCodes(
 
 export function stackableResponseToUnitTypeRedeemables(
   validatedCoupons: ValidatedCoupons,
+  newCoupons: Coupon[],
 ): StackableRedeemableResponse[] {
+  const newCouponCodes = newCoupons.map((coupon) => coupon.code);
   return validatedCoupons.redeemables.filter(
     (redeemable) =>
       redeemable.result?.discount?.type === 'UNIT' &&
-      redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE,
+      redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE &&
+      newCouponCodes.includes(redeemable.id),
   );
 }
 

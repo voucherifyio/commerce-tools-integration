@@ -1,5 +1,6 @@
 import { OrdersItem } from '@voucherify/sdk';
 import {
+  Coupon,
   ProductPriceAndSourceId,
   StackableRedeemableResultDiscountUnitWithCodeAndPrice,
 } from '../types';
@@ -8,10 +9,14 @@ import {
   stackableResponseToUnitTypeRedeemables,
 } from './redeemableOperationFunctions';
 
-export function getProductsToAdd(validatedCoupons, currentPricesOfProducts) {
+export function getProductsToAdd(
+  validatedCoupons,
+  currentPricesOfProducts,
+  newCoupons: Coupon[],
+) {
   return getCtProductsWithCurrentPriceAmount(
     stackableRedeemablesResponseToUnitStackableRedeemablesResultDiscountUnitWithCodes(
-      stackableResponseToUnitTypeRedeemables(validatedCoupons),
+      stackableResponseToUnitTypeRedeemables(validatedCoupons, newCoupons),
     ),
     validatedCoupons.order.items,
     currentPricesOfProducts,
