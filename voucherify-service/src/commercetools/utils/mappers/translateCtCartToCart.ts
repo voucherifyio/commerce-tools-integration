@@ -9,7 +9,7 @@ export function translateCtCartToCart(cart: CommerceToolsCart): Cart {
     id: cart.id,
     customerId: cart?.customerId,
     anonymousId: cart?.anonymousId,
-    sessionKey: getSessionFromCtCart(cart as CommerceToolsCart),
+    sessionKey: getSessionFromCtCart(cart),
     coupons: getCouponsFromCartOrOrder(cart),
     items: mapLineItemsToIntegrationType(cart.lineItems),
   };

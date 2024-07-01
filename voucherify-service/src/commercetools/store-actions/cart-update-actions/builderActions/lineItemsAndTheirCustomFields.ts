@@ -2,20 +2,18 @@ import { LineItem } from '@commercetools/platform-sdk';
 import {
   CartAction,
   CartActionAddLineItem,
-  CartActionRemoveLineItem,
   CartActionSetLineItemCustomType,
   DataToRunCartActionsBuilder,
 } from '../CartAction';
 import mapValidateCouponsResultToLineProductsWithFixedAmount from '../helpers/fixedPrice';
 import addFreeLineItems from '../helpers/addFreeLineItems';
-import removeFreeLineItemsForNonApplicableCoupon from '../helpers/removeFreeLineItemsForNonApplicableCoupon';
 
 function removeDuplicatedAddLineItems(
   actionsAddLineItem: CartActionAddLineItem[],
 ): CartActionAddLineItem[] {
   const processedAddLineItemIds = [];
   const processedAddLineItems = [];
-  for (const currentAction of actionsAddLineItem as CartActionAddLineItem[]) {
+  for (const currentAction of actionsAddLineItem) {
     if (!processedAddLineItemIds.includes(currentAction.sku)) {
       processedAddLineItemIds.push(currentAction.sku);
       processedAddLineItems.push(currentAction);
@@ -27,7 +25,6 @@ function removeDuplicatedAddLineItems(
 
 function mergeUniqueSetLineItemCustomTypeActions(
   actionsSetLineItemCustomType: CartActionSetLineItemCustomType[],
-  actionsRemoveLineItem: CartActionRemoveLineItem[],
   lineItems: LineItem[],
 ): CartAction[] {
   const sumQuantity = (elements, action, key) => {
@@ -35,16 +32,6 @@ function mergeUniqueSetLineItemCustomTypeActions(
       .filter((element) => element[key] === action.lineItemId)
       .reduce((acc, element) => acc + element.quantity, 0);
   };
-
-  // If lineItem is going to be removed we don't want to set customField on it.
-  const removeLineItemIdsWithQuantity = actionsRemoveLineItem.map(
-    (action: CartActionRemoveLineItem) => {
-      return {
-        lineItemId: action.lineItemId,
-        quantity: action.quantity,
-      };
-    },
-  );
 
   const actionsSetLineItemCustomTypeUnique = [
     ...new Map(
@@ -56,7 +43,6 @@ function mergeUniqueSetLineItemCustomTypeActions(
     .map((action: CartActionSetLineItemCustomType) => {
       if (
         // We need to decide if this case remove item from cart or only will change quantity to lower
-        sumQuantity(removeLineItemIdsWithQuantity, action, 'lineItemId') <
         sumQuantity(lineItems, action, 'id')
       ) {
         return {
@@ -93,20 +79,13 @@ export default function lineItemsAndTheirCustomFields(
   const allActionsSetLineItemCustomType = [
     ...lineProductsWithFixedAmount,
     ...freeLineItemsActions,
-  ].filter((action) => action?.action === 'setLineItemCustomType');
-
-  const removeActions = removeFreeLineItemsForNonApplicableCoupon(
-    dataToRunCartActionsBuilder,
-  );
-
-  const removeLineItemActions = removeActions.filter(
-    (removeAction) => removeAction?.action === 'removeLineItem',
-  );
+  ].filter(
+    (action) => action?.action === 'setLineItemCustomType',
+  ) as CartActionSetLineItemCustomType[];
 
   const mergedSetLineItemCustomTypeActions =
     mergeUniqueSetLineItemCustomTypeActions(
-      allActionsSetLineItemCustomType as CartActionSetLineItemCustomType[],
-      removeLineItemActions as CartActionRemoveLineItem[],
+      allActionsSetLineItemCustomType,
       dataToRunCartActionsBuilder.commerceToolsCart.lineItems,
     );
 
@@ -124,7 +103,6 @@ export default function lineItemsAndTheirCustomFields(
         ),
     ),
     ...uniqueAddLineItems,
-    ...removeActions,
     ...mergedSetLineItemCustomTypeActions,
   ];
 }

@@ -7,7 +7,7 @@ import { uniqBy } from 'lodash';
 export function getCouponsFromCartOrOrder(
   cart: CommerceToolsCart | CommerceToolsOrder,
 ): Coupon[] {
-  const coupons = (cart.custom?.fields?.discount_codes ?? [])
+  const coupons: Coupon[] = (cart.custom?.fields?.discount_codes ?? [])
     .map(deserializeCoupons)
     .filter(
       (coupon) =>

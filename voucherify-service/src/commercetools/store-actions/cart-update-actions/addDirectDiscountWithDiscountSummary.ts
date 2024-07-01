@@ -28,27 +28,10 @@ export default function addDirectDiscountWithDiscountSummary(
   const discounts = [];
 
   applicableCoupons.forEach((coupon) => {
-    if (coupon.result.discount.effect === 'APPLY_TO_ORDER') {
-      discounts.push({
-        target: {
-          type: 'lineItems',
-          predicate: 'true',
-        },
-        value: {
-          type: 'absolute',
-          money: [
-            {
-              centAmount:
-                coupon?.order?.total_applied_discount_amount ||
-                coupon.order?.applied_discount_amount ||
-                0,
-              currencyCode,
-            },
-          ],
-        },
-      });
-      return;
-    }
+    let totalDiscountAmount =
+      coupon?.order?.items_applied_discount_amount ||
+      coupon.order?.applied_discount_amount ||
+      0;
 
     coupon.order.items.forEach((item) => {
       if (item.product_id === FREE_SHIPPING_UNIT_TYPE) {
@@ -73,8 +56,27 @@ export default function addDirectDiscountWithDiscountSummary(
             ],
           },
         });
+        totalDiscountAmount -= item.applied_discount_amount;
       }
     });
+
+    if (totalDiscountAmount) {
+      discounts.push({
+        target: {
+          type: 'lineItems',
+          predicate: 'true',
+        },
+        value: {
+          type: 'absolute',
+          money: [
+            {
+              centAmount: totalDiscountAmount,
+              currencyCode,
+            },
+          ],
+        },
+      });
+    }
   });
 
   return [

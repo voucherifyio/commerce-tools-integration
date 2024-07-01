@@ -88,7 +88,9 @@ export const getTypesServiceMockWithNotDefinedCouponTypeResponse = () => {
     '../../src/commercetools/custom-types/custom-types.service',
   ) as CustomTypesService;
 
-  typesService.findCouponType = jest.fn().mockResolvedValue(null);
+  typesService.findCouponType = jest
+    .fn()
+    .mockRejectedValue(new Error('CouponType not found'));
 
   return typesService;
 };

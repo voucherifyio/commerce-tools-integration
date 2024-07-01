@@ -1,8 +1,10 @@
 import { AppModule } from './app.module';
 import { CommandFactory } from 'nest-commander';
-import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
-import { utilities as nestWinstonModuleUtilities } from 'nest-winston';
+import {
+  WinstonModule,
+  utilities as nestWinstonModuleUtilities,
+} from 'nest-winston';
 
 async function bootstrap() {
   await CommandFactory.run(

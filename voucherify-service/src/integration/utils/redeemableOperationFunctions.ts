@@ -5,14 +5,27 @@ import {
   StackableRedeemableResultDiscountUnit,
 } from '@voucherify/sdk';
 import { FREE_SHIPPING_UNIT_TYPE } from '../../consts/voucherify';
-import { ValidationValidateStackableResponse } from '@voucherify/sdk';
-import { StackableRedeemableResultDiscountUnitWithCodeAndPrice } from '../types';
+import {
+  Coupon,
+  StackableRedeemableResultDiscountUnitWithCodeAndPrice,
+  ValidatedCoupons,
+} from '../types';
+import { uniqBy } from 'lodash';
+
+export function getRedeemablesByStatuses(
+  redeemables: StackableRedeemableResponse[],
+  statuses: StackableRedeemableResponseStatus[],
+): StackableRedeemableResponse[] {
+  return uniqBy(redeemables ?? [], 'id').filter((redeemable) =>
+    statuses.includes(redeemable.status),
+  );
+}
 
 export function getRedeemablesByStatus(
   redeemables: StackableRedeemableResponse[],
   status: StackableRedeemableResponseStatus,
 ): StackableRedeemableResponse[] {
-  return (redeemables ?? []).filter(
+  return uniqBy(redeemables ?? [], 'id').filter(
     (redeemable) => redeemable.status === status,
   );
 }
@@ -24,12 +37,15 @@ export function redeemablesToCodes(
 }
 
 export function stackableResponseToUnitTypeRedeemables(
-  validatedCoupons: ValidationValidateStackableResponse,
+  validatedCoupons: ValidatedCoupons,
+  coupons: Coupon[],
 ): StackableRedeemableResponse[] {
+  const couponCodes = coupons.map((coupon) => coupon.code);
   return validatedCoupons.redeemables.filter(
     (redeemable) =>
       redeemable.result?.discount?.type === 'UNIT' &&
-      redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE,
+      redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE &&
+      couponCodes.includes(redeemable.id),
   );
 }
 
@@ -76,7 +92,7 @@ export function stackableRedeemablesResponseToUnitStackableRedeemablesResultDisc
 export function unitTypeRedeemablesToOrderItems(
   unitTypeRedeemables: StackableRedeemableResponse[],
 ): OrdersItem[] {
-  return unitTypeRedeemables.flatMap((e) => e.order.items);
+  return unitTypeRedeemables?.flatMap((e) => e.order.items);
 }
 
 export function filterOutRedeemablesIfCodeIn(

@@ -94,17 +94,6 @@ export const OREDER_COUPON_CUSTOM_FIELDS: TypeDraft = {
       inputHint: 'SingleLine',
     },
     {
-      name: 'isValidationFailed',
-      label: {
-        en: 'isValidationFailed',
-      },
-      required: false,
-      type: {
-        name: 'Boolean',
-      },
-      inputHint: 'SingleLine',
-    },
-    {
       name: 'couponsLimit',
       label: {
         en: 'couponsLimit',

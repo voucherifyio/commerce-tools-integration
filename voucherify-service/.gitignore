@@ -42,3 +42,5 @@ json
 .env-local
 *.icloud
 /label-*.json
+.vercel
+vercel.json

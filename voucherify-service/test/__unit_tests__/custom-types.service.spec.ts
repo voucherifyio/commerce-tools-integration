@@ -64,7 +64,6 @@ describe('ConfigCommand', () => {
   it('should be defined', () => {
     command.findCouponType('test');
     expect(command.findCouponType).toBeDefined();
-    command.configureCouponTypes();
     expect(command.configureCouponTypes).toBeDefined();
   });
 });

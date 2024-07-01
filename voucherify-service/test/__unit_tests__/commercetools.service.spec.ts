@@ -10,6 +10,7 @@ import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 import { getCommerceToolsConnectorServiceMockForCommerceToolsServiceTest } from '../__mocks__/commerce-tools-connector.service';
 import { cart } from './payloads/commercetools.service.spec.payloads';
 import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../__mocks__/tax-categories.service';
+import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../__mocks__/types.service';
 
 const moduleMocker = new ModuleMocker(global);
 
@@ -32,7 +33,10 @@ describe('CommerceToolsService', () => {
             ),
         },
         { provide: Logger, useValue: getLoggerForCommerceToolsServiceTest() },
-        CustomTypesService,
+        {
+          provide: CustomTypesService,
+          useValue: getTypesServiceMockWithConfiguredCouponTypeResponse(),
+        },
         {
           provide: TaxCategoriesService,
           useValue:
@@ -227,7 +231,6 @@ describe('CommerceToolsService', () => {
           name: 'shippingProductSourceIds',
           value: [],
         },
-        { action: 'setCustomField', name: 'couponsLimit', value: 5 },
       ],
     });
   });

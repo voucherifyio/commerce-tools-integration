@@ -47,7 +47,8 @@ export class CustomerImportService {
             }),
           },
         })
-        .execute();
+        .execute()
+        .catch((result) => result);
       yield customerResult.body.results;
       page++;
       if (customerResult.body.total < page * limit) {

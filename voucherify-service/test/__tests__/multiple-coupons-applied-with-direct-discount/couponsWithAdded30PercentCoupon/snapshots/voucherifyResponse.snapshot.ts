@@ -354,4 +354,14 @@ export const voucherifyResponse = {
     ttl: 7,
     ttl_unit: 'DAYS',
   },
+  stacking_rules: {
+    redeemables_limit: 30,
+    applicable_redeemables_limit: 3,
+    applicable_exclusive_redeemables_limit: 1,
+    applicable_redeemables_per_category_limit: 3,
+    exclusive_categories: ['cat_0e39d9b0e551edcc40'],
+    joint_categories: [],
+    redeemables_application_mode: 'PARTIAL',
+    redeemables_sorting_rule: 'CATEGORY_HIERARCHY',
+  },
 };

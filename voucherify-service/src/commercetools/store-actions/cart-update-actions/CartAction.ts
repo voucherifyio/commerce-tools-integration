@@ -24,12 +24,6 @@ export type CartActionSetCustomFieldWithCoupons = {
   value: string[];
 };
 
-export type CartActionSetCustomFieldWithValidationFailed = {
-  action: 'setCustomField';
-  name: 'isValidationFailed';
-  value: boolean;
-};
-
 export type CartActionSetCustomFieldFreeShipping = {
   action: 'setCustomField';
   name: 'shippingProductSourceIds';
@@ -132,18 +126,17 @@ export type CartAction =
   | CartActionChangeLineItemQuantity
   | CartActionSetLineItemCustomType
   | CartActionSetCustomFieldWithCouponsLimit
-  | CartActionSetCustomFieldWithValidationFailed
   | CartActionSetCustomFieldFreeShipping
   | CartActionRecalculate;
 
 export type DataToRunCartActionsBuilder = {
+  initialActions: CartAction[];
   availablePromotions: availablePromotion[];
   applicableCoupons: StackableRedeemableResponse[];
   inapplicableCoupons: StackableRedeemableResponse[];
   newSessionKey?: string;
   totalDiscountAmount: number;
   productsToAdd: ProductToAdd[];
-  allInapplicableCouponsArePromotionTier?: boolean;
   couponsLimit: number;
   commerceToolsCart: CommerceToolsCart;
   cartDiscountApplyMode: CartDiscountApplyMode;

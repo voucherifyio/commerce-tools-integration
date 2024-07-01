@@ -40,6 +40,13 @@ describe('when adding new product to the cart with free product already applied 
 
     expect(result.actions).toEqual([
       {
+        action: 'setCustomType',
+        name: 'couponCodes',
+        type: {
+          id: '5aa76235-9d61-41c7-9d57-278b2bcc2f75',
+        },
+      },
+      {
         action: 'removeCustomLineItem',
         customLineItemId: 'c1ff70fb-895d-49d9-bb0c-d27a55172e78',
       },
@@ -93,7 +100,7 @@ describe('when adding new product to the cart with free product already applied 
         name: 'shippingProductSourceIds',
         value: ['260d2585-daef-4c11-9adb-1b90099b7ae8'],
       },
-      { action: 'setCustomField', name: 'couponsLimit', value: 5 },
+      { action: 'setCustomField', name: 'couponsLimit', value: 30 },
     ]);
   });
 });

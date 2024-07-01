@@ -17,7 +17,11 @@ export class ApiExtensionService {
   async list() {
     const {
       body: { results: extensions },
-    } = await this.client.extensions().get().execute();
+    } = await this.client
+      .extensions()
+      .get()
+      .execute()
+      .catch((result) => result);
 
     return extensions;
   }
@@ -37,6 +41,7 @@ export class ApiExtensionService {
         .withId({ ID: extensionToRemove.id })
         .delete({ queryArgs: { version: extensionToRemove.version } })
         .execute()
+        .catch((result) => result)
     )?.body;
   }
 
@@ -59,6 +64,7 @@ export class ApiExtensionService {
             .withId({ ID: extension.id })
             .delete({ queryArgs: { version: extension.version } })
             .execute()
+            .catch((result) => result)
         ).body,
       );
     }
@@ -92,7 +98,11 @@ export class ApiExtensionService {
       timeoutInMs: 2000,
       key,
     };
-    const addResponse = await this.client.extensions().post({ body }).execute();
+    const addResponse = await this.client
+      .extensions()
+      .post({ body })
+      .execute()
+      .catch((result) => result);
     return addResponse.body?.id || false;
   }
 
