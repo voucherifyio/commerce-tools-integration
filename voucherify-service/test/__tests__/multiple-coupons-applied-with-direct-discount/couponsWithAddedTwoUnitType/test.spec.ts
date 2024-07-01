@@ -46,6 +46,11 @@ describe('when applying discount code which adds free product to the cart', () =
 
     expect(result.actions).toEqual([
       {
+        action: 'setCustomType',
+        type: { id: '5aa76235-9d61-41c7-9d57-278b2bcc2f75' },
+        name: 'couponCodes',
+      },
+      {
         action: 'setDirectDiscounts',
         discounts: [
           {
@@ -91,21 +96,6 @@ describe('when applying discount code which adds free product to the cart', () =
         quantity: 3,
       },
       {
-        action: 'changeLineItemQuantity',
-        lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
-        quantity: 3,
-      },
-      {
-        action: 'setLineItemCustomField',
-        lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
-        name: 'applied_codes',
-      },
-      {
-        action: 'removeLineItem',
-        lineItemId: '939bf618-c4cf-4e11-ae35-034c4b1860d2',
-        quantity: 0,
-      },
-      {
         action: 'setLineItemCustomType',
         lineItemId: '9ea34a33-36cf-479e-bba6-18644ea181c5',
         type: { key: 'lineItemCodesType' },
@@ -142,7 +132,7 @@ describe('when applying discount code which adds free product to the cart', () =
         name: 'shippingProductSourceIds',
         value: ['260d2585-daef-4c11-9adb-1b90099b7ae8'],
       },
-      { action: 'setCustomField', name: 'couponsLimit', value: 5 },
+      { action: 'setCustomField', name: 'couponsLimit', value: 30 },
     ]);
   });
 });

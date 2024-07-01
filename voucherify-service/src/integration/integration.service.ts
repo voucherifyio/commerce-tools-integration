@@ -30,6 +30,7 @@ import {
   stackableRedeemablesResponseToUnitStackableRedeemablesResultDiscountUnitWithCodes,
   stackableResponseToUnitTypeRedeemables,
   unitTypeRedeemablesToOrderItems,
+  getRedeemablesByStatuses,
 } from './utils/redeemableOperationFunctions';
 import { buildValidationsValidateStackableParamsForVoucherify } from './utils/mappers/buildValidationsValidateStackableParamsForVoucherify';
 import { buildRedeemStackableRequestForVoucherify } from './utils/mappers/buildRedeemStackableRequestForVoucherify';
@@ -37,16 +38,17 @@ import { replaceCodesWithInapplicableCoupons } from './utils/replaceCodesWithIna
 import {
   couponsStatusDeleted,
   filterOutCouponsTypePromotionTier,
-  filterCouponsStatusAppliedAndNewByLimit,
   codesFromCoupons,
   uniqueCouponsByCodes,
   filterOutCouponsIfCodeIn,
+  couponsStatusNew,
 } from './utils/couponsOperationFunctions';
 import { getIncorrectPrices } from './utils/getIncorrectPrices';
 import { getCodesIfProductNotFoundIn } from './utils/getCodesIfProductNotFoundIn';
 import { getItemsWithCorrectedPrices } from './utils/getItemsWithPricesCorrected';
 import { getProductsToAdd } from './utils/getProductsToAddWithPricesCorrected';
 import { getOrderMetadata } from './utils/getOrderMetadata';
+import { getInvalidCodesDueRemovedItems } from './utils/getInvalidCodesDueRemovedItems';
 
 @Injectable()
 export class IntegrationService {
@@ -73,20 +75,14 @@ export class IntegrationService {
   }
 
   private getInapplicableRedeemables(validatedCoupons: ValidatedCoupons) {
-    return getRedeemablesByStatus(
+    return getRedeemablesByStatuses(
       [
         ...(validatedCoupons.redeemables || []),
         ...(validatedCoupons.inapplicable_redeemables || []),
+        ...(validatedCoupons.skipped_redeemables || []),
       ],
-      'INAPPLICABLE',
+      ['INAPPLICABLE', 'SKIPPED'],
     );
-  }
-
-  private setInapplicableCoupons(
-    cartUpdateActions: CartUpdateActionsInterface,
-    inapplicableRedeemables: StackableRedeemableResponse[],
-  ) {
-    cartUpdateActions?.setInapplicableCoupons?.(inapplicableRedeemables);
   }
 
   private async validateCoupons(coupons: Coupon[], cart: Cart) {
@@ -158,6 +154,7 @@ export class IntegrationService {
     codesWithMissingProductsToAdd: string[],
     promotions: Promotions,
     productsToAdd: ProductToAdd[],
+    inapplicableRedeemables: StackableRedeemableResponse[],
   ) {
     cartUpdateActions?.setSessionKey?.(validatedCoupons?.session?.key);
     cartUpdateActions?.setTotalDiscountAmount?.(
@@ -172,10 +169,7 @@ export class IntegrationService {
         promotions,
       ),
     );
-    cartUpdateActions?.setInapplicableCoupons?.([
-      ...this.getInapplicableRedeemables(validatedCoupons),
-      ...replaceCodesWithInapplicableCoupons(codesWithMissingProductsToAdd),
-    ]);
+    cartUpdateActions?.setInapplicableCoupons?.(inapplicableRedeemables);
     cartUpdateActions?.setProductsToAdd?.(productsToAdd);
   }
 
@@ -283,7 +277,9 @@ export class IntegrationService {
       });
     }
 
-    const { promotions, availablePromotions } =
+    const newCoupons: Coupon[] = couponsStatusNew(uniqueCoupons);
+
+    let { promotions, availablePromotions } =
       await this.voucherifyService.getPromotions(cart, uniqueCoupons);
 
     this.setAvailablePromotions(cartUpdateActions, availablePromotions);
@@ -296,7 +292,7 @@ export class IntegrationService {
     }
 
     const deletedCoupons = couponsStatusDeleted(uniqueCoupons);
-    this.voucherifyConnectorService.releaseValidationSession(
+    await this.voucherifyConnectorService.releaseValidationSession(
       codesFromCoupons(filterOutCouponsTypePromotionTier(deletedCoupons)),
       sessionKey,
     );
@@ -317,39 +313,63 @@ export class IntegrationService {
       anonymousId,
     });
 
-    const couponsAppliedAndNewLimitedByConfig =
-      filterCouponsStatusAppliedAndNewByLimit(
-        uniqueCoupons,
-        this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT'),
-      );
-
-    let validatedCoupons = await this.validateCoupons(
-      couponsAppliedAndNewLimitedByConfig,
-      cart,
+    const notDeletedCoupons = filterOutCouponsIfCodeIn(
+      uniqueCoupons,
+      deletedCoupons.map((coupon) => coupon.code),
     );
+
+    let validatedCoupons = await this.validateCoupons(notDeletedCoupons, cart);
 
     const inapplicableRedeemables =
       this.getInapplicableRedeemables(validatedCoupons);
 
-    this.setInapplicableCoupons(cartUpdateActions, inapplicableRedeemables);
-
     const inapplicableCodes = redeemablesToCodes(inapplicableRedeemables);
 
-    if (
-      !Array.isArray(validatedCoupons?.inapplicable_redeemables) &&
-      validatedCoupons.valid === false
-    ) {
-      const applicableCodes = couponsAppliedAndNewLimitedByConfig.filter(
-        (coupon) => !inapplicableCodes.includes(coupon.code),
+    let applicableCoupons = filterOutCouponsIfCodeIn(
+      notDeletedCoupons,
+      inapplicableCodes,
+    );
+    const invalidCodesDueRemovedItems = getInvalidCodesDueRemovedItems(
+      validatedCoupons,
+      applicableCoupons,
+      cart,
+    );
+    inapplicableRedeemables.push(
+      ...replaceCodesWithInapplicableCoupons(
+        invalidCodesDueRemovedItems,
+        'You have removed product that was part of the discount',
+      ),
+    );
+
+    applicableCoupons = filterOutCouponsIfCodeIn(notDeletedCoupons, [
+      ...inapplicableCodes,
+      ...invalidCodesDueRemovedItems,
+    ]);
+    if (invalidCodesDueRemovedItems.length > 0) {
+      await this.voucherifyConnectorService.releaseValidationSession(
+        invalidCodesDueRemovedItems,
+        sessionKey,
       );
-      if (applicableCodes.length === 0) {
-        return;
-      }
-      validatedCoupons = await this.validateCoupons(applicableCodes, cart);
+      ({ promotions, availablePromotions } =
+        await this.voucherifyService.getPromotions(cart, applicableCoupons));
+      this.setAvailablePromotions(cartUpdateActions, availablePromotions);
     }
 
-    const unitTypeRedeemables =
-      stackableResponseToUnitTypeRedeemables(validatedCoupons);
+    if (
+      (!Array.isArray(validatedCoupons?.inapplicable_redeemables) &&
+        validatedCoupons.valid === false) ||
+      invalidCodesDueRemovedItems.length
+    ) {
+      if (applicableCoupons.length === 0) {
+        return;
+      }
+      validatedCoupons = await this.validateCoupons(applicableCoupons, cart);
+    }
+
+    const unitTypeRedeemables = stackableResponseToUnitTypeRedeemables(
+      validatedCoupons,
+      newCoupons,
+    );
     const stackableRedeemablesResultDiscountUnitWithPriceAndCodes =
       stackableRedeemablesResponseToUnitStackableRedeemablesResultDiscountUnitWithCodes(
         unitTypeRedeemables,
@@ -382,7 +402,7 @@ export class IntegrationService {
       unitTypeRedeemables,
       codesWithMissingProductsToAdd,
       validatedCoupons,
-      couponsAppliedAndNewLimitedByConfig,
+      notDeletedCoupons,
       cart,
     );
 
@@ -391,6 +411,7 @@ export class IntegrationService {
         ? getProductsToAdd(
             validatedCouponsWithCorrectPrices,
             currentPricesOfProducts,
+            newCoupons,
           )
         : [];
 
@@ -400,12 +421,17 @@ export class IntegrationService {
       productsToAdd,
     });
 
+    cartUpdateActions.setCouponsLimit(
+      validatedCouponsWithCorrectPrices.stacking_rules.redeemables_limit,
+    );
+
     await this.updateCart(
       cartUpdateActions,
       validatedCouponsWithCorrectPrices,
       codesWithMissingProductsToAdd,
       promotions,
       productsToAdd,
+      inapplicableRedeemables,
     );
 
     return;

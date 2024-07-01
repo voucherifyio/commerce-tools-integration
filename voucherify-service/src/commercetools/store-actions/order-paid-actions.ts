@@ -78,7 +78,7 @@ export class OrderPaidActions implements OrderPaidActions {
         .withId({ ID: id })
         .get()
         .execute()
-        .catch((e) => e)
+        .catch((result) => result)
     )?.body;
   }
 

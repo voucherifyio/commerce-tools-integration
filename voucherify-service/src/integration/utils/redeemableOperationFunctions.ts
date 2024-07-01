@@ -6,10 +6,20 @@ import {
 } from '@voucherify/sdk';
 import { FREE_SHIPPING_UNIT_TYPE } from '../../consts/voucherify';
 import {
+  Coupon,
   StackableRedeemableResultDiscountUnitWithCodeAndPrice,
   ValidatedCoupons,
 } from '../types';
 import { uniqBy } from 'lodash';
+
+export function getRedeemablesByStatuses(
+  redeemables: StackableRedeemableResponse[],
+  statuses: StackableRedeemableResponseStatus[],
+): StackableRedeemableResponse[] {
+  return uniqBy(redeemables ?? [], 'id').filter((redeemable) =>
+    statuses.includes(redeemable.status),
+  );
+}
 
 export function getRedeemablesByStatus(
   redeemables: StackableRedeemableResponse[],
@@ -28,11 +38,14 @@ export function redeemablesToCodes(
 
 export function stackableResponseToUnitTypeRedeemables(
   validatedCoupons: ValidatedCoupons,
+  coupons: Coupon[],
 ): StackableRedeemableResponse[] {
+  const couponCodes = coupons.map((coupon) => coupon.code);
   return validatedCoupons.redeemables.filter(
     (redeemable) =>
       redeemable.result?.discount?.type === 'UNIT' &&
-      redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE,
+      redeemable.result.discount.unit_type !== FREE_SHIPPING_UNIT_TYPE &&
+      couponCodes.includes(redeemable.id),
   );
 }
 

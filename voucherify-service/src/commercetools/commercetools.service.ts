@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   Cart as CommerceToolsCart,
   Order as CommerceToolsOrder,
+  Type,
 } from '@commercetools/platform-sdk';
 import { CommercetoolsConnectorService } from './commercetools-connector.service';
 import sleep from '../misc/sleep';
@@ -59,15 +60,17 @@ export class CommercetoolsService implements StoreInterface {
     }
 
     const cartUpdateActions = new CartUpdateActions();
+
+    if (cart.custom?.type?.id !== (await this.getCouponCodesType()).id) {
+      cartUpdateActions.setInitialActions([
+        await this.getSetCustomTypeAction(),
+      ]);
+    }
     cartUpdateActions.setPriceSelector(getPriceSelectorFromCtCart(cart));
     cartUpdateActions.setCtClient(
       this.commerceToolsConnectorService.getClient(),
     );
     cartUpdateActions.setCart(cart);
-    cartUpdateActions.setCouponsLimit(
-      this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT') ?? 5,
-    );
-
     cartUpdateActions.setCartDiscountApplyMode(this.cartDiscountApplyMode);
 
     if (this.cartDiscountApplyMode === CartDiscountApplyMode.CustomLineItem) {
@@ -170,25 +173,25 @@ export class CommercetoolsService implements StoreInterface {
     }
   }
 
-  public async setCustomTypeForInitializedCart(): Promise<CartResponse> {
-    const couponType = await this.typesService.findCouponType('couponCodes');
-    if (!couponType) {
-      const msg = 'CouponType not found';
-      this.logger.error({ msg });
-      throw new Error(msg);
-    }
+  private async getCouponCodesType(): Promise<Type> {
+    return await this.typesService.findCouponType('couponCodes');
+  }
 
+  private async getSetCustomTypeAction(): Promise<CartAction> {
+    const couponType = await this.typesService.findCouponType('couponCodes');
+    return {
+      action: 'setCustomType',
+      type: {
+        id: couponType.id,
+      },
+      name: 'couponCodes',
+    };
+  }
+
+  public async setCustomTypeForInitializedCart(): Promise<CartResponse> {
     return {
       status: true,
-      actions: [
-        {
-          action: 'setCustomType',
-          type: {
-            id: couponType.id,
-          },
-          name: 'couponCodes',
-        },
-      ],
+      actions: [await this.getSetCustomTypeAction()],
     };
   }
 }

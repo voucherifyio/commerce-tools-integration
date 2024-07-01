@@ -48,7 +48,7 @@ export class TaxCategoriesService {
       .taxCategories()
       .get({ queryArgs: { where: 'name="coupon"' } })
       .execute()
-      .catch((e) => e);
+      .catch((result) => result);
 
     if ([200, 201].includes(statusCode) && body.count === 1) {
       this.logger.debug({
@@ -67,7 +67,7 @@ export class TaxCategoriesService {
         },
       })
       .execute()
-      .catch((e) => e);
+      .catch((result) => result);
 
     if (![200, 201].includes(response.statusCode)) {
       return null;
@@ -94,8 +94,12 @@ export class TaxCategoriesService {
       countryRates: currentRates.map((rate) => rate.country).join(', '),
     });
 
-    const listOfCountriesUsedInTheProject = (await ctClient.get().execute())
-      .body.countries;
+    const listOfCountriesUsedInTheProject = (
+      await ctClient
+        .get()
+        .execute()
+        .catch((result) => result)
+    ).body.countries;
 
     const desiredRates =
       listOfCountriesUsedInTheProject?.map((countryCode) => {
@@ -156,7 +160,7 @@ export class TaxCategoriesService {
         },
       })
       .execute()
-      .catch((e) => e);
+      .catch((result) => result);
 
     const success = [200, 201].includes(response.statusCode);
     if (success) {
@@ -185,7 +189,7 @@ export class TaxCategoriesService {
         },
       })
       .execute()
-      .catch((e) => e);
+      .catch((result) => result);
 
     const success = [200, 201].includes(response.statusCode);
     if (success) {
@@ -251,7 +255,7 @@ export class TaxCategoriesService {
         },
       })
       .execute()
-      .catch((e) => e);
+      .catch((result) => result);
     const success = [200, 201].includes(response.statusCode);
     if (success) {
       this.couponTaxCategory = null;

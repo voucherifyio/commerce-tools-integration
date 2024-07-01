@@ -226,7 +226,6 @@ Set environment variables with credentials to Voucherify and commercetools APIs.
     - (optional) `LOGGER_LEVEL` - logging level for `npm run test`. You can set it to `error` or `fatal`.
     - (optional) `DEBUG_STORE_REQUESTS_IN_JSON` - `true` if you want to keep external requests / response in a JSON file.
     - (optional) `DEBUG_STORE_REQUESTS_DIR` - name of the directory where JSON files with request / responses are stored. 
-    - (optional) `COMMERCE_TOOLS_COUPONS_LIMIT` - maximum number of coupons that could be applied to cart. Default value is 5, maximum 30 related to [Voucherify Api](https://docs.voucherify.io/reference/redeem-stacked-discounts)
     - (optional) `DISABLE_CART_PROMOTION` - allow to disable [cart level promotion](https://support.voucherify.io/article/519-create-cart-level-promotions) functionality. It will reduce number of api calls because it's remove usage of [promotion validation request](https://docs.voucherify.io/reference/validate-promotions-1) from all cart related operation.
     - (optional) `APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT` - by default, the application applies a cart discount by adding a custom line item. Set this option value as `true` to enforces the application to use the commercetools beta feature called [direct discounts](https://docs.commercetools.com/api/projects/carts#set-directdiscounts) to apply discounts on the cart.
     - (optional) `MAX_CART_UPDATE_RESPONSE_TIME_WITHOUT_CHECKING_IF_API_EXTENSION_TIMED_OUT` - default `1000`[ms]. Accepts range of numbers `0` - `1750`. If set to `0` we will always be checking if application responded to
@@ -474,6 +473,10 @@ If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
 - 2024-06-18 `v6.0.7`
+  - updated tests
+  - dropped `COMMERCE_TOOLS_COUPONS_LIMIT` config - now this config will be taken directly from V% account setting.
+  - skipped vouchers will be treated as invalid, so you will see error message (the reason voucher was skipped)
+  - fix ordering of `couponCodes/customField` - now first will be `applied coupons/promotions`, second `invalid` and 3rd `available promotions`, keep it in mind that the order of those promotions is crucial because it determines validating order. 
   - code refactoring (lowering cognitive complexity)
   - fixed package vulnerabilities
   - coupon tax category is not being configured in Direct Discount mode. `[APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT=true]`

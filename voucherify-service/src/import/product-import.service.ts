@@ -121,7 +121,8 @@ export class ProductImportService {
             }),
           },
         })
-        .execute();
+        .execute()
+        .catch((result) => result);
       yield productResult.body.results;
       page++;
       if (productResult.body.total < page * limit) {
