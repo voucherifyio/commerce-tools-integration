@@ -483,6 +483,9 @@ If you found a bug or want to suggest a new feature, please file a GitHub issue.
   - script that undoes `npm run config` - `npm run unconfig`
   - added `npm run unconfig` to `npm run ct-connect-post-undeploy` command
   - fix that caused duplications in `customField`-`discount_codes`
+  - deleted promotions will be right away available in AVAILABLE PROMOTIONS
+  - if product from unit type voucher/promotion is remover, promotion will be dropped.
+  - fix for setting up `couponCodes` custom type in the cart
 - 2024-01-31 `v6.0.6`
   - remove fallback to `coupon.order?.total_discount_amount` that caused too great promotions in some cases
   - added test to test this case ^
