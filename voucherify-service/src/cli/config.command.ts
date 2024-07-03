@@ -19,6 +19,7 @@ export class ConfigCommand extends CommandRunner {
   ) {
     super();
   }
+
   async run(): Promise<void> {
     const applyCartDiscountAsCtDirectDiscount =
       this.configService.get<string>(

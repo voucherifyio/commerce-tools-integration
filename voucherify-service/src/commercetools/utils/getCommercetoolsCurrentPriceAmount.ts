@@ -29,7 +29,7 @@ const filterByCustomerGroup = (priceVariant, customerGroup) => {
   return !priceVariant?.customerGroup;
 };
 
-export function getCommercetoolstCurrentPriceAmount(
+export function getCommercetoolsCurrentPriceAmount(
   ctProduct: Product,
   productSkuSourceId: string,
   priceSelector: PriceSelector,

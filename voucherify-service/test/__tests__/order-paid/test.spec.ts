@@ -34,7 +34,7 @@ describe('When order is paid', () => {
     }));
   });
 
-  it('Should not reedem stackable vouchers with creating an order', async () => {
+  it('Should not redeem stackable vouchers with creating an order', async () => {
     const result = await commercetoolsService.checkIfCartStatusIsPaidAndRedeem(
       orderPaidWithoutCustomCodesResponse,
     );

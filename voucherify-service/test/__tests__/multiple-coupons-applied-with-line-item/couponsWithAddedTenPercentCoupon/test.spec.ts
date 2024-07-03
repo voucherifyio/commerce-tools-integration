@@ -1,7 +1,4 @@
-import {
-  defaultGetCouponTaxCategoryResponse,
-  getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
-} from '../../../__mocks__/tax-categories.service';
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../../__mocks__/tax-categories.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../../__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../../__mocks__/commerce-tools-connector.service';
 import { buildCartServiceWithMockedDependencies } from '../../cart-service.factory';
@@ -10,6 +7,7 @@ import { cart } from './snapshots/cart.snapshot';
 import { CommercetoolsService } from '../../../../src/commercetools/commercetools.service';
 import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../../__mocks__/types.service';
 import { VoucherifyConnectorService } from '../../../../src/voucherify/voucherify-connector.service';
+
 describe('when adding new product to the cart with free product already applied (via coupon)', () => {
   let commercetoolsService: CommercetoolsService;
   let voucherifyConnectorService: VoucherifyConnectorService;

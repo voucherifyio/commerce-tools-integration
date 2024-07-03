@@ -1,7 +1,4 @@
-import {
-  getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse,
-  defaultGetCouponTaxCategoryResponse,
-} from '../../__mocks__/tax-categories.service';
+import { getTaxCategoryServiceMockWithConfiguredTaxCategoryResponse } from '../../__mocks__/tax-categories.service';
 import { getTypesServiceMockWithConfiguredCouponTypeResponse } from '../../__mocks__/types.service';
 import { getVoucherifyConnectorServiceMockWithDefinedResponse } from '../../__mocks__/voucherify-connector.service';
 import { getCommerceToolsConnectorServiceMockWithProductResponse } from '../../__mocks__/commerce-tools-connector.service';
@@ -10,10 +7,10 @@ import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 import { CommercetoolsService } from '../../../src/commercetools/commercetools.service';
 import { VoucherifyConnectorService } from '../../../src/voucherify/voucherify-connector.service';
+
 describe('when adding new product to the cart with free product already applied (via coupon)', () => {
   let commercetoolsService: CommercetoolsService;
   let voucherifyConnectorService: VoucherifyConnectorService;
-  const COUPON_CODE = 'ADD_GIFT';
   const SKU_ID = 'gift-sku-id';
   const PRODUCT_ID = '7c66ebdb-446d-4ea5-846e-80463a356ef2'; //gift-product-id
   const PRODUCT_PRICE = 6500;

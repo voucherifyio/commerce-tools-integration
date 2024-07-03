@@ -1,8 +1,8 @@
 import {
+  CartDiscountTarget,
+  CartDiscountValueDraft,
   TaxCategory,
   TypedMoney,
-  CartDiscountValueDraft,
-  CartDiscountTarget,
 } from '@commercetools/platform-sdk';
 import { availablePromotion, ProductToAdd } from '../../../integration/types';
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';

@@ -8,6 +8,7 @@ import { CommercetoolsService } from '../../../src/commercetools/commercetools.s
 import { voucherifyResponse } from './snapshots/voucherifyResponse.snapshot';
 import { cart } from './snapshots/cart.snapshot';
 import { VoucherifyConnectorService } from '../../../src/voucherify/voucherify-connector.service';
+
 describe('When trying to apply inexistent coupon code', () => {
   let commercetoolsService: CommercetoolsService;
   let voucherifyConnectorService: VoucherifyConnectorService;

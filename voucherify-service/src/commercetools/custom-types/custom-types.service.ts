@@ -1,14 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommercetoolsConnectorService } from '../commercetools-connector.service';
+import { Type, TypeDraft, TypeUpdateAction } from '@commercetools/platform-sdk';
 import {
-  Product,
-  Type,
-  TypeDraft,
-  TypeUpdateAction,
-} from '@commercetools/platform-sdk';
-import {
-  OREDER_COUPON_CUSTOM_FIELDS,
   LINE_ITEM_COUPON_CUSTOM_FIELDS,
+  ORDER_COUPON_CUSTOM_FIELDS,
 } from './coupon-type-definition';
 
 @Injectable()
@@ -47,7 +42,7 @@ export class CustomTypesService {
 
   public async configureCouponTypes(): Promise<{ success: boolean }> {
     const { success: orderConfigured } = await this.upsertCouponType(
-      OREDER_COUPON_CUSTOM_FIELDS,
+      ORDER_COUPON_CUSTOM_FIELDS,
     );
     const { success: productConfigured } = await this.upsertCouponType(
       LINE_ITEM_COUPON_CUSTOM_FIELDS,
@@ -65,7 +60,7 @@ export class CustomTypesService {
 
   public async unconfigureCouponTypes(): Promise<{ success: boolean }> {
     const { success: orderConfig } = await this.deleteCouponType(
-      OREDER_COUPON_CUSTOM_FIELDS,
+      ORDER_COUPON_CUSTOM_FIELDS,
     );
     const { success: productConfig } = await this.deleteCouponType(
       LINE_ITEM_COUPON_CUSTOM_FIELDS,

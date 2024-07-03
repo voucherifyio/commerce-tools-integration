@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
 import { RequestJsonLogger } from '../../../src/configs/requestJsonLogger';
 import { CommercetoolsConnectorService } from '../../../src/commercetools/commercetools-connector.service';
-import { ApiExtensionService } from '../../../src/commercetools/api-extension.service';
 import { MigrateCommand } from '../../../src/cli/migrate.command';
 import { ProductImportService } from '../../../src/import/product-import.service';
 import { OrderImportService } from '../../../src/import/order-import.service';

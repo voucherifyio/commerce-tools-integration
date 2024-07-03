@@ -8,8 +8,8 @@ import {
 } from '@voucherify/sdk';
 import { ConfigService } from '@nestjs/config';
 import {
-  RequestJsonLoggerInterface,
   REQUEST_JSON_LOGGER,
+  RequestJsonLoggerInterface,
 } from '../misc/request-json-logger-interface';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { mapItemsToVoucherifyOrdersItems } from '../integration/utils/mappers/product';
