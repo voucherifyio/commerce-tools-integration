@@ -3,17 +3,17 @@ import { CommercetoolsService } from '../../src/commercetools/commercetools.serv
 export const getCommerceToolsServiceMockWithMockedResponse = (
   response?: any,
 ) => {
-  const commerceToolsConnectoService = jest.createMockFromModule(
+  const commerceToolsConnectorService = jest.createMockFromModule(
     '../../src/commercetools/commercetools.service',
   ) as CommercetoolsService & { getProductMock: jest.Mock };
 
-  commerceToolsConnectoService.handleCartUpdate = jest
+  commerceToolsConnectorService.handleCartUpdate = jest
     .fn()
     .mockReturnValue(response);
 
-  commerceToolsConnectoService.checkIfCartStatusIsPaidAndRedeem = jest
+  commerceToolsConnectorService.checkIfCartStatusIsPaidAndRedeem = jest
     .fn()
     .mockReturnValue(response);
 
-  return commerceToolsConnectoService;
+  return commerceToolsConnectorService;
 };

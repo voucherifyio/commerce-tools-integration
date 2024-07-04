@@ -31,14 +31,19 @@ export class CommercetoolsService implements StoreInterface {
     private readonly taxCategoriesService: TaxCategoriesService,
     private readonly configService: ConfigService,
   ) {}
+
   private cartUpdateHandler: CartUpdateHandler;
+
   public setCartUpdateListener(handler: CartUpdateHandler) {
     this.cartUpdateHandler = handler;
   }
+
   private orderPaidHandler: OrderRedeemHandler;
+
   public setOrderPaidListener(handler: OrderRedeemHandler) {
     this.orderPaidHandler = handler;
   }
+
   private cartDiscountApplyMode: CartDiscountApplyMode =
     this.configService.get<string>(
       'APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT',

@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { VoucherifyConnectorService } from '../../src/voucherify/voucherify-connector.service';
 import { Logger } from '@nestjs/common';
 import { RequestJsonFileLogger } from '../../src/misc/request-json-file-logger';
 

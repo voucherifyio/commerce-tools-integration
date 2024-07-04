@@ -7,6 +7,7 @@ import {
   TaxCategoryReplaceTaxRateAction,
   TaxRate,
 } from '@commercetools/platform-sdk';
+
 @Injectable()
 export class TaxCategoriesService {
   constructor(
@@ -142,7 +143,7 @@ export class TaxCategoriesService {
     ];
 
     this.logger.debug({
-      msg: 'Calculated updates for countiries in coupon tax categories:',
+      msg: 'Calculated updates for countries in coupon tax categories:',
       actions,
     });
 
@@ -166,7 +167,7 @@ export class TaxCategoriesService {
     if (success) {
       this.logger.debug({ msg: 'Updated countries for coupon tax category' });
     } else {
-      const msg = 'Could not update countires for coupon tax category';
+      const msg = 'Could not update countries for coupon tax category';
       this.logger.error({
         msg,
       });

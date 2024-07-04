@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class ApiExtensionService {
   private client: ByProjectKeyRequestBuilder;
+
   constructor(
     private readonly ctConnector: CommercetoolsConnectorService,
     private readonly configService: ConfigService,

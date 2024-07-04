@@ -15,6 +15,7 @@ export class ApiExtensionUpdateCommand extends CommandRunner {
   ) {
     super();
   }
+
   async run(): Promise<void> {
     const url =
       this.configService.get<string>('APP_URL') ||

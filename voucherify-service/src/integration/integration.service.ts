@@ -6,42 +6,42 @@ import {
 } from '@voucherify/sdk';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import {
+  AvailablePromotion,
   Cart,
-  Coupon,
-  ProductToAdd,
-  SentCoupons,
-  Order,
   CartUpdateActionsInterface,
+  Coupon,
+  Order,
   OrderPaidActionsInterface,
   ProductPriceAndSourceId,
-  AvailablePromotion,
+  ProductToAdd,
+  Promotions,
+  SentCoupons,
   StackableRedeemableResultDiscountUnitWithCodeAndPrice,
   ValidatedCoupons,
-  Promotions,
 } from './types';
 import { mapItemsToVoucherifyOrdersItems } from './utils/mappers/product';
 import { ConfigService } from '@nestjs/config';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
 import { VoucherifyService } from '../voucherify/voucherify.service';
 import {
-  redeemablesToCodes,
   filterOutRedeemablesIfCodeIn,
   getRedeemablesByStatus,
+  getRedeemablesByStatuses,
+  redeemablesToCodes,
   stackableRedeemablesResponseToUnitStackableRedeemablesResultDiscountUnitWithCodes,
   stackableResponseToUnitTypeRedeemables,
   unitTypeRedeemablesToOrderItems,
-  getRedeemablesByStatuses,
 } from './utils/redeemableOperationFunctions';
 import { buildValidationsValidateStackableParamsForVoucherify } from './utils/mappers/buildValidationsValidateStackableParamsForVoucherify';
 import { buildRedeemStackableRequestForVoucherify } from './utils/mappers/buildRedeemStackableRequestForVoucherify';
 import { replaceCodesWithInapplicableCoupons } from './utils/replaceCodesWithInapplicableCoupons';
 import {
-  couponsStatusDeleted,
-  filterOutCouponsTypePromotionTier,
   codesFromCoupons,
-  uniqueCouponsByCodes,
-  filterOutCouponsIfCodeIn,
+  couponsStatusDeleted,
   couponsStatusNew,
+  filterOutCouponsIfCodeIn,
+  filterOutCouponsTypePromotionTier,
+  uniqueCouponsByCodes,
 } from './utils/couponsOperationFunctions';
 import { getIncorrectPrices } from './utils/getIncorrectPrices';
 import { getCodesIfProductNotFoundIn } from './utils/getCodesIfProductNotFoundIn';
@@ -233,11 +233,11 @@ export class IntegrationService {
       }),
     );
 
-    sentCoupons.forEach((sendedCoupon) => {
-      if (sendedCoupon.result === 'SUCCESS') {
-        usedCoupons.push(sendedCoupon.coupon);
+    sentCoupons.forEach((sentCoupon) => {
+      if (sentCoupon.result === 'SUCCESS') {
+        usedCoupons.push(sentCoupon.coupon);
       } else {
-        notUsedCoupons.push(sendedCoupon.coupon);
+        notUsedCoupons.push(sentCoupon.coupon);
       }
     });
 

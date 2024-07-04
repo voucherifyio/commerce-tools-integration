@@ -15,62 +15,85 @@ import {
   DataToRunCartActionsBuilder,
 } from './cart-update-actions/CartAction';
 import { CartDiscountApplyMode, PriceSelector } from '../types';
-import { getCommercetoolstCurrentPriceAmount } from '../utils/getCommercetoolstCurrentPriceAmount';
+import { getCommercetoolsCurrentPriceAmount } from '../utils/getCommercetoolsCurrentPriceAmount';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 import { validate as uuidValidate } from 'uuid';
 
 export class CartUpdateActions implements CartUpdateActionsInterface {
   private taxCategory: TaxCategory;
+
   public setTaxCategory(value: TaxCategory) {
     this.taxCategory = value;
   }
+
   private couponsLimit: number;
+
   public setCouponsLimit(value: number | undefined) {
     this.couponsLimit = value;
   }
+
   private initialActions: CartAction[] = [];
+
   public setInitialActions(value: CartAction[]) {
     this.initialActions = value;
   }
+
   private commerceToolsCart: CommerceToolsCart;
+
   public setCart(value: CommerceToolsCart) {
     this.commerceToolsCart = value;
   }
+
   private cartDiscountApplyMode: CartDiscountApplyMode;
+
   public setCartDiscountApplyMode(value: CartDiscountApplyMode) {
     this.cartDiscountApplyMode = value;
   }
+
   private availablePromotions: availablePromotion[] = [];
+
   public setAvailablePromotions(value: availablePromotion[]) {
     this.availablePromotions = value;
   }
+
   private totalDiscountAmount = 0;
+
   public setTotalDiscountAmount(value: number) {
     this.totalDiscountAmount = value;
   }
+
   private productsToAdd: ProductToAdd[] = [];
+
   public setProductsToAdd(value: ProductToAdd[]) {
     this.productsToAdd = value;
   }
+
   private applicableCoupons: StackableRedeemableResponse[] = [];
+
   public setApplicableCoupons(value: StackableRedeemableResponse[]) {
     this.applicableCoupons = value;
   }
+
   private inapplicableCoupons: StackableRedeemableResponse[] = [];
+
   public setInapplicableCoupons(value: StackableRedeemableResponse[]) {
     this.inapplicableCoupons = value;
   }
+
   private sessionKey: string;
+
   public setSessionKey(value: string) {
     this.sessionKey = value;
   }
 
   private priceSelector: PriceSelector;
+
   public setPriceSelector(value: PriceSelector) {
     this.priceSelector = value;
   }
 
   private ctClient: ByProjectKeyRequestBuilder;
+
   public setCtClient(value: ByProjectKeyRequestBuilder) {
     this.ctClient = value;
   }
@@ -103,7 +126,7 @@ export class CartUpdateActions implements CartUpdateActionsInterface {
         if (!unit) {
           return undefined;
         }
-        const price = getCommercetoolstCurrentPriceAmount(
+        const price = getCommercetoolsCurrentPriceAmount(
           ctProduct,
           unit.sku?.source_id,
           this.priceSelector,

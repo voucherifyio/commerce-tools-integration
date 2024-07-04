@@ -36,7 +36,7 @@ export const LINE_ITEM_COUPON_CUSTOM_FIELDS: TypeDraft = {
   ],
 };
 
-export const OREDER_COUPON_CUSTOM_FIELDS: TypeDraft = {
+export const ORDER_COUPON_CUSTOM_FIELDS: TypeDraft = {
   key: 'couponCodes', //DO NOT CHANGE the key
   name: {
     en: 'couponCodes',

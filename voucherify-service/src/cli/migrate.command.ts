@@ -84,6 +84,7 @@ export class MigrateCommand extends CommandRunner {
     date.setHours(date.getHours() - parseInt(matched[0]));
     return date.toJSON();
   }
+
   @Option({
     flags: '--ms [number]',
     description: 'Sync from last X milliseconds',
