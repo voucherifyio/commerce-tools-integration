@@ -7,6 +7,7 @@ import {
   TaxCategoryReplaceTaxRateAction,
   TaxRate,
 } from '@commercetools/platform-sdk';
+
 @Injectable()
 export class TaxCategoriesService {
   constructor(
@@ -47,7 +48,8 @@ export class TaxCategoriesService {
     const { statusCode, body } = await ctClient
       .taxCategories()
       .get({ queryArgs: { where: 'name="coupon"' } })
-      .execute();
+      .execute()
+      .catch((result) => result);
 
     if ([200, 201].includes(statusCode) && body.count === 1) {
       this.logger.debug({
@@ -65,7 +67,8 @@ export class TaxCategoriesService {
           rates: [],
         },
       })
-      .execute();
+      .execute()
+      .catch((result) => result);
 
     if (![200, 201].includes(response.statusCode)) {
       return null;
@@ -92,8 +95,12 @@ export class TaxCategoriesService {
       countryRates: currentRates.map((rate) => rate.country).join(', '),
     });
 
-    const listOfCountriesUsedInTheProject = (await ctClient.get().execute())
-      .body.countries;
+    const listOfCountriesUsedInTheProject = (
+      await ctClient
+        .get()
+        .execute()
+        .catch((result) => result)
+    ).body.countries;
 
     const desiredRates =
       listOfCountriesUsedInTheProject?.map((countryCode) => {
@@ -136,7 +143,7 @@ export class TaxCategoriesService {
     ];
 
     this.logger.debug({
-      msg: 'Calculated updates for countiries in coupon tax categories:',
+      msg: 'Calculated updates for countries in coupon tax categories:',
       actions,
     });
 
@@ -153,19 +160,48 @@ export class TaxCategoriesService {
           actions,
         },
       })
-      .execute();
+      .execute()
+      .catch((result) => result);
 
     const success = [200, 201].includes(response.statusCode);
     if (success) {
       this.logger.debug({ msg: 'Updated countries for coupon tax category' });
     } else {
-      const msg = 'Could not update countires for coupon tax category';
+      const msg = 'Could not update countries for coupon tax category';
       this.logger.error({
         msg,
       });
     }
 
     return this.getCashedCouponTaxCategoryOrFromNewRequest();
+  }
+
+  public async unconfigureCouponTaxCategory(): Promise<{ success: boolean }> {
+    const ctClient = this.commerceToolsConnectorService.getClient();
+    const couponTaxCategory =
+      await this.getCashedCouponTaxCategoryOrFromNewRequest();
+
+    const response = await ctClient
+      .taxCategories()
+      .withId({ ID: couponTaxCategory.id })
+      .delete({
+        queryArgs: {
+          version: couponTaxCategory.version,
+        },
+      })
+      .execute()
+      .catch((result) => result);
+
+    const success = [200, 201].includes(response.statusCode);
+    if (success) {
+      this.logger.debug({ msg: 'Deleted coupon tax category' });
+      return { success: true };
+    }
+    const msg = 'Could not delete coupon tax category';
+    this.logger.error({
+      msg,
+    });
+    return { success: false };
   }
 
   private calcOperationsToGetDesiredRates(
@@ -219,7 +255,8 @@ export class TaxCategoriesService {
           ],
         },
       })
-      .execute();
+      .execute()
+      .catch((result) => result);
     const success = [200, 201].includes(response.statusCode);
     if (success) {
       this.couponTaxCategory = null;

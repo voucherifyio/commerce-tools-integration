@@ -11,6 +11,7 @@ export class ApiExtensionListCommand extends CommandRunner {
   constructor(private readonly registerService: ApiExtensionService) {
     super();
   }
+
   async run(): Promise<void> {
     const spinner = loadingCli('List registered API Extensions').start();
     const extensions = await this.registerService.list();

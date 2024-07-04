@@ -1,10 +1,8 @@
-import { Logger } from '@nestjs/common';
 import { Command, CommandRunner, Option } from 'nest-commander';
 import loadingCli from 'loading-cli';
 import { ProductImportService } from '../import/product-import.service';
 import { OrderImportService } from '../import/order-import.service';
 import { CustomerImportService } from '../import/customer-import.service';
-import { CommandMetadata } from 'nest-commander/src/command-runner.interface';
 
 type ResourceTypeArg = {
   name: 'products' | 'orders' | 'customers';
@@ -71,7 +69,7 @@ export class MigrateCommand extends CommandRunner {
   })
   parseDays(val: string): string {
     const date = new Date();
-    const matched = val.match(/[0-9]{1,}/g);
+    const matched = val.match(/\d+/g);
     date.setDate(date.getDate() - parseInt(matched[0]));
     return date.toJSON();
   }
@@ -82,17 +80,18 @@ export class MigrateCommand extends CommandRunner {
   })
   parseHours(val: string): string {
     const date = new Date();
-    const matched = val.match(/[0-9]{1,}/g);
+    const matched = val.match(/\d+/g);
     date.setHours(date.getHours() - parseInt(matched[0]));
     return date.toJSON();
   }
+
   @Option({
     flags: '--ms [number]',
     description: 'Sync from last X milliseconds',
   })
   parseMs(val: string): string {
     const date = new Date();
-    const matched = val.match(/[0-9]{1,}/g);
+    const matched = val.match(/\d+/g);
     date.setMilliseconds(date.getMilliseconds() - parseInt(matched[0]));
     return date.toJSON();
   }
@@ -103,7 +102,7 @@ export class MigrateCommand extends CommandRunner {
   })
   parseDate(val: string): string {
     const date = new Date();
-    const matched = val.match(/[0-9]{4}-[0-9]{2}-[0-9]{2}/g);
+    const matched = val.match(/\d{4}-\d{2}-\d{2}/g);
     date.setTime(Date.parse(matched[0]));
     return date.toJSON();
   }
@@ -114,9 +113,7 @@ export class MigrateCommand extends CommandRunner {
   })
   parseLongDate(val: string): string {
     const date = new Date();
-    const matched = val.match(
-      /[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}/g,
-    );
+    const matched = val.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/g);
     date.setTime(Date.parse(matched[0]));
     return date.toJSON();
   }

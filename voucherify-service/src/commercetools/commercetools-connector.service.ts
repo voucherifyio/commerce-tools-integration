@@ -3,14 +3,14 @@ import { performance } from 'perf_hooks';
 import fetch from 'node-fetch2';
 import { ConfigService } from '@nestjs/config';
 import {
-  ClientBuilder,
   AuthMiddlewareOptions,
+  ClientBuilder,
+  ClientRequest,
+  createAuthForClientCredentialsFlow,
+  createHttpClient,
+  createLoggerMiddleware,
   HttpMiddlewareOptions,
   Middleware,
-  createHttpClient,
-  createAuthForClientCredentialsFlow,
-  createLoggerMiddleware,
-  ClientRequest,
 } from '@commercetools/sdk-client-v2';
 import {
   Cart,
@@ -18,8 +18,8 @@ import {
 } from '@commercetools/platform-sdk';
 import { ByProjectKeyRequestBuilder } from '@commercetools/platform-sdk/dist/declarations/src/generated/client/by-project-key-request-builder';
 import {
-  RequestJsonLoggerInterface,
   REQUEST_JSON_LOGGER,
+  RequestJsonLoggerInterface,
 } from '../misc/request-json-logger-interface';
 
 type MeasurementKey = '__start' | '__httpStart';

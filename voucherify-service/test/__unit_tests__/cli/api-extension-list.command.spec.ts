@@ -13,13 +13,11 @@ import { OrderMapper } from '../../../src/integration/utils/mappers/order';
 import { CommercetoolsService } from '../../../src/commercetools/commercetools.service';
 import { CustomTypesService } from '../../../src/commercetools/custom-types/custom-types.service';
 import { TaxCategoriesService } from '../../../src/commercetools/tax-categories/tax-categories.service';
-import { ApiExtensionUpdateCommand } from '../../../src/cli/api-extension-update.command';
 import { ApiExtensionListCommand } from '../../../src/cli/api-extension-list.command';
 import {
   getCommerceToolsConnectorServiceMockForAPIExtensionServiceTest,
   getConfigForAPIExtensionServiceTest,
 } from '../../__mocks__/commerce-tools-connector.service';
-import { ApiExtensionDeleteCommand } from '../../../src/cli/api-extension-delete.command';
 import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 
 const moduleMocker = new ModuleMocker(global);

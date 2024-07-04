@@ -1,10 +1,10 @@
 import {
-  Controller,
-  Post,
   Body,
-  UseGuards,
+  Controller,
   Logger,
+  Post,
   Res,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { CartOrderDto } from './dto/CartOrder.dto';
@@ -46,8 +46,7 @@ export class ApiExtensionController {
     if (!response?.status) {
       return responseExpress.status(400).json({});
     }
-    responseExpress.status(200).json({ actions: response.actions });
-    return;
+    return responseExpress.status(200).json({ actions: response.actions });
   }
 
   async handleRequestOrder(order: Order, responseExpress: Response) {
@@ -55,7 +54,6 @@ export class ApiExtensionController {
       actions: [],
     });
     await this.commercetoolsService.checkIfCartStatusIsPaidAndRedeem(order);
-    return;
   }
 
   @Post()

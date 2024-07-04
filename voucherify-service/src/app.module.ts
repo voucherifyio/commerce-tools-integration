@@ -1,4 +1,4 @@
-import { Module, Logger } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -18,6 +18,7 @@ import { ApiExtensionDeleteCommand } from './cli/api-extension-delete.command';
 import { ApiExtensionUpdateCommand } from './cli/api-extension-update.command';
 import { ApiExtensionListCommand } from './cli/api-extension-list.command';
 import { ConfigCommand } from './cli/config.command';
+import { UnconfigCommand } from './cli/unconfig.command';
 import { MigrateCommand } from './cli/migrate.command';
 import { OrderMapper } from './integration/utils/mappers/order';
 import { ValidationSchema } from './configs/validationSchema';
@@ -49,6 +50,7 @@ import { VoucherifyService } from './voucherify/voucherify.service';
     ApiExtensionDeleteCommand,
     MigrateCommand,
     ConfigCommand,
+    UnconfigCommand,
     ApiExtensionListCommand,
     ApiExtensionUpdateCommand,
     OrderMapper,

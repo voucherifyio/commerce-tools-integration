@@ -1,21 +1,21 @@
-import { getCommercetoolstCurrentPriceAmount } from '../../src/commercetools/utils/getCommercetoolstCurrentPriceAmount';
+import { getCommercetoolsCurrentPriceAmount } from '../../src/commercetools/utils/getCommercetoolsCurrentPriceAmount';
 import {
   deserializeCouponsSerializedDiscountOrCode,
-  getCommercetoolstCurrentPriceAmountCtProduct,
-  getCommercetoolstCurrentPriceAmountProductPriceSelector,
-  getCommercetoolstCurrentPriceAmountProductSkuSourceId,
-  getCommercetoolstCurrentPriceAmountResult,
+  getCommercetoolsCurrentPriceAmountCtProduct,
+  getCommercetoolsCurrentPriceAmountProductPriceSelector,
+  getCommercetoolsCurrentPriceAmountProductSkuSourceId,
+  getCommercetoolsCurrentPriceAmountResult,
 } from './payloads/ctUtils.spec.payloads';
 import { deserializeCoupons } from '../../src/commercetools/utils/deserializeCoupons';
 
 describe('CT Utils Test', () => {
-  it('should getCommercetoolstCurrentPriceAmount correctly', () => {
-    const result = getCommercetoolstCurrentPriceAmount(
-      getCommercetoolstCurrentPriceAmountCtProduct as any,
-      getCommercetoolstCurrentPriceAmountProductSkuSourceId,
-      getCommercetoolstCurrentPriceAmountProductPriceSelector,
+  it('should getCommercetoolsCurrentPriceAmount correctly', () => {
+    const result = getCommercetoolsCurrentPriceAmount(
+      getCommercetoolsCurrentPriceAmountCtProduct as any,
+      getCommercetoolsCurrentPriceAmountProductSkuSourceId,
+      getCommercetoolsCurrentPriceAmountProductPriceSelector,
     );
-    expect(result).toEqual(getCommercetoolstCurrentPriceAmountResult);
+    expect(result).toEqual(getCommercetoolsCurrentPriceAmountResult);
   });
 
   it('should deserializeCoupons correctly', () => {

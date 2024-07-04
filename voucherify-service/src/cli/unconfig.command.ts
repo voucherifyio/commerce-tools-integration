@@ -5,13 +5,13 @@ import { CustomTypesService } from '../commercetools/custom-types/custom-types.s
 import { ConfigService } from '@nestjs/config';
 
 @Command({
-  name: 'config',
-  description: `Set up the required basic configuration in commercetools:
+  name: 'unconfig',
+  description: `Unset up the required basic configuration in commercetools:
   1. custom coupon type - needed to store coupons codes inside the [Cart](https://docs.commercetools.com/api/projects/carts) object
   (optionally based on "APPLY_CART_DISCOUNT_AS_CT_DIRECT_DISCOUNT") 2. coupon tax category - needed for any coupon or gift card with a fixed amount discount
   `,
 })
-export class ConfigCommand extends CommandRunner {
+export class UnconfigCommand extends CommandRunner {
   constructor(
     private readonly typesService: CustomTypesService,
     private readonly taxCategoriesService: TaxCategoriesService,
@@ -28,18 +28,18 @@ export class ConfigCommand extends CommandRunner {
     const totalSteps: number = applyCartDiscountAsCtDirectDiscount ? 1 : 2;
     let currentStep = 1;
     const spinnerCouponsTypes = loadingCli(
-      `[${currentStep}/${totalSteps}] Attempt to configure required coupon types in Commercetools`,
+      `[${currentStep}/${totalSteps}] Attempt to unconfigure required coupon types in Commercetools`,
     ).start();
 
     const { success: couponTypesCreated } =
-      await this.typesService.configureCouponTypes();
+      await this.typesService.unconfigureCouponTypes();
     if (couponTypesCreated) {
       spinnerCouponsTypes.succeed(
-        `[${currentStep}/${totalSteps}] Coupon custom-types configured`,
+        `[${currentStep}/${totalSteps}] Coupon custom-types unconfigured`,
       );
     } else {
       spinnerCouponsTypes.fail(
-        `[${currentStep}/${totalSteps}] Could not configure coupon codes`,
+        `[${currentStep}/${totalSteps}] Could not unconfigure coupon codes`,
       );
     }
 
@@ -48,18 +48,18 @@ export class ConfigCommand extends CommandRunner {
     }
     currentStep++;
     const spinnerTaxCategories = loadingCli(
-      `[${currentStep}/${totalSteps}] Attempt to configure coupon tax categories in Commercetools`,
+      `[${currentStep}/${totalSteps}] Attempt to unconfigure coupon tax categories in Commercetools`,
     ).start();
 
-    const couponTaxCategoriesCreated =
-      await this.taxCategoriesService.configureCouponTaxCategory();
+    const { success: couponTaxCategoriesCreated } =
+      await this.taxCategoriesService.unconfigureCouponTaxCategory();
     if (couponTaxCategoriesCreated) {
       spinnerTaxCategories.succeed(
-        `[${currentStep}/${totalSteps}] Coupon tax categories configured`,
+        `[${currentStep}/${totalSteps}] Coupon tax categories unconfigured`,
       );
     } else {
       spinnerTaxCategories.fail(
-        `[${currentStep}/${totalSteps}] Could not configure coupon tax categories`,
+        `[${currentStep}/${totalSteps}] Could not unconfigure coupon tax categories`,
       );
     }
   }

@@ -1,4 +1,3 @@
-import { replaceCodesWithInapplicableCoupons } from '../../src/integration/utils/replaceCodesWithInapplicableCoupons';
 import mapValidateCouponsResultToLineProductsWithFixedAmount from '../../src/commercetools/store-actions/cart-update-actions/helpers/fixedPrice';
 import { dataToRunCartActionsBuilder } from './payloads/fixedPrice.spec.payloads';
 

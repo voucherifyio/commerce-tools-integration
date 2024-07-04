@@ -80,13 +80,13 @@ function updateDiscountsCodes(
   const { availablePromotions, applicableCoupons, inapplicableCoupons } =
     dataToRunCartActionsBuilder;
   const coupons = [
-    ...availablePromotions,
     ...applicableCoupons.map((coupon) => {
       const value =
         coupon.result.discount?.unit_type === FREE_SHIPPING_UNIT_TYPE
           ? FREE_SHIPPING
-          : coupon.order?.applied_discount_amount ||
-            coupon.order?.items_applied_discount_amount | 0;
+          : coupon.order.applied_discount_amount ||
+            coupon.order.items_applied_discount_amount ||
+            0;
       return {
         code: coupon.id,
         banner: coupon['banner'] || undefined,
@@ -100,15 +100,21 @@ function updateDiscountsCodes(
         ({
           code: coupon.id,
           status: 'NOT_APPLIED',
-          errMsg: coupon.result?.error?.message || 'Unknown error',
+          errMsg:
+            coupon.result?.error?.message ||
+            // @ts-ignore Voucherify SDK is outdated
+            coupon.result?.details?.message ||
+            'Unknown error',
         } as Coupon),
     ),
+    //keep it at the bottom!, if status change from `AVAILABLE` to `NEW` it will be applied in correct order.
+    ...availablePromotions,
   ];
 
   return {
     action: 'setCustomField',
     name: 'discount_codes',
-    value: coupons.map((coupon) => JSON.stringify(coupon)) as string[],
+    value: coupons.map((coupon) => JSON.stringify(coupon)),
   };
 }
 
@@ -120,7 +126,9 @@ export default function setCustomFields(
   cartActions.push(setSessionAsCustomField(dataToRunCartActionsBuilder));
   cartActions.push(updateDiscountsCodes(dataToRunCartActionsBuilder));
   cartActions.push(addShippingProductSourceIds(dataToRunCartActionsBuilder));
-  cartActions.push(setCouponsLimit(dataToRunCartActionsBuilder));
+  if (dataToRunCartActionsBuilder.couponsLimit) {
+    cartActions.push(setCouponsLimit(dataToRunCartActionsBuilder));
+  }
 
   return cartActions;
 }

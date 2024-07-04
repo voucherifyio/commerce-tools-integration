@@ -40,7 +40,6 @@ describe('When no coupon codes provided and have no previous voucherify session,
         name: 'shippingProductSourceIds',
         value: [],
       },
-      { action: 'setCustomField', name: 'couponsLimit', value: 5 },
     ]);
   });
   it('Should NOT call voucherify', async () => {

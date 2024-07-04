@@ -20,6 +20,7 @@ export class ApiExtensionDeleteCommand extends CommandRunner {
   ) {
     super();
   }
+
   async run(
     passedParam: string[],
     options?: ApiExtensionDeleteCommandOptions,
@@ -38,12 +39,12 @@ export class ApiExtensionDeleteCommand extends CommandRunner {
       const removedExtensions: Extension[] = [];
 
       if (options.id) {
-        const removedExtenison = await this.registerService.removeById(
+        const removedExtension = await this.registerService.removeById(
           options.id,
         );
 
-        if (removedExtenison) {
-          removedExtensions.push(removedExtenison);
+        if (removedExtension) {
+          removedExtensions.push(removedExtension);
         }
       } else {
         const removed = await this.registerService.removeByAttr(

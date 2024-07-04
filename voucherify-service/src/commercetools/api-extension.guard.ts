@@ -1,7 +1,7 @@
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
+  Injectable,
   Logger,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
@@ -9,6 +9,7 @@ import { Observable } from 'rxjs';
 @Injectable()
 export class ApiExtensionGuard implements CanActivate {
   constructor(private readonly logger: Logger) {}
+
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
@@ -25,7 +26,7 @@ export class ApiExtensionGuard implements CanActivate {
         msg: 'API_EXTENSION_BASIC_AUTH_PASSWORD not match, request blocked',
         class: context.getClass().name,
         method: context.getHandler().name,
-        incomingAuthorixation: authorization,
+        incomingAuthorization: authorization,
       });
     }
     return canActivate;

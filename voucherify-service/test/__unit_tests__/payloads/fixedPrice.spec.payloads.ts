@@ -266,7 +266,6 @@ export const dataToRunCartActionsBuilder = {
   newSessionKey: 'ssn_LaXruZ16YofEL1ZZIxXsWBCsxfpFGALb',
   totalDiscountAmount: 28375,
   productsToAdd: [],
-  allInapplicableCouponsArePromotionTier: true,
   couponsLimit: 5,
   cartDiscountApplyMode: 0,
   commerceToolsCart: {

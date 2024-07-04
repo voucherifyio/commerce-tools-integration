@@ -1,10 +1,10 @@
 import {
-  IsString,
   IsArray,
-  ValidateNested,
   IsDefined,
   IsIn,
   IsOptional,
+  IsString,
+  ValidateNested,
 } from 'class-validator';
 import {
   Cart,
@@ -42,6 +42,7 @@ export class Custom implements CustomFields {
   @Type(() => FC)
   public fields: FC;
 }
+
 export class CartObj implements Cart {
   public id: string;
   public createdAt: string;

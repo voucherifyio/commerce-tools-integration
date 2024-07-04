@@ -1,4 +1,4 @@
-export const getCommercetoolstCurrentPriceAmountCtProduct = {
+export const getCommercetoolsCurrentPriceAmountCtProduct = {
   id: '253ec97b-f8ac-4a14-94e2-150f5ab0510a',
   version: 1,
   versionModifiedAt: '2023-05-31T16:03:43.827Z',
@@ -4282,16 +4282,16 @@ export const getCommercetoolstCurrentPriceAmountCtProduct = {
   lastVariantId: 8,
 };
 
-export const getCommercetoolstCurrentPriceAmountProductSkuSourceId =
+export const getCommercetoolsCurrentPriceAmountProductSkuSourceId =
   'M0E20000000ELDF';
 
-export const getCommercetoolstCurrentPriceAmountProductPriceSelector = {
+export const getCommercetoolsCurrentPriceAmountProductPriceSelector = {
   country: 'US',
   currencyCode: 'USD',
   distributionChannels: [],
 };
 
-export const getCommercetoolstCurrentPriceAmountResult = 37375;
+export const getCommercetoolsCurrentPriceAmountResult = 37375;
 
 export const deserializeCouponsSerializedDiscountOrCode =
   '{"code":"unit1","status":"APPLIED","type":"voucher","value":37375}';

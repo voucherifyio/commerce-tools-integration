@@ -3,9 +3,11 @@ import { AppModule } from './app.module';
 import { ApiExtensionService } from './commercetools/api-extension.service';
 import * as ngrok from 'ngrok';
 import { join } from 'path';
-import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
-import { utilities as nestWinstonModuleUtilities } from 'nest-winston';
+import {
+  utilities as nestWinstonModuleUtilities,
+  WinstonModule,
+} from 'nest-winston';
 
 async function bootstrap() {
   const logFormat = winston.format.combine(
@@ -35,9 +37,10 @@ async function bootstrap() {
   const registerService = app.get(ApiExtensionService);
   const isApiExtensionRegistered = await registerService.update(url);
   if (isApiExtensionRegistered) {
-    logger.log('Api Extension registerd in Commerce tools');
+    logger.log('Api Extension registered in Commerce tools');
   } else {
     logger.error('Could not register Api Extension in Commerce Tools');
   }
 }
+
 bootstrap();

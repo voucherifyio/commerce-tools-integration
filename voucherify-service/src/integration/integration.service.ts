@@ -1,25 +1,33 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { RedemptionsRedeemStackableResponse } from '@voucherify/sdk';
-
+import {
+  OrdersItem,
+  RedemptionsRedeemStackableResponse,
+  StackableRedeemableResponse,
+} from '@voucherify/sdk';
 import { VoucherifyConnectorService } from '../voucherify/voucherify-connector.service';
 import {
+  AvailablePromotion,
   Cart,
-  Coupon,
-  ProductToAdd,
-  SentCoupons,
-  Order,
   CartUpdateActionsInterface,
+  Coupon,
+  Order,
   OrderPaidActionsInterface,
   ProductPriceAndSourceId,
+  ProductToAdd,
+  Promotions,
+  SentCoupons,
+  StackableRedeemableResultDiscountUnitWithCodeAndPrice,
+  ValidatedCoupons,
 } from './types';
 import { mapItemsToVoucherifyOrdersItems } from './utils/mappers/product';
 import { ConfigService } from '@nestjs/config';
 import { CommercetoolsService } from '../commercetools/commercetools.service';
 import { VoucherifyService } from '../voucherify/voucherify.service';
 import {
-  redeemablesToCodes,
   filterOutRedeemablesIfCodeIn,
   getRedeemablesByStatus,
+  getRedeemablesByStatuses,
+  redeemablesToCodes,
   stackableRedeemablesResponseToUnitStackableRedeemablesResultDiscountUnitWithCodes,
   stackableResponseToUnitTypeRedeemables,
   unitTypeRedeemablesToOrderItems,
@@ -28,18 +36,19 @@ import { buildValidationsValidateStackableParamsForVoucherify } from './utils/ma
 import { buildRedeemStackableRequestForVoucherify } from './utils/mappers/buildRedeemStackableRequestForVoucherify';
 import { replaceCodesWithInapplicableCoupons } from './utils/replaceCodesWithInapplicableCoupons';
 import {
-  couponsStatusDeleted,
-  filterOutCouponsTypePromotionTier,
-  filterCouponsStatusAppliedAndNewByLimit,
   codesFromCoupons,
-  uniqueCouponsByCodes,
+  couponsStatusDeleted,
+  couponsStatusNew,
   filterOutCouponsIfCodeIn,
+  filterOutCouponsTypePromotionTier,
+  uniqueCouponsByCodes,
 } from './utils/couponsOperationFunctions';
 import { getIncorrectPrices } from './utils/getIncorrectPrices';
 import { getCodesIfProductNotFoundIn } from './utils/getCodesIfProductNotFoundIn';
 import { getItemsWithCorrectedPrices } from './utils/getItemsWithPricesCorrected';
 import { getProductsToAdd } from './utils/getProductsToAddWithPricesCorrected';
 import { getOrderMetadata } from './utils/getOrderMetadata';
+import { getInvalidCodesDueRemovedItems } from './utils/getInvalidCodesDueRemovedItems';
 
 @Injectable()
 export class IntegrationService {
@@ -58,6 +67,198 @@ export class IntegrationService {
     );
   }
 
+  private setAvailablePromotions(
+    cartUpdateActions: CartUpdateActionsInterface,
+    availablePromotions: AvailablePromotion[],
+  ) {
+    cartUpdateActions?.setAvailablePromotions?.(availablePromotions);
+  }
+
+  private getInapplicableRedeemables(validatedCoupons: ValidatedCoupons) {
+    return getRedeemablesByStatuses(
+      [
+        ...(validatedCoupons.redeemables || []),
+        ...(validatedCoupons.inapplicable_redeemables || []),
+        ...(validatedCoupons.skipped_redeemables || []),
+      ],
+      ['INAPPLICABLE', 'SKIPPED'],
+    );
+  }
+
+  private async validateCoupons(coupons: Coupon[], cart: Cart) {
+    return await this.voucherifyConnectorService.validateStackableVouchers(
+      buildValidationsValidateStackableParamsForVoucherify(
+        coupons,
+        cart,
+        mapItemsToVoucherifyOrdersItems(cart.items),
+      ),
+    );
+  }
+
+  private async getPricesOfProductsFromCommercetools(
+    cartUpdateActions: CartUpdateActionsInterface,
+    stackableRedeemablesResultDiscountUnitWithPriceAndCodes: StackableRedeemableResultDiscountUnitWithCodeAndPrice[],
+  ) {
+    return (
+      (await cartUpdateActions.getPricesOfProductsFromCommercetools?.(
+        stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
+      )) || { found: [], notFound: [] }
+    );
+  }
+
+  private async getCorrectPrices(
+    currentPricesOfProducts: ProductPriceAndSourceId[],
+    unitTypeRedeemables: StackableRedeemableResponse[],
+    codesWithMissingProductsToAdd: string[],
+    validatedCoupons: ValidatedCoupons,
+    couponsAppliedAndNewLimitedByConfig: Coupon[],
+    cart: Cart,
+  ): Promise<ValidatedCoupons> {
+    const pricesIncorrect = getIncorrectPrices(
+      currentPricesOfProducts,
+      unitTypeRedeemablesToOrderItems(unitTypeRedeemables),
+    );
+
+    if (
+      filterOutCouponsIfCodeIn(
+        couponsAppliedAndNewLimitedByConfig,
+        codesWithMissingProductsToAdd,
+      ).length > 0 &&
+      pricesIncorrect.length
+    ) {
+      const itemsWithPricesCorrected = getItemsWithCorrectedPrices(
+        validatedCoupons.order.items,
+        cart.items,
+        pricesIncorrect,
+      );
+
+      validatedCoupons =
+        await this.voucherifyConnectorService.validateStackableVouchers(
+          buildValidationsValidateStackableParamsForVoucherify(
+            filterOutCouponsIfCodeIn(
+              couponsAppliedAndNewLimitedByConfig,
+              codesWithMissingProductsToAdd,
+            ),
+            cart,
+            itemsWithPricesCorrected,
+          ),
+        );
+    }
+
+    return validatedCoupons;
+  }
+
+  private async updateCart(
+    cartUpdateActions: CartUpdateActionsInterface | undefined,
+    validatedCoupons: ValidatedCoupons,
+    codesWithMissingProductsToAdd: string[],
+    promotions: Promotions,
+    productsToAdd: ProductToAdd[],
+    inapplicableRedeemables: StackableRedeemableResponse[],
+  ) {
+    cartUpdateActions?.setSessionKey?.(validatedCoupons?.session?.key);
+    cartUpdateActions?.setTotalDiscountAmount?.(
+      validatedCoupons?.order?.total_applied_discount_amount || 0,
+    );
+    cartUpdateActions?.setApplicableCoupons?.(
+      this.voucherifyService.setBannerOnValidatedPromotions(
+        filterOutRedeemablesIfCodeIn(
+          getRedeemablesByStatus(validatedCoupons?.redeemables, 'APPLICABLE'),
+          codesWithMissingProductsToAdd,
+        ),
+        promotions,
+      ),
+    );
+    cartUpdateActions?.setInapplicableCoupons?.(inapplicableRedeemables);
+    cartUpdateActions?.setProductsToAdd?.(productsToAdd);
+  }
+
+  private async getMetadataOptions(
+    order: Order,
+    orderPaidActions: OrderPaidActionsInterface,
+  ) {
+    const orderMetadataSchemaProperties =
+      await this.voucherifyConnectorService.getMetadataSchemaProperties(
+        'order',
+      );
+
+    const productMetadataSchemaProperties =
+      await this.voucherifyConnectorService.getMetadataSchemaProperties(
+        'product',
+      );
+
+    const orderMetadata = await getOrderMetadata(
+      order?.rawOrder,
+      orderMetadataSchemaProperties,
+      orderPaidActions.getCustomMetadataForOrder,
+    );
+
+    return { orderMetadata, productMetadataSchemaProperties };
+  }
+
+  private async redeemStackableVouchers(
+    order: Order,
+    items: OrdersItem[],
+    orderMetadata: Record<string, string>,
+  ) {
+    try {
+      const response =
+        await this.voucherifyConnectorService.redeemStackableVouchers(
+          buildRedeemStackableRequestForVoucherify(order, items, orderMetadata),
+        );
+
+      return { response };
+    } catch (e) {
+      console.log(e); //can't use the logger because it cannot handle error objects
+      this.logger.debug({ msg: 'Redeem operation failed', error: e.details });
+      return { status: true, actions: [] };
+    }
+  }
+
+  private async segregateCouponsByResult(
+    response: RedemptionsRedeemStackableResponse,
+  ) {
+    const sentCoupons: SentCoupons[] = [];
+    const usedCoupons: string[] = [];
+    const notUsedCoupons: string[] = [];
+
+    sentCoupons.push(
+      ...response.redemptions.map((redeem) => {
+        return {
+          result: redeem.result,
+          coupon: redeem.voucher?.code
+            ? redeem.voucher.code
+            : redeem['promotion_tier']['id'],
+        };
+      }),
+    );
+
+    sentCoupons.forEach((sentCoupon) => {
+      if (sentCoupon.result === 'SUCCESS') {
+        usedCoupons.push(sentCoupon.coupon);
+      } else {
+        notUsedCoupons.push(sentCoupon.coupon);
+      }
+    });
+
+    return { usedCoupons, notUsedCoupons };
+  }
+
+  private createActions(usedCoupons: string[], notUsedCoupons: string[]) {
+    return [
+      {
+        action: 'setCustomField',
+        name: 'discount_codes',
+        value: notUsedCoupons,
+      },
+      {
+        action: 'setCustomField',
+        name: 'used_codes',
+        value: usedCoupons,
+      },
+    ];
+  }
+
   public async validateCouponsAndGetAvailablePromotions(
     cart: Cart,
     cartUpdateActions?: CartUpdateActionsInterface,
@@ -68,7 +269,6 @@ export class IntegrationService {
       anonymousId,
       sessionKey,
       coupons: couponsFromRequest,
-      items,
     } = cart;
     const uniqueCoupons: Coupon[] = uniqueCouponsByCodes(couponsFromRequest);
     if (couponsFromRequest.length !== uniqueCoupons.length) {
@@ -77,12 +277,12 @@ export class IntegrationService {
       });
     }
 
-    const { promotions, availablePromotions } =
+    const newCoupons: Coupon[] = couponsStatusNew(uniqueCoupons);
+
+    let { promotions, availablePromotions } =
       await this.voucherifyService.getPromotions(cart, uniqueCoupons);
 
-    if (typeof cartUpdateActions?.setAvailablePromotions === 'function') {
-      cartUpdateActions.setAvailablePromotions(availablePromotions);
-    }
+    this.setAvailablePromotions(cartUpdateActions, availablePromotions);
 
     if (!uniqueCoupons.length) {
       this.logger.debug({
@@ -92,8 +292,7 @@ export class IntegrationService {
     }
 
     const deletedCoupons = couponsStatusDeleted(uniqueCoupons);
-    //don't wait
-    this.voucherifyConnectorService.releaseValidationSession(
+    await this.voucherifyConnectorService.releaseValidationSession(
       codesFromCoupons(filterOutCouponsTypePromotionTier(deletedCoupons)),
       sessionKey,
     );
@@ -114,59 +313,63 @@ export class IntegrationService {
       anonymousId,
     });
 
-    const couponsAppliedAndNewLimitedByConfig =
-      filterCouponsStatusAppliedAndNewByLimit(
-        uniqueCoupons,
-        this.configService.get<number>('COMMERCE_TOOLS_COUPONS_LIMIT'),
-      );
-
-    let validatedCoupons =
-      await this.voucherifyConnectorService.validateStackableVouchers(
-        buildValidationsValidateStackableParamsForVoucherify(
-          couponsAppliedAndNewLimitedByConfig,
-          cart,
-          mapItemsToVoucherifyOrdersItems(items),
-        ),
-      );
-
-    const inapplicableRedeemables = getRedeemablesByStatus(
-      [
-        ...validatedCoupons.redeemables,
-        ...(validatedCoupons?.inapplicable_redeemables || []),
-      ],
-      'INAPPLICABLE',
+    const notDeletedCoupons = filterOutCouponsIfCodeIn(
+      uniqueCoupons,
+      deletedCoupons.map((coupon) => coupon.code),
     );
-    if (typeof cartUpdateActions?.setInapplicableCoupons === 'function') {
-      cartUpdateActions.setInapplicableCoupons(inapplicableRedeemables);
-    }
+
+    let validatedCoupons = await this.validateCoupons(notDeletedCoupons, cart);
+
+    const inapplicableRedeemables =
+      this.getInapplicableRedeemables(validatedCoupons);
 
     const inapplicableCodes = redeemablesToCodes(inapplicableRedeemables);
 
-    if (
-      //Checking if project uses partial redeemables
-      !Array.isArray(validatedCoupons?.inapplicable_redeemables) &&
-      validatedCoupons.valid === false
-    ) {
-      const applicableCodes = couponsAppliedAndNewLimitedByConfig.filter(
-        (coupon) => !inapplicableCodes.includes(coupon.code),
+    let applicableCoupons = filterOutCouponsIfCodeIn(
+      notDeletedCoupons,
+      inapplicableCodes,
+    );
+    const invalidCodesDueRemovedItems = getInvalidCodesDueRemovedItems(
+      validatedCoupons,
+      applicableCoupons,
+      cart,
+    );
+    inapplicableRedeemables.push(
+      ...replaceCodesWithInapplicableCoupons(
+        invalidCodesDueRemovedItems,
+        'You have removed product that was part of the discount',
+      ),
+    );
+
+    applicableCoupons = filterOutCouponsIfCodeIn(notDeletedCoupons, [
+      ...inapplicableCodes,
+      ...invalidCodesDueRemovedItems,
+    ]);
+    if (invalidCodesDueRemovedItems.length > 0) {
+      await this.voucherifyConnectorService.releaseValidationSession(
+        invalidCodesDueRemovedItems,
+        sessionKey,
       );
-      if (applicableCodes.length === 0) {
-        return;
-      }
-      //We need to do another call to V% if there is any applicable coupon in the cart
-      //to get definitions of discounts we should apply on the cart
-      validatedCoupons =
-        await this.voucherifyConnectorService.validateStackableVouchers(
-          buildValidationsValidateStackableParamsForVoucherify(
-            applicableCodes,
-            cart,
-            mapItemsToVoucherifyOrdersItems(items),
-          ),
-        );
+      ({ promotions, availablePromotions } =
+        await this.voucherifyService.getPromotions(cart, applicableCoupons));
+      this.setAvailablePromotions(cartUpdateActions, availablePromotions);
     }
 
-    const unitTypeRedeemables =
-      stackableResponseToUnitTypeRedeemables(validatedCoupons);
+    if (
+      (!Array.isArray(validatedCoupons?.inapplicable_redeemables) &&
+        validatedCoupons.valid === false) ||
+      invalidCodesDueRemovedItems.length
+    ) {
+      if (applicableCoupons.length === 0) {
+        return;
+      }
+      validatedCoupons = await this.validateCoupons(applicableCoupons, cart);
+    }
+
+    const unitTypeRedeemables = stackableResponseToUnitTypeRedeemables(
+      validatedCoupons,
+      newCoupons,
+    );
     const stackableRedeemablesResultDiscountUnitWithPriceAndCodes =
       stackableRedeemablesResponseToUnitStackableRedeemablesResultDiscountUnitWithCodes(
         unitTypeRedeemables,
@@ -178,22 +381,14 @@ export class IntegrationService {
     }: {
       found: ProductPriceAndSourceId[];
       notFound: string[];
-    } =
-      typeof cartUpdateActions?.getPricesOfProductsFromCommercetools ===
-      'function'
-        ? await cartUpdateActions.getPricesOfProductsFromCommercetools(
-            stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
-          )
-        : { found: [], notFound: [] };
+    } = await this.getPricesOfProductsFromCommercetools(
+      cartUpdateActions,
+      stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
+    );
 
     const codesWithMissingProductsToAdd = getCodesIfProductNotFoundIn(
       stackableRedeemablesResultDiscountUnitWithPriceAndCodes,
       notFoundProductSourceIds,
-    );
-
-    const pricesIncorrect = getIncorrectPrices(
-      currentPricesOfProducts,
-      unitTypeRedeemablesToOrderItems(unitTypeRedeemables),
     );
 
     //don't wait
@@ -202,68 +397,43 @@ export class IntegrationService {
       validatedCoupons?.session?.key ?? sessionKey,
     );
 
-    if (
-      filterOutCouponsIfCodeIn(
-        couponsAppliedAndNewLimitedByConfig,
-        codesWithMissingProductsToAdd,
-      ).length > 0 &&
-      pricesIncorrect.length
-    ) {
-      const itemsWithPricesCorrected = getItemsWithCorrectedPrices(
-        validatedCoupons.order.items,
-        items,
-        pricesIncorrect,
-      );
+    const validatedCouponsWithCorrectPrices = await this.getCorrectPrices(
+      currentPricesOfProducts,
+      unitTypeRedeemables,
+      codesWithMissingProductsToAdd,
+      validatedCoupons,
+      notDeletedCoupons,
+      cart,
+    );
 
-      validatedCoupons =
-        await this.voucherifyConnectorService.validateStackableVouchers(
-          buildValidationsValidateStackableParamsForVoucherify(
-            filterOutCouponsIfCodeIn(
-              couponsAppliedAndNewLimitedByConfig,
-              codesWithMissingProductsToAdd,
-            ),
-            cart,
-            itemsWithPricesCorrected,
-          ),
-        );
-    }
-
-    const productsToAdd: ProductToAdd[] = validatedCoupons.order
-      ? getProductsToAdd(validatedCoupons, currentPricesOfProducts)
-      : [];
+    const productsToAdd: ProductToAdd[] =
+      validatedCouponsWithCorrectPrices?.order
+        ? getProductsToAdd(
+            validatedCouponsWithCorrectPrices,
+            currentPricesOfProducts,
+            newCoupons,
+          )
+        : [];
 
     this.logger.debug({
-      validatedCoupons,
+      validatedCouponsWithCorrectPrices,
       availablePromotions,
       productsToAdd,
     });
 
-    if (
-      typeof cartUpdateActions?.setSessionKey === 'function' &&
-      typeof cartUpdateActions?.setTotalDiscountAmount === 'function' &&
-      typeof cartUpdateActions?.setApplicableCoupons === 'function' &&
-      typeof cartUpdateActions?.setInapplicableCoupons === 'function' &&
-      typeof cartUpdateActions?.setProductsToAdd === 'function'
-    ) {
-      cartUpdateActions.setSessionKey(validatedCoupons?.session?.key);
-      cartUpdateActions.setTotalDiscountAmount(
-        validatedCoupons.order?.total_applied_discount_amount || 0,
-      );
-      cartUpdateActions.setApplicableCoupons(
-        this.voucherifyService.setBannerOnValidatedPromotions(
-          filterOutRedeemablesIfCodeIn(
-            getRedeemablesByStatus(validatedCoupons.redeemables, 'APPLICABLE'),
-            codesWithMissingProductsToAdd,
-          ),
-          promotions,
-        ),
-      );
-      cartUpdateActions.setInapplicableCoupons([
-        ...inapplicableRedeemables,
-        ...replaceCodesWithInapplicableCoupons(codesWithMissingProductsToAdd),
-      ]);
-      cartUpdateActions.setProductsToAdd(productsToAdd);
-    }
+    cartUpdateActions.setCouponsLimit(
+      validatedCouponsWithCorrectPrices.stacking_rules.redeemables_limit,
+    );
+
+    await this.updateCart(
+      cartUpdateActions,
+      validatedCouponsWithCorrectPrices,
+      codesWithMissingProductsToAdd,
+      promotions,
+      productsToAdd,
+      inapplicableRedeemables,
+    );
+
     return;
   }
 
@@ -273,27 +443,13 @@ export class IntegrationService {
   ) {
     const { id, customerId } = order;
 
-    //schema of product metadata
-    const productMetadataSchemaProperties =
-      await this.voucherifyConnectorService.getMetadataSchemaProperties(
-        'product',
-      );
+    //schema of order & product metadata
+    const { orderMetadata, productMetadataSchemaProperties } =
+      await this.getMetadataOptions(order, orderPaidActions);
 
     const items = mapItemsToVoucherifyOrdersItems(
       order.items,
       productMetadataSchemaProperties,
-    );
-
-    //schema of order metadata
-    const orderMetadataSchemaProperties =
-      await this.voucherifyConnectorService.getMetadataSchemaProperties(
-        'order',
-      );
-
-    const orderMetadata = await getOrderMetadata(
-      order?.rawOrder,
-      orderMetadataSchemaProperties,
-      orderPaidActions.getCustomMetadataForOrder,
     );
 
     const coupons: Coupon[] = (order.coupons ?? []).filter(
@@ -323,29 +479,11 @@ export class IntegrationService {
       id,
       customerId,
     });
-    const sentCoupons: SentCoupons[] = [];
-    const usedCoupons: string[] = [];
-    const notUsedCoupons: string[] = [];
-    let response: RedemptionsRedeemStackableResponse;
-    try {
-      response = await this.voucherifyConnectorService.redeemStackableVouchers(
-        buildRedeemStackableRequestForVoucherify(order, items, orderMetadata),
-      );
-    } catch (e) {
-      console.log(e); //can't use the logger because it cannot handle error objects
-      this.logger.debug({ msg: 'Redeem operation failed', error: e.details });
-      return { status: true, actions: [] };
-    }
 
-    sentCoupons.push(
-      ...response.redemptions.map((redeem) => {
-        return {
-          result: redeem.result,
-          coupon: redeem.voucher?.code
-            ? redeem.voucher.code
-            : redeem['promotion_tier']['id'],
-        };
-      }),
+    const { response } = await this.redeemStackableVouchers(
+      order,
+      items,
+      orderMetadata,
     );
 
     this.logger.debug({
@@ -355,13 +493,9 @@ export class IntegrationService {
       redemptions: response?.redemptions,
     });
 
-    sentCoupons.forEach((sendedCoupon) => {
-      if (sendedCoupon.result === 'SUCCESS') {
-        usedCoupons.push(sendedCoupon.coupon);
-      } else {
-        notUsedCoupons.push(sendedCoupon.coupon);
-      }
-    });
+    const { usedCoupons, notUsedCoupons } = await this.segregateCouponsByResult(
+      response,
+    );
 
     this.logger.debug({
       msg: 'Realized coupons',
@@ -370,18 +504,8 @@ export class IntegrationService {
       usedCoupons,
       notUsedCoupons,
     });
-    const actions = [
-      {
-        action: 'setCustomField',
-        name: 'discount_codes',
-        value: notUsedCoupons,
-      },
-      {
-        action: 'setCustomField',
-        name: 'used_codes',
-        value: usedCoupons,
-      },
-    ];
+
+    const actions = this.createActions(usedCoupons, notUsedCoupons);
 
     return {
       status: true,

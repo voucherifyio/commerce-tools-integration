@@ -1,8 +1,8 @@
 import {
+  CartDiscountTarget,
+  CartDiscountValueDraft,
   TaxCategory,
   TypedMoney,
-  CartDiscountValueDraft,
-  CartDiscountTarget,
 } from '@commercetools/platform-sdk';
 import { availablePromotion, ProductToAdd } from '../../../integration/types';
 import { ChannelReference } from '@commercetools/platform-sdk/dist/declarations/src/generated/models/channel';
@@ -22,12 +22,6 @@ export type CartActionSetCustomFieldWithCoupons = {
   action: 'setCustomField';
   name: 'discount_codes';
   value: string[];
-};
-
-export type CartActionSetCustomFieldWithValidationFailed = {
-  action: 'setCustomField';
-  name: 'isValidationFailed';
-  value: boolean;
 };
 
 export type CartActionSetCustomFieldFreeShipping = {
@@ -132,18 +126,17 @@ export type CartAction =
   | CartActionChangeLineItemQuantity
   | CartActionSetLineItemCustomType
   | CartActionSetCustomFieldWithCouponsLimit
-  | CartActionSetCustomFieldWithValidationFailed
   | CartActionSetCustomFieldFreeShipping
   | CartActionRecalculate;
 
 export type DataToRunCartActionsBuilder = {
+  initialActions: CartAction[];
   availablePromotions: availablePromotion[];
   applicableCoupons: StackableRedeemableResponse[];
   inapplicableCoupons: StackableRedeemableResponse[];
   newSessionKey?: string;
   totalDiscountAmount: number;
   productsToAdd: ProductToAdd[];
-  allInapplicableCouponsArePromotionTier?: boolean;
   couponsLimit: number;
   commerceToolsCart: CommerceToolsCart;
   cartDiscountApplyMode: CartDiscountApplyMode;

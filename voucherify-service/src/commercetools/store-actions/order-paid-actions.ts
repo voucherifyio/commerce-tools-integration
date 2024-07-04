@@ -72,8 +72,14 @@ export class OrderPaidActions implements OrderPaidActions {
   }
 
   public async findPayment(id: string): Promise<Payment> {
-    return (await this.ctClient.payments().withId({ ID: id }).get().execute())
-      ?.body;
+    return (
+      await this.ctClient
+        .payments()
+        .withId({ ID: id })
+        .get()
+        .execute()
+        .catch((result) => result)
+    )?.body;
   }
 
   public async getCustomMetadataForOrder(

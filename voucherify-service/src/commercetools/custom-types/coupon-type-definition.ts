@@ -36,7 +36,7 @@ export const LINE_ITEM_COUPON_CUSTOM_FIELDS: TypeDraft = {
   ],
 };
 
-export const OREDER_COUPON_CUSTOM_FIELDS: TypeDraft = {
+export const ORDER_COUPON_CUSTOM_FIELDS: TypeDraft = {
   key: 'couponCodes', //DO NOT CHANGE the key
   name: {
     en: 'couponCodes',
@@ -90,17 +90,6 @@ export const OREDER_COUPON_CUSTOM_FIELDS: TypeDraft = {
       type: {
         name: 'Set',
         elementType: { name: 'String' },
-      },
-      inputHint: 'SingleLine',
-    },
-    {
-      name: 'isValidationFailed',
-      label: {
-        en: 'isValidationFailed',
-      },
-      required: false,
-      type: {
-        name: 'Boolean',
       },
       inputHint: 'SingleLine',
     },

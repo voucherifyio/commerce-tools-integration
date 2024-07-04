@@ -5,17 +5,15 @@ import {
   RedemptionsRedeemStackableParams,
   ValidationsValidateStackableParams,
   VoucherifyServerSide,
-  ValidationValidateStackableResponse,
-  StackableRedeemableResponse,
 } from '@voucherify/sdk';
 import { ConfigService } from '@nestjs/config';
 import {
-  RequestJsonLoggerInterface,
   REQUEST_JSON_LOGGER,
+  RequestJsonLoggerInterface,
 } from '../misc/request-json-logger-interface';
 import { OrdersCreate } from '@voucherify/sdk/dist/types/Orders';
 import { mapItemsToVoucherifyOrdersItems } from '../integration/utils/mappers/product';
-import { Order } from '../integration/types';
+import { Order, ValidatedCoupons } from '../integration/types';
 import { elapsedTime } from '../misc/elapsedTime';
 
 @Injectable()
@@ -49,14 +47,7 @@ export class VoucherifyConnectorService {
     return voucherify;
   }
 
-  async validateStackableVouchers(
-    request: ValidationsValidateStackableParams,
-  ): Promise<
-    ValidationValidateStackableResponse & {
-      // At the momement of the implementation, Voucherifyu SDK do not recognize Partial Redeem API.
-      inapplicable_redeemables?: StackableRedeemableResponse[];
-    }
-  > {
+  async validateStackableVouchers(request: ValidationsValidateStackableParams) {
     const start = performance.now();
     const response = await this.getClient().validations.validateStackable(
       request,
@@ -72,8 +63,8 @@ export class VoucherifyConnectorService {
         elapsedTime: elapsedTime(start, end),
       },
     );
-
-    return response;
+    // At the moment of the implementation, Voucherify SDK is outdated.
+    return response as ValidatedCoupons;
   }
 
   async createOrder(
@@ -111,15 +102,15 @@ export class VoucherifyConnectorService {
         elapsedTime: elapsedTime(start, end),
       },
     );
+
     return response;
   }
 
   async releaseValidationSession(codes: string[], sessionKey: string) {
     for await (const code of codes) {
-      await this.getClient().vouchers.releaseValidationSession(
-        code,
-        sessionKey,
-      );
+      await this.getClient()
+        .vouchers.releaseValidationSession(code, sessionKey)
+        .catch((err) => err);
     }
   }
 

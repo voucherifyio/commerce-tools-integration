@@ -13,6 +13,7 @@ const sleep = (time: number) => {
     setTimeout(resolve, time);
   });
 };
+
 @Injectable()
 export class OrderImportService {
   constructor(
@@ -43,7 +44,8 @@ export class OrderImportService {
             }),
           },
         })
-        .execute();
+        .execute()
+        .catch((result) => result);
       yield ordersResult.body.results;
       page++;
       if (ordersResult.body.total < page * limit) {
@@ -75,12 +77,10 @@ export class OrderImportService {
         }
 
         const metadata = mergeTwoObjectsIntoOne(
-          typeof orderActions?.getCustomMetadataForOrder === 'function'
-            ? await orderActions.getCustomMetadataForOrder(
-                order,
-                orderMetadataSchemaProperties,
-              )
-            : {},
+          (await orderActions.getCustomMetadataForOrder?.(
+            order,
+            orderMetadataSchemaProperties,
+          )) || {},
           getSimpleMetadataForOrder(order, orderMetadataSchemaProperties),
         );
 
