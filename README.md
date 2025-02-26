@@ -472,6 +472,8 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2025-02-26 `v6.0.8`
+  - Fix `npm run conifg` script.
 - 2024-06-18 `v6.0.7`
   - updated tests
   - dropped `COMMERCE_TOOLS_COUPONS_LIMIT` config - now this config will be taken directly from V% account setting.
