@@ -23,7 +23,7 @@ export class CustomTypesService {
     const ctClient = this.commerceToolsConnectorService.getClient();
     const response = await ctClient
       .types()
-      .get({ queryArgs: { where: `key="couponCodes"` } })
+      .get({ queryArgs: { where: `key="${typeName}"` } })
       .execute()
       .catch((result) => result);
     if (
@@ -83,7 +83,9 @@ export class CustomTypesService {
       msg: 'Attempt to configure custom field type for order that keeps information about coupon codes.',
     });
 
-    const couponType = await this.findCouponType(typeDefinition.key);
+    const couponType = await this.findCouponType(typeDefinition.key).catch(
+      () => undefined,
+    );
 
     if (!couponType) {
       this.logger.debug({

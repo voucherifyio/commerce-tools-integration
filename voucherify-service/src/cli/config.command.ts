@@ -31,8 +31,8 @@ export class ConfigCommand extends CommandRunner {
       `[${currentStep}/${totalSteps}] Attempt to configure required coupon types in Commercetools`,
     ).start();
 
-    const { success: couponTypesCreated } =
-      await this.typesService.configureCouponTypes();
+    const couponTypesCreated =
+      (await this.typesService.configureCouponTypes())?.success || false;
     if (couponTypesCreated) {
       spinnerCouponsTypes.succeed(
         `[${currentStep}/${totalSteps}] Coupon custom-types configured`,
@@ -44,7 +44,7 @@ export class ConfigCommand extends CommandRunner {
     }
 
     if (applyCartDiscountAsCtDirectDiscount) {
-      return;
+      process.exit(0);
     }
     currentStep++;
     const spinnerTaxCategories = loadingCli(
@@ -62,5 +62,6 @@ export class ConfigCommand extends CommandRunner {
         `[${currentStep}/${totalSteps}] Could not configure coupon tax categories`,
       );
     }
+    process.exit(0);
   }
 }
