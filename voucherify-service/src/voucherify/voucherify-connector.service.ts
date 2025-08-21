@@ -18,6 +18,8 @@ import { elapsedTime } from '../misc/elapsedTime';
 
 @Injectable()
 export class VoucherifyConnectorService {
+  private client: ReturnType<typeof VoucherifyServerSide>;
+
   constructor(
     private configService: ConfigService,
     private logger: Logger,
@@ -34,17 +36,19 @@ export class VoucherifyConnectorService {
     this.configService.get<string>('VOUCHERIFY_API_URL');
 
   getClient(): ReturnType<typeof VoucherifyServerSide> {
-    const start = performance.now();
-    const voucherify = VoucherifyServerSide({
-      applicationId: this.applicationId,
-      secretKey: this.secretKey,
-      apiUrl: this.apiUrl,
-      channel: `Commercetools integration-v${process.env.npm_package_version}`,
-    });
-    const end = performance.now();
-    this.logger.debug(`V% getClient creation: ${end - start}ms`);
+    if (!this.client) {
+      const start = performance.now();
+      this.client = VoucherifyServerSide({
+        applicationId: this.applicationId,
+        secretKey: this.secretKey,
+        apiUrl: this.apiUrl,
+        channel: `Commercetools integration-v${process.env.npm_package_version}`,
+      });
+      const end = performance.now();
+      this.logger.debug(`V% getClient creation: ${end - start}ms`);
+    }
 
-    return voucherify;
+    return this.client;
   }
 
   async validateStackableVouchers(request: ValidationsValidateStackableParams) {
