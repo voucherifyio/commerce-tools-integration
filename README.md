@@ -472,6 +472,9 @@ Currently, we support a few cases related to loyalty program. Firstly we provide
 If you found a bug or want to suggest a new feature, please file a GitHub issue.
 
 ## Changelog
+- 2025-08-21 `v6.0.9`
+  - Added cache for voucherify client - thanks @flpandre for the contribution!
+  - Updated dependencies - 0 vulnerabilities.
 - 2025-02-26 `v6.0.8`
   - Fix `npm run conifg` script.
 - 2024-06-18 `v6.0.7`
